@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 9.26.4
+
+- chore: republish
+
 ## 9.26.3
 
 - chore: republish
