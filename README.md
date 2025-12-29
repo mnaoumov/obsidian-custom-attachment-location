@@ -363,7 +363,7 @@ For more details, refer to the [documentation](https://github.com/mnaoumov/obsid
 
 From December 2025, the project repository is hosted at [mnaoumov/obsidian-custom-attachment-location](https://github.com/mnaoumov/obsidian-custom-attachment-location).
 
-The original author's repository is preserved as an archive of issues/PRs/discussions at [RainCat1998/obsidian-custom-attachment-location](https://github.com/RainCat1998/obsidian-custom-attachment-location).
+The original author's repository is preserved as an archive of issues/PRs/discussions/releases at [RainCat1998/obsidian-custom-attachment-location](https://github.com/RainCat1998/obsidian-custom-attachment-location).
 
 ## License
 
