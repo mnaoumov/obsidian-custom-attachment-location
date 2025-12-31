@@ -344,6 +344,14 @@ export const defaultTranslations = {
       },
       name: 'Move attachment to proper folder used by multiple notes mode'
     },
+    promptDefaultValue: {
+      description: {
+        part1: 'Default value shown in the prompt dialog. Leave empty to start with a blank field.',
+        part2: 'Use',
+        part3: 'to pre-fill with the original filename.'
+      },
+      name: 'Default prompt value'
+    },
     renameAttachmentsToLowerCase: 'Rename attachments to lower case',
     renamedAttachmentFileName: {
       description: {

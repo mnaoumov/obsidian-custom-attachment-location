@@ -73,6 +73,8 @@ export class PluginSettings {
   public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode =
     MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
 
+  public promptDefaultValue = '';
+
   public renamedAttachmentFileName = '';
   public shouldDeleteOrphanAttachments = false;
   public shouldHandleRenames = true;

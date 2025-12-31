@@ -466,8 +466,15 @@ export class Substitutions {
       return DUMMY_PATH;
     }
 
+    // Evaluate the default value template
+    let defaultValue = '';
+    if (this.plugin.settings.promptDefaultValue) {
+      defaultValue = this.fillTemplateForPromptDefault(this.plugin.settings.promptDefaultValue, ctx);
+    }
+
     const promptResult = await promptWithPreview({
       ctx,
+      defaultValue,
       valueValidator: (value) =>
         validatePath({
           areTokensAllowed: false,
@@ -479,6 +486,14 @@ export class Substitutions {
       throw new Error('Prompt cancelled');
     }
     return formatString(promptResult, ctx.format);
+  }
+
+  private fillTemplateForPromptDefault(template: string, ctx: TokenEvaluatorContext): string {
+    // Simple replacement for common tokens without recursion into ${prompt}
+    return template
+      .replace(/\${originalAttachmentFileName}/gi, ctx.originalAttachmentFileName)
+      .replace(/\${noteFileName}/gi, ctx.noteFileName)
+      .replace(/\${date:(?<Format>[^}]*)}/gi, (_, format) => formatDate(String(format)));
   }
 
   private async getHeading(format: string): Promise<string> {

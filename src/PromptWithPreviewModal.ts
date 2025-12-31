@@ -19,6 +19,7 @@ import type { TokenEvaluatorContext } from './TokenEvaluatorContext.ts';
 
 interface PromptWithPreviewModalOptions {
   ctx: TokenEvaluatorContext;
+  defaultValue: string;
   valueValidator: (value: string) => Promise<null | string>;
 }
 
@@ -79,7 +80,7 @@ class PromptWithPreviewModal extends Modal {
   public constructor(private readonly options: PromptWithPreviewModalOptions, private readonly resolve: PromiseResolve<null | string>) {
     super(options.ctx.app);
     addPluginCssClasses(this.containerEl, CssClass.PromptModal);
-    this.value = options.ctx.originalAttachmentFileName;
+    this.value = options.defaultValue;
   }
 
   public override onClose(): void {

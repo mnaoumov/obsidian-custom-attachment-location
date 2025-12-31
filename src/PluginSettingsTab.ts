@@ -121,6 +121,34 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingEx(this.containerEl)
+      .setName(t(($) => $.pluginSettingsTab.promptDefaultValue.name))
+      .setDesc(createFragment((f) => {
+        f.appendText(t(($) => $.pluginSettingsTab.promptDefaultValue.description.part1));
+        f.createEl('br');
+        f.appendText(t(($) => $.pluginSettingsTab.promptDefaultValue.description.part2));
+        f.appendText(' ');
+        // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+        appendCodeBlock(f, '${originalAttachmentFileName}');
+        f.appendText(' ');
+        f.appendText(t(($) => $.pluginSettingsTab.promptDefaultValue.description.part3));
+      }))
+      .addCodeHighlighter((codeHighlighter) => {
+        codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+        codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+        this.bind(codeHighlighter, 'promptDefaultValue', {
+          componentToPluginSettingsValueConverter(uiValue: string): string {
+            const trimmed = uiValue.trimEnd();
+            return trimmed === '' ? '' : normalizePath(trimmed);
+          },
+          pluginSettingsToComponentValueConverter(pluginSettingsValue: string): string {
+            return pluginSettingsValue.trimEnd();
+          },
+          shouldResetSettingWhenComponentIsEmpty: false,
+          shouldShowPlaceholderForDefaultValues: false
+        });
+      });
+
+    new SettingEx(this.containerEl)
       .setName(t(($) => $.pluginSettingsTab.attachmentRenameMode.name))
       .setDesc(createFragment((f) => {
         f.appendText(t(($) => $.pluginSettingsTab.attachmentRenameMode.description.part1));
