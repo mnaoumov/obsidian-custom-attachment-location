@@ -113,7 +113,7 @@ Size of the attachment file.
 
 **Format**:
 
-- `B`**`n`** (default): size in bytes rounded to `n` decimal points. `n` is a number (`0` if omitted).
+- `B`**`n`** (no format): size in bytes rounded to `n` decimal points. `n` is a number (`0` if omitted).
 - `KB`**`n`**: size in kilobytes rounded to `n` decimal points. `n` is a number (`0` if omitted).
 - `MB`**`n`**: size in megabytes rounded to `n` decimal points. `n` is a number (`0` if omitted).
 
@@ -135,7 +135,7 @@ The generated file name of the attachment (available only inside [Markdown URL f
 
 **Format**:
 
-- (default): Unchanged file name. **Example**: `foo/bar/baz qux quux.pdf` -> `baz qux quux`.
+- (no format): Unchanged file name. **Example**: `foo/bar/baz qux quux.pdf` -> `baz qux quux`.
 - `left`**`n`**: Left `n` characters of the file name. **Example** `left2`: `foo/bar/baz qux quux.pdf` -> `ba`.
 - `lower`: Lowercase file name. **Example**: `foo/bar/Baz QUX quux.pdf` -> `baz qux quux`.
 - `right`**`n`**: Right `n` characters of the file name. **Example** `right2`: `foo/bar/baz qux quux.pdf` -> `ux`.
@@ -154,7 +154,7 @@ The heading above the cursor in the note editor where the attachment is inserted
 
 **Format**:
 
-- (default) `any`: Heading of the nearest any level `#...# Heading`.
+- (no format) `any`: Heading of the nearest any level `#...# Heading`.
 - `1`: Heading of the nearest `# Heading`.
 - `2`: Heading of the nearest `## Heading`.
 - `3`: Heading of the nearest `### Heading`.
@@ -180,7 +180,7 @@ Current note file name.
 
 **Format**:
 
-- (default): Unchanged file name. **Example**: `foo/bar/baz qux quux.md` -> `baz qux quux`.
+- (no format): Unchanged file name. **Example**: `foo/bar/baz qux quux.md` -> `baz qux quux`.
 - `left`**`n`**: Left `n` characters of the file name. **Example** `left2`: `foo/bar/baz qux quux.md` -> `ba`.
 - `lower`: Lowercase file name. **Example**: `foo/bar/Baz QUX quux.md` -> `baz qux quux`.
 - `right`**`n`**: Right `n` characters of the file name. **Example** `right2`: `foo/bar/baz qux quux.md` -> `ux`.
@@ -199,7 +199,7 @@ Current note's folder name.
 
 **Format**:
 
-- (default): Unchanged folder name. **Example**: `foo/bar baz qux/quux.md` -> `bar baz qux`.
+- (no format): Unchanged folder name. **Example**: `foo/bar baz qux/quux.md` -> `bar baz qux`.
 - `left`**`n`**: Left `n` characters of the folder name. **Example** `left2`: `foo/bar baz qux/quux.md` -> `ba`.
 - `lower`: Lowercase folder name. **Example**: `foo/Bar BAZ qux/quux.md` -> `bar baz qux`.
 - `right`**`n`**: Right `n` characters of the folder name. **Example** `right2`: `foo/bar baz qux/quux.md` -> `ux`.
@@ -231,7 +231,7 @@ File name of the original attachment file.
 
 **Format**:
 
-- (default): File name as is. **Example**: `foo bar.baz.pdf` -> `foo bar.baz`.
+- (no format): File name as is. **Example**: `foo bar.baz.pdf` -> `foo bar.baz`.
 - `left`**`n`**: Left `n` characters of the file name. **Example** `left2`: `foo/bar baz qux/quux.pdf` -> `ba`.
 - `lower`: Lowercase folder name. **Example**: `foo Bar.BAZ.pdf` -> `foo bar.baz`.
 - `right`**`n`**: Right `n` characters of the folder name. **Example** `left2`: `foo/bar baz qux/quux.pdf` -> `ux`.
@@ -266,7 +266,7 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 
 **Format**:
 
-- (default): Unchanged value entered by user. **Example**: `foo bar` -> `foo bar`.
+- (no format): Unchanged value entered by user. **Example**: `foo bar` -> `foo bar`.
 - `left`**`n`**: Left `n` characters of the value entered by user. **Example** `left2`: `foo bar` -> `fo`.
 - `lower`: Lowercased value entered by user. **Example**: `foo Bar` -> `foo bar`.
 - `right`**`n`**: Right `n` characters of the value entered by user. **Example** `right2`: `foo bar` -> `ar`.
