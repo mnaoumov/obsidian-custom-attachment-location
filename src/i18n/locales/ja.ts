@@ -152,12 +152,6 @@ export const ja: Translations<PluginTypes> = {
       invalidRegularExpression: '無効な正規表現 {{regExp}}',
       specialCharactersMustNotContainSlash: '特殊文字には / を含めることはできません',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: '特殊文字の置換には無効なファイル名パス文字を含めることはできません。'
-    },
-    version: {
-      part1: '設定ファイル ',
-      part2: 'のバージョン',
-      part3: 'は現在のプラグインバージョンより新しいです',
-      part4: 'プラグインが期待通りに動作しない可能性があります。プラグインを最新バージョンに更新するか、設定が正しいことを確認してください。'
     }
   },
   pluginSettingsTab: {

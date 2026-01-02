@@ -151,12 +151,6 @@ export const kh: Translations<PluginTypes> = {
       invalidRegularExpression: 'កន្សោមធម្មតាមិនត្រឹមត្រូវ {{regExp}}',
       specialCharactersMustNotContainSlash: 'តួអក្សរពិសេសមិនត្រូវមាន /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'ការជំនួសតួអក្សរពិសេសមិនត្រូវមានតួអក្សរផ្លូវឈ្មោះឯកសារមិនត្រឹមត្រូវ។'
-    },
-    version: {
-      part1: 'ឯកសារការកំណត់របស់អ្នក ',
-      part2: 'មានកំណែ',
-      part3: 'ដែលថ្មីជាងកំណែផ្នែកបន្ថែមបច្ចុប្បន្ន',
-      part4: 'ផ្នែកបន្ថែមអាចមិនដំណើរការតាមដែលរំពឹងទុក។ សូមធ្វើបច្ចុប្បន្នភាពផ្នែកបន្ថែមទៅកំណែចុងក្រោយបំផុត ឬធានាថាការកំណត់ត្រឹមត្រូវ។'
     }
   },
   pluginSettingsTab: {

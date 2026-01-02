@@ -152,12 +152,6 @@ export const cs: Translations<PluginTypes> = {
       invalidRegularExpression: 'Neplatný regulární výraz {{regExp}}',
       specialCharactersMustNotContainSlash: 'Speciální znaky nesmí obsahovat /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Náhrada speciálních znaků nesmí obsahovat neplatné znaky cesty názvu souboru.'
-    },
-    version: {
-      part1: 'Váš soubor nastavení ',
-      part2: 'má verzi',
-      part3: 'která je novější než aktuální verze pluginu',
-      part4: 'Plugin nemusí fungovat podle očekávání. Aktualizujte prosím plugin na nejnovější verzi nebo se ujistěte, že nastavení jsou správná.'
     }
   },
   pluginSettingsTab: {

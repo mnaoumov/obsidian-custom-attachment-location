@@ -1,20 +1,13 @@
 import type { MaybeReturn } from 'obsidian-dev-utils/Type';
 
-import {
-  App,
-  debounce
-} from 'obsidian';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
-import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
+import { debounce } from 'obsidian';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase';
 import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/Validation';
 import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
 import { compare } from 'semver';
 
-import type { Plugin } from './Plugin.ts';
 import type { PluginTypes } from './PluginTypes.ts';
 
 import {
@@ -59,18 +52,11 @@ class LegacySettings {
 }
 
 class LegacySettingsConverter {
-  private readonly app: App;
-
-  public constructor(private readonly legacySettings: Partial<LegacySettings> & Partial<PluginSettings>, private readonly plugin: Plugin) {
-    this.app = plugin.app;
+  public constructor(private readonly legacySettings: Partial<LegacySettings> & Partial<PluginSettings>) {
   }
 
   public convert(): void {
     this.convertWarningVersion();
-
-    if (this.handleNewVersion()) {
-      return;
-    }
 
     this.convertDateTimeFormat();
     this.convertReplaceWhitespace();
@@ -80,7 +66,6 @@ class LegacySettingsConverter {
     this.convertDeleteOrphanAttachments();
     this.convertKeepEmptyAttachmentFolders();
     this.convertRenameCollectedFiles();
-    this.convertToLowerCase();
     this.convertCustomTokensStr();
     this.convertConvertImagesToJpeg();
     this.convertWhitespaceReplacement();
@@ -88,7 +73,6 @@ class LegacySettingsConverter {
     this.convertCollectAttachmentUsedByMultipleNotesMode();
     this.convertMarkdownUrlFormat();
     this.convertSpecialCharacters();
-    this.legacySettings.version = this.plugin.manifest.version;
   }
 
   private convertAutoRenameFiles(): void {
@@ -125,21 +109,6 @@ class LegacySettingsConverter {
 
 ${commentOut(this.legacySettings.customTokensStr)}
 `;
-      invokeAsyncSafely(async () => {
-        await this.plugin.waitForLifecycleEvent('layoutReady');
-        await alert({
-          app: this.app,
-          message: createFragment((f) => {
-            f.appendText(t(($) => $.pluginSettingsManager.customToken.deprecated.part1));
-            f.createEl('a', {
-              href: 'https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens',
-              text: t(($) => $.pluginSettingsManager.customToken.deprecated.part2)
-            });
-            f.appendText(' ');
-            f.appendText(t(($) => $.pluginSettingsManager.customToken.deprecated.part3));
-          })
-        });
-      });
     }
   }
 
@@ -176,25 +145,7 @@ ${commentOut(this.legacySettings.customTokensStr)}
       // eslint-disable-next-line no-template-curly-in-string -- Valid token.
       && (this.legacySettings.markdownUrlFormat === '${generatedAttachmentFilePath}' || this.legacySettings.markdownUrlFormat === '${noteFilePath}')
     ) {
-      invokeAsyncSafely(async () => {
-        await this.plugin.waitForLifecycleEvent('layoutReady');
-        await alert({
-          app: this.app,
-          message: createFragment((f) => {
-            f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part1));
-            appendCodeBlock(f, t(($) => $.pluginSettingsTab.markdownUrlFormat.name));
-            f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part2));
-            f.createEl('a', {
-              href: 'https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#markdown-url-format',
-              text: t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part3)
-            });
-            f.appendText(' ');
-            f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part4));
-            f.appendText(' ');
-            f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part5));
-          })
-        });
-      });
+      this.legacySettings.markdownUrlFormat = '';
     }
   }
 
@@ -227,46 +178,6 @@ ${commentOut(this.legacySettings.customTokensStr)}
   private convertSpecialCharacters(): void {
     if (this.legacySettings.version && compare(this.legacySettings.version, '9.16.0') < 0 && this.legacySettings.specialCharacters === '#^[]|*\\<>:?') {
       this.legacySettings.specialCharacters = '#^[]|*\\<>:?/';
-      invokeAsyncSafely(async () => {
-        await this.plugin.waitForLifecycleEvent('layoutReady');
-        await alert({
-          app: this.app,
-          message: createFragment((f) => {
-            f.appendText(t(($) => $.pluginSettingsManager.specialCharacters.part1));
-            appendCodeBlock(f, t(($) => $.pluginSettingsTab.specialCharacters.name));
-            f.appendText(t(($) => $.pluginSettingsManager.specialCharacters.part2));
-          })
-        });
-      });
-    }
-  }
-
-  private convertToLowerCase(): void {
-    if (this.legacySettings.toLowerCase || this.legacySettings.shouldRenameAttachmentsToLowerCase) {
-      invokeAsyncSafely(async () => {
-        await this.plugin.waitForLifecycleEvent('layoutReady');
-        await alert({
-          app: this.app,
-          message: createFragment((f) => {
-            f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part1));
-            f.appendText(' ');
-            appendCodeBlock(f, t(($) => $.pluginSettingsTab.renameAttachmentsToLowerCase));
-            f.appendText(' ');
-            f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part2));
-            f.appendText(' ');
-            appendCodeBlock(f, 'lower');
-            f.appendText(' ');
-            f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part3));
-            f.appendText(' ');
-            f.createEl('a', {
-              href: 'https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-              text: t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part4)
-            });
-            f.appendText(' ');
-            f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part5));
-          })
-        });
-      });
     }
   }
 
@@ -282,39 +193,6 @@ ${commentOut(this.legacySettings.customTokensStr)}
       this.legacySettings.specialCharactersReplacement = this.legacySettings.whitespaceReplacement;
     }
   }
-
-  private handleNewVersion(): boolean {
-    if (this.legacySettings.version && compare(this.legacySettings.version, this.plugin.manifest.version) > 0) {
-      if (window.sessionStorage.getItem('custom-attachment-location-version-mismatch-alert-shown') === 'true') {
-        return false;
-      }
-      window.sessionStorage.setItem('custom-attachment-location-version-mismatch-alert-shown', 'true');
-      invokeAsyncSafely(async () => {
-        await this.plugin.waitForLifecycleEvent('layoutReady');
-        await alert({
-          app: this.app,
-          message: createFragment((f) => {
-            f.appendText(t(($) => $.pluginSettingsManager.version.part1));
-            f.appendText(' ');
-            appendCodeBlock(f, `${this.plugin.manifest.dir ?? ''}/data.json`);
-            f.appendText(' ');
-            f.appendText(t(($) => $.pluginSettingsManager.version.part2));
-            f.appendText(' ');
-            appendCodeBlock(f, this.legacySettings.version ?? '');
-            f.appendText(', ');
-            f.appendText(t(($) => $.pluginSettingsManager.version.part3));
-            f.appendText(' ');
-            appendCodeBlock(f, this.plugin.manifest.version);
-            f.appendText('. ');
-            f.appendText(t(($) => $.pluginSettingsManager.version.part4));
-          })
-        });
-      });
-      return true;
-    }
-
-    return false;
-  }
 }
 
 export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes> {
@@ -328,7 +206,7 @@ export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes
 
   protected override registerLegacySettingsConverters(): void {
     this.registerLegacySettingsConverter(LegacySettings, (legacySettings) => {
-      new LegacySettingsConverter(legacySettings, this.plugin).convert();
+      new LegacySettingsConverter(legacySettings).convert();
     });
   }
 

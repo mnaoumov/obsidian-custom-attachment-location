@@ -153,12 +153,6 @@ export const ms: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Aksara khas tidak boleh mengandungi /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Penggantian aksara khas tidak boleh mengandungi aksara laluan nama fail yang tidak sah.'
-    },
-    version: {
-      part1: 'Fail tetapan anda ',
-      part2: 'mempunyai versi',
-      part3: 'yang lebih baharu daripada versi pemalam semasa',
-      part4: 'Pemalam mungkin tidak berfungsi seperti yang dijangkakan. Sila kemas kini pemalam ke versi terkini atau pastikan tetapan adalah betul.'
     }
   },
   pluginSettingsTab: {

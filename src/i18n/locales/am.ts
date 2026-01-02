@@ -151,12 +151,6 @@ export const am: Translations<PluginTypes> = {
       invalidRegularExpression: 'የማይሰራ መደበኛ አገላለጽ {{regExp}}',
       specialCharactersMustNotContainSlash: 'ልዩ ቁምፊዎች / መያዝ የለባቸውም',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'ልዩ ቁምፊ መተካት የማይሰራ የፋይል ስም መንገድ ቁምፊዎች መያዝ የለባቸውም።'
-    },
-    version: {
-      part1: 'የእርስዎ ቅንብር ፋይል ',
-      part2: 'ሥሪት አለው',
-      part3: 'እሱም ከአሁኑ ፕላጊን ሥሪት የበለጠ አዲስ ነው',
-      part4: 'ፕላጊኑ እንደሚጠበቀው ላይሰራ ይችላል። እባክዎ ፕላጊኑን ወደ የቅርብ ጊዜ ሥሪት ያዘምኑ ወይም ቅንብሮቹ ትክክል መሆናቸውን ያረጋግጡ።'
     }
   },
   pluginSettingsTab: {

@@ -154,12 +154,6 @@ export const it: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'I caratteri speciali non devono contenere /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'La sostituzione dei caratteri speciali non deve contenere caratteri di percorso nome file non validi.'
-    },
-    version: {
-      part1: 'Il tuo file delle impostazioni ',
-      part2: 'ha la versione',
-      part3: 'che è più recente della versione corrente del plugin',
-      part4: 'Il plugin potrebbe non funzionare come previsto. Aggiorna il plugin all\'ultima versione o assicurati che le impostazioni siano corrette.'
     }
   },
   pluginSettingsTab: {

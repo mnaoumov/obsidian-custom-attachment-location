@@ -153,12 +153,6 @@ export const pl: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Znaki specjalne nie mogą zawierać /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Zamiana znaków specjalnych nie może zawierać nieprawidłowych znaków ścieżki nazwy pliku.'
-    },
-    version: {
-      part1: 'Twój plik ustawień ',
-      part2: 'ma wersję',
-      part3: 'która jest nowsza niż bieżąca wersja wtyczki',
-      part4: 'Wtyczka może nie działać zgodnie z oczekiwaniami. Zaktualizuj wtyczkę do najnowszej wersji lub upewnij się, że ustawienia są poprawne.'
     }
   },
   pluginSettingsTab: {

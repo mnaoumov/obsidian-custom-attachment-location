@@ -153,12 +153,6 @@ export const nl: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Speciale karakters mogen geen / bevatten',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Speciale karakter vervanging mag geen ongeldige bestandsnaam pad karakters bevatten.'
-    },
-    version: {
-      part1: 'Je instellingenbestand ',
-      part2: 'heeft versie',
-      part3: 'wat nieuwer is dan de huidige plugin versie',
-      part4: 'De plugin werkt mogelijk niet zoals verwacht. Werk de plugin bij naar de nieuwste versie of zorg ervoor dat de instellingen correct zijn.'
     }
   },
   pluginSettingsTab: {

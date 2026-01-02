@@ -152,12 +152,6 @@ export const da: Translations<PluginTypes> = {
       invalidRegularExpression: 'Ugyldigt regulært udtryk {{regExp}}',
       specialCharactersMustNotContainSlash: 'Særlige tegn må ikke indeholde /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Erstatning af særlige tegn må ikke indeholde ugyldige filnavnsti-tegn.'
-    },
-    version: {
-      part1: 'Din indstillingsfil ',
-      part2: 'har version',
-      part3: 'som er nyere end den nuværende plugin-version',
-      part4: 'Pluginet fungerer muligvis ikke som forventet. Opdater venligst pluginet til den seneste version eller sørg for, at indstillingerne er korrekte.'
     }
   },
   pluginSettingsTab: {

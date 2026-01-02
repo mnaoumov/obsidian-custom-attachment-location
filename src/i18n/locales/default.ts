@@ -175,13 +175,13 @@ export const defaultTranslations = {
       codeComment:
         '// Custom tokens were commented out as they have to be updated to the new format introduced in plugin version 9.0.0.\n// Refer to the documentation (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for more information.',
       deprecated: {
-        part1: 'In plugin version 9.0.0, the format of custom token registration changed. Please update your tokens accordingly. Refer to the',
+        part1: 'The format of custom token registration changed. Please update your tokens accordingly. Refer to the',
         part2: 'documentation',
         part3: 'for more information'
       }
     },
     legacyRenameAttachmentsToLowerCase: {
-      part1: 'In plugin version 9.0.0, the',
+      part1: 'The',
       part2: 'setting is deprecated. Use',
       part3: 'format instead. See',
       part4: 'documentation',
@@ -197,7 +197,7 @@ export const defaultTranslations = {
       }
     },
     specialCharacters: {
-      part1: 'In plugin version 9.16.0, the',
+      part1: 'The',
       part2: 'default setting value was changed. Your setting value was updated to the new default value.'
     },
     validation: {
@@ -207,12 +207,6 @@ export const defaultTranslations = {
       specialCharactersMustNotContainSlash: 'Special characters must not contain /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Special character replacement must not contain invalid file name path characters.'
-    },
-    version: {
-      part1: 'Your settings file ',
-      part2: 'has version',
-      part3: 'which is newer than the current plugin version',
-      part4: 'The plugin might not work as expected. Please update the plugin to the latest version or ensure that the settings are correct.'
     }
   },
   pluginSettingsTab: {
@@ -436,5 +430,22 @@ export const defaultTranslations = {
     },
     title: 'Provide a value for the prompt token'
   },
-  regularExpression: '/regular expression/'
+  regularExpression: '/regular expression/',
+  releaseNotes: {
+    title: 'Release notes',
+    versionMismatch: {
+      part1: 'Your settings file ',
+      part2: 'has version',
+      part3: 'which is newer than the current plugin version',
+      part4: 'The plugin might not work as expected. Please update the plugin to the latest version or ensure that the settings are correct.',
+      title: 'Version mismatch'
+    },
+    versions: {
+      '10.0.0': {
+        part1: 'The format of tokens has been changed. Please update your tokens accordingly. See',
+        part2: 'documentation',
+        part3: 'for more information.'
+      }
+    }
+  }
 } as const satisfies DefaultTranslationsBase;

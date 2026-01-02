@@ -151,12 +151,6 @@ export const ar: Translations<PluginTypes> = {
       invalidRegularExpression: 'التعبير النمطي غير صالح {{regExp}}',
       specialCharactersMustNotContainSlash: 'الأحرف الخاصة يجب ألا تحتوي على /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'استبدال الأحرف الخاصة يجب ألا يحتوي على أحرف مسار اسم ملف غير صالحة.'
-    },
-    version: {
-      part1: 'ملف إعداداتك ',
-      part2: 'له إصدار',
-      part3: 'أحدث من إصدار الإضافة الحالي',
-      part4: 'قد لا تعمل الإضافة كما هو متوقع. يرجى تحديث الإضافة إلى أحدث إصدار أو التأكد من صحة الإعدادات.'
     }
   },
   pluginSettingsTab: {

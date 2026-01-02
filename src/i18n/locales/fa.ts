@@ -152,12 +152,6 @@ export const fa: Translations<PluginTypes> = {
       invalidRegularExpression: 'عبارت قانونی نامعتبر {{regExp}}',
       specialCharactersMustNotContainSlash: 'کراکترهای ویژه نباید حاوی / باشند',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'جایگزین کراکترهای ویژه نباید حاوی کراکترهای نامعتبر مسیر نام فایل باشد.'
-    },
-    version: {
-      part1: 'فایل تنظیمات شما ',
-      part2: 'نسخه',
-      part3: 'را دارد که جدیدتر از نسخه فعلی پلاگین است',
-      part4: 'پلاگین ممکن است طبق انتظار کار نکند. لطفاً پلاگین را به آخرین نسخه به‌روزرسانی کنید یا اطمینان حاصل کنید که تنظیمات صحیح هستند.'
     }
   },
   pluginSettingsTab: {

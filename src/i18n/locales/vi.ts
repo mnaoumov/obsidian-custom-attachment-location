@@ -153,12 +153,6 @@ export const vi: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Ký tự đặc biệt không được chứa dấu /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Chuỗi thay thế ký tự đặc biệt không được chứa ký tự tên tệp hoặc đường dẫn không hợp lệ.'
-    },
-    version: {
-      part1: 'Tệp cài đặt của bạn ',
-      part2: 'có phiên bản',
-      part3: 'mới hơn phiên bản plugin hiện tại',
-      part4: 'Plugin có thể không hoạt động như mong đợi. Vui lòng cập nhật plugin lên phiên bản mới nhất hoặc đảm bảo các cài đặt là đúng.'
     }
   },
   pluginSettingsTab: {

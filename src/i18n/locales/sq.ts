@@ -154,12 +154,6 @@ export const sq: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Karaketret specialë nuk duhet të përmbajnë /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Zëvendësimi i karaktereve specialë nuk duhet të përmbajë karaktere të pavlefshëm për shtegun e skedarit.'
-    },
-    version: {
-      part1: 'Skedari juaj i cilësimeve ',
-      part2: 'ka versionin',
-      part3: 'që është më i ri se versioni aktual i shtesës',
-      part4: 'Shtesa mund të mos funksionojë siç pritet. Përditësoni shtesën në versionin më të fundit ose sigurohuni që cilësimet të jenë të sakta.'
     }
   },
   pluginSettingsTab: {

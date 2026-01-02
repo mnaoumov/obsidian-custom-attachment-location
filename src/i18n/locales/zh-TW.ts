@@ -150,12 +150,6 @@ export const zhTW: Translations<PluginTypes> = {
       invalidRegularExpression: '無效的正則表達式 {{regExp}}',
       specialCharactersMustNotContainSlash: '特殊字元不得包含 /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: '特殊字元的替換不得包含無效的檔名或路徑字元。'
-    },
-    version: {
-      part1: '您的設定檔案',
-      part2: '版本為',
-      part3: '高於目前插件版本',
-      part4: '插件可能無法正常運作。請更新插件至最新版本，或確認設定是否正確。'
     }
   },
   pluginSettingsTab: {
