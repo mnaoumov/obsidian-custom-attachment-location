@@ -60,5 +60,9 @@
     "dompurify": "3.0.1",
     "type-fest": "latest"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "json5": "^2.2.3",
+    "zod": "^4.3.4"
+  }
 }
