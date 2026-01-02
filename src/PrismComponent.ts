@@ -27,8 +27,6 @@ export class PrismComponent extends Component {
     const FORMAT_OBJECT_DEPTH_2 = `${PREFIX_PATTERN}|${FORMAT_OBJECT_DEPTH_1}${SUFFIX_PATTERN}`;
     // Depth 3: allows depth-2 blocks inside.
     const FORMAT_OBJECT_DEPTH_3 = `${PREFIX_PATTERN}|${FORMAT_OBJECT_DEPTH_2}${SUFFIX_PATTERN}`;
-    // Depth 4: allows depth-3 blocks inside.
-    const FORMAT_OBJECT_DEPTH_4 = `${PREFIX_PATTERN}|${FORMAT_OBJECT_DEPTH_3}${SUFFIX_PATTERN}`;
 
     prism.languages[TOKENIZED_STRING_LANGUAGE] = {
       expression: {
@@ -57,7 +55,7 @@ export class PrismComponent extends Component {
           /* eslint-disable perfectionist/sort-objects -- Need to keep object order. */
           prefix: {
             alias: 'regex',
-            pattern: /\$\{/
+            pattern: /^\$\{/
           },
           token: {
             alias: 'number',
@@ -65,20 +63,20 @@ export class PrismComponent extends Component {
           },
           formatDelimiter: {
             alias: 'regex',
-            pattern: /:/
+            pattern: /^:/
           },
           format: {
             alias: 'language-javascript',
             inside: javascriptLanguage,
-            pattern: new RegExp(FORMAT_OBJECT_DEPTH_3)
+            pattern: new RegExp(`^${FORMAT_OBJECT_DEPTH_3}`)
           },
           suffix: {
             alias: 'regex',
-            pattern: /\}\s*\}/
+            pattern: /\}$/
           }
           /* eslint-enable perfectionist/sort-objects -- Need to keep object order. */
         },
-        pattern: new RegExp(FORMAT_OBJECT_DEPTH_4)
+        pattern: new RegExp(String.raw`\$\{[^:}]+:${FORMAT_OBJECT_DEPTH_3}\}`)
       },
       important: {
         pattern: /^\./
