@@ -9,7 +9,7 @@ export interface ScannedToken {
   token: string;
 }
 
-const TOKEN_HEAD_REGEXP = /\$\{(?<Token>[^:}]+?)(?<Colon>\s*:\s*)?/y;
+const TOKEN_HEAD_REGEXP = /\$\{\s*(?<Token>[a-zA-Z0-9_]+)\s*(?<Colon>:\s*)?/y;
 
 export function parseFormatObject(formatText: string, tokenName: string): Record<string, unknown> {
   let parsed: unknown;
