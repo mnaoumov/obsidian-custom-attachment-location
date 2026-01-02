@@ -1,6 +1,6 @@
 # Custom Attachment Location
 
-This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize attachment location with tokens (`${noteFileName}`, `${date:format}`, etc) like typora.
+This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize attachment location with tokens (`${noteFileName}`, `${date:{momentJsFormat:'YYYYMMDD'}}`, etc) like typora.
 
 ## Features
 
@@ -15,13 +15,13 @@ This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize a
 - Same to "Files & Links -> Default location for new attachments".
 - **Put "./" at the beginning of the path if you want to use relative path.**
 - See available [tokens](#tokens).
-- example: `assets/${noteFileName}`, `./assets/${noteFileName}`, `./assets/${noteFileName}/${date:YYYY}`
+- example: `assets/${noteFileName}`, `./assets/${noteFileName}`, `./assets/${noteFileName}/${date:{momentJsFormat:'YYYY'}}`
 
 ### Generated attachment file name
 
 - See available [tokens](#tokens).
-- example: `${originalAttachmentFileName}-${date:YYYYMMDDHHmmssSSS}`, `${noteFileName}-img-${date:YYYYMMDD}`
-- Obsidian default: `Pasted image ${date:YYYYMMDDHHmmss}`.
+- example: `${originalAttachmentFileName}-${date:{momentJsFormat:'YYYYMMDDHHmmssSSS'}}`, `${noteFileName}-img-${date:{momentJsFormat:'YYYYMMDD'}}`
+- Obsidian default: `Pasted image ${date:{momentJsFormat:'YYYYMMDDHHmmss'}}`.
 
 ### Markdown URL format
 
@@ -105,158 +105,402 @@ If enabled, when the note is deleted, its orphan attachments are deleted as well
 
 The following tokens can be used in the [Location for New Attachments](#location-for-new-attachments), [Generated attachment file name](#generated-attachment-file-name) and [Markdown URL format](#markdown-url-format) settings.
 
-Token strings: `${token}` or `${token:format}`. `token` is case-insensitive. `format` is case-sensitive. When `${token}` is used, `format` is empty string.
+Token strings:
+
+- `${token}`: Use token default format (`null`).
+- `${token:{...}}`: Use explicit format parsed as a **JSON5 object** (single-line).
+
+`token` is case-insensitive. Format object keys and values are case-sensitive.
+
+### Format (JSON5)
+
+The `<format>` part must be a JSON5 **object** (single line), i.e. it must start with `{` and end with `}`.
+
+- Property names can be quoted or unquoted: `${attachmentFileSize:{unit:'KB','decimalPoints':2}}`.
+- Strings must be quoted: `${date:{momentJsFormat:'YYYYMMDD'}}`.
+- JSON5 allows (optional) trailing commas: `${attachmentFileSize:{unit:'KB',decimalPoints:2,}}`.
+
+If you need quotes inside a JSON5 string, either escape them or switch quote types:
+
+- `${date:{momentJsFormat:'YYYY-MM-DD \'at\' HH:mm'}}`
+- `${date:{momentJsFormat:"YYYY-MM-DD 'at' HH:mm"}}`
+
+### Validation (strict)
+
+Each token validates its own `format` shape at runtime. Unknown object properties are rejected (strict validation).
+
+Example (error):
+
+`❌ ${attachmentFileSize:{unit:'B',decimalPoints:3,unknownProperty:'foo'}}`
 
 ### `${attachmentFileSize}`
 
 Size of the attachment file.
 
-**Format**:
+#### Format schema
 
-- `B`**`n`** (no format): size in bytes rounded to `n` decimal points. `n` is a number (`0` if omitted).
-- `KB`**`n`**: size in kilobytes rounded to `n` decimal points. `n` is a number (`0` if omitted).
-- `MB`**`n`**: size in megabytes rounded to `n` decimal points. `n` is a number (`0` if omitted).
+```ts
+{
+  decimalPoints?: number; // default: 0
+  unit?: 'B' | 'KB' | 'MB'; // default: 'B'
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{unit:'B',decimalPoints:0}`.
+
+#### Examples
+
+- `${attachmentFileSize}`: `123`.
+- `${attachmentFileSize:{unit:'KB',decimalPoints:2}}`: `456.78`.
 
 ### `${date}`
 
 Current date/time.
 
-**Format**: [Moment.js formatting][Moment.js formatting].
+#### Format schema
+
+```ts
+{
+  momentJsFormat: string;
+}
+```
+
+#### Default (omitted) format
+
+`null`, invalid.
+
+#### Examples
+
+- `${date:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
 
 ### `${frontmatter}`
 
 Frontmatter value of the current note.
 
-**Format**: frontmatter key. Nested keys are supported, e.g., `key1.key2.3.key4`.
+#### Format schema
+
+```ts
+{
+  key: string;
+}
+```
+
+Nested keys are supported, e.g. `'key1.key2.3.key4'`.
+
+#### Default (omitted) format
+
+`null`, invalid.
+
+#### Examples
+
+- `${frontmatter:{key:'tags.0'}}`: `tag1`.
 
 ### `${generatedAttachmentFileName}`
 
 The generated file name of the attachment (available only inside [Markdown URL format](#markdown-url-format) setting).
 
-**Format**:
+#### Format schema
 
-- (no format): Unchanged file name. **Example**: `foo/bar/baz qux quux.pdf` -> `baz qux quux`.
-- `left`**`n`**: Left `n` characters of the file name. **Example** `left2`: `foo/bar/baz qux quux.pdf` -> `ba`.
-- `lower`: Lowercase file name. **Example**: `foo/bar/Baz QUX quux.pdf` -> `baz qux quux`.
-- `right`**`n`**: Right `n` characters of the file name. **Example** `right2`: `foo/bar/baz qux quux.pdf` -> `ux`.
-- `slug`: Slugified file name. **Example**: `foo/bar/baz qux quux.pdf` -> `baz-qux-quux`.
-- `upper`: Uppercase file name. **Example**: `foo/bar/Baz QUX quux.pdf` -> `BAZ QUX QUUX`.
+```ts
+{
+  transform?: 'lower' | 'slug' | 'upper';
+  trim?: {
+    length: number;
+    side: 'left' | 'right';
+  }
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{}`.
+
+#### Examples
+
+- `${generatedAttachmentFileName}`: `foo/bar/baz.pdf -> baz`.
+- `${generatedAttachmentFileName:{transform:'lower'}}`: `foo/bar/BAZ.pdf -> baz`.
+- `${generatedAttachmentFileName:{transform:'slug'}}`: `foo/bar/baz qux.pdf -> baz-qux`.
+- `${generatedAttachmentFileName:{transform:'upper'}}`: `foo/bar/baz.pdf -> BAZ`.
+- `${generatedAttachmentFileName:{trim:{side:'left',length:2}}}`: `foo/bar/baz.pdf -> ba`.
+- `${generatedAttachmentFileName:{trim:{side:'right',length:2}}}`: `foo/bar/baz.pdf -> az`.
 
 ### `${generatedAttachmentFilePath}`
 
 The generated file path of the attachment (available only inside [Markdown URL format](#markdown-url-format) setting).
 
-**Example**: `foo/bar/baz.pdf` -> `foo/bar/baz.pdf`.
+#### Format schema
+
+*(No format for this token)*.
+
+#### Default (omitted) format
+
+`null`.
+
+#### Examples
+
+- `${generatedAttachmentFilePath}`: `foo/bar/baz.pdf`.
 
 ### `${heading}`
 
-The heading above the cursor in the note editor where the attachment is inserted.
+The heading above the cursor in the note editor where the attachment is inserted. Empty if such heading does not exist.
 
-**Format**:
+#### Format schema
 
-- (no format) `any`: Heading of the nearest any level `#...# Heading`.
-- `1`: Heading of the nearest `# Heading`.
-- `2`: Heading of the nearest `## Heading`.
-- `3`: Heading of the nearest `### Heading`.
-- `4`: Heading of the nearest `#### Heading`.
-- `5`: Heading of the nearest `##### Heading`.
-- `6`: Heading of the nearest `###### Heading`.
+```ts
+{
+  level: 1 | 2 | 3 | 4 | 5 | 6 | 'any';
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{level:'any'}`.
+
+#### Examples
+
+- `${heading}`: `Nearest heading at any level`.
+- `${heading:{level:1}}`: `Nearest heading at level 1`.
+- `${heading:{level:2}}`: `Nearest heading at level 2`.
+- `${heading:{level:3}}`: `Nearest heading at level 3`.
+- `${heading:{level:4}}`: `Nearest heading at level 4`.
+- `${heading:{level:5}}`: `Nearest heading at level 5`.
+- `${heading:{level:6}}`: `Nearest heading at level 6`.
 
 ### `${noteFileCreationDate}`
 
 Note file creation date/time.
 
-**Format**: [Moment.js formatting][Moment.js formatting].
+#### Format schema
+
+```ts
+{
+  momentJsFormat: string;
+}
+```
+
+`momentJsFormat` uses [Moment.js format].
+
+#### Default (omitted) format
+
+`null`, invalid.
+
+#### Examples
+
+- `${noteFileCreationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
 
 ### `${noteFileModificationDate}`
 
 Note file modification date/time.
 
-**Format**: [Moment.js formatting][Moment.js formatting].
+#### Format schema
+
+```ts
+{
+  momentJsFormat: string;
+}
+```
+
+`momentJsFormat` uses [Moment.js format].
+
+#### Default (omitted) format
+
+`null`, invalid.
+
+#### Examples
+
+- `${noteFileModificationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
 
 ### `${noteFileName}`
 
 Current note file name.
 
-**Format**:
+#### Format schema
 
-- (no format): Unchanged file name. **Example**: `foo/bar/baz qux quux.md` -> `baz qux quux`.
-- `left`**`n`**: Left `n` characters of the file name. **Example** `left2`: `foo/bar/baz qux quux.md` -> `ba`.
-- `lower`: Lowercase file name. **Example**: `foo/bar/Baz QUX quux.md` -> `baz qux quux`.
-- `right`**`n`**: Right `n` characters of the file name. **Example** `right2`: `foo/bar/baz qux quux.md` -> `ux`.
-- `slug`: Slugified file name. **Example**: `foo/bar/baz qux quux.md` -> `baz-qux-quux`.
-- `upper`: Uppercase file name. **Example**: `foo/bar/Baz QUX quux.md` -> `BAZ QUX QUUX`.
+```ts
+{
+  transform?: 'lower' | 'slug' | 'upper';
+  trim?: {
+    length: number;
+    side: 'left' | 'right';
+  };
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{}`.
+
+#### Examples
+
+- `${noteFileName}`: `foo/bar/baz.md -> baz`.
+- `${noteFileName:{transform:'lower'}}`: `foo/bar/BAZ.md -> baz`.
+- `${noteFileName:{transform:'slug'}}`: `foo/bar/baz qux.md -> baz-qux`.
+- `${noteFileName:{transform:'upper'}}`: `foo/bar/baz.md -> BAZ`.
+- `${noteFileName:{trim:{side:'left',length:2}}}`: `foo/bar/baz.md -> ba`.
+- `${noteFileName:{trim:{side:'right',length:2}}}`: `foo/bar/baz.md -> az`.
 
 ### `${noteFilePath}`
 
 Current note full path.
 
-**Example**: `foo/bar/baz.md` -> `foo/bar/baz.md`.
+#### Format schema
+
+*(No format for this token)*.
+
+#### Default (omitted) format
+
+`null`.
+
+#### Examples
+
+- `${noteFilePath}`: `foo/bar/baz.md`.
 
 ### `${noteFolderName}`
 
 Current note's folder name.
 
-**Format**:
+#### Format schema
 
-- (no format): Unchanged folder name. **Example**: `foo/bar baz qux/quux.md` -> `bar baz qux`.
-- `left`**`n`**: Left `n` characters of the folder name. **Example** `left2`: `foo/bar baz qux/quux.md` -> `ba`.
-- `lower`: Lowercase folder name. **Example**: `foo/Bar BAZ qux/quux.md` -> `bar baz qux`.
-- `right`**`n`**: Right `n` characters of the folder name. **Example** `right2`: `foo/bar baz qux/quux.md` -> `ux`.
-- `slug`: Slugified folder name. **Example**: `foo/bar baz qux/quux.md` -> `bar-baz-qux`.
-- `upper`: Uppercase folder name. **Example**: `foo/Bar BAZ qux/quux.md` -> `BAR BAZ QUX`.
+```ts
+{
+  pick?: {
+    from: 'start' | 'end';
+    index?: number; // default: 0
+  };
+  transform?: 'lower' | 'slug' | 'upper';
+  trim?: {
+    length: number;
+    side: 'left' | 'right';
+  };
+}
+```
 
-- `indexFromEnd`**`n`**: 0-based index from the end of the folder tree. **Example** `indexFromEnd1`: `foo/bar/baz/qux/quux.md` -> `baz`.
-- `indexFromStart`**`n`**: 0-based index from the start of the folder tree. **Example** `indexFromStart1`: `foo/bar/baz/qux/quux.md` -> `bar`.
+#### Default (omitted) format
 
-You can combine both kind of format formats, having `indexFrom...` first:
+`null`, equivalent to `{pick:{from:'end',index:0}}`.
 
-- `indexFromEnd`**`n`**`,left`**`m`**. **Example**: `indexFromEnd1,left2`: `foo/bar/baz/qux/quux.md` -> `ba` (first two characters of `baz`).
+#### Examples
+
+- `${noteFolderName}`: `foo/bar/baz/qux.md -> baz`.
+- `${noteFolderName:{pick:{from:'end',index:1}}}`: `foo/bar/baz/qux/quux/corge.md -> qux`.
+- `${noteFolderName:{pick:{from:'start',index:1}}}`: `foo/bar/baz/qux/quux/corge.md -> bar`.
+- `${noteFolderName:{transform:'lower'}}`: `foo/bar/BAZ/qux.md -> baz`.
+- `${noteFolderName:{transform:'slug'}}`: `foo/bar/baz qux/quux.md -> baz-qux`.
+- `${noteFolderName:{transform:'upper'}}`: `foo/bar/baz/qux.md -> BAZ`.
+- `${noteFolderName:{trim:{side:'left',length:2}}}`: `foo/bar/baz/qux.md -> ba`.
+- `${noteFolderName:{trim:{side:'right',length:2}}}`: `foo/bar/baz/qux.md -> az`.
 
 ### `${noteFolderPath}`
 
 Current note's folder full path.
 
-**Example**: `foo/bar/baz.md` -> `foo/bar`.
+#### Format schema
+
+*(No format for this token)*.
+
+#### Default (omitted) format
+
+`null`.
+
+#### Examples
+
+- `${noteFolderPath}`: `foo/bar/baz.md -> foo/bar`.
 
 ### `${originalAttachmentFileExtension}`
 
 Extension of the original attachment file.
 
-**Example**: `foo.bar.pdf` -> `pdf`.
+#### Format schema
+
+*(No format for this token)*.
+
+#### Default (omitted) format
+
+`null`.
+
+#### Examples
+
+- `${originalAttachmentFileExtension}`: `foo.bar.pdf -> pdf`.
 
 ### `${originalAttachmentFileName}`
 
 File name of the original attachment file.
 
-**Format**:
+#### Format schema
 
-- (no format): File name as is. **Example**: `foo bar.baz.pdf` -> `foo bar.baz`.
-- `left`**`n`**: Left `n` characters of the file name. **Example** `left2`: `foo/bar baz qux/quux.pdf` -> `ba`.
-- `lower`: Lowercase folder name. **Example**: `foo Bar.BAZ.pdf` -> `foo bar.baz`.
-- `right`**`n`**: Right `n` characters of the folder name. **Example** `left2`: `foo/bar baz qux/quux.pdf` -> `ux`.
-- `slug`: Slugified file name. **Example**: `foo bar.baz.pdf` -> `foo-bar-baz`.
-- `upper`: Uppercase folder name. **Example**: `foo Bar.BAZ.pdf` -> `FOO BAR.BAZ`.
+```ts
+{
+  transform?: 'lower' | 'slug' | 'upper';
+  trim?: {
+    length: number;
+    side: 'left' | 'right';
+  };
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{}`.
+
+#### Examples
+
+- `${originalAttachmentFileName}`: `foo.pdf -> foo`.
+- `${originalAttachmentFileName:{transform:'lower'}}`: `FOO.pdf -> foo`.
+- `${originalAttachmentFileName:{transform:'slug'}}`: `foo bar.pdf -> foo-bar`.
+- `${originalAttachmentFileName:{transform:'upper'}}`: `foo.pdf -> FOO`.
+- `${originalAttachmentFileName:{trim:{side:'left',length:2}}}`: `foo.pdf -> fo`.
+- `${originalAttachmentFileName:{trim:{side:'right',length:2}}}`: `foo.pdf -> oo`.
 
 ### `${originalAttachmentFileCreationDate}`
 
-Original attachment file creation date/time. Empty if unknown.
+Original attachment file creation date/time.
 
-**Format**:
+#### Format schema
 
-- [Moment.js formatting][Moment.js formatting]. **Example** `YYYY-MM-DD`: `2025-09-01`.
-- **`format,default=empty`** (same as above, but explicit): Use empty string if the original date was not available.
-- **`format,default=now`**: Use current time if the original date was not available.
+```ts
+{
+  momentJsFormat: string;
+  valueWhenUnknown?: 'empty' | 'now'; // default: 'empty'
+}
+```
+
+`momentJsFormat` uses [Moment.js format].
+
+#### Default (omitted) format
+
+`null`, invalid.
+
+#### Examples
+
+- `${originalAttachmentFileCreationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
+- `${originalAttachmentFileCreationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}`: `(empty)`.
 
 ### `${originalAttachmentFileModificationDate}`
 
-Original attachment file modification date/time. Empty if unknown.
+Original attachment file modification date/time.
 
-**Format**:
+#### Format schema
 
-- [Moment.js formatting][Moment.js formatting]. **Example** `YYYY-MM-DD`: `2025-09-01`.
-- **`format,default=empty`** (same as above, but explicit): Use empty string if the original date was not available.
-- **`format,default=now`**: Use current time if the original date was not available.
+```ts
+{
+  momentJsFormat: string;
+  valueWhenUnknown?: 'empty' | 'now'; // default: 'empty'
+}
+```
+
+`momentJsFormat` uses [Moment.js format].
+
+#### Default (omitted) format
+
+`null`, invalid.
+
+#### Examples
+
+- `${originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
+- `${originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}`: `(empty)`.
+
 
 ### `${prompt}`
 
@@ -264,25 +508,58 @@ The value asked from the user prompt.
 
 Also in the prompt modal, you can preview the file, if it is supported by Obsidian (image, video, pdf).
 
-**Format**:
+#### Format schema
 
-- (no format): Unchanged value entered by user. **Example**: `foo bar` -> `foo bar`.
-- `left`**`n`**: Left `n` characters of the value entered by user. **Example** `left2`: `foo bar` -> `fo`.
-- `lower`: Lowercased value entered by user. **Example**: `foo Bar` -> `foo bar`.
-- `right`**`n`**: Right `n` characters of the value entered by user. **Example** `right2`: `foo bar` -> `ar`.
-- `slug`: Slugified value entered by user. **Example**: `foo bar.baz` -> `foo-bar-baz`.
-- `upper`: Uppercased value entered by user **Example**: `foo Bar` -> `FOO BAR`.
+```ts
+{
+  transform?: 'lower' | 'slug' | 'upper';
+  trim?: {
+    length: number;
+    side: 'left' | 'right';
+  };
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{}`.
+
+#### Examples
+
+- `${prompt}`: `foo -> foo`.
+- `${prompt:{transform:'lower'}}`: `FOO -> foo`.
+- `${prompt:{transform:'slug'}}`: `foo bar -> foo-bar`.
+- `${prompt:{transform:'upper'}}`: `foo -> FOO`.
+- `${prompt:{trim:{side:'left',length:2}}}`: `foo -> fo`.
+- `${prompt:{trim:{side:'right',length:2}}}`: `foo -> oo`.
 
 ### `${random}`
 
 Random value.
 
-**Format**:
+#### Format schema
 
-- `D`**`n`**: `n` random digits. `n` is a number (`1` if omitted).
-- `L`**`n`**: `n` random letters. `n` is a number (`1` if omitted).
-- `DL`**`n`**: `n` random digits or letters. `n` is a number (`1` if omitted).
-- `uuid`: Random UUID.
+```ts
+{
+  digits?: boolean; // default: true
+  length?: number; // default: 1
+  letterCase?: 'lower' | 'mixed' | 'upper'; // default: 'upper'
+  letters?: boolean; // default: true
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{digits:true,length:1,letterCase:'upper',letters:true}`.
+
+#### Examples
+
+- `${random}`: `7`.
+- `${random:{digits:false}}`: `M`.
+- `${random:{length:10}}`: `8JR91VMU9R`.
+- `${random:{letterCase:mixed,length:10}}`: `8Jr91vmU9R`.
+- `${random:{letters:false}}`: `7`.
+
 
 ### `${sequenceNumber}`
 
@@ -290,9 +567,45 @@ Sequential number of the first link within the note to the attachment file. Appl
 
 When the link cannot be found, the value of the token is `0`.
 
-**Format**:
+#### Format schema
 
-- **`n`**: Output `n` digits, pad with zeros if needed. `n` is a number (`1` if omitted). **Example**: `4` -> `0002`.
+```ts
+{
+  length?: number; // default: 1
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{length:1}`.
+
+#### Examples
+
+- `${sequenceNumber}`: `1`.
+- `${sequenceNumber:{length:4}}`: `0001`.
+
+### `${uuid}`
+
+Random UUID value.
+
+#### Format schema
+
+```ts
+{
+  case?: 'lower' | 'upper'; // default: 'lower'
+  hyphens?: boolean; // default: true
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{}`.
+
+#### Examples
+
+- `${uuid}`: `edd5b990-fede-4e02-aa0e-1e9251da2f83`.
+- `${uuid:{case:'upper'}}`: `EDD5B990-FEDE-4E02-AA0E-1E9251DA2F83`.
+- `${uuid:{hyphens:false}}`: `edd5b990fede4e02aa0e1e9251da2f83`.
 
 ## Custom tokens
 
@@ -304,20 +617,19 @@ Example:
 
 ```javascript
 registerCustomToken('foo', (ctx) => {
-  return ctx.noteFileName + ctx.app.appId + ctx.format + ctx.obsidian.apiVersion;
+  const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
+  return ctx.noteFileName + ctx.app.appId + formatValue + ctx.obsidian.apiVersion;
 });
 
 registerCustomToken('bar', async (ctx) => {
   await sleep(100);
-  return ctx.noteFileName + ctx.app.appId + ctx.format + ctx.obsidian.apiVersion;
-});
-
-registerCustomToken('baz', async (ctx) => {
-  return ctx.noteFileName + await ctx.fillTemplate('corge ${grault} garply ${waldo:fred} plugh');
+  const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
+  const filledTemplate = await ctx.fillTemplate('qux ${quux} corge ${grault:{garply:\'waldo\'}} fred');
+  return ctx.noteFileName + ctx.app.appId + formatValue + ctx.obsidian.apiVersion + filledTemplate;
 });
 ```
 
-Then you can use the defined `${foo}`, `${bar:xyzzy}` tokens in the [Location for New Attachments](#location-for-new-attachments), [Generated attachment file name](#generated-attachment-file-name) and [Markdown URL format](#markdown-url-format) settings.
+Then you can use the defined `${foo}`, `${bar:{formatKey:'baz'}}` tokens in the [Location for New Attachments](#location-for-new-attachments), [Generated attachment file name](#generated-attachment-file-name) and [Markdown URL format](#markdown-url-format) settings.
 
 See [spec](./src/TokenEvaluatorContext.ts) of the `ctx` argument.
 
@@ -369,4 +681,4 @@ The original author's repository is preserved as an archive of issues/PRs/discus
 
 Copyright (c) [RainCat1998](https://github.com/RainCat1998), [Michael Naumov](https://github.com/mnaoumov/).
 
-[Moment.js formatting]: https://momentjs.com/docs/#/displaying/format/
+[Moment.js format]: https://momentjs.com/docs/#/displaying/format/
