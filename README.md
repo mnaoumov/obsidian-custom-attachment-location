@@ -148,7 +148,7 @@ Size of the attachment file.
 
 #### Default (omitted) format
 
-`null`, equivalent to `{unit:'B',decimalPoints:0}`.
+`null`, equivalent to `{}`.
 
 #### Examples
 
@@ -251,13 +251,13 @@ The heading above the cursor in the note editor where the attachment is inserted
 
 ```ts
 {
-  level: '1' | '2' | '3' | '4' | '5' | '6' | 'any';
+  level?: '1' | '2' | '3' | '4' | '5' | '6' | 'any'; // default: 'any'
 }
 ```
 
 #### Default (omitted) format
 
-`null`, equivalent to `{level:'any'}`.
+`null`, equivalent to `{}`.
 
 #### Examples
 
@@ -382,7 +382,7 @@ Current note's folder name.
 
 #### Default (omitted) format
 
-`null`, equivalent to `{pick:{from:'end',index:0}}`.
+`null`, equivalent to `{}`.
 
 #### Examples
 
@@ -535,7 +535,7 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 - `${prompt}`: `foo -> foo`.
 - `${prompt:{case:'lower'}}`: `FOO -> foo`.
 - `${prompt:{case:'upper'}}`: `foo -> FOO`.
-- `${prompt:{defaultTemplate:'${uuid}'}}`: shows prompt with default value as generated `${uuid}`.
+- `${prompt:{defaultValueTemplate:'${uuid}'}}`: shows prompt with default value as generated `${uuid}`.
 - `${prompt:{slugify:true}}`: `foo bar -> foo-bar`.
 - `${prompt:{trim:{side:'left',length:2}}}`: `foo -> fo`.
 - `${prompt:{trim:{side:'right',length:2}}}`: `foo -> oo`.
@@ -557,7 +557,7 @@ Random value.
 
 #### Default (omitted) format
 
-`null`, equivalent to `{digits:true,length:1,letterCase:'upper',letters:true}`.
+`null`, equivalent to `{}`.
 
 #### Examples
 
@@ -584,7 +584,7 @@ When the link cannot be found, the value of the token is `0`.
 
 #### Default (omitted) format
 
-`null`, equivalent to `{length:1}`.
+`null`, equivalent to `{}`.
 
 #### Examples
 
