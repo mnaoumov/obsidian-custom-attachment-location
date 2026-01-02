@@ -475,7 +475,6 @@ Original attachment file modification date/time.
 - `${originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
 - `${originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}`: `(empty)`.
 
-
 ### `${originalAttachmentFileName}`
 
 File name of the original attachment file.
@@ -566,7 +565,6 @@ Random value.
 - `${random:{length:10}}`: `8JR91VMU9R`.
 - `${random:{letterCase:mixed,length:10}}`: `8Jr91vmU9R`.
 - `${random:{letters:false}}`: `7`.
-
 
 ### `${sequenceNumber}`
 
