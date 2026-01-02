@@ -62,6 +62,7 @@
   },
   "type": "module",
   "dependencies": {
+    "acorn": "^8.15.0",
     "json5": "^2.2.3",
     "zod": "^4.3.4"
   }
