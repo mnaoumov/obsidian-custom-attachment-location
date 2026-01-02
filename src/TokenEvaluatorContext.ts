@@ -3,6 +3,9 @@ import type {
   FileStats
 } from 'obsidian';
 
+import type { Plugin } from './Plugin.ts';
+import type { ValidatePathOptions } from './Substitutions.ts';
+
 /**
  * An action context.
  */
@@ -89,6 +92,13 @@ export interface TokenEvaluatorContext {
   attachmentFileStat: FileStats | undefined;
 
   /**
+   * A cursor line.
+   *
+   * `null` if the cursor line is not known.
+   */
+  cursorLine: null | number;
+
+  /**
    * Fills a template with the current context.
    */
   fillTemplate(template: string): Promise<string>;
@@ -96,7 +106,7 @@ export interface TokenEvaluatorContext {
   /**
    * The format of the token.
    */
-  format: string;
+  format: null | Record<string, unknown>;
 
   /**
    * A full template string.
@@ -175,6 +185,11 @@ export interface TokenEvaluatorContext {
   originalAttachmentFileName: string;
 
   /**
+   * A plugin instance.
+   */
+  plugin: Plugin;
+
+  /**
    * A sequence number of the attachment file.
    *
    * `0` if the sequence number is not known.
@@ -200,4 +215,9 @@ export interface TokenEvaluatorContext {
    * A token with the format.
    */
   tokenWithFormat: string;
+
+  /**
+   * Validates a path.
+   */
+  validatePath(options: ValidatePathOptions): Promise<string>;
 }

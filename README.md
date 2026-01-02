@@ -205,7 +205,8 @@ The generated file name of the attachment (available only inside [Markdown URL f
 
 ```ts
 {
-  transform?: 'lower' | 'slug' | 'upper';
+  case?: 'lower' | 'upper';
+  slugify?: boolean; // default: false
   trim?: {
     length: number;
     side: 'left' | 'right';
@@ -220,9 +221,9 @@ The generated file name of the attachment (available only inside [Markdown URL f
 #### Examples
 
 - `${generatedAttachmentFileName}`: `foo/bar/baz.pdf -> baz`.
-- `${generatedAttachmentFileName:{transform:'lower'}}`: `foo/bar/BAZ.pdf -> baz`.
-- `${generatedAttachmentFileName:{transform:'slug'}}`: `foo/bar/baz qux.pdf -> baz-qux`.
-- `${generatedAttachmentFileName:{transform:'upper'}}`: `foo/bar/baz.pdf -> BAZ`.
+- `${generatedAttachmentFileName:{case:'lower'}}`: `foo/bar/BAZ.pdf -> baz`.
+- `${generatedAttachmentFileName:{case:'upper'}}`: `foo/bar/baz.pdf -> BAZ`.
+- `${generatedAttachmentFileName:{slugify:true}}`: `foo/bar/baz qux.pdf -> baz-qux`.
 - `${generatedAttachmentFileName:{trim:{side:'left',length:2}}}`: `foo/bar/baz.pdf -> ba`.
 - `${generatedAttachmentFileName:{trim:{side:'right',length:2}}}`: `foo/bar/baz.pdf -> az`.
 
@@ -250,7 +251,7 @@ The heading above the cursor in the note editor where the attachment is inserted
 
 ```ts
 {
-  level: 1 | 2 | 3 | 4 | 5 | 6 | 'any';
+  level: '1' | '2' | '3' | '4' | '5' | '6' | 'any';
 }
 ```
 
@@ -261,12 +262,12 @@ The heading above the cursor in the note editor where the attachment is inserted
 #### Examples
 
 - `${heading}`: `Nearest heading at any level`.
-- `${heading:{level:1}}`: `Nearest heading at level 1`.
-- `${heading:{level:2}}`: `Nearest heading at level 2`.
-- `${heading:{level:3}}`: `Nearest heading at level 3`.
-- `${heading:{level:4}}`: `Nearest heading at level 4`.
-- `${heading:{level:5}}`: `Nearest heading at level 5`.
-- `${heading:{level:6}}`: `Nearest heading at level 6`.
+- `${heading:{level:'1'}}`: `Nearest heading at level 1`.
+- `${heading:{level:'2'}}`: `Nearest heading at level 2`.
+- `${heading:{level:'3'}}`: `Nearest heading at level 3`.
+- `${heading:{level:'4'}}`: `Nearest heading at level 4`.
+- `${heading:{level:'5'}}`: `Nearest heading at level 5`.
+- `${heading:{level:'6'}}`: `Nearest heading at level 6`.
 
 ### `${noteFileCreationDate}`
 
@@ -320,7 +321,8 @@ Current note file name.
 
 ```ts
 {
-  transform?: 'lower' | 'slug' | 'upper';
+  case?: 'lower' | 'upper';
+  slugify?: boolean; // default: false
   trim?: {
     length: number;
     side: 'left' | 'right';
@@ -335,9 +337,9 @@ Current note file name.
 #### Examples
 
 - `${noteFileName}`: `foo/bar/baz.md -> baz`.
-- `${noteFileName:{transform:'lower'}}`: `foo/bar/BAZ.md -> baz`.
-- `${noteFileName:{transform:'slug'}}`: `foo/bar/baz qux.md -> baz-qux`.
-- `${noteFileName:{transform:'upper'}}`: `foo/bar/baz.md -> BAZ`.
+- `${noteFileName:{case:'lower'}}`: `foo/bar/BAZ.md -> baz`.
+- `${noteFileName:{case:'upper'}}`: `foo/bar/baz.md -> BAZ`.
+- `${noteFileName:{slugify:true}}`: `foo/bar/baz qux.md -> baz-qux`.
 - `${noteFileName:{trim:{side:'left',length:2}}}`: `foo/bar/baz.md -> ba`.
 - `${noteFileName:{trim:{side:'right',length:2}}}`: `foo/bar/baz.md -> az`.
 
@@ -365,11 +367,12 @@ Current note's folder name.
 
 ```ts
 {
+  case?: 'lower' | 'upper';
   pick?: {
     from: 'start' | 'end';
     index?: number; // default: 0
   };
-  transform?: 'lower' | 'slug' | 'upper';
+  slugify?: boolean; // default: false
   trim?: {
     length: number;
     side: 'left' | 'right';
@@ -386,9 +389,9 @@ Current note's folder name.
 - `${noteFolderName}`: `foo/bar/baz/qux.md -> baz`.
 - `${noteFolderName:{pick:{from:'end',index:1}}}`: `foo/bar/baz/qux/quux/corge.md -> qux`.
 - `${noteFolderName:{pick:{from:'start',index:1}}}`: `foo/bar/baz/qux/quux/corge.md -> bar`.
-- `${noteFolderName:{transform:'lower'}}`: `foo/bar/BAZ/qux.md -> baz`.
-- `${noteFolderName:{transform:'slug'}}`: `foo/bar/baz qux/quux.md -> baz-qux`.
-- `${noteFolderName:{transform:'upper'}}`: `foo/bar/baz/qux.md -> BAZ`.
+- `${noteFolderName:{case:'lower'}}`: `foo/bar/BAZ/qux.md -> baz`.
+- `${noteFolderName:{case:'upper'}}`: `foo/bar/baz/qux.md -> BAZ`.
+- `${noteFolderName:{slugify:true}}`: `foo/bar/baz qux/quux.md -> baz-qux`.
 - `${noteFolderName:{trim:{side:'left',length:2}}}`: `foo/bar/baz/qux.md -> ba`.
 - `${noteFolderName:{trim:{side:'right',length:2}}}`: `foo/bar/baz/qux.md -> az`.
 
@@ -407,51 +410,6 @@ Current note's folder full path.
 #### Examples
 
 - `${noteFolderPath}`: `foo/bar/baz.md -> foo/bar`.
-
-### `${originalAttachmentFileExtension}`
-
-Extension of the original attachment file.
-
-#### Format schema
-
-*(No format for this token)*.
-
-#### Default (omitted) format
-
-`null`.
-
-#### Examples
-
-- `${originalAttachmentFileExtension}`: `foo.bar.pdf -> pdf`.
-
-### `${originalAttachmentFileName}`
-
-File name of the original attachment file.
-
-#### Format schema
-
-```ts
-{
-  transform?: 'lower' | 'slug' | 'upper';
-  trim?: {
-    length: number;
-    side: 'left' | 'right';
-  };
-}
-```
-
-#### Default (omitted) format
-
-`null`, equivalent to `{}`.
-
-#### Examples
-
-- `${originalAttachmentFileName}`: `foo.pdf -> foo`.
-- `${originalAttachmentFileName:{transform:'lower'}}`: `FOO.pdf -> foo`.
-- `${originalAttachmentFileName:{transform:'slug'}}`: `foo bar.pdf -> foo-bar`.
-- `${originalAttachmentFileName:{transform:'upper'}}`: `foo.pdf -> FOO`.
-- `${originalAttachmentFileName:{trim:{side:'left',length:2}}}`: `foo.pdf -> fo`.
-- `${originalAttachmentFileName:{trim:{side:'right',length:2}}}`: `foo.pdf -> oo`.
 
 ### `${originalAttachmentFileCreationDate}`
 
@@ -476,6 +434,22 @@ Original attachment file creation date/time.
 
 - `${originalAttachmentFileCreationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
 - `${originalAttachmentFileCreationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}`: `(empty)`.
+
+### `${originalAttachmentFileExtension}`
+
+Extension of the original attachment file.
+
+#### Format schema
+
+*(No format for this token)*.
+
+#### Default (omitted) format
+
+`null`.
+
+#### Examples
+
+- `${originalAttachmentFileExtension}`: `foo.bar.pdf -> pdf`.
 
 ### `${originalAttachmentFileModificationDate}`
 
@@ -502,6 +476,36 @@ Original attachment file modification date/time.
 - `${originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}`: `(empty)`.
 
 
+### `${originalAttachmentFileName}`
+
+File name of the original attachment file.
+
+#### Format schema
+
+```ts
+{
+  case?: 'lower' | 'upper';
+  slugify?: boolean; // default: false
+  trim?: {
+    length: number;
+    side: 'left' | 'right';
+  };
+}
+```
+
+#### Default (omitted) format
+
+`null`, equivalent to `{}`.
+
+#### Examples
+
+- `${originalAttachmentFileName}`: `foo.pdf -> foo`.
+- `${originalAttachmentFileName:{case:'lower'}}`: `FOO.pdf -> foo`.
+- `${originalAttachmentFileName:{case:'upper'}}`: `foo.pdf -> FOO`.
+- `${originalAttachmentFileName:{slugify:true}}`: `foo bar.pdf -> foo-bar`.
+- `${originalAttachmentFileName:{trim:{side:'left',length:2}}}`: `foo.pdf -> fo`.
+- `${originalAttachmentFileName:{trim:{side:'right',length:2}}}`: `foo.pdf -> oo`.
+
 ### `${prompt}`
 
 The value asked from the user prompt.
@@ -512,7 +516,8 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 
 ```ts
 {
-  transform?: 'lower' | 'slug' | 'upper';
+  case?: 'lower' | 'upper';
+  slugify?: boolean; // default: false
   trim?: {
     length: number;
     side: 'left' | 'right';
@@ -527,9 +532,9 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 #### Examples
 
 - `${prompt}`: `foo -> foo`.
-- `${prompt:{transform:'lower'}}`: `FOO -> foo`.
-- `${prompt:{transform:'slug'}}`: `foo bar -> foo-bar`.
-- `${prompt:{transform:'upper'}}`: `foo -> FOO`.
+- `${prompt:{case:'lower'}}`: `FOO -> foo`.
+- `${prompt:{case:'upper'}}`: `foo -> FOO`.
+- `${prompt:{slugify:true}}`: `foo bar -> foo-bar`.
 - `${prompt:{trim:{side:'left',length:2}}}`: `foo -> fo`.
 - `${prompt:{trim:{side:'right',length:2}}}`: `foo -> oo`.
 

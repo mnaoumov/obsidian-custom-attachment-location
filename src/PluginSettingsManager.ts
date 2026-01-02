@@ -12,7 +12,6 @@ import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/Pl
 import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/Validation';
 import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
-import { replaceAll } from 'obsidian-dev-utils/String';
 import { compare } from 'semver';
 
 import type { Plugin } from './Plugin.ts';
@@ -86,7 +85,6 @@ class LegacySettingsConverter {
     this.convertConvertImagesToJpeg();
     this.convertWhitespaceReplacement();
     this.convertShouldKeepEmptyAttachmentFolders();
-    this.convertLegacyTokens();
     this.convertCollectAttachmentUsedByMultipleNotesMode();
     this.convertMarkdownUrlFormat();
     this.convertSpecialCharacters();
@@ -170,13 +168,6 @@ ${commentOut(this.legacySettings.customTokensStr)}
     if (this.legacySettings.keepEmptyAttachmentFolders !== undefined) {
       this.legacySettings.shouldKeepEmptyAttachmentFolders = this.legacySettings.keepEmptyAttachmentFolders;
     }
-  }
-
-  private convertLegacyTokens(): void {
-    this.legacySettings.attachmentFolderPath = this.replaceLegacyTokens(this.legacySettings.attachmentFolderPath);
-    this.legacySettings.generatedAttachmentFileName = this.replaceLegacyTokens(this.legacySettings.generatedAttachmentFileName);
-    this.legacySettings.markdownUrlFormat = this.replaceLegacyTokens(this.legacySettings.markdownUrlFormat);
-    this.legacySettings.customTokensStr = this.replaceLegacyTokens(this.legacySettings.customTokensStr ?? '');
   }
 
   private convertMarkdownUrlFormat(): void {
@@ -323,34 +314,6 @@ ${commentOut(this.legacySettings.customTokensStr)}
     }
 
     return false;
-  }
-
-  private replaceLegacyTokens(str: string | undefined): string {
-    if (str === undefined) {
-      return '';
-    }
-
-    const TOKEN_NAME_MAP: Record<string, string> = {
-      fileCreationDate: 'noteFileCreationDate',
-      fileModificationDate: 'noteFileModificationDate',
-      fileName: 'noteFileName',
-      filePath: 'noteFilePath',
-      folderName: 'noteFolderName',
-      folderPath: 'noteFolderPath',
-      originalCopiedFileExtension: 'originalAttachmentFileExtension',
-      originalCopiedFileName: 'originalAttachmentFileName',
-      randomDigit: 'random:D',
-      randomDigitOrLetter: 'random:DL',
-      randomLetter: 'random:L',
-      uuid: 'random:uuid'
-    };
-
-    for (const [oldTokenName, newTokenName] of Object.entries(TOKEN_NAME_MAP)) {
-      str = replaceAll(str, new RegExp(`\\\${${oldTokenName}(?<Suffix>[:}])`, 'i'), `\${${newTokenName}$<Suffix>`);
-      str = replaceAll(str, `substitutions.${oldTokenName}`, `substitutions.${newTokenName}`);
-    }
-
-    return str;
   }
 }
 
