@@ -154,12 +154,6 @@ export const ro: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Caracterele speciale nu trebuie să conțină /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Înlocuirea caracterelor speciale nu trebuie să conțină caractere invalide de cale de fișier.'
-    },
-    version: {
-      part1: 'Fișierul dvs. de setări ',
-      part2: 'are versiunea',
-      part3: 'care este mai nouă decât versiunea actuală a pluginului',
-      part4: 'Pluginul ar putea să nu funcționeze corect. Actualizați pluginul la ultima versiune sau verificați dacă setările sunt corecte.'
     }
   },
   pluginSettingsTab: {

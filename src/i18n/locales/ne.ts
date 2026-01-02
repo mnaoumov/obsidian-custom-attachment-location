@@ -151,12 +151,6 @@ export const ne: Translations<PluginTypes> = {
       invalidRegularExpression: 'अमान्य नियमित अभिव्यक्ति {{regExp}}',
       specialCharactersMustNotContainSlash: 'विशेष अक्षरहरूमा / हुनुहुन्न',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'विशेष अक्षर प्रतिस्थापनमा अमान्य फाइल नाम पाथ अक्षरहरू हुनुहुन्न।'
-    },
-    version: {
-      part1: 'तपाईँको सेटिङ फाइल ',
-      part2: 'मा संस्करण',
-      part3: 'छ जुन हालको प्लगइन संस्करण भन्दा नयाँ छ',
-      part4: 'प्लगइनले अपेक्षित रूपमा काम नगर्न सक्छ। कृपया प्लगइनलाई नवीनतम संस्करणमा अपडेट गर्नुहोस् वा सेटिङहरू सही छन् भन्ने निश्चित गर्नुहोस्।'
     }
   },
   pluginSettingsTab: {

@@ -151,12 +151,6 @@ export const th: Translations<PluginTypes> = {
       invalidRegularExpression: 'นิพจน์ปกติไม่ถูกต้อง {{regExp}}',
       specialCharactersMustNotContainSlash: 'อักขระพิเศษต้องไม่มีเครื่องหมาย /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'การแทนที่อักขระพิเศษต้องไม่มีอักขระที่ไม่ถูกต้องสำหรับชื่อไฟล์หรือเส้นทาง'
-    },
-    version: {
-      part1: 'ไฟล์การตั้งค่าของคุณ ',
-      part2: 'มีเวอร์ชัน',
-      part3: 'ซึ่งใหม่กว่าส่วนขยายปัจจุบัน',
-      part4: 'ปลั๊กอินอาจไม่ทำงานตามที่คาดไว้ กรุณาอัปเดตปลั๊กอินเป็นเวอร์ชันล่าสุด หรือยืนยันว่าการตั้งค่าถูกต้อง'
     }
   },
   pluginSettingsTab: {

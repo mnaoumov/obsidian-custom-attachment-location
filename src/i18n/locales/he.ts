@@ -151,12 +151,6 @@ export const he: Translations<PluginTypes> = {
       invalidRegularExpression: 'ביטוי רגולרי לא תקף {{regExp}}',
       specialCharactersMustNotContainSlash: 'תווים מיוחדים לא יכולים להכיל /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'החלפת תווים מיוחדים לא יכולה להכיל תווים לא תקפים של נתיב שם קובץ.'
-    },
-    version: {
-      part1: 'קובץ ההגדרות שלך ',
-      part2: 'יש גרסה',
-      part3: 'שהיא חדשה יותר מגרסת התוסף הנוכחית',
-      part4: 'התוסף עלול לא לעבוד כצפוי. אנא עדכן את התוסף לגרסה האחרונה או וודא שההגדרות נכונות.'
     }
   },
   pluginSettingsTab: {

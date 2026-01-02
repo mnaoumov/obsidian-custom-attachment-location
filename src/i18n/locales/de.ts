@@ -153,13 +153,6 @@ export const de: Translations<PluginTypes> = {
       invalidRegularExpression: 'Ungültiger regulärer Ausdruck {{regExp}}',
       specialCharactersMustNotContainSlash: 'Sonderzeichen dürfen nicht / enthalten',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Sonderzeichen-Ersetzung darf keine ungültigen Dateiname-Pfad-Zeichen enthalten.'
-    },
-    version: {
-      part1: 'Ihre Einstellungsdatei ',
-      part2: 'hat Version',
-      part3: 'die neuer ist als die aktuelle Plugin-Version',
-      part4:
-        'Das Plugin funktioniert möglicherweise nicht wie erwartet. Bitte aktualisieren Sie das Plugin auf die neueste Version oder stellen Sie sicher, dass die Einstellungen korrekt sind.'
     }
   },
   pluginSettingsTab: {

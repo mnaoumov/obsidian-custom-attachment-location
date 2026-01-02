@@ -153,12 +153,6 @@ export const uz: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Maxsus belgilar / ni o\'z ichiga olmang',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Maxsus belgi o\'rnini bosuvchi fayl nomi yoki yo\'l belgilari bo\'lmasligi kerak.'
-    },
-    version: {
-      part1: 'Sozlamalar faylingiz',
-      part2: 'versiyasi mavjud',
-      part3: 'va u mavjud plagin versiyasidan yangi.',
-      part4: 'Plagin kutilganidek ishlamasligi mumkin. Iltimos, plagin so\'nggi versiyasiga yangilang yoki sozlamalarni tekshiring.'
     }
   },
   pluginSettingsTab: {

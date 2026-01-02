@@ -153,13 +153,6 @@ export const ga: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Níor cheart go mbeadh / sna carachtair speisialta',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Níor cheart go mbeadh carachtair conair ainm comhaid neamhbhailí in ionadú carachtar speisialta.'
-    },
-    version: {
-      part1: 'Tá leagan',
-      part2: 'ag do chomhad socruithe',
-      part3: 'atá níos nua ná leagan reatha an phlugain',
-      part4:
-        'D\'fhéadfadh nach n-oibreodh an plugan mar a bhíothas ag súil. Nuashonraigh an plugan chuig an leagan is déanaí nó déan cinnte go bhfuil na socruithe ceart.'
     }
   },
   pluginSettingsTab: {

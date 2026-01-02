@@ -153,12 +153,6 @@ export const hu: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'A speciális karakterek nem tartalmazhatnak / jelet',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'A speciális karakterek helyettesítése nem tartalmazhat érvénytelen fájlnév elérési út karaktereket.'
-    },
-    version: {
-      part1: 'A beállítási fájlod ',
-      part2: 'verziója',
-      part3: 'újabb, mint a jelenlegi bővítmény verzió',
-      part4: 'A bővítmény nem a várt módon működhet. Kérjük, frissítsd a bővítményt a legújabb verzióra vagy győződj meg róla, hogy a beállítások helyesek.'
     }
   },
   pluginSettingsTab: {

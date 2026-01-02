@@ -153,12 +153,6 @@ export const lv: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Īpašajos rakstzīmēs nedrīkst būt /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Īpašo rakstzīmju aizstāšana nedrīkst saturēt nederīgus faila nosaukuma ceļa rakstzīmes.'
-    },
-    version: {
-      part1: 'Jūsu iestatījumu fails ',
-      part2: 'ir versija',
-      part3: ', kas ir jaunāka par pašreizējo spraudņa versiju',
-      part4: 'Spraudnis var nedarboties kā paredzēts. Lūdzu, atjauniniet spraudni uz jaunāko versiju vai pārliecinieties, ka iestatījumi ir pareizi.'
     }
   },
   pluginSettingsTab: {

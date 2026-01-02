@@ -153,12 +153,6 @@ export const id: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Karakter khusus tidak boleh mengandung /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Penggantian karakter khusus tidak boleh mengandung karakter jalur nama file yang tidak valid.'
-    },
-    version: {
-      part1: 'File pengaturan Anda ',
-      part2: 'memiliki versi',
-      part3: 'yang lebih baru dari versi plugin saat ini',
-      part4: 'Plugin mungkin tidak berfungsi seperti yang diharapkan. Silakan perbarui plugin ke versi terbaru atau pastikan pengaturannya benar.'
     }
   },
   pluginSettingsTab: {

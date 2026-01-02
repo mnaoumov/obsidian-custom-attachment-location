@@ -152,12 +152,6 @@ export const ko: Translations<PluginTypes> = {
       invalidRegularExpression: '유효하지 않은 정규식 {{regExp}}',
       specialCharactersMustNotContainSlash: '특수 문자에는 /가 포함되어서는 안 됩니다',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: '특수 문자 대체에는 유효하지 않은 파일 이름 경로 문자가 포함되어서는 안 됩니다.'
-    },
-    version: {
-      part1: '설정 파일 ',
-      part2: '의 버전이',
-      part3: '현재 플러그인 버전보다 새 버전입니다',
-      part4: '플러그인이 예상대로 작동하지 않을 수 있습니다. 플러그인을 최신 버전으로 업데이트하거나 설정이 올바른지 확인하세요.'
     }
   },
   pluginSettingsTab: {

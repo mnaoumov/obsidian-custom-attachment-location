@@ -151,12 +151,6 @@ export const tr: Translations<PluginTypes> = {
       invalidRegularExpression: 'Geçersiz düzenli ifade {{regExp}}',
       specialCharactersMustNotContainSlash: 'Özel karakterler / içermemelidir',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Özel karakterler geçersiz dosya adı veya yol karakterleri içermemelidir'
-    },
-    version: {
-      part1: 'Ayarlar dosyanız ',
-      part2: 'şu sürüme sahip: ',
-      part3: 'Bu sürüm, mevcut eklenti sürümünden daha yenidir.',
-      part4: 'Eklenti beklendiği gibi çalışmayabilir. Lütfen eklentiyi en son sürüme güncelleyin veya ayarların doğru olduğundan emin olun.'
     }
   },
   pluginSettingsTab: {

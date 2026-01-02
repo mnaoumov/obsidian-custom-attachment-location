@@ -153,12 +153,6 @@ export const uk: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Спеціальні символи не повинні містити /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'Заміна спеціальних символів не повинна містити недопустимі символи шляху або імені файлу.'
-    },
-    version: {
-      part1: 'Ваш файл налаштувань ',
-      part2: 'має версію',
-      part3: 'яка новіша за поточну версію плагіна',
-      part4: 'Плагін може працювати некоректно. Будь ласка, оновіть плагін до останньої версії або перевірте правильність налаштувань.'
     }
   },
   pluginSettingsTab: {

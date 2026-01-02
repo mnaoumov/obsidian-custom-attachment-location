@@ -154,13 +154,6 @@ export const ca: Translations<PluginTypes> = {
       specialCharactersMustNotContainSlash: 'Els caràcters especials no han de contenir /',
       specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
         'El reemplaçament de caràcters especials no ha de contenir caràcters de camí de nom de fitxer no vàlids.'
-    },
-    version: {
-      part1: 'El vostre fitxer de configuració ',
-      part2: 'té la versió',
-      part3: 'que és més nova que la versió actual del plugin',
-      part4:
-        'El plugin podria no funcionar com s\'espera. Si us plau, actualitzeu el plugin a la darrera versió o assegureu-vos que les configuracions siguin correctes.'
     }
   },
   pluginSettingsTab: {

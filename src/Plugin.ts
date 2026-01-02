@@ -36,6 +36,7 @@ import {
 } from 'obsidian';
 import { convertAsyncToSync } from 'obsidian-dev-utils/Async';
 import { blobToJpegArrayBuffer } from 'obsidian-dev-utils/Blob';
+import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import {
   extractDefaultExportInterop,
   getPrototypeOf,
@@ -52,6 +53,7 @@ import {
   getPath,
   isNote
 } from 'obsidian-dev-utils/obsidian/FileSystem';
+import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   encodeUrl,
   extractLinkFile,
@@ -64,6 +66,7 @@ import {
   getAllLinks,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/MetadataCache';
+import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import {
@@ -84,6 +87,7 @@ import {
   parentFolderPath,
   ViewType
 } from 'obsidian-typings/implementations';
+import { compare } from 'semver';
 
 import type { PluginTypes } from './PluginTypes.ts';
 
@@ -227,6 +231,8 @@ export class Plugin extends PluginBase<PluginTypes> {
     if (!this.isMarkdownViewPatched) {
       this.registerEvent(this.app.workspace.on('active-leaf-change', convertAsyncToSync(this.handleActiveLeafChange.bind(this))));
     }
+
+    await this.showReleaseNotes();
   }
 
   protected override async onloadImpl(): Promise<void> {
@@ -817,5 +823,119 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
 
     return false;
+  }
+
+  private async showReleaseNotes(): Promise<void> {
+    const RELEASE_NOTES: Record<string, DocumentFragment> = {
+      /* eslint-disable perfectionist/sort-objects -- Need to keep versions in order. */
+      '9.0.0': createFragment((f) => {
+        f.appendText(t(($) => $.pluginSettingsManager.customToken.deprecated.part1));
+        f.createEl('a', {
+          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens',
+          text: t(($) => $.pluginSettingsManager.customToken.deprecated.part2)
+        });
+        f.appendText(' ');
+        f.appendText(t(($) => $.pluginSettingsManager.customToken.deprecated.part3));
+        f.createEl('br');
+        f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part1));
+        f.appendText(' ');
+        appendCodeBlock(f, t(($) => $.pluginSettingsTab.renameAttachmentsToLowerCase));
+        f.appendText(' ');
+        f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part2));
+        f.appendText(' ');
+        appendCodeBlock(f, 'lower');
+        f.appendText(' ');
+        f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part3));
+        f.appendText(' ');
+        f.createEl('a', {
+          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+          text: t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part4)
+        });
+        f.appendText(' ');
+        f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part5));
+      }),
+      '9.2.0': createFragment((f) => {
+        f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part1));
+        appendCodeBlock(f, t(($) => $.pluginSettingsTab.markdownUrlFormat.name));
+        f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part2));
+        f.createEl('a', {
+          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#markdown-url-format',
+          text: t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part3)
+        });
+        f.appendText(' ');
+        f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part4));
+        f.appendText(' ');
+        f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part5));
+      }),
+      '9.16.0': createFragment((f) => {
+        f.appendText(t(($) => $.pluginSettingsManager.specialCharacters.part1));
+        appendCodeBlock(f, t(($) => $.pluginSettingsTab.specialCharacters.name));
+        f.appendText(t(($) => $.pluginSettingsManager.specialCharacters.part2));
+      }),
+      '10.0.0': createFragment((f) => {
+        f.appendText(t(($) => $.releaseNotes.versions['10.0.0'].part1));
+        f.appendText(' ');
+        f.createEl('a', {
+          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+          text: t(($) => $.releaseNotes.versions['10.0.0'].part2)
+        });
+        f.appendText(' ');
+        f.appendText(t(($) => $.releaseNotes.versions['10.0.0'].part3));
+      })
+      /* eslint-enable perfectionist/sort-objects -- Need to keep versions in order. */
+    };
+
+    const releaseNotes = createFragment();
+    let shouldShow = false;
+    let isVersionMismatch = false;
+
+    if (compare(this.manifest.version, this.settings.version) < 0) {
+      shouldShow = true;
+      isVersionMismatch = true;
+      releaseNotes.createEl('h3', { text: t(($) => $.releaseNotes.versionMismatch.title) });
+      releaseNotes.append(createFragment((f) => {
+        f.appendText(t(($) => $.releaseNotes.versionMismatch.part1));
+        f.appendText(' ');
+        appendCodeBlock(f, `${this.manifest.dir ?? ''}/data.json`);
+        f.appendText(' ');
+        f.appendText(t(($) => $.releaseNotes.versionMismatch.part2));
+        f.appendText(' ');
+        appendCodeBlock(f, this.settings.version);
+        f.appendText(', ');
+        f.appendText(t(($) => $.releaseNotes.versionMismatch.part3));
+        f.appendText(' ');
+        appendCodeBlock(f, this.manifest.version);
+        f.appendText('. ');
+        f.appendText(t(($) => $.releaseNotes.versionMismatch.part4));
+      }));
+      releaseNotes.createEl('hr');
+    }
+
+    for (const [version, versionReleaseNote] of Object.entries(RELEASE_NOTES)) {
+      if (!this.settings.version || compare(version, this.settings.version) <= 0) {
+        continue;
+      }
+
+      shouldShow = true;
+      releaseNotes.createEl('h3', { text: version });
+      releaseNotes.append(versionReleaseNote);
+      releaseNotes.createEl('hr');
+    }
+
+    if (!isVersionMismatch) {
+      await this.settingsManager.editAndSave((settings) => {
+        settings.version = this.manifest.version;
+      });
+    }
+
+    if (!shouldShow) {
+      return;
+    }
+
+    await alert({
+      app: this.app,
+      message: releaseNotes,
+      title: t(($) => $.releaseNotes.title)
+    });
   }
 }
