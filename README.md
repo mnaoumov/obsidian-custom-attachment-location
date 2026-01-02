@@ -517,6 +517,7 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 ```ts
 {
   case?: 'lower' | 'upper';
+  defaultValueTemplate?: string; // default: ${originalAttachmentFileName}
   slugify?: boolean; // default: false
   trim?: {
     length: number;
@@ -534,6 +535,7 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 - `${prompt}`: `foo -> foo`.
 - `${prompt:{case:'lower'}}`: `FOO -> foo`.
 - `${prompt:{case:'upper'}}`: `foo -> FOO`.
+- `${prompt:{defaultTemplate:'${uuid}'}}`: shows prompt with default value as generated `${uuid}`.
 - `${prompt:{slugify:true}}`: `foo bar -> foo-bar`.
 - `${prompt:{trim:{side:'left',length:2}}}`: `foo -> fo`.
 - `${prompt:{trim:{side:'right',length:2}}}`: `foo -> oo`.
