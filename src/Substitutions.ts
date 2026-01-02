@@ -15,8 +15,6 @@ import {
   extname
 } from 'obsidian-dev-utils/Path';
 import {
-  replaceAll,
-  replaceAllAsync,
   trimEnd,
   trimStart
 } from 'obsidian-dev-utils/String';
@@ -26,6 +24,10 @@ import type { TokenEvaluatorContext } from './TokenEvaluatorContext.ts';
 import type { TokenBase } from './Tokens/TokenBase.ts';
 
 import { ActionContext } from './TokenEvaluatorContext.ts';
+import {
+  parseFormatObject,
+  scanTokens
+} from './TokenParser.ts';
 import { AttachmentFileSizeToken } from './Tokens/AttachmentFileSizeToken.ts';
 import { CustomToken } from './Tokens/CustomToken.ts';
 import { DateToken } from './Tokens/DateToken.ts';
@@ -51,13 +53,15 @@ import { UuidToken } from './Tokens/UuidToken.ts';
 export type TokenEvaluator = (ctx: TokenEvaluatorContext) => Promisable<string>;
 
 interface Token {
-  format: string;
+  end: number;
+  formatText: null | string;
+  raw: string;
+  start: number;
   token: string;
 }
 
 const MORE_THAN_TWO_DOTS_REG_EXP = /^\.{3,}$/;
 const TRAILING_DOTS_REG_EXP = /\.+$/;
-const SUBSTITUTION_TOKEN_REG_EXP = /\${(?<Token>.+?)(?::(?<Format>.*?))?}/g;
 
 export enum TokenValidationMode {
   Error = 'Error',
@@ -220,15 +224,26 @@ export class Substitutions {
   }
 
   public async fillTemplate(template: string): Promise<string> {
-    return await replaceAllAsync(template, SUBSTITUTION_TOKEN_REG_EXP, async (abortSignal, args, tokenName) => {
+    const abortController = new AbortController();
+    const abortSignal = abortController.signal;
+
+    const tokens = scanTokens(template);
+
+    let out = '';
+    let lastOffset = 0;
+
+    for (const t of tokens) {
       abortSignal.throwIfAborted();
 
-      const token = Substitutions.registeredTokens.get(tokenName.toLowerCase());
+      out += template.slice(lastOffset, t.start);
+      lastOffset = t.end;
+
+      const token = Substitutions.registeredTokens.get(t.token.toLowerCase());
       if (!token) {
-        throw new Error(`Unknown token '${tokenName}'.`);
+        throw new Error(`Unknown token '${t.token}'.`);
       }
 
-      const formatObj = {}; // TODO
+      const format = t.formatText === null ? null : parseFormatObject(t.formatText, t.token);
 
       const ctx: TokenEvaluatorContext = {
         abortSignal,
@@ -238,7 +253,7 @@ export class Substitutions {
         attachmentFileStat: this.attachmentFileStat,
         cursorLine: this.cursorLine,
         fillTemplate: this.fillTemplate.bind(this),
-        format: formatObj,
+        format,
         fullTemplate: template,
         generatedAttachmentFileName: this.generatedAttachmentFileName,
         generatedAttachmentFilePath: this.generatedAttachmentFilePath,
@@ -255,41 +270,31 @@ export class Substitutions {
         originalAttachmentFileName: this.originalAttachmentFileName,
         plugin: this.plugin,
         sequenceNumber: this.sequenceNumber ?? 0,
-        token: tokenName,
-        tokenEndOffset: args.offset + args.substring.length,
-        tokenStartOffset: args.offset,
-        tokenWithFormat: args.substring,
+        token: t.token,
+        tokenEndOffset: t.end,
+        tokenStartOffset: t.start,
+        tokenWithFormat: t.raw,
         validatePath
       };
 
-      try {
-        const result = await token.evaluate(ctx);
-        abortSignal.throwIfAborted();
-
-        if (typeof result !== 'string') {
-          console.error('Token returned non-string value.', {
-            ctx,
-            result
-          });
-          throw new Error('Token returned non-string value');
-        }
-        return result;
-      } catch (e) {
-        throw new Error(`Error formatting token \${${tokenName}}`, { cause: e });
+      const evaluated = await token.evaluate(ctx);
+      abortSignal.throwIfAborted();
+      if (typeof evaluated !== 'string') {
+        console.error('Token returned non-string value.', { ctx, result: evaluated });
+        throw new Error('Token returned non-string value');
       }
-    });
-  }
-}
+      out += evaluated;
+    }
 
-export function hasPromptToken(str: string): boolean {
-  return extractTokens(str).some((token) => token.token === 'prompt');
+    out += template.slice(lastOffset);
+    return out;
+  }
 }
 
 export async function validateFileName(options: ValidateFileNameOptions): Promise<string> {
   switch (options.tokenValidationMode) {
     case TokenValidationMode.Error: {
-      const match = options.fileName.match(SUBSTITUTION_TOKEN_REG_EXP);
-      if (match) {
+      if (scanTokens(options.fileName, { throwOnError: false }).length > 0) {
         return 'Tokens are not allowed in file name';
       }
       break;
@@ -307,7 +312,12 @@ export async function validateFileName(options: ValidateFileNameOptions): Promis
       throw new Error(`Invalid token validation mode: ${options.tokenValidationMode as string}`);
   }
 
-  const cleanFileName = removeTokens(options.fileName);
+  let cleanFileName;
+  try {
+    cleanFileName = removeTokens(options.fileName);
+  } catch {
+    return `Invalid token syntax in file name "${options.fileName}"`;
+  }
 
   if (cleanFileName === '.' || cleanFileName === '..') {
     return options.areSingleDotsAllowed ? '' : 'Single dots are not allowed in file name';
@@ -338,11 +348,8 @@ export async function validatePath(options: ValidatePathOptions): Promise<string
     if (unknownToken) {
       return `Unknown token: ${unknownToken}`;
     }
-  } else {
-    const match = options.path.match(SUBSTITUTION_TOKEN_REG_EXP);
-    if (match) {
-      return 'Tokens are not allowed in path';
-    }
+  } else if (scanTokens(options.path, { throwOnError: false }).length > 0) {
+    return 'Tokens are not allowed in path';
   }
 
   let path = trimStart(options.path, '/');
@@ -375,15 +382,20 @@ function dotToEmpty(name: string): string {
 }
 
 function extractTokens(str: string): Token[] {
-  const matches = str.matchAll(SUBSTITUTION_TOKEN_REG_EXP);
-  return Array.from(matches).map((match) => ({
-    format: match.groups?.['Format'] ?? '',
-    token: match.groups?.['Token'] ?? ''
-  }));
+  return scanTokens(str, { throwOnError: false });
 }
 
 function removeTokens(str: string): string {
-  return replaceAll(str, SUBSTITUTION_TOKEN_REG_EXP, (_, token, format) => `_${token}_${format}_`);
+  const tokens = scanTokens(str);
+  let out = '';
+  let lastOffset = 0;
+  for (const t of tokens) {
+    out += str.slice(lastOffset, t.start);
+    out += `_${t.token}_${t.formatText ?? ''}_`;
+    lastOffset = t.end;
+  }
+  out += str.slice(lastOffset);
+  return out;
 }
 
 async function validateTokens(plugin: Plugin, str: string): Promise<null | string> {
@@ -394,19 +406,34 @@ async function validateTokens(plugin: Plugin, str: string): Promise<null | strin
     plugin
   });
 
-  const tokens = extractTokens(str);
-  for (const token of tokens) {
-    if (!Substitutions.isRegisteredToken(token.token)) {
-      return `Unknown token '${token.token}'.`;
+  let tokens: Token[];
+  try {
+    tokens = extractTokens(str);
+  } catch (e) {
+    return `Invalid token syntax: ${(e as Error).message}`;
+  }
+
+  for (const t of tokens) {
+    if (!Substitutions.isRegisteredToken(t.token)) {
+      return `Unknown token '${t.token}'.`;
     }
-    const singleFormats = token.format.split(',');
-    for (const singleFormat of singleFormats) {
+
+    // Validate the format object is parseable JSON5 (if present).
+    if (t.formatText !== null) {
       try {
-        await FAKE_SUBSTITUTION.fillTemplate(`\${${token.token}:${singleFormat}}`);
-      } catch {
-        return `Token '${token.token}' is used with unknown format '${singleFormat}'.`;
+        parseFormatObject(t.formatText, t.token);
+      } catch (e) {
+        return `Invalid format for token '${t.token}': ${(e as Error).message}`;
       }
     }
+
+    // Validate token-specific schema by evaluating in a safe context.
+    try {
+      await FAKE_SUBSTITUTION.fillTemplate(t.raw);
+    } catch (e) {
+      return `Invalid token '${t.raw}': ${(e as Error).message}`;
+    }
   }
+
   return null;
 }
