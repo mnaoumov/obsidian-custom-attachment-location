@@ -34,8 +34,8 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@commitlint/cli": "^20.2.0",
-    "@commitlint/config-conventional": "^20.2.0",
+    "@commitlint/cli": "^20.3.0",
+    "@commitlint/config-conventional": "^20.3.0",
     "@commitlint/types": "^20.2.0",
     "@tsconfig/strictest": "latest",
     "@types/node": "25.0.3",
