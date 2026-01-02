@@ -312,7 +312,7 @@ export async function validateFileName(options: ValidateFileNameOptions): Promis
       throw new Error(`Invalid token validation mode: ${options.tokenValidationMode as string}`);
   }
 
-  let cleanFileName;
+  let cleanFileName: string;
   try {
     cleanFileName = removeTokens(options.fileName);
   } catch {
@@ -391,7 +391,7 @@ function removeTokens(str: string): string {
   let lastOffset = 0;
   for (const t of tokens) {
     out += str.slice(lastOffset, t.start);
-    out += `_${t.token}_${t.formatText ?? ''}_`;
+    out += `__${t.token}__`;
     lastOffset = t.end;
   }
   out += str.slice(lastOffset);
