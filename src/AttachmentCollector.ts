@@ -14,10 +14,7 @@ import {
   TFile,
   Vault
 } from 'obsidian';
-import {
-  abortSignalAny,
-  INFINITE_TIMEOUT
-} from 'obsidian-dev-utils/AbortController';
+import { abortSignalAny } from 'obsidian-dev-utils/AbortController';
 import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import {
   getPath,
@@ -58,10 +55,7 @@ import {
 } from './AttachmentPath.ts';
 import { selectMode } from './Modals/CollectAttachmentUsedByMultipleNotesModal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './PluginSettings.ts';
-import {
-  hasPromptToken,
-  Substitutions
-} from './Substitutions.ts';
+import { Substitutions } from './Substitutions.ts';
 import { ActionContext } from './TokenEvaluatorContext.ts';
 
 export interface GetProperAttachmentPathOptions {
@@ -248,7 +242,7 @@ export function collectAttachmentsEntireVault(plugin: Plugin): void {
     app: plugin.app,
     operationFn: (abortSignal) => collectAttachmentsInAbstractFilesImpl(plugin, [plugin.app.vault.getRoot()], abortSignal),
     operationName: t(($) => $.commands.collectAttachmentsEntireVault),
-    timeoutInMilliseconds: getTimeoutInMilliseconds(plugin)
+    timeoutInMilliseconds: plugin.settings.getTimeoutInMilliseconds()
   });
 }
 
@@ -258,7 +252,7 @@ export function collectAttachmentsInAbstractFiles(plugin: Plugin, abstractFiles:
     app: plugin.app,
     operationFn: (abortSignal) => collectAttachmentsInAbstractFilesImpl(plugin, abstractFiles, abortSignal),
     operationName: t(($) => $.menuItems.collectAttachmentsInFile),
-    timeoutInMilliseconds: getTimeoutInMilliseconds(plugin)
+    timeoutInMilliseconds: plugin.settings.getTimeoutInMilliseconds()
   });
 }
 
@@ -405,14 +399,6 @@ async function getCanvasLinks(app: App, canvasFile: TFile): Promise<ReferenceCac
       start: { col: 0, line: 0, loc: 0, offset: 0 }
     }
   }));
-}
-
-function getTimeoutInMilliseconds(plugin: Plugin): number {
-  return plugin.settings.collectAttachmentUsedByMultipleNotesMode === CollectAttachmentUsedByMultipleNotesMode.Prompt
-      || hasPromptToken(plugin.settings.attachmentFolderPath)
-      || hasPromptToken(plugin.settings.generatedAttachmentFileName)
-    ? INFINITE_TIMEOUT
-    : plugin.settings.getTimeoutInMilliseconds();
 }
 
 async function prepareAttachmentToMove(
