@@ -12,7 +12,9 @@ import {
 import { TokenBase } from './TokenBase.ts';
 
 const formatSchema = z.strictObject({
-  ...stringFormatSchema.shape
+  ...stringFormatSchema.shape,
+  // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+  defaultValueTemplate: z.string().optional().default('${originalAttachmentFileName}')
 });
 type Format = z.infer<typeof formatSchema>;
 
@@ -28,6 +30,7 @@ export class PromptToken extends TokenBase<Format> {
 
     const promptResult = await promptWithPreview({
       ctx,
+      defaultValue: format.defaultValueTemplate,
       valueValidator: (value) =>
         ctx.validatePath({
           areTokensAllowed: false,

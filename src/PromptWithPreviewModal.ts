@@ -19,6 +19,7 @@ import type { TokenEvaluatorContext } from './TokenEvaluatorContext.ts';
 
 interface PromptWithPreviewModalOptions {
   ctx: TokenEvaluatorContext;
+  defaultValue: string;
   valueValidator: (value: string) => Promise<null | string>;
 }
 
@@ -74,12 +75,11 @@ class PreviewModal extends Modal {
 
 class PromptWithPreviewModal extends Modal {
   private isOkClicked = false;
-  private value: string;
+  private value = '';
 
   public constructor(private readonly options: PromptWithPreviewModalOptions, private readonly resolve: PromiseResolve<null | string>) {
     super(options.ctx.app);
     addPluginCssClasses(this.containerEl, CssClass.PromptModal);
-    this.value = options.ctx.originalAttachmentFileName;
   }
 
   public override onClose(): void {
@@ -89,6 +89,21 @@ class PromptWithPreviewModal extends Modal {
 
   public override onOpen(): void {
     super.onOpen();
+    invokeAsyncSafely(this.onOpenAsync.bind(this));
+  }
+
+  private handleOk(event: Event, textComponent: TextComponent): void {
+    event.preventDefault();
+    if (!textComponent.inputEl.checkValidity()) {
+      return;
+    }
+
+    this.isOkClicked = true;
+    this.close();
+  }
+
+  private async onOpenAsync(): Promise<void> {
+    this.value = await this.options.ctx.fillTemplate(this.options.defaultValue);
 
     const title = createFragment((f) => {
       f.appendText(t(($) => $.promptWithPreviewModal.title));
@@ -145,16 +160,6 @@ class PromptWithPreviewModal extends Modal {
     if (!this.options.ctx.attachmentFileContent || !embeddableCreator) {
       previewButton.setDisabled(true);
     }
-  }
-
-  private handleOk(event: Event, textComponent: TextComponent): void {
-    event.preventDefault();
-    if (!textComponent.inputEl.checkValidity()) {
-      return;
-    }
-
-    this.isOkClicked = true;
-    this.close();
   }
 
   private preview(): void {
