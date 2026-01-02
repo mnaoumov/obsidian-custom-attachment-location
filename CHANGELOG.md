@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 10.0.0
+
+- docs: cleanup
+- chore: update libs
+- docs: simplify default
+- feat: defaultValueTemplate re #1
+- fix: prism
+- fix: parser
+- fix: replace legacy format strings
+- feat: add release notes
+- feat: update sample tokens
+- feat: rewrite prism
+- feat: add parser
+- feat: don't check for prompt token
+- feat: refactor token formats
+- docs: update formats
+- docs: replace with (no format)
+- docs: add attributions
+
 ## 9.26.4
 
 - chore: republish
