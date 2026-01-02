@@ -64,7 +64,7 @@ export class PluginSettings {
   public duplicateNameSeparator = ' ';
   public emptyAttachmentFolderBehavior: EmptyAttachmentFolderBehavior = EmptyAttachmentFolderBehavior.DeleteWithEmptyParents;
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-  public generatedAttachmentFileName = 'file-${date:YYYYMMDDHHmmssSSS}';
+  public generatedAttachmentFileName = 'file-${date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}';
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public jpegQuality = 0.8;
   public markdownUrlFormat = '';

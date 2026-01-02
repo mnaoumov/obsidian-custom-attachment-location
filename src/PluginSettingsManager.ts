@@ -6,6 +6,7 @@ import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/Pl
 import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/Validation';
 import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
+import { replaceAll } from 'obsidian-dev-utils/String';
 import { compare } from 'semver';
 
 import type { PluginTypes } from './PluginTypes.ts';
@@ -73,6 +74,7 @@ class LegacySettingsConverter {
     this.convertCollectAttachmentUsedByMultipleNotesMode();
     this.convertMarkdownUrlFormat();
     this.convertSpecialCharacters();
+    this.convertLegacyTokens();
   }
 
   private convertAutoRenameFiles(): void {
@@ -139,6 +141,12 @@ ${commentOut(this.legacySettings.customTokensStr)}
     }
   }
 
+  private convertLegacyTokens(): void {
+    this.legacySettings.attachmentFolderPath = this.replaceLegacyTokens(this.legacySettings.attachmentFolderPath);
+    this.legacySettings.generatedAttachmentFileName = this.replaceLegacyTokens(this.legacySettings.generatedAttachmentFileName);
+    this.legacySettings.markdownUrlFormat = this.replaceLegacyTokens(this.legacySettings.markdownUrlFormat);
+  }
+
   private convertMarkdownUrlFormat(): void {
     if (
       this.legacySettings.version && compare(this.legacySettings.version, '9.2.0') < 0
@@ -192,6 +200,20 @@ ${commentOut(this.legacySettings.customTokensStr)}
       this.legacySettings.specialCharacters = `${this.legacySettings.specialCharacters ?? ''} `;
       this.legacySettings.specialCharactersReplacement = this.legacySettings.whitespaceReplacement;
     }
+  }
+
+  private replaceLegacyTokens(str: string | undefined): string {
+    if (str === undefined) {
+      return '';
+    }
+
+    return replaceAll(
+      str,
+      /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi,
+      (_, token, momentJsFormat) => {
+        return `\${${token}:{momentJsFormat:'${momentJsFormat}'}}`;
+      }
+    );
   }
 }
 
@@ -278,7 +300,7 @@ export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes
 
 function addDateTimeFormat(str: string, dateTimeFormat: string): string {
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-  return str.replaceAll('${date}', `\${date:${dateTimeFormat}}`);
+  return str.replaceAll('${date}', `\${date:{momentJsFormat:'${dateTimeFormat}'}}`);
 }
 
 function commentOut(str: string): string {
