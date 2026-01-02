@@ -2,19 +2,17 @@ import { INFINITE_TIMEOUT } from 'obsidian-dev-utils/AbortController';
 import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { escapeRegExp } from 'obsidian-dev-utils/RegExp';
 
-export const SAMPLE_CUSTOM_TOKENS = `registerCustomToken('foo', (ctx) => {
-  return ctx.noteFileName + ctx.app.appId + ctx.format + ctx.obsidian.apiVersion;
+export const SAMPLE_CUSTOM_TOKENS = String.raw`registerCustomToken('foo', (ctx) => {
+  const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
+  return ctx.noteFileName + ctx.app.appId + formatValue + ctx.obsidian.apiVersion;
 });
 
 registerCustomToken('bar', async (ctx) => {
   await sleep(100);
-  return ctx.noteFileName + ctx.app.appId + ctx.format + ctx.obsidian.apiVersion;
-});
-
-registerCustomToken('baz', async (ctx) => {
-  return ctx.noteFileName + await ctx.fillTemplate('corge \${grault} garply \${waldo:fred} plugh');
-});
-`;
+  const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
+  const filledTemplate = await ctx.fillTemplate('qux \${quux} corge \${grault:{garply:\'waldo\'}} fred');
+  return ctx.noteFileName + ctx.app.appId + formatValue + ctx.obsidian.apiVersion + filledTemplate;
+});`;
 
 const ALWAYS_MATCH_REG_EXP = /(?:)/;
 const NEVER_MATCH_REG_EXP = /$./;
