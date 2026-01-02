@@ -12,6 +12,24 @@ export class PrismComponent extends Component {
 
   private async initPrism(): Promise<void> {
     const prism = await loadPrism();
+
+    const javascriptLanguage = prism.languages['javascript'];
+
+    if (!javascriptLanguage) {
+      return;
+    }
+
+    const PREFIX_PATTERN = String.raw`\{(?:[^{}]|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'`;
+    const SUFFIX_PATTERN = String.raw`)*\}`;
+
+    const FORMAT_OBJECT_DEPTH_1 = `${PREFIX_PATTERN}${SUFFIX_PATTERN}`;
+    // Depth 2: allows depth-1 blocks inside.
+    const FORMAT_OBJECT_DEPTH_2 = `${PREFIX_PATTERN}|${FORMAT_OBJECT_DEPTH_1}${SUFFIX_PATTERN}`;
+    // Depth 3: allows depth-2 blocks inside.
+    const FORMAT_OBJECT_DEPTH_3 = `${PREFIX_PATTERN}|${FORMAT_OBJECT_DEPTH_2}${SUFFIX_PATTERN}`;
+    // Depth 4: allows depth-3 blocks inside.
+    const FORMAT_OBJECT_DEPTH_4 = `${PREFIX_PATTERN}|${FORMAT_OBJECT_DEPTH_3}${SUFFIX_PATTERN}`;
+
     prism.languages[TOKENIZED_STRING_LANGUAGE] = {
       expression: {
         greedy: true,
@@ -19,27 +37,48 @@ export class PrismComponent extends Component {
           /* eslint-disable perfectionist/sort-objects -- Need to keep object order. */
           prefix: {
             alias: 'regex',
-            pattern: /\${/
+            pattern: /\$\{/
           },
           token: {
             alias: 'number',
-            pattern: /^[a-zA-Z0-9_,]+/
+            pattern: /^[^:}]+/
+          },
+          suffix: {
+            alias: 'regex',
+            pattern: /\}/
+          }
+          /* eslint-enable perfectionist/sort-objects -- Need to keep object order. */
+        },
+        pattern: /\$\{[^:}]+\}/
+      },
+      expressionWithFormat: {
+        greedy: true,
+        inside: {
+          /* eslint-disable perfectionist/sort-objects -- Need to keep object order. */
+          prefix: {
+            alias: 'regex',
+            pattern: /\$\{/
+          },
+          token: {
+            alias: 'number',
+            pattern: /^[^:}]+/
           },
           formatDelimiter: {
             alias: 'regex',
             pattern: /:/
           },
           format: {
-            alias: 'string',
-            pattern: /[a-zA-Z0-9_,-]+/
+            alias: 'language-javascript',
+            inside: javascriptLanguage,
+            pattern: new RegExp(FORMAT_OBJECT_DEPTH_3)
           },
           suffix: {
             alias: 'regex',
-            pattern: /}/
+            pattern: /\}\s*\}/
           }
           /* eslint-enable perfectionist/sort-objects -- Need to keep object order. */
         },
-        pattern: /\${.+?}/
+        pattern: new RegExp(FORMAT_OBJECT_DEPTH_4)
       },
       important: {
         pattern: /^\./
