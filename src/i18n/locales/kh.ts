@@ -118,7 +118,7 @@ export const kh: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// សញ្ញាសម្គាល់ផ្ទាល់ខ្លួនត្រូវបានដកចេញពីមតិយោបល់ពីព្រោះពួកគេត្រូវតែបានធ្វើបច្ចុប្បន្នភាពទៅជាទម្រង់ថ្មីដែលបានណែនាំក្នុងកំណែផ្នែកបន្ថែម 9.0.0។\n// សូមមើលឯកសារយោង (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) សម្រាប់ព័ត៌មានបន្ថែម។',
+        '// សញ្ញាសម្គាល់ផ្ទាល់ខ្លួនត្រូវបានដកចេញពីមតិយោបល់ពីព្រោះពួកគេត្រូវតែបានធ្វើបច្ចុប្បន្នភាពទៅជាទម្រង់ថ្មីដែលបានណែនាំក្នុងកំណែផ្នែកបន្ថែម 9.0.0។\n// សូមមើលឯកសារយោង (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) សម្រាប់ព័ត៌មានបន្ថែម។',
       deprecated: {
         part1: 'ក្នុងកំណែផ្នែកបន្ថែម 9.0.0 ទម្រង់នៃការចុះឈ្មោះសញ្ញាសម្គាល់ផ្ទាល់ខ្លួនបានផ្លាស់ប្តូរ។ សូមធ្វើបច្ចុប្បន្នភាពសញ្ញាសម្គាល់របស់អ្នកតាម។ សូមមើល',
         part2: 'ឯកសារយោង',

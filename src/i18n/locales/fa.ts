@@ -119,7 +119,7 @@ export const fa: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// نشان‌های سفارشی کامنت شده زیرا باید به فرمت جدید معرفی شده در نسخه 9.0.0 پلاگین به‌روزرسانی شوند.\n// برای اطلاعات بیشتر به مستندات (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) مراجعه کنید.',
+        '// نشان‌های سفارشی کامنت شده زیرا باید به فرمت جدید معرفی شده در نسخه 9.0.0 پلاگین به‌روزرسانی شوند.\n// برای اطلاعات بیشتر به مستندات (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) مراجعه کنید.',
       deprecated: {
         part1: 'در نسخه 9.0.0 پلاگین، فرمت ثبت نشان‌های سفارشی تغییر کرده است. لطفاً نشان‌های خود را به تناسب به‌روزرسانی کنید. به',
         part2: 'مستندات',

@@ -118,7 +118,7 @@ export const ne: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// कस्टम टोकनहरू टिप्पणी गरिएका छन् किनभने तिनीहरूलाई प्लगइन संस्करण 9.0.0 मा परिचय गरिएको नयाँ ढाँचामा अपडेट गर्नुपर्छ।\n// थप जानकारीका लागि कागजात (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) हेर्नुहोस्।',
+        '// कस्टम टोकनहरू टिप्पणी गरिएका छन् किनभने तिनीहरूलाई प्लगइन संस्करण 9.0.0 मा परिचय गरिएको नयाँ ढाँचामा अपडेट गर्नुपर्छ।\n// थप जानकारीका लागि कागजात (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) हेर्नुहोस्।',
       deprecated: {
         part1: 'प्लगइन संस्करण 9.0.0 मा, कस्टम टोकन दर्ताको ढाँचा परिवर्तन भयो। कृपया तपाईँका टोकनहरूलाई तदनुसार अपडेट गर्नुहोस्।',
         part2: 'कागजात',

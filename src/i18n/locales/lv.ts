@@ -119,7 +119,7 @@ export const lv: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// Pielāgotie tokeni tika komentēti, jo tie ir jāatjaunina uz jauno formātu, kas ieviests spraudņa versijā 9.0.0.\n// Sīkāku informāciju skatiet dokumentācijā (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens).',
+        '// Pielāgotie tokeni tika komentēti, jo tie ir jāatjaunina uz jauno formātu, kas ieviests spraudņa versijā 9.0.0.\n// Sīkāku informāciju skatiet dokumentācijā (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens).',
       deprecated: {
         part1: 'Spraudņa versijā 9.0.0 pielāgoto tokenu reģistrācijas formāts mainījās. Lūdzu, atjauniniet savus tokenus attiecīgi. Sīkāku informāciju skatiet',
         part2: 'dokumentācijā',

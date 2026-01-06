@@ -119,7 +119,7 @@ export const ga: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// Cuireadh comharthaí saincheaptha i gcomhrá mar gheall ar gá iad a nuashonrú chuig an fhormáid nua a tugadh isteach i leagan 9.0.0 an phlugain.\n// Féach ar an doiciméadú (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) le haghaidh tuilleadh eolais.',
+        '// Cuireadh comharthaí saincheaptha i gcomhrá mar gheall ar gá iad a nuashonrú chuig an fhormáid nua a tugadh isteach i leagan 9.0.0 an phlugain.\n// Féach ar an doiciméadú (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) le haghaidh tuilleadh eolais.',
       deprecated: {
         part1: 'I leagan 9.0.0 an phlugain, d\'athraigh formáid chlárúcháin comharthaí saincheaptha. Nuashonraigh do chomharthaí dá réir. Féach ar an',
         part2: 'doiciméadú',

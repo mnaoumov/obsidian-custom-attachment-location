@@ -118,7 +118,7 @@ export const th: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// โทเคนที่กำหนดเองถูกคอมเมนต์ไว้ เนื่องจากต้องอัปเดตเป็นรูปแบบใหม่ที่ถูกเพิ่มในปลั๊กอินเวอร์ชัน 9.0.0\n// ดูรายละเอียดในเอกสารประกอบ (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)',
+        '// โทเคนที่กำหนดเองถูกคอมเมนต์ไว้ เนื่องจากต้องอัปเดตเป็นรูปแบบใหม่ที่ถูกเพิ่มในปลั๊กอินเวอร์ชัน 9.0.0\n// ดูรายละเอียดในเอกสารประกอบ (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)',
       deprecated: {
         part1: 'ในปลั๊กอินเวอร์ชัน 9.0.0 รูปแบบการลงทะเบียนโทเคนที่กำหนดเองได้เปลี่ยนไป กรุณาอัปเดตโทเคนของคุณ ดูเพิ่มเติมที่',
         part2: 'เอกสาร',

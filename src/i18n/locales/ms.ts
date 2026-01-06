@@ -119,7 +119,7 @@ export const ms: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// Token kustom telah dikomenkan kerana perlu dikemas kini ke format baharu yang diperkenalkan dalam versi pemalam 9.0.0.\n// Rujuk dokumentasi (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) untuk maklumat lanjut.',
+        '// Token kustom telah dikomenkan kerana perlu dikemas kini ke format baharu yang diperkenalkan dalam versi pemalam 9.0.0.\n// Rujuk dokumentasi (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) untuk maklumat lanjut.',
       deprecated: {
         part1: 'Dalam versi pemalam 9.0.0, format pendaftaran token kustom telah berubah. Sila kemas kini token anda dengan sewajarnya. Rujuk',
         part2: 'dokumentasi',

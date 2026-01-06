@@ -118,7 +118,7 @@ export const he: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// טוקנים מותאמים אישיים הועברו להערה מכיוון שהם צריכים להיות מעודכנים לפורמט החדש שהוצג בגרסת תוסף 9.0.0.\n// פנה לתיעוד (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) למידע נוסף.',
+        '// טוקנים מותאמים אישיים הועברו להערה מכיוון שהם צריכים להיות מעודכנים לפורמט החדש שהוצג בגרסת תוסף 9.0.0.\n// פנה לתיעוד (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) למידע נוסף.',
       deprecated: {
         part1: 'בגרסת תוסף 9.0.0, הפורמט של רישום טוקנים מותאמים אישיים השתנה. אנא עדכן את הטוקנים שלך בהתאם. פנה ל',
         part2: 'תיעוד',
