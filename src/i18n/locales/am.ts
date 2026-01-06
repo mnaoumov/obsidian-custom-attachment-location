@@ -118,7 +118,7 @@ export const am: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// የተለመዱ ቶከኖች በፕላጊን ሥሪት 9.0.0 ውስጥ የተዋወቀውን አዲስ ቅርጸት ማዘመን ስለሚያስፈልጋቸው ተሰይመዋል።\n// ለተጨማሪ መረጃ ሰነዱን ይመልከቱ (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)።',
+        '// የተለመዱ ቶከኖች በፕላጊን ሥሪት 9.0.0 ውስጥ የተዋወቀውን አዲስ ቅርጸት ማዘመን ስለሚያስፈልጋቸው ተሰይመዋል።\n// ለተጨማሪ መረጃ ሰነዱን ይመልከቱ (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)።',
       deprecated: {
         part1: 'በፕላጊን ሥሪት 9.0.0 ውስጥ፣ የተለመዱ ቶከን ምዝገባ ቅርጸት ተለወጠ። እባክዎ ቶከኖችዎን በዚሁ መሰረት ያዘምኑ። ወደ',
         part2: 'ሰነድ',

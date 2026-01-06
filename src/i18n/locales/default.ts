@@ -173,7 +173,7 @@ export const defaultTranslations = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// Custom tokens were commented out as they have to be updated to the new format introduced in plugin version 9.0.0.\n// Refer to the documentation (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for more information.',
+        '// Custom tokens were commented out as they have to be updated to the new format introduced in plugin version 9.0.0.\n// Refer to the documentation (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for more information.',
       deprecated: {
         part1: 'The format of custom token registration changed. Please update your tokens accordingly. Refer to the',
         part2: 'documentation',

@@ -119,7 +119,7 @@ export const ja: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// カスタムトークンは、プラグイン バージョン 9.0.0 で導入された新しい形式に更新する必要があるため、コメントアウトされました。\n// 詳細については、ドキュメント (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) を参照してください。',
+        '// カスタムトークンは、プラグイン バージョン 9.0.0 で導入された新しい形式に更新する必要があるため、コメントアウトされました。\n// 詳細については、ドキュメント (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) を参照してください。',
       deprecated: {
         part1: 'プラグイン バージョン 9.0.0 では、カスタムトークン登録の形式が変更されました。トークンを適切に更新してください。詳細については',
         part2: 'ドキュメント',

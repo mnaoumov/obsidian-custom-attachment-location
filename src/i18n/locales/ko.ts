@@ -119,7 +119,7 @@ export const ko: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// 사용자 정의 토큰은 플러그인 버전 9.0.0에서 도입된 새 형식으로 업데이트해야 하므로 주석 처리되었습니다.\n// 자세한 내용은 문서(https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)를 참조하세요.',
+        '// 사용자 정의 토큰은 플러그인 버전 9.0.0에서 도입된 새 형식으로 업데이트해야 하므로 주석 처리되었습니다.\n// 자세한 내용은 문서(https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)를 참조하세요.',
       deprecated: {
         part1: '플러그인 버전 9.0.0에서 사용자 정의 토큰 등록 형식이 변경되었습니다. 토큰을 적절히 업데이트하세요. 자세한 내용은',
         part2: '문서',

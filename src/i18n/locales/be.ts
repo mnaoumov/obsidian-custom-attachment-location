@@ -119,7 +119,7 @@ export const be: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// Карыстальніцкія токены былі закаментаваны, паколькі яны павінны быць абноўлены да новага фармату, уведзенага ў версіі плагіна 9.0.0.\n// Звярніцеся да дакументацыі (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) для атрымання дадатковай інфармацыі.',
+        '// Карыстальніцкія токены былі закаментаваны, паколькі яны павінны быць абноўлены да новага фармату, уведзенага ў версіі плагіна 9.0.0.\n// Звярніцеся да дакументацыі (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) для атрымання дадатковай інфармацыі.',
       deprecated: {
         part1: 'У версіі плагіна 9.0.0 фармат рэгістрацыі карыстальніцкіх токенаў змяніўся. Калі ласка, абнавіце вашы токены адпаведна. Звярніцеся да',
         part2: 'дакументацыі',

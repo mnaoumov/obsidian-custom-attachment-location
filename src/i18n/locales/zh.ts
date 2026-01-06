@@ -118,7 +118,7 @@ export const zh: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// 自定义令牌已被注释掉，因为它们需要更新为插件 9.0.0 版本引入的新格式。\n// 更多信息请参考文档 (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)。',
+        '// 自定义令牌已被注释掉，因为它们需要更新为插件 9.0.0 版本引入的新格式。\n// 更多信息请参考文档 (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)。',
       deprecated: {
         part1: '在插件 9.0.0 版本中，自定义令牌注册格式已更改。请相应更新你的令牌。参考',
         part2: '文档',

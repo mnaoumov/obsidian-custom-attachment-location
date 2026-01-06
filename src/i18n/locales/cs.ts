@@ -119,7 +119,7 @@ export const cs: Translations<PluginTypes> = {
   pluginSettingsManager: {
     customToken: {
       codeComment:
-        '// Vlastní tokeny byly zakomentovány, protože musí být aktualizovány na nový formát zavedený ve verzi pluginu 9.0.0.\n// Odkazujte na dokumentaci (https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) pro více informací.',
+        '// Vlastní tokeny byly zakomentovány, protože musí být aktualizovány na nový formát zavedený ve verzi pluginu 9.0.0.\n// Odkazujte na dokumentaci (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) pro více informací.',
       deprecated: {
         part1: 'Ve verzi pluginu 9.0.0 se změnil formát registrace vlastních tokenů. Aktualizujte prosím své tokeny odpovídajícím způsobem. Odkazujte na',
         part2: 'dokumentaci',
