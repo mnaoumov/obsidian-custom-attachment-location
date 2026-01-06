@@ -62,7 +62,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
         f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part3));
         f.appendText(' ');
         f.createEl('a', {
-          href: 'https://github.com/RainCat1998/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
           text: t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part4)
         });
         f.createEl('br');
