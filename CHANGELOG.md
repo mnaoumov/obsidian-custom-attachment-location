@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.0.2
+
+- fix: hyphens token re #8
+
 ## 10.0.1
 
 - fix: update links to the new repo re #5
