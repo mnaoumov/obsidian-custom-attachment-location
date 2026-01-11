@@ -6,7 +6,7 @@ import { TokenBase } from './TokenBase.ts';
 
 const formatSchema = z.strictObject({
   case: z.enum(['lower', 'upper']).optional().default('lower'),
-  dashes: z.boolean().optional().default(true)
+  hyphens: z.boolean().optional().default(true)
 });
 type Format = z.infer<typeof formatSchema>;
 
@@ -20,6 +20,6 @@ export class UuidToken extends TokenBase<Format> {
     if (format.case === 'upper') {
       uuid = uuid.toUpperCase();
     }
-    return format.dashes ? uuid : uuid.replace(/-/g, '');
+    return format.hyphens ? uuid : uuid.replace(/-/g, '');
   }
 }
