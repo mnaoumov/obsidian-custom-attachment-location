@@ -17,11 +17,19 @@ This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize a
 - See available [tokens](#tokens).
 - example: `assets/${noteFileName}`, `./assets/${noteFileName}`, `./assets/${noteFileName}/${date:{momentJsFormat:'YYYY'}}`
 
+> [!WARNING]
+>
+> Other plugins might intercept attachment insertion and use their own locations, which might seems that this plugin is misbehaving. See #7.
+
 ### Generated attachment file name
 
 - See available [tokens](#tokens).
 - example: `${originalAttachmentFileName}-${date:{momentJsFormat:'YYYYMMDDHHmmssSSS'}}`, `${noteFileName}-img-${date:{momentJsFormat:'YYYYMMDD'}}`
 - Obsidian default: `Pasted image ${date:{momentJsFormat:'YYYYMMDDHHmmss'}}`.
+
+> [!WARNING]
+>
+> Other plugins might intercept attachment insertion and use their own file names, which might seems that this plugin is misbehaving. See #7.
 
 ### Markdown URL format
 
