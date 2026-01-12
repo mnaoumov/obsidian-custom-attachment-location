@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.0.3
+
+- fix: comparison with unset version re <https://github.com/RainCat1998/obsidian-custom-attachment-location/issues/261>
+
 ## 10.0.2
 
 - fix: hyphens token re #8
