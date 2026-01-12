@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.0.4
+
+- chore: update libs
+
 ## 10.0.3
 
 - fix: comparison with unset version re <https://github.com/RainCat1998/obsidian-custom-attachment-location/issues/261>
