@@ -889,7 +889,7 @@ export class Plugin extends PluginBase<PluginTypes> {
     let shouldShow = false;
     let isVersionMismatch = false;
 
-    if (compare(this.manifest.version, this.settings.version) < 0) {
+    if (this.settings.version && compare(this.manifest.version, this.settings.version) < 0) {
       shouldShow = true;
       isVersionMismatch = true;
       releaseNotes.createEl('h3', { text: t(($) => $.releaseNotes.versionMismatch.title) });
