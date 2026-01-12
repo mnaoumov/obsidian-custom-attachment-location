@@ -19,7 +19,7 @@ This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize a
 
 > [!WARNING]
 >
-> Other plugins might intercept attachment insertion and use their own locations, which might seems that this plugin is misbehaving. See #7.
+> Other plugins might intercept attachment insertion and use their own locations, which might seems that this plugin is misbehaving. See [#7](https://github.com/mnaoumov/obsidian-custom-attachment-location/issues/7).
 
 ### Generated attachment file name
 
@@ -29,7 +29,7 @@ This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize a
 
 > [!WARNING]
 >
-> Other plugins might intercept attachment insertion and use their own file names, which might seems that this plugin is misbehaving. See #7.
+> Other plugins might intercept attachment insertion and use their own file names, which might seems that this plugin is misbehaving. See [#7](https://github.com/mnaoumov/obsidian-custom-attachment-location/issues/7).
 
 ### Markdown URL format
 
