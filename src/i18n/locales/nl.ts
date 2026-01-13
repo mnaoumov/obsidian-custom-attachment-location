@@ -101,7 +101,7 @@ export const nl: Translations<PluginTypes> = {
       height: 'Hoogte',
       width: 'Breedte'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'zal de lege bijlagenmap verwijderen.',
         displayText: 'Verwijderen'
@@ -204,7 +204,7 @@ export const nl: Translations<PluginTypes> = {
       },
       name: 'Dubbele naam scheidingsteken'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Wanneer de bijlagenmap leeg wordt:'
       },

@@ -101,7 +101,7 @@ export const hu: Translations<PluginTypes> = {
       height: 'Magasság',
       width: 'Szélesség'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'törli az üres melléklet mappát.',
         displayText: 'Törlés'
@@ -205,7 +205,7 @@ export const hu: Translations<PluginTypes> = {
       },
       name: 'Duplikált név elválasztó'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Amikor a melléklet mappa üres lesz:'
       },

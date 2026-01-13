@@ -101,7 +101,7 @@ export const pt: Translations<PluginTypes> = {
       height: 'Altura',
       width: 'Largura'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'irá eliminar a pasta de anexos vazia.',
         displayText: 'Eliminar'
@@ -203,7 +203,7 @@ export const pt: Translations<PluginTypes> = {
       },
       name: 'Separador de nomes duplicados'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Quando a pasta de anexos ficar vazia:'
       },

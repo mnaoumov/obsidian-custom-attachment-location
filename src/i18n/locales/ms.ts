@@ -101,7 +101,7 @@ export const ms: Translations<PluginTypes> = {
       height: 'Ketinggian',
       width: 'Kelebaran'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'akan memadamkan folder lampiran kosong.',
         displayText: 'Padam'
@@ -204,7 +204,7 @@ export const ms: Translations<PluginTypes> = {
       },
       name: 'Pemisah nama pendua'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Apabila folder lampiran menjadi kosong:'
       },

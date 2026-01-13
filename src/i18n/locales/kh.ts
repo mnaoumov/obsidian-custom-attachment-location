@@ -100,7 +100,7 @@ export const kh: Translations<PluginTypes> = {
       height: 'កម្ពស់',
       width: 'ទទឹង'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'នឹងលុបទឹតែកឯកសារចំណាប់ទទេ។',
         displayText: 'លុប'
@@ -201,7 +201,7 @@ export const kh: Translations<PluginTypes> = {
       },
       name: 'អ្នកបំបែកឈ្មោះដូចគ្នា'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'នៅពេលទឹតែកឯកសារចំណាប់ក្លាយជាទទេ:'
       },

@@ -101,7 +101,7 @@ export const sq: Translations<PluginTypes> = {
       height: 'Gjatësia',
       width: 'Gjerësia'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'do të fshijë dosjen e zbrazët të bashkëngjitjeve.',
         displayText: 'Fshi'
@@ -205,7 +205,7 @@ export const sq: Translations<PluginTypes> = {
       },
       name: 'Ndarës për emra të dyfishtë'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Kur dosja e bashkëngjitjeve bëhet e zbrazët:'
       },

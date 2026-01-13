@@ -70,7 +70,7 @@ import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
 import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import {
-  EmptyAttachmentFolderBehavior,
+  EmptyFolderBehavior,
   registerRenameDeleteHandlers
 } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { createFolderSafe } from 'obsidian-dev-utils/obsidian/Vault';
@@ -240,7 +240,7 @@ export class Plugin extends PluginBase<PluginTypes> {
 
     registerRenameDeleteHandlers(this, () => {
       const settings: Partial<RenameDeleteHandlerSettings> = {
-        emptyAttachmentFolderBehavior: this.settings.emptyAttachmentFolderBehavior,
+        emptyFolderBehavior: this.settings.emptyFolderBehavior,
         isNote: (path) => isNoteEx(this, path),
         isPathIgnored: (path) => this.settings.isPathIgnored(path),
         shouldHandleDeletions: this.settings.shouldDeleteOrphanAttachments,
@@ -471,7 +471,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       const folderPath = parentFolderPath(attachmentPath);
       if (!await this.app.vault.exists(folderPath)) {
         await createFolderSafe(this.app, folderPath);
-        if (this.settings.emptyAttachmentFolderBehavior === EmptyAttachmentFolderBehavior.Keep) {
+        if (this.settings.emptyFolderBehavior === EmptyFolderBehavior.Keep) {
           await this.app.vault.create(join(folderPath, '.gitkeep'), '');
         }
       }

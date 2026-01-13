@@ -101,7 +101,7 @@ export const id: Translations<PluginTypes> = {
       height: 'Tinggi',
       width: 'Lebar'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'akan menghapus folder lampiran yang kosong.',
         displayText: 'Hapus'
@@ -206,7 +206,7 @@ export const id: Translations<PluginTypes> = {
       },
       name: 'Pemisah nama duplikat'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Ketika folder lampiran menjadi kosong:'
       },

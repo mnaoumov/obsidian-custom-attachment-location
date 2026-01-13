@@ -101,7 +101,7 @@ export const ja: Translations<PluginTypes> = {
       height: '高さ',
       width: '幅'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: '空の添付ファイルフォルダを削除します。',
         displayText: '削除'
@@ -205,7 +205,7 @@ export const ja: Translations<PluginTypes> = {
       },
       name: '重複名区切り文字'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: '添付ファイルフォルダが空になったとき:'
       },

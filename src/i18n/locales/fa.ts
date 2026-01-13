@@ -101,7 +101,7 @@ export const fa: Translations<PluginTypes> = {
       height: 'ارتفاع',
       width: 'عرض'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'پوشه خالی پیوست‌ها را حذف خواهد کرد.',
         displayText: 'حذف'
@@ -204,7 +204,7 @@ export const fa: Translations<PluginTypes> = {
       },
       name: 'جداکننده نام تکراری'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'زمانی که پوشه پیوست‌ها خالی می‌شود:'
       },

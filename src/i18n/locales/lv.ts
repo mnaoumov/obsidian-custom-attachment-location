@@ -101,7 +101,7 @@ export const lv: Translations<PluginTypes> = {
       height: 'Augstums',
       width: 'Platums'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'dzēsīs tukšo pielikumu mapi.',
         displayText: 'Dzēst'
@@ -203,7 +203,7 @@ export const lv: Translations<PluginTypes> = {
       },
       name: 'Dublēto nosaukumu atdalītājs'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Kad pielikumu mape kļūst tukša:'
       },

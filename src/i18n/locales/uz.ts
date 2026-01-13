@@ -101,7 +101,7 @@ export const uz: Translations<PluginTypes> = {
       height: 'Balandlik',
       width: 'Kenglik'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'Bo\'sh qo\'shimcha papkasini o\'chiradi.',
         displayText: 'O\'chirish'
@@ -204,7 +204,7 @@ export const uz: Translations<PluginTypes> = {
       },
       name: 'Nusxa nom ajratgichi'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Qo\'shimchalar papkasi bo\'sh bo\'lganda:'
       },

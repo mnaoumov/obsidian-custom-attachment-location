@@ -101,7 +101,7 @@ export const fr: Translations<PluginTypes> = {
       height: 'Hauteur',
       width: 'Largeur'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'supprimera le dossier de pièces jointes vide.',
         displayText: 'Supprimer'
@@ -207,7 +207,7 @@ export const fr: Translations<PluginTypes> = {
       },
       name: 'Séparateur de nom dupliqué'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Lorsque le dossier de pièces jointes devient vide :'
       },

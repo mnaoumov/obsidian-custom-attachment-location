@@ -100,7 +100,7 @@ export const zh: Translations<PluginTypes> = {
       height: '高度',
       width: '宽度'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: '将删除空的附件文件夹。',
         displayText: '删除'
@@ -201,7 +201,7 @@ export const zh: Translations<PluginTypes> = {
       },
       name: '重复文件名分隔符'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: '当附件文件夹变为空时：'
       },

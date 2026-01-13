@@ -3,7 +3,7 @@ import type { MaybeReturn } from 'obsidian-dev-utils/Type';
 import { debounce } from 'obsidian';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase';
-import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/Validation';
 import { isValidRegExp } from 'obsidian-dev-utils/RegExp';
 import { replaceAll } from 'obsidian-dev-utils/String';
@@ -32,6 +32,7 @@ class LegacySettings {
   public convertImagesToJpeg = false;
   public dateTimeFormat = '';
   public deleteOrphanAttachments = false;
+  public emptyAttachmentFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
   public generatedAttachmentFilename = '';
   public keepEmptyAttachmentFolders = false;
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
@@ -171,9 +172,13 @@ ${commentOut(this.legacySettings.customTokensStr)}
 
   private convertShouldKeepEmptyAttachmentFolders(): void {
     if (this.legacySettings.shouldKeepEmptyAttachmentFolders !== undefined) {
-      this.legacySettings.emptyAttachmentFolderBehavior = this.legacySettings.shouldKeepEmptyAttachmentFolders
-        ? EmptyAttachmentFolderBehavior.Keep
-        : EmptyAttachmentFolderBehavior.DeleteWithEmptyParents;
+      this.legacySettings.emptyFolderBehavior = this.legacySettings.shouldKeepEmptyAttachmentFolders
+        ? EmptyFolderBehavior.Keep
+        : EmptyFolderBehavior.DeleteWithEmptyParents;
+    }
+
+    if (this.legacySettings.emptyAttachmentFolderBehavior !== undefined) {
+      this.legacySettings.emptyFolderBehavior = this.legacySettings.emptyAttachmentFolderBehavior;
     }
   }
 

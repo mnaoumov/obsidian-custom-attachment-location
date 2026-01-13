@@ -101,7 +101,7 @@ export const ko: Translations<PluginTypes> = {
       height: '높이',
       width: '너비'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: '빈 첨부 파일 폴더를 삭제합니다.',
         displayText: '삭제'
@@ -202,7 +202,7 @@ export const ko: Translations<PluginTypes> = {
       },
       name: '중복 이름 구분자'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: '첨부 파일 폴더가 비게 될 때:'
       },

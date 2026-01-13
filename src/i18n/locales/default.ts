@@ -137,17 +137,17 @@ export const defaultTranslations = {
       height: 'Height',
       width: 'Width'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
-        description: 'will delete the empty attachment folder.',
+        description: 'will delete the empty folder.',
         displayText: 'Delete'
       },
       deleteWithEmptyParents: {
-        description: 'will delete the empty attachment folder and its empty parent folders.',
+        description: 'will delete the empty folder and its empty parent folders.',
         displayText: 'Delete with empty parents'
       },
       keep: {
-        description: 'will keep the empty attachment folder.',
+        description: 'will keep the empty folder.',
         displayText: 'Keep'
       }
     },
@@ -265,11 +265,11 @@ export const defaultTranslations = {
       },
       name: 'Duplicate name separator'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
-        part1: 'When the attachment folder becomes empty:'
+        part1: 'When the folder becomes empty:'
       },
-      name: 'Empty attachment folder behavior'
+      name: 'Empty folder behavior'
     },
     excludePaths: {
       description: {

@@ -101,7 +101,7 @@ export const pl: Translations<PluginTypes> = {
       height: 'Wysokość',
       width: 'Szerokość'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'usunie pusty folder załączników.',
         displayText: 'Usuń'
@@ -204,7 +204,7 @@ export const pl: Translations<PluginTypes> = {
       },
       name: 'Separator duplikowanych nazw'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Gdy folder załączników stanie się pusty:'
       },

@@ -101,7 +101,7 @@ export const ca: Translations<PluginTypes> = {
       height: 'Alçada',
       width: 'Amplada'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'esborrarà la carpeta d\'adjunts buida.',
         displayText: 'Esborrar'
@@ -207,7 +207,7 @@ export const ca: Translations<PluginTypes> = {
       },
       name: 'Separador de noms duplicats'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Quan la carpeta d\'adjunts es buida:'
       },
