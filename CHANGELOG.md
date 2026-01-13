@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.1.0
+
+- fix: rename emptyFolderBehavior
+
 ## 10.0.4
 
 - chore: update libs
