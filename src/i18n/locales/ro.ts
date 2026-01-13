@@ -101,7 +101,7 @@ export const ro: Translations<PluginTypes> = {
       height: 'Înălțime',
       width: 'Lățime'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'va șterge dosarul de atașamente gol.',
         displayText: 'Șterge'
@@ -205,7 +205,7 @@ export const ro: Translations<PluginTypes> = {
       },
       name: 'Separator pentru nume duplicate'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Când dosarul de atașamente devine gol:'
       },

@@ -100,7 +100,7 @@ export const ne: Translations<PluginTypes> = {
       height: 'उचाइ',
       width: 'चौडाइ'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'खाली संलग्नक फोल्डर मेटाउनेछ।',
         displayText: 'मेटाउनुहोस्'
@@ -201,7 +201,7 @@ export const ne: Translations<PluginTypes> = {
       },
       name: 'डुप्लिकेट नाम विभाजक'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'जब संलग्नक फोल्डर खाली हुन्छ:'
       },

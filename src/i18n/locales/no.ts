@@ -101,7 +101,7 @@ export const no: Translations<PluginTypes> = {
       height: 'Høyde',
       width: 'Bredde'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'vil slette den tomme vedleggsmappen.',
         displayText: 'Slett'
@@ -202,7 +202,7 @@ export const no: Translations<PluginTypes> = {
       },
       name: 'Duplikat navn separator'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Når vedleggsmappen blir tom:'
       },

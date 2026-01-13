@@ -101,7 +101,7 @@ export const be: Translations<PluginTypes> = {
       height: 'Вышыня',
       width: 'Шырыня'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'выдаліць пустую папку далучэнняў.',
         displayText: 'Выдаліць'
@@ -206,7 +206,7 @@ export const be: Translations<PluginTypes> = {
       },
       name: 'Раздзяляльнік дублікатаў імёнаў'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Калі папка далучэнняў становіцца пустой:'
       },

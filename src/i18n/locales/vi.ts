@@ -101,7 +101,7 @@ export const vi: Translations<PluginTypes> = {
       height: 'Сhiều cao',
       width: 'Сhiều rộng'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'Sẽ xóa thư mục tệp đính kèm trống.',
         displayText: 'Xóa'
@@ -203,7 +203,7 @@ export const vi: Translations<PluginTypes> = {
       },
       name: 'Bộ phân cách tên trùng'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Khi thư mục tệp đính kèm trở nên trống:'
       },

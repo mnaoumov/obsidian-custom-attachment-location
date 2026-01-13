@@ -101,7 +101,7 @@ export const ga: Translations<PluginTypes> = {
       height: 'Airde',
       width: 'Leithead'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'scriosfaidh an fhillteán ceangaltán folamh.',
         displayText: 'Scrios'
@@ -206,7 +206,7 @@ export const ga: Translations<PluginTypes> = {
       },
       name: 'Deighilteoir ainm dúbailte'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Nuair a bhíonn an fhillteán ceangaltán folamh:'
       },

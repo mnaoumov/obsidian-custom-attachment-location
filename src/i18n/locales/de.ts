@@ -101,7 +101,7 @@ export const de: Translations<PluginTypes> = {
       height: 'Höhe',
       width: 'Breite'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'wird den leeren Anhang-Ordner löschen.',
         displayText: 'Löschen'
@@ -206,7 +206,7 @@ export const de: Translations<PluginTypes> = {
       },
       name: 'Duplikat-Namen-Separator'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Wenn der Anhang-Ordner leer wird:'
       },

@@ -100,7 +100,7 @@ export const he: Translations<PluginTypes> = {
       height: 'גובה',
       width: 'רוחב'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'ימחק את תיקיית הקבצים המצורפים הריקה.',
         displayText: 'מחיקה'
@@ -203,7 +203,7 @@ export const he: Translations<PluginTypes> = {
       },
       name: 'מפריד שמות כפולים'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'כאשר תיקיית הקבצים המצורפים הופכת ריקה:'
       },

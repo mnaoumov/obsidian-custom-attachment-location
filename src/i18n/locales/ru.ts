@@ -101,7 +101,7 @@ export const ru: Translations<PluginTypes> = {
       height: 'Высота',
       width: 'Ширина'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'удалит пустую папку вложений.',
         displayText: 'Удалить'
@@ -204,7 +204,7 @@ export const ru: Translations<PluginTypes> = {
       },
       name: 'Разделитель для дубликатов имён'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Когда папка вложений пустая:'
       },

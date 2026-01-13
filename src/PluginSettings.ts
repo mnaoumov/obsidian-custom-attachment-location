@@ -1,5 +1,5 @@
 import { INFINITE_TIMEOUT } from 'obsidian-dev-utils/AbortController';
-import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { escapeRegExp } from 'obsidian-dev-utils/RegExp';
 
 export const SAMPLE_CUSTOM_TOKENS = String.raw`registerCustomToken('foo', (ctx) => {
@@ -62,7 +62,7 @@ export class PluginSettings {
   public defaultImageSize = '';
   public defaultImageSizeDimension: DefaultImageSizeDimension = DefaultImageSizeDimension.Width;
   public duplicateNameSeparator = ' ';
-  public emptyAttachmentFolderBehavior: EmptyAttachmentFolderBehavior = EmptyAttachmentFolderBehavior.DeleteWithEmptyParents;
+  public emptyFolderBehavior: EmptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
   public generatedAttachmentFileName = 'file-${date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}';
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.

@@ -100,7 +100,7 @@ export const th: Translations<PluginTypes> = {
       height: 'ความสูง',
       width: 'ความกว้าง'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'จะลบโฟลเดอร์ไฟล์แนบที่ว่างเปล่า',
         displayText: 'ลบ'
@@ -201,7 +201,7 @@ export const th: Translations<PluginTypes> = {
       },
       name: 'ตัวคั่นสำหรับชื่อซ้ำ'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'เมื่อโฟลเดอร์ไฟล์แนบว่างเปล่า:'
       },

@@ -100,7 +100,7 @@ export const ar: Translations<PluginTypes> = {
       height: 'الارتفاع',
       width: 'العرض'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'سيحذف مجلد المرفقات الفارغ.',
         displayText: 'حذف'
@@ -203,7 +203,7 @@ export const ar: Translations<PluginTypes> = {
       },
       name: 'فاصل الأسماء المكررة'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'عندما يصبح مجلد المرفقات فارغاً:'
       },

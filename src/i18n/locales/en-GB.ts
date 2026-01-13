@@ -101,7 +101,7 @@ export const enGB: Translations<PluginTypes> = {
       height: 'Height',
       width: 'Width'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'will delete the empty attachment folder.',
         displayText: 'Delete'
@@ -205,7 +205,7 @@ export const enGB: Translations<PluginTypes> = {
       },
       name: 'Duplicate name separator'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'When the attachment folder becomes empty:'
       },

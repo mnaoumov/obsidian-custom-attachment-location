@@ -100,7 +100,7 @@ export const am: Translations<PluginTypes> = {
       height: 'እርዝመት',
       width: 'ስፋት'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'ባዶውን ተያያዥ ፎልደር ይሰርዛል።',
         displayText: 'መሰረዝ'
@@ -203,7 +203,7 @@ export const am: Translations<PluginTypes> = {
       },
       name: 'የተደጋጋሚ ስም መለያያ'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'ተያያዥ ፎልደር ባዶ ሲሆን:'
       },

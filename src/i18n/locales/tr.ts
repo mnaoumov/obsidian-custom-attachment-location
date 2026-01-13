@@ -100,7 +100,7 @@ export const tr: Translations<PluginTypes> = {
       height: 'Yükseklik',
       width: 'Genişlik'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'Boş eki klasörünü silecek.',
         displayText: 'Sil'
@@ -201,7 +201,7 @@ export const tr: Translations<PluginTypes> = {
       },
       name: 'Yinelenen ad ayırıcı'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Ek klasörü boş olduğunda:'
       },

@@ -101,7 +101,7 @@ export const cs: Translations<PluginTypes> = {
       height: 'Výška',
       width: 'Šířka'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'smaže prázdnou složku příloh.',
         displayText: 'Smazat'
@@ -204,7 +204,7 @@ export const cs: Translations<PluginTypes> = {
       },
       name: 'Oddělovač duplicitních názvů'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Když se složka příloh stane prázdnou:'
       },

@@ -14,7 +14,7 @@ import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/Modals/Confirm';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
-import { EmptyAttachmentFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
 
 import type { PluginSettings } from './PluginSettings.ts';
@@ -443,31 +443,31 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.emptyAttachmentFolderBehavior.name))
+      .setName(t(($) => $.pluginSettingsTab.emptyFolderBehavior.name))
       .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.emptyAttachmentFolderBehavior.description.part1));
+        f.appendText(t(($) => $.pluginSettingsTab.emptyFolderBehavior.description.part1));
         f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.keep.displayText));
+        appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.keep.displayText));
         f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.keep.description));
+        f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.keep.description));
         f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.delete.displayText));
+        appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.delete.displayText));
         f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.delete.description));
+        f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.delete.description));
         f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.deleteWithEmptyParents.displayText));
+        appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText));
         f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.deleteWithEmptyParents.description));
+        f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.description));
       }))
       .addDropdown((dropdown) => {
         dropdown.addOptions({
           /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [EmptyAttachmentFolderBehavior.Keep]: t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.keep.displayText),
-          [EmptyAttachmentFolderBehavior.Delete]: t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.delete.displayText),
-          [EmptyAttachmentFolderBehavior.DeleteWithEmptyParents]: t(($) => $.pluginSettings.emptyAttachmentFolderBehavior.deleteWithEmptyParents.displayText)
+          [EmptyFolderBehavior.Keep]: t(($) => $.pluginSettings.emptyFolderBehavior.keep.displayText),
+          [EmptyFolderBehavior.Delete]: t(($) => $.pluginSettings.emptyFolderBehavior.delete.displayText),
+          [EmptyFolderBehavior.DeleteWithEmptyParents]: t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText)
           /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
         });
-        this.bind(dropdown, 'emptyAttachmentFolderBehavior');
+        this.bind(dropdown, 'emptyFolderBehavior');
       });
 
     new SettingEx(this.containerEl)

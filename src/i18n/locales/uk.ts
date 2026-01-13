@@ -101,7 +101,7 @@ export const uk: Translations<PluginTypes> = {
       height: 'Висота',
       width: 'Ширина'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       delete: {
         description: 'видалить порожню папку вкладень.',
         displayText: 'Видалити'
@@ -204,7 +204,7 @@ export const uk: Translations<PluginTypes> = {
       },
       name: 'Роздільник для дублікатів імен'
     },
-    emptyAttachmentFolderBehavior: {
+    emptyFolderBehavior: {
       description: {
         part1: 'Коли папка вкладень порожня:'
       },
