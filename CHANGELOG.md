@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.2.1
+
+- chore: update libs re #11
+
 ## 10.2.0
 
 - refactor: path settings re #12
