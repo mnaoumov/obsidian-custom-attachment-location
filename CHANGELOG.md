@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.2.0
+
+- refactor: path settings re #12
+
 ## 10.1.0
 
 - fix: rename emptyFolderBehavior
