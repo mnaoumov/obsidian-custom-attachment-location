@@ -298,6 +298,17 @@ export const defaultTranslations = {
       },
       name: 'Generated attachment file name'
     },
+    groups: {
+      advanced: 'Advanced',
+      collectedAttachments: 'Collected attachments',
+      core: 'Core',
+      customTokens: 'Custom tokens',
+      deletion: 'Deletion',
+      images: 'Images',
+      moveRenames: 'Move/renames',
+      path: 'Path',
+      specialCharacters: 'Special characters'
+    },
     includePaths: {
       description: {
         part1: 'Include notes from the following paths.',
