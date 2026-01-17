@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 10.3.0
+
+- feat: extract localizations
+- feat: reorder settings re #10
+
 ## 10.2.1
 
 - chore: update libs re #11
