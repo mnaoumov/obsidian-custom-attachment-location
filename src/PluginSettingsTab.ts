@@ -61,7 +61,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
     this.plugin.settingsManager.shouldDebounceCustomTokensValidation = true;
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Core')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.core))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.locationForNewAttachments.name))
@@ -115,7 +115,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Move/renames')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.moveRenames))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.duplicateNameSeparator.name))
@@ -292,7 +292,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Deletion')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.deletion))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.emptyFolderBehavior.name))
@@ -332,7 +332,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Special characters')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.specialCharacters))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.specialCharacters.name))
@@ -371,7 +371,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Collected attachments')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.collectedAttachments))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.name))
@@ -454,7 +454,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Images')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.images))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.defaultImageSize.name))
@@ -538,7 +538,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Path')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.path))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.includePaths.name))
@@ -635,7 +635,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Custom tokens')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.customTokens))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.customTokens.name))
@@ -694,7 +694,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       });
 
     new SettingGroupEx(this.containerEl)
-      .setHeading('Advanced')
+      .setHeading(t(($) => $.pluginSettingsTab.groups.advanced))
       .addSettingEx((setting) => {
         setting
           .setName(t(($) => $.pluginSettingsTab.markdownUrlFormat.name))
