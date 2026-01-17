@@ -15,7 +15,7 @@ import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/Modals/Confirm';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
-import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
+import { SettingGroupEx } from 'obsidian-dev-utils/obsidian/SettingGroupEx';
 
 import type { PluginSettings } from './PluginSettings.ts';
 import type { PluginTypes } from './PluginTypes.ts';
@@ -39,6 +39,14 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
     super.display();
     this.containerEl.empty();
 
+    const REGISTER_CUSTOM_TOKENS_DEBOUNCE_IN_MILLISECONDS = 2000;
+    const registerCustomTokensDebounced = debounce((customTokensStr: string) => {
+      invokeAsyncSafely(async () => {
+        Substitutions.registerCustomTokens(customTokensStr);
+        await this.revalidate();
+      });
+    }, REGISTER_CUSTOM_TOKENS_DEBOUNCE_IN_MILLISECONDS);
+
     const bindOptionsWithTrim: BindOptionsExtended<PluginSettings, string, ConditionalKeys<PluginSettings, string>> = {
       componentToPluginSettingsValueConverter(uiValue: string): string {
         return normalizePath(uiValue.trimEnd());
@@ -50,630 +58,681 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       shouldShowPlaceholderForDefaultValues: false
     };
 
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.locationForNewAttachments.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part1));
-        f.appendText(' ');
-        appendCodeBlock(f, '.');
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part2));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part3));
-        f.appendText(' ');
-        f.createEl('a', {
-          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-          text: t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part4)
-        });
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part5));
-        f.appendText(' ');
-        appendCodeBlock(f, '.attachments');
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part6));
-        f.appendText(' ');
-        f.createEl('a', { href: 'https://github.com/polyipseity/obsidian-show-hidden-files/', text: 'Show Hidden Files' });
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part7));
-      }))
-      .addCodeHighlighter((codeHighlighter) => {
-        codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-        codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-        this.bind(codeHighlighter, 'attachmentFolderPath', bindOptionsWithTrim);
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.generatedAttachmentFileName.description.part1));
-        f.appendText(' ');
-        f.createEl('a', {
-          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-          text: t(($) => $.pluginSettingsTab.generatedAttachmentFileName.description.part2)
-        });
-        f.appendText('.');
-      }))
-      .addCodeHighlighter((codeHighlighter) => {
-        codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-        codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-        this.bind(codeHighlighter, 'generatedAttachmentFileName', bindOptionsWithTrim);
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.markdownUrlFormat.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part2));
-        f.appendText(' ');
-        f.createEl('a', {
-          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-          text: t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part3)
-        });
-        f.appendText('.');
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part4));
-      }))
-      .addCodeHighlighter((codeHighlighter) => {
-        codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-        codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-        this.bind(codeHighlighter, 'markdownUrlFormat', bindOptionsWithTrim);
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.attachmentRenameMode.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.attachmentRenameMode.description.part1));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.attachmentRenameMode.none.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.attachmentRenameMode.none.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.attachmentRenameMode.onlyPastedImages.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.attachmentRenameMode.onlyPastedImages.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.attachmentRenameMode.all.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.attachmentRenameMode.all.description));
-      }))
-      .addDropdown((dropdown) => {
-        dropdown.addOptions({
-          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [AttachmentRenameMode.None]: t(($) => $.pluginSettings.attachmentRenameMode.none.displayText),
-          [AttachmentRenameMode.OnlyPastedImages]: t(($) => $.pluginSettings.attachmentRenameMode.onlyPastedImages.displayText),
-          [AttachmentRenameMode.All]: t(($) => $.pluginSettings.attachmentRenameMode.all.displayText)
-          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-        });
-        this.bind(dropdown, 'attachmentRenameMode');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.shouldHandleRenames.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part2));
-        f.appendText(' ');
-        f.createEl('a', {
-          href: 'obsidian://show-plugin?id=backlink-cache',
-          text: 'Backlink Cache'
-        });
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part3));
-      }))
-      .addToggle((toggle) => {
-        this.bind(toggle, 'shouldHandleRenames', {
-          onChanged: () => {
-            this.display();
-          }
-        });
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.name))
-      .setDesc(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.description))
-      .addToggle((toggle) => {
-        if (this.plugin.settings.shouldHandleRenames) {
-          this.bind(toggle, 'shouldRenameAttachmentFolder');
-        } else {
-          toggle.setDisabled(true);
-          toggle.setValue(false);
-        }
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.description.part1));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.pluginSettingsTab.renamedAttachmentFileName.name));
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.description.part2));
-      }))
-      .addToggle((toggle) => {
-        if (this.plugin.settings.shouldHandleRenames) {
-          this.bind(toggle, 'shouldRenameAttachmentFiles');
-        } else {
-          toggle.setDisabled(true);
-          toggle.setValue(false);
-        }
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part1));
-        f.appendText(' ');
-        f.createEl('a', {
-          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-          text: t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part2)
-        });
-        f.appendText('.');
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part3));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name));
-        f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part4));
-      }))
-      .addCodeHighlighter((codeHighlighter) => {
-        codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-        codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-        this.bind(codeHighlighter, 'renamedAttachmentFileName', bindOptionsWithTrim);
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.specialCharacters.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.specialCharacters.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.specialCharacters.description.part2));
-      }))
-      .addText((text) => {
-        this.bind(text, 'specialCharacters', {
-          componentToPluginSettingsValueConverter: restoreSpaceCharacter,
-          pluginSettingsToComponentValueConverter: showSpaceCharacter,
-          shouldResetSettingWhenComponentIsEmpty: false,
-          shouldShowPlaceholderForDefaultValues: false
-        });
-
-        handleWhitespace(text);
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.specialCharactersReplacement.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.specialCharactersReplacement.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.specialCharactersReplacement.description.part2));
-      }))
-      .addText((text) => {
-        this.bind(text, 'specialCharactersReplacement', {
-          componentToPluginSettingsValueConverter: restoreSpaceCharacter,
-          pluginSettingsToComponentValueConverter: showSpaceCharacter,
-          shouldResetSettingWhenComponentIsEmpty: false,
-          shouldShowPlaceholderForDefaultValues: false
-        });
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.convertImagesToJpegMode.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.convertImagesToJpegMode.description.part1));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.convertImagesToJpegMode.none.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.convertImagesToJpegMode.none.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.convertImagesToJpegMode.onlyPastedClipboardPngImages.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.convertImagesToJpegMode.onlyPastedClipboardPngImages.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.convertImagesToJpegMode.allImagesExceptAlreadyJpeg.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.convertImagesToJpegMode.allImagesExceptAlreadyJpeg.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.convertImagesToJpegMode.allImages.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.convertImagesToJpegMode.allImages.description));
-      }))
-      .addDropdown((dropdown) => {
-        dropdown.addOptions({
-          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [ConvertImagesToJpegMode.None]: t(($) => $.pluginSettings.convertImagesToJpegMode.none.displayText),
-          [ConvertImagesToJpegMode.OnlyPastedClipboardPngImages]: t(($) => $.pluginSettings.convertImagesToJpegMode.onlyPastedClipboardPngImages.displayText),
-          [ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles]: t(($) => $.pluginSettings.convertImagesToJpegMode.allImagesExceptAlreadyJpeg.displayText),
-          [ConvertImagesToJpegMode.AllImages]: t(($) => $.pluginSettings.convertImagesToJpegMode.allImages.displayText)
-          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-        });
-        this.bind(dropdown, 'convertImagesToJpegMode');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.jpegQuality.name))
-      .setDesc(t(($) => $.pluginSettingsTab.jpegQuality.description))
-      .addDropdown((dropDown) => {
-        dropDown.addOptions(generateJpegQualityOptions());
-        this.bind(dropDown, 'jpegQuality', {
-          componentToPluginSettingsValueConverter: (value) => Number(value),
-          pluginSettingsToComponentValueConverter: (value) => value.toPrecision(JPEG_QUALITY_PRECISION)
-        });
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part1));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part2));
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part3));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name));
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part4));
-      }))
-      .addToggle((toggle) => {
-        this.bind(toggle, 'shouldRenameCollectedAttachments');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part1));
-        f.appendText(' ');
-        f.createEl('a', {
-          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-          text: t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part2)
-        });
-        f.appendText('.');
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part3));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name));
-        f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part4));
-      }))
-      .addCodeHighlighter((codeHighlighter) => {
-        codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-        codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-        this.bind(codeHighlighter, 'collectedAttachmentFileName', bindOptionsWithTrim);
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.collectAttachmentUsedByMultipleNotesMode.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.collectAttachmentUsedByMultipleNotesMode.description.part1));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.description));
-      }))
-      .addDropdown((dropdown) => {
-        dropdown.addOptions({
-          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [CollectAttachmentUsedByMultipleNotesMode.Skip]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.displayText),
-          [CollectAttachmentUsedByMultipleNotesMode.Move]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.displayText),
-          [CollectAttachmentUsedByMultipleNotesMode.Copy]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.displayText),
-          [CollectAttachmentUsedByMultipleNotesMode.Cancel]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.displayText),
-          [CollectAttachmentUsedByMultipleNotesMode.Prompt]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText)
-          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-        });
-        this.bind(dropdown, 'collectAttachmentUsedByMultipleNotesMode');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.description.part1));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.description));
-      }))
-      .addDropdown((dropdown) => {
-        dropdown.addOptions({
-          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip]: t(($) =>
-            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText
-          ),
-          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll]: t(($) =>
-            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText
-          ),
-          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel]: t(($) =>
-            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText
-          ),
-          [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(($) =>
-            $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText
-          )
-          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-        });
-        this.bind(dropdown, 'moveAttachmentToProperFolderUsedByMultipleNotesMode');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.duplicateNameSeparator.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part2));
-        f.appendText(' ');
-        appendCodeBlock(f, 'existingFile.pdf');
-        f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part3));
-        f.appendText(' ');
-        appendCodeBlock(f, 'existingFile 1.pdf');
-        f.appendText(', ');
-        appendCodeBlock(f, 'existingFile 2.pdf');
-        f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part4));
-      }))
-      .addText((text) => {
-        this.bind(text, 'duplicateNameSeparator', {
-          componentToPluginSettingsValueConverter: restoreSpaceCharacter,
-          pluginSettingsToComponentValueConverter: showSpaceCharacter
-        });
-
-        handleWhitespace(text);
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.emptyFolderBehavior.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.emptyFolderBehavior.description.part1));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.keep.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.keep.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.delete.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.delete.description));
-        f.createEl('br');
-        appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText));
-        f.appendText(' - ');
-        f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.description));
-      }))
-      .addDropdown((dropdown) => {
-        dropdown.addOptions({
-          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [EmptyFolderBehavior.Keep]: t(($) => $.pluginSettings.emptyFolderBehavior.keep.displayText),
-          [EmptyFolderBehavior.Delete]: t(($) => $.pluginSettings.emptyFolderBehavior.delete.displayText),
-          [EmptyFolderBehavior.DeleteWithEmptyParents]: t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText)
-          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-        });
-        this.bind(dropdown, 'emptyFolderBehavior');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.shouldDeleteOrphanAttachments.name))
-      .setDesc(t(($) => $.pluginSettingsTab.shouldDeleteOrphanAttachments.description))
-      .addToggle((toggle) => {
-        this.bind(toggle, 'shouldDeleteOrphanAttachments');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.includePaths.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part2));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part3));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.regularExpression));
-        f.appendText('.');
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part4));
-      }))
-      .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'includePaths');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.excludePaths.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part2));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part3));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.regularExpression));
-        f.appendText('.');
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part4));
-      }))
-      .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'excludePaths');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part1));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part2));
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part3));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part4));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part5));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.regularExpression));
-        f.appendText('.');
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part6));
-      }))
-      .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'excludePathsFromAttachmentCollecting');
-      });
-
-    const REGISTER_CUSTOM_TOKENS_DEBOUNCE_IN_MILLISECONDS = 2000;
-    const registerCustomTokensDebounced = debounce((customTokensStr: string) => {
-      invokeAsyncSafely(async () => {
-        Substitutions.registerCustomTokens(customTokensStr);
-        await this.revalidate();
-      });
-    }, REGISTER_CUSTOM_TOKENS_DEBOUNCE_IN_MILLISECONDS);
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.customTokens.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part2));
-        f.appendText(' ');
-        f.createEl('a', {
-          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens',
-          text: t(($) => $.pluginSettingsTab.customTokens.description.part3)
-        });
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part4));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part5));
-      }))
-      .addCodeHighlighter((codeHighlighter) => {
-        codeHighlighter.setLanguage('javascript');
-        codeHighlighter.inputEl.addClass('custom-tokens-setting-control');
-        this.bind(codeHighlighter, 'customTokensStr', {
-          onChanged: (newValue) => {
-            registerCustomTokensDebounced(newValue);
-          }
-        });
-      });
     this.plugin.settingsManager.shouldDebounceCustomTokensValidation = true;
 
-    new SettingEx(this.containerEl)
-      .addButton((button) => {
-        button.setButtonText(t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title));
-        button.setWarning();
-        button.onClick(convertAsyncToSync(async () => {
-          if (this.plugin.settings.customTokensStr === SAMPLE_CUSTOM_TOKENS) {
-            return;
-          }
-
-          if (
-            this.plugin.settings.customTokensStr !== '' && !await confirm({
-              app: this.plugin.app,
-              cancelButtonText: t(($) => $.obsidianDevUtils.buttons.cancel),
-              message: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.message),
-              okButtonText: t(($) => $.obsidianDevUtils.buttons.ok),
-              title: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title)
-            })
-          ) {
-            return;
-          }
-
-          await this.plugin.settingsManager.editAndSave((setting) => {
-            setting.customTokensStr = SAMPLE_CUSTOM_TOKENS;
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Core')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.locationForNewAttachments.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part1));
+            f.appendText(' ');
+            appendCodeBlock(f, '.');
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part2));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part3));
+            f.appendText(' ');
+            f.createEl('a', {
+              href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+              text: t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part4)
+            });
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part5));
+            f.appendText(' ');
+            appendCodeBlock(f, '.attachments');
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part6));
+            f.appendText(' ');
+            f.createEl('a', { href: 'https://github.com/polyipseity/obsidian-show-hidden-files/', text: 'Show Hidden Files' });
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part7));
+          }))
+          .addCodeHighlighter((codeHighlighter) => {
+            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+            this.bind(codeHighlighter, 'attachmentFolderPath', bindOptionsWithTrim);
           });
-          this.display();
-        }));
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part2));
-        f.appendText(' ');
-        appendCodeBlock(f, '.md');
-        f.appendText(', ');
-        appendCodeBlock(f, '.canvas');
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part3));
-        f.appendText(' ');
-        appendCodeBlock(f, '.base');
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part4));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part5));
-        f.appendText(' ');
-        appendCodeBlock(f, '.foo.md');
-        f.appendText(', ');
-        appendCodeBlock(f, '.bar.canvas');
-        f.appendText(', ');
-        appendCodeBlock(f, '.baz.base');
-        f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part6));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part7));
-      }))
-      .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'treatAsAttachmentExtensions');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.timeoutInSeconds.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.timeoutInSeconds.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.timeoutInSeconds.description.part2));
-        f.appendText(' ');
-        appendCodeBlock(f, '0');
-        f.appendText(' ');
-        f.appendText(t(($) => $.pluginSettingsTab.timeoutInSeconds.description.part3));
-      }))
-      .addNumber((number) => {
-        number.setMin(0);
-        this.bind(number, 'timeoutInSeconds');
-      });
-
-    new SettingEx(this.containerEl)
-      .setName(t(($) => $.pluginSettingsTab.defaultImageSize.name))
-      .setDesc(createFragment((f) => {
-        f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part1));
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part2));
-        f.appendText(' (');
-        appendCodeBlock(f, '300px');
-        f.appendText(') ');
-        f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part3));
-        f.appendText(' (');
-        appendCodeBlock(f, '50%');
-        f.appendText(').');
-        f.createEl('br');
-        f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part4));
-      }))
-      .addText((text) => {
-        this.bind(text, 'defaultImageSize');
       })
-      .addDropdown((dropdown) => {
-        dropdown.selectEl.addClass('default-image-size-dimension-setting-control');
-        dropdown.addOptions({
-          /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-          [DefaultImageSizeDimension.Width]: t(($) => $.pluginSettings.defaultImageSizeDimension.width),
-          [DefaultImageSizeDimension.Height]: t(($) => $.pluginSettings.defaultImageSizeDimension.height)
-          /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-        });
-        this.bind(dropdown, 'defaultImageSizeDimension');
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.generatedAttachmentFileName.description.part1));
+            f.appendText(' ');
+            f.createEl('a', {
+              href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+              text: t(($) => $.pluginSettingsTab.generatedAttachmentFileName.description.part2)
+            });
+            f.appendText('.');
+          }))
+          .addCodeHighlighter((codeHighlighter) => {
+            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+            this.bind(codeHighlighter, 'generatedAttachmentFileName', bindOptionsWithTrim);
+          });
+      });
+
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Move/renames')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.duplicateNameSeparator.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part2));
+            f.appendText(' ');
+            appendCodeBlock(f, 'existingFile.pdf');
+            f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part3));
+            f.appendText(' ');
+            appendCodeBlock(f, 'existingFile 1.pdf');
+            f.appendText(', ');
+            appendCodeBlock(f, 'existingFile 2.pdf');
+            f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part4));
+          }))
+          .addText((text) => {
+            this.bind(text, 'duplicateNameSeparator', {
+              componentToPluginSettingsValueConverter: restoreSpaceCharacter,
+              pluginSettingsToComponentValueConverter: showSpaceCharacter
+            });
+
+            handleWhitespace(text);
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.attachmentRenameMode.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.attachmentRenameMode.description.part1));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.attachmentRenameMode.none.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.attachmentRenameMode.none.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.attachmentRenameMode.onlyPastedImages.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.attachmentRenameMode.onlyPastedImages.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.attachmentRenameMode.all.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.attachmentRenameMode.all.description));
+          }))
+          .addDropdown((dropdown) => {
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+              [AttachmentRenameMode.None]: t(($) => $.pluginSettings.attachmentRenameMode.none.displayText),
+              [AttachmentRenameMode.OnlyPastedImages]: t(($) => $.pluginSettings.attachmentRenameMode.onlyPastedImages.displayText),
+              [AttachmentRenameMode.All]: t(($) => $.pluginSettings.attachmentRenameMode.all.displayText)
+              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+            });
+            this.bind(dropdown, 'attachmentRenameMode');
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.shouldHandleRenames.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part2));
+            f.appendText(' ');
+            f.createEl('a', {
+              href: 'obsidian://show-plugin?id=backlink-cache',
+              text: 'Backlink Cache'
+            });
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part3));
+          }))
+          .addToggle((toggle) => {
+            this.bind(toggle, 'shouldHandleRenames', {
+              onChanged: () => {
+                this.display();
+              }
+            });
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.name))
+          .setDesc(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.description))
+          .addToggle((toggle) => {
+            if (this.plugin.settings.shouldHandleRenames) {
+              this.bind(toggle, 'shouldRenameAttachmentFolder');
+            } else {
+              toggle.setDisabled(true);
+              toggle.setValue(false);
+            }
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.description.part1));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.pluginSettingsTab.renamedAttachmentFileName.name));
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.description.part2));
+          }))
+          .addToggle((toggle) => {
+            if (this.plugin.settings.shouldHandleRenames) {
+              this.bind(toggle, 'shouldRenameAttachmentFiles');
+            } else {
+              toggle.setDisabled(true);
+              toggle.setValue(false);
+            }
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part1));
+            f.appendText(' ');
+            f.createEl('a', {
+              href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+              text: t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part2)
+            });
+            f.appendText('.');
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part3));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name));
+            f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part4));
+          }))
+          .addCodeHighlighter((codeHighlighter) => {
+            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+            this.bind(codeHighlighter, 'renamedAttachmentFileName', bindOptionsWithTrim);
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.description.part1));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.description));
+          }))
+          .addDropdown((dropdown) => {
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip]: t(($) =>
+                $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText
+              ),
+              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll]: t(($) =>
+                $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText
+              ),
+              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel]: t(($) =>
+                $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText
+              ),
+              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(($) =>
+                $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText
+              )
+              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+            });
+            this.bind(dropdown, 'moveAttachmentToProperFolderUsedByMultipleNotesMode');
+          });
+      });
+
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Deletion')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.emptyFolderBehavior.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.emptyFolderBehavior.description.part1));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.keep.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.keep.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.delete.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.delete.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.description));
+          }))
+          .addDropdown((dropdown) => {
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+              [EmptyFolderBehavior.Keep]: t(($) => $.pluginSettings.emptyFolderBehavior.keep.displayText),
+              [EmptyFolderBehavior.Delete]: t(($) => $.pluginSettings.emptyFolderBehavior.delete.displayText),
+              [EmptyFolderBehavior.DeleteWithEmptyParents]: t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText)
+              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+            });
+            this.bind(dropdown, 'emptyFolderBehavior');
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.shouldDeleteOrphanAttachments.name))
+          .setDesc(t(($) => $.pluginSettingsTab.shouldDeleteOrphanAttachments.description))
+          .addToggle((toggle) => {
+            this.bind(toggle, 'shouldDeleteOrphanAttachments');
+          });
+      });
+
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Special characters')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.specialCharacters.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.specialCharacters.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.specialCharacters.description.part2));
+          }))
+          .addText((text) => {
+            this.bind(text, 'specialCharacters', {
+              componentToPluginSettingsValueConverter: restoreSpaceCharacter,
+              pluginSettingsToComponentValueConverter: showSpaceCharacter,
+              shouldResetSettingWhenComponentIsEmpty: false,
+              shouldShowPlaceholderForDefaultValues: false
+            });
+
+            handleWhitespace(text);
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.specialCharactersReplacement.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.specialCharactersReplacement.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.specialCharactersReplacement.description.part2));
+          }))
+          .addText((text) => {
+            this.bind(text, 'specialCharactersReplacement', {
+              componentToPluginSettingsValueConverter: restoreSpaceCharacter,
+              pluginSettingsToComponentValueConverter: showSpaceCharacter,
+              shouldResetSettingWhenComponentIsEmpty: false,
+              shouldShowPlaceholderForDefaultValues: false
+            });
+          });
+      });
+
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Collected attachments')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part1));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part2));
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part3));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name));
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part4));
+          }))
+          .addToggle((toggle) => {
+            this.bind(toggle, 'shouldRenameCollectedAttachments');
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part1));
+            f.appendText(' ');
+            f.createEl('a', {
+              href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+              text: t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part2)
+            });
+            f.appendText('.');
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part3));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name));
+            f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part4));
+          }))
+          .addCodeHighlighter((codeHighlighter) => {
+            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+            this.bind(codeHighlighter, 'collectedAttachmentFileName', bindOptionsWithTrim);
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.collectAttachmentUsedByMultipleNotesMode.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.collectAttachmentUsedByMultipleNotesMode.description.part1));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.description));
+          }))
+          .addDropdown((dropdown) => {
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+              [CollectAttachmentUsedByMultipleNotesMode.Skip]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.skip.displayText),
+              [CollectAttachmentUsedByMultipleNotesMode.Move]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.move.displayText),
+              [CollectAttachmentUsedByMultipleNotesMode.Copy]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.copy.displayText),
+              [CollectAttachmentUsedByMultipleNotesMode.Cancel]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.cancel.displayText),
+              [CollectAttachmentUsedByMultipleNotesMode.Prompt]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText)
+              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+            });
+            this.bind(dropdown, 'collectAttachmentUsedByMultipleNotesMode');
+          });
+      });
+
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Images')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.defaultImageSize.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part2));
+            f.appendText(' (');
+            appendCodeBlock(f, '300px');
+            f.appendText(') ');
+            f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part3));
+            f.appendText(' (');
+            appendCodeBlock(f, '50%');
+            f.appendText(').');
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part4));
+          }))
+          .addText((text) => {
+            this.bind(text, 'defaultImageSize');
+          })
+          .addDropdown((dropdown) => {
+            dropdown.selectEl.addClass('default-image-size-dimension-setting-control');
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+              [DefaultImageSizeDimension.Width]: t(($) => $.pluginSettings.defaultImageSizeDimension.width),
+              [DefaultImageSizeDimension.Height]: t(($) => $.pluginSettings.defaultImageSizeDimension.height)
+              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+            });
+            this.bind(dropdown, 'defaultImageSizeDimension');
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.convertImagesToJpegMode.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.convertImagesToJpegMode.description.part1));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.convertImagesToJpegMode.none.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.convertImagesToJpegMode.none.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.convertImagesToJpegMode.onlyPastedClipboardPngImages.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.convertImagesToJpegMode.onlyPastedClipboardPngImages.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.convertImagesToJpegMode.allImagesExceptAlreadyJpeg.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.convertImagesToJpegMode.allImagesExceptAlreadyJpeg.description));
+            f.createEl('br');
+            appendCodeBlock(f, t(($) => $.pluginSettings.convertImagesToJpegMode.allImages.displayText));
+            f.appendText(' - ');
+            f.appendText(t(($) => $.pluginSettings.convertImagesToJpegMode.allImages.description));
+          }))
+          .addDropdown((dropdown) => {
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+              [ConvertImagesToJpegMode.None]: t(($) => $.pluginSettings.convertImagesToJpegMode.none.displayText),
+              [ConvertImagesToJpegMode.OnlyPastedClipboardPngImages]: t(($) =>
+                $.pluginSettings.convertImagesToJpegMode.onlyPastedClipboardPngImages.displayText
+              ),
+              [ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles]: t(($) =>
+                $.pluginSettings.convertImagesToJpegMode.allImagesExceptAlreadyJpeg.displayText
+              ),
+              [ConvertImagesToJpegMode.AllImages]: t(($) => $.pluginSettings.convertImagesToJpegMode.allImages.displayText)
+              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+            });
+            this.bind(dropdown, 'convertImagesToJpegMode');
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.jpegQuality.name))
+          .setDesc(t(($) => $.pluginSettingsTab.jpegQuality.description))
+          .addDropdown((dropDown) => {
+            dropDown.addOptions(generateJpegQualityOptions());
+            this.bind(dropDown, 'jpegQuality', {
+              componentToPluginSettingsValueConverter: (value) => Number(value),
+              pluginSettingsToComponentValueConverter: (value) => value.toPrecision(JPEG_QUALITY_PRECISION)
+            });
+          });
+      });
+
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Path')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.includePaths.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part2));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part3));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.regularExpression));
+            f.appendText('.');
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part4));
+          }))
+          .addMultipleText((multipleText) => {
+            this.bind(multipleText, 'includePaths');
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.excludePaths.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part2));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part3));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.regularExpression));
+            f.appendText('.');
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part4));
+          }))
+          .addMultipleText((multipleText) => {
+            this.bind(multipleText, 'excludePaths');
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part1));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part2));
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part3));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part4));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part5));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.regularExpression));
+            f.appendText('.');
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part6));
+          }))
+          .addMultipleText((multipleText) => {
+            this.bind(multipleText, 'excludePathsFromAttachmentCollecting');
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part2));
+            f.appendText(' ');
+            appendCodeBlock(f, '.md');
+            f.appendText(', ');
+            appendCodeBlock(f, '.canvas');
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part3));
+            f.appendText(' ');
+            appendCodeBlock(f, '.base');
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part4));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part5));
+            f.appendText(' ');
+            appendCodeBlock(f, '.foo.md');
+            f.appendText(', ');
+            appendCodeBlock(f, '.bar.canvas');
+            f.appendText(', ');
+            appendCodeBlock(f, '.baz.base');
+            f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part6));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part7));
+          }))
+          .addMultipleText((multipleText) => {
+            this.bind(multipleText, 'treatAsAttachmentExtensions');
+          });
+      });
+
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Custom tokens')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.customTokens.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part2));
+            f.appendText(' ');
+            f.createEl('a', {
+              href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens',
+              text: t(($) => $.pluginSettingsTab.customTokens.description.part3)
+            });
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part4));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part5));
+          }))
+          .addCodeHighlighter((codeHighlighter) => {
+            codeHighlighter.setLanguage('javascript');
+            codeHighlighter.inputEl.addClass('custom-tokens-setting-control');
+            this.bind(codeHighlighter, 'customTokensStr', {
+              onChanged: (newValue) => {
+                registerCustomTokensDebounced(newValue);
+              }
+            });
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .addButton((button) => {
+            button.setButtonText(t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title));
+            button.setWarning();
+            button.onClick(convertAsyncToSync(async () => {
+              if (this.plugin.settings.customTokensStr === SAMPLE_CUSTOM_TOKENS) {
+                return;
+              }
+
+              if (
+                this.plugin.settings.customTokensStr !== '' && !await confirm({
+                  app: this.plugin.app,
+                  cancelButtonText: t(($) => $.obsidianDevUtils.buttons.cancel),
+                  message: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.message),
+                  okButtonText: t(($) => $.obsidianDevUtils.buttons.ok),
+                  title: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title)
+                })
+              ) {
+                return;
+              }
+
+              await this.plugin.settingsManager.editAndSave((settings) => {
+                settings.customTokensStr = SAMPLE_CUSTOM_TOKENS;
+              });
+              this.display();
+            }));
+          });
+      });
+
+    new SettingGroupEx(this.containerEl)
+      .setHeading('Advanced')
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.markdownUrlFormat.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part2));
+            f.appendText(' ');
+            f.createEl('a', {
+              href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+              text: t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part3)
+            });
+            f.appendText('.');
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part4));
+          }))
+          .addCodeHighlighter((codeHighlighter) => {
+            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+            this.bind(codeHighlighter, 'markdownUrlFormat', bindOptionsWithTrim);
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.timeoutInSeconds.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.timeoutInSeconds.description.part1));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.timeoutInSeconds.description.part2));
+            f.appendText(' ');
+            appendCodeBlock(f, '0');
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.timeoutInSeconds.description.part3));
+          }))
+          .addNumber((number) => {
+            number.setMin(0);
+            this.bind(number, 'timeoutInSeconds');
+          });
       });
   }
 
