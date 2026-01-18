@@ -269,7 +269,8 @@ export async function getProperAttachmentPath(options: GetProperAttachmentPathOp
           cursorLine: isReferenceCache(options.reference) ? options.reference.position.start.line : 0,
           noteFilePath: options.noteFilePath,
           originalAttachmentFileName: options.attachmentFile.name,
-          plugin: options.plugin
+          plugin: options.plugin,
+          sequenceNumber: await options.plugin.getSequenceNumber(options.noteFilePath, options.attachmentFile.path)
         })
       ),
       options.attachmentFile.extension
