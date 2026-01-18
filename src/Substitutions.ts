@@ -184,6 +184,8 @@ export class Substitutions {
     } else {
       this.cursorLine = options.cursorLine;
     }
+
+    this.sequenceNumber = options.sequenceNumber;
   }
 
   public static isRegisteredToken(token: string): boolean {
