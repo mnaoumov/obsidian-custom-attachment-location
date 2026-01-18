@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.3.1
+
+- fix: sequenceNumber re #13
+
 ## 10.3.0
 
 - feat: extract localizations
