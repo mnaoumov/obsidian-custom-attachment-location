@@ -11,6 +11,10 @@ export interface ScannedToken {
 
 const TOKEN_HEAD_REGEXP = /\$\{\s*(?<Token>[a-zA-Z0-9_]+)\s*(?<Colon>:\s*)?/y;
 
+interface ScanTokensOptions {
+  throwOnError?: boolean;
+}
+
 export function parseFormatObject(formatText: string, tokenName: string): Record<string, unknown> {
   let parsed: unknown;
   try {
@@ -25,7 +29,7 @@ export function parseFormatObject(formatText: string, tokenName: string): Record
   return parsed as Record<string, unknown>;
 }
 
-export function scanTokens(str: string, options?: { throwOnError?: boolean }): ScannedToken[] {
+export function scanTokens(str: string, options?: ScanTokensOptions): ScannedToken[] {
   const throwOnError = options?.throwOnError ?? true;
   const tokens: ScannedToken[] = [];
 

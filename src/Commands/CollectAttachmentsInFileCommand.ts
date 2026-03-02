@@ -41,7 +41,6 @@ class CollectAttachmentsInFilesCommandInvocation extends AbstractFilesCommandInv
 }
 
 export class CollectAttachmentsInFileCommand extends AbstractFileCommandBase<Plugin> {
-
   public constructor(plugin: Plugin) {
     super({
       fileMenuItemName: t(($) => $.menuItems.collectAttachmentsInFile),

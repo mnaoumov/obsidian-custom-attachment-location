@@ -101,24 +101,6 @@ interface ValidateFileNameOptions {
   tokenValidationMode: TokenValidationMode;
 }
 
-export function parseCustomTokens(customTokensStr: string): CustomToken[] | null {
-  const customTokens: CustomToken[] = [];
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func -- Need to create function from string.
-    const registerCustomTokensWrapperFn = new Function('registerCustomToken', customTokensStr) as RegisterCustomTokensWrapperFn;
-
-    registerCustomTokensWrapperFn(registerCustomToken);
-    return customTokens;
-  } catch (e) {
-    printError(new Error('Error registering custom tokens', { cause: e }));
-    return null;
-  }
-
-  function registerCustomToken(token: string, evaluator: TokenEvaluator): void {
-    customTokens.push(new CustomToken(token, evaluator));
-  }
-}
-
 export class Substitutions {
   private static readonly registeredTokens = new Map<string, TokenBase<unknown>>();
   static {
@@ -290,6 +272,24 @@ export class Substitutions {
 
     out += template.slice(lastOffset);
     return out;
+  }
+}
+
+export function parseCustomTokens(customTokensStr: string): CustomToken[] | null {
+  const customTokens: CustomToken[] = [];
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func -- Need to create function from string.
+    const registerCustomTokensWrapperFn = new Function('registerCustomToken', customTokensStr) as RegisterCustomTokensWrapperFn;
+
+    registerCustomTokensWrapperFn(registerCustomToken);
+    return customTokens;
+  } catch (e) {
+    printError(new Error('Error registering custom tokens', { cause: e }));
+    return null;
+  }
+
+  function registerCustomToken(token: string, evaluator: TokenEvaluator): void {
+    customTokens.push(new CustomToken(token, evaluator));
   }
 }
 
