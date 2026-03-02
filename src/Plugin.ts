@@ -7,7 +7,7 @@ import type {
 } from 'obsidian';
 import type {
   AttachmentPathContext,
-  GetAvailablePathForAttachmentsExtendedFnOptions,
+  GetAvailablePathForAttachmentsExtendedFnParams,
   GetAvailablePathForAttachmentsFnExtended
 } from 'obsidian-dev-utils/obsidian/AttachmentPath';
 import type { PathOrFile } from 'obsidian-dev-utils/obsidian/FileSystem';
@@ -403,19 +403,19 @@ export class Plugin extends PluginBase<PluginTypes> {
     }
   }
 
-  private async getAvailablePathForAttachments(options: GetAvailablePathForAttachmentsExtendedFnOptions): Promise<string> {
+  private async getAvailablePathForAttachments(params: GetAvailablePathForAttachmentsExtendedFnParams): Promise<string> {
     const {
       attachmentFileExtension,
       notePathOrFile,
       shouldSkipDuplicateCheck,
       shouldSkipMissingAttachmentFolderCreation
-    } = options;
+    } = params;
     let {
       attachmentFileBaseName,
       attachmentFileContent,
       attachmentFileStat,
       shouldSkipGeneratedAttachmentFileName
-    } = options;
+    } = params;
 
     if (attachmentFileBaseName === DUMMY_PATH) {
       attachmentFileContent ??= new ArrayBuffer(0);
@@ -429,7 +429,7 @@ export class Plugin extends PluginBase<PluginTypes> {
 
     const noteFile = getFileOrNull(this.app, notePathOrFile);
     const noteFilePath = notePathOrFile ? getPath(this.app, notePathOrFile) : undefined;
-    const oldNoteFilePath = options.oldNotePathOrFile ? getPath(this.app, options.oldNotePathOrFile) : undefined;
+    const oldNoteFilePath = params.oldNotePathOrFile ? getPath(this.app, params.oldNotePathOrFile) : undefined;
 
     if (attachmentFileBaseName.startsWith(IMPORT_FILES_PREFIX)) {
       attachmentFileBaseName = trimStart(attachmentFileBaseName, IMPORT_FILES_PREFIX);
@@ -453,7 +453,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       const attachmentFileName = makeFileName(attachmentFileBaseName, attachmentFileExtension);
       const attachmentFolderFullPath = await getAttachmentFolderFullPathForPath(
         this,
-        options.context as string as ActionContext,
+        params.context as string as ActionContext,
         noteFilePath,
         attachmentFileName,
         oldNoteFilePath,
@@ -464,12 +464,12 @@ export class Plugin extends PluginBase<PluginTypes> {
       if (shouldSkipGeneratedAttachmentFileName) {
         generatedAttachmentFileName = attachmentFileName;
       } else {
-        const cursorLine = await this.getCursorLine(noteFilePath, options.oldAttachmentPathOrFile);
-        const sequenceNumber = await this.getSequenceNumber(noteFilePath, options.oldAttachmentPathOrFile);
+        const cursorLine = await this.getCursorLine(noteFilePath, params.oldAttachmentPathOrFile);
+        const sequenceNumber = await this.getSequenceNumber(noteFilePath, params.oldAttachmentPathOrFile);
         const generatedAttachmentFileBaseName = await getGeneratedAttachmentFileBaseName(
           this,
           new Substitutions({
-            actionContext: options.context as string as ActionContext,
+            actionContext: params.context as string as ActionContext,
             attachmentFileContent,
             attachmentFileStat,
             cursorLine,
