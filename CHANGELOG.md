@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 10.3.2
+
+- chore: lint
+- chore: update libs re #19
+
 ## 10.3.1
 
 - fix: sequenceNumber re #13
