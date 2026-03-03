@@ -11,6 +11,12 @@ export interface ScannedToken {
 
 const TOKEN_HEAD_REGEXP = /\$\{\s*(?<Token>[a-zA-Z0-9_]+)\s*(?<Colon>:\s*)?/y;
 
+interface ParseHeadAtResult {
+  hasColon: boolean;
+  indexAfterHead: number;
+  tokenName: string;
+}
+
 interface ScanTokensOptions {
   throwOnError?: boolean;
 }
@@ -48,7 +54,7 @@ function parseHeadAt(
   str: string,
   start: number,
   throwOnError: boolean
-): { hasColon: boolean; indexAfterHead: number; tokenName: string } | null {
+): null | ParseHeadAtResult {
   TOKEN_HEAD_REGEXP.lastIndex = start;
   const head = TOKEN_HEAD_REGEXP.exec(str);
   if (!head) {
