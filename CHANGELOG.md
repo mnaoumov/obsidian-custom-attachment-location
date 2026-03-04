@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.3.3
+
+- feat: safer trashing
+
 ## 10.3.2
 
 - chore: lint
