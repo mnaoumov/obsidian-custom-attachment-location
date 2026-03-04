@@ -14,6 +14,7 @@ import {
 import { CssClass } from 'obsidian-dev-utils/CssClass';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { addPluginCssClasses } from 'obsidian-dev-utils/obsidian/Plugin/PluginContext';
+import { trashSafe } from 'obsidian-dev-utils/obsidian/Vault';
 
 import type { TokenEvaluatorContext } from './TokenEvaluatorContext.ts';
 
@@ -37,7 +38,7 @@ class PreviewModal extends Modal {
     this.embedComponent?.unload();
     invokeAsyncSafely(async () => {
       if (this.tempFile) {
-        await this.app.fileManager.trashFile(this.tempFile);
+        await trashSafe(this.app, this.tempFile);
       }
     });
   }
