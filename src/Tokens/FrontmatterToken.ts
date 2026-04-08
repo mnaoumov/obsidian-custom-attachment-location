@@ -1,4 +1,4 @@
-import { getNestedPropertyValue } from 'obsidian-dev-utils/ObjectUtils';
+import { getNestedPropertyValue } from 'obsidian-dev-utils/object-utils';
 import { getFileOrNull } from 'obsidian-dev-utils/obsidian/FileSystem';
 import { z } from 'zod';
 

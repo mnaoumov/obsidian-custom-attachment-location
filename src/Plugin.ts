@@ -34,15 +34,15 @@ import {
   TFile,
   Vault
 } from 'obsidian';
-import { convertAsyncToSync } from 'obsidian-dev-utils/Async';
+import { convertAsyncToSync } from 'obsidian-dev-utils/async';
 import { blobToJpegArrayBuffer } from 'obsidian-dev-utils/Blob';
-import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
+import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   extractDefaultExportInterop,
   getPrototypeOf,
   normalizeOptionalProperties,
   removeUndefinedProperties
-} from 'obsidian-dev-utils/ObjectUtils';
+} from 'obsidian-dev-utils/object-utils';
 import {
   DUMMY_PATH,
   getAvailablePathForAttachments
@@ -66,9 +66,9 @@ import {
   getAllLinks,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/MetadataCache';
-import { alert } from 'obsidian-dev-utils/obsidian/Modals/Alert';
-import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
-import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
+import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
+import { registerPatch } from 'obsidian-dev-utils/obsidian/monkey-around';
+import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-base';
 import {
   EmptyFolderBehavior,
   registerRenameDeleteHandlers
@@ -80,8 +80,8 @@ import {
   extname,
   join,
   makeFileName
-} from 'obsidian-dev-utils/Path';
-import { trimStart } from 'obsidian-dev-utils/String';
+} from 'obsidian-dev-utils/path';
+import { trimStart } from 'obsidian-dev-utils/string';
 import {
   isReferenceCache,
   parentFolderPath,

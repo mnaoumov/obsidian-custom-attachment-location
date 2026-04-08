@@ -4,10 +4,10 @@ import {
   normalizePath,
   Notice
 } from 'obsidian';
-import { printError } from 'obsidian-dev-utils/Error';
-import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
+import { printError } from 'obsidian-dev-utils/error';
+import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { join } from 'obsidian-dev-utils/Path';
+import { join } from 'obsidian-dev-utils/path';
 
 import type { Plugin } from './Plugin.ts';
 

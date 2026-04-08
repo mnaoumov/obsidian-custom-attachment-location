@@ -1,5 +1,5 @@
 import { moment as moment_ } from 'obsidian';
-import { extractDefaultExportInterop } from 'obsidian-dev-utils/ObjectUtils';
+import { extractDefaultExportInterop } from 'obsidian-dev-utils/object-utils';
 import { z } from 'zod';
 
 export const moment = extractDefaultExportInterop(moment_);

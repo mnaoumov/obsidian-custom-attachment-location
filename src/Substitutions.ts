@@ -6,18 +6,18 @@ import type { Promisable } from 'type-fest';
 
 // eslint-disable-next-line import-x/no-namespace -- Need to pass entire obsidian module.
 import * as obsidian from 'obsidian';
-import { printError } from 'obsidian-dev-utils/Error';
+import { printError } from 'obsidian-dev-utils/error';
 import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/AttachmentPath';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/Validation';
 import {
   basename,
   dirname,
   extname
-} from 'obsidian-dev-utils/Path';
+} from 'obsidian-dev-utils/path';
 import {
   trimEnd,
   trimStart
-} from 'obsidian-dev-utils/String';
+} from 'obsidian-dev-utils/string';
 
 import type { Plugin } from './Plugin.ts';
 import type { TokenEvaluatorContext } from './TokenEvaluatorContext.ts';

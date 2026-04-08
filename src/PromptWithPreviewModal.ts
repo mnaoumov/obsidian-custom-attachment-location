@@ -1,5 +1,5 @@
 import type { TFile } from 'obsidian';
-import type { PromiseResolve } from 'obsidian-dev-utils/Async';
+import type { PromiseResolve } from 'obsidian-dev-utils/async';
 import type { EmbedComponent } from 'obsidian-typings';
 
 import {
@@ -10,7 +10,7 @@ import {
 import {
   convertAsyncToSync,
   invokeAsyncSafely
-} from 'obsidian-dev-utils/Async';
+} from 'obsidian-dev-utils/async';
 import { CssClass } from 'obsidian-dev-utils/CssClass';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { addPluginCssClasses } from 'obsidian-dev-utils/obsidian/Plugin/PluginContext';

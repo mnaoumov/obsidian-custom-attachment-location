@@ -1,4 +1,4 @@
-import type { BindOptionsExtended } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
+import type { BindOptionsExtended } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab-base';
 import type { ConditionalKeys } from 'type-fest';
 
 import {
@@ -9,11 +9,11 @@ import {
 import {
   convertAsyncToSync,
   invokeAsyncSafely
-} from 'obsidian-dev-utils/Async';
-import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
+} from 'obsidian-dev-utils/async';
+import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/Modals/Confirm';
-import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
+import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab-base';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
 import { SettingGroupEx } from 'obsidian-dev-utils/obsidian/SettingGroupEx';
 
