@@ -11,8 +11,8 @@ export const configs: Linter.Config[] = defineEslintConfigs({
           'error',
           {
             brands: [
-            'Backlink Cache',
-            'Show Hidden Files'
+              'Backlink Cache',
+              'Show Hidden Files'
             ]
           }
         ]

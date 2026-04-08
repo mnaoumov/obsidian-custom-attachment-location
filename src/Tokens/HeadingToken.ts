@@ -1,4 +1,4 @@
-import { getCacheSafe } from 'obsidian-dev-utils/obsidian/MetadataCache';
+import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { z } from 'zod';
 
 import type { TokenEvaluatorContext } from '../TokenEvaluatorContext.ts';

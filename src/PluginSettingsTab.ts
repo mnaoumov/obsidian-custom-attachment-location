@@ -12,10 +12,10 @@ import {
 } from 'obsidian-dev-utils/async';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { confirm } from 'obsidian-dev-utils/obsidian/Modals/Confirm';
+import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab-base';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
-import { SettingGroupEx } from 'obsidian-dev-utils/obsidian/SettingGroupEx';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
+import { SettingGroupEx } from 'obsidian-dev-utils/obsidian/setting-group-ex';
 
 import type { PluginSettings } from './PluginSettings.ts';
 import type { PluginTypes } from './PluginTypes.ts';

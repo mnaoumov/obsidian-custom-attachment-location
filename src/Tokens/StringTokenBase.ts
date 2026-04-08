@@ -1,5 +1,4 @@
 import { extractDefaultExportInterop } from 'obsidian-dev-utils/object-utils';
-// eslint-disable-next-line import-x/no-rename-default -- Need to rename default export.
 import slugify_ from 'slugify';
 import { z } from 'zod';
 

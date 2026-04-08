@@ -1,5 +1,5 @@
 import { getNestedPropertyValue } from 'obsidian-dev-utils/object-utils';
-import { getFileOrNull } from 'obsidian-dev-utils/obsidian/FileSystem';
+import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
 import { z } from 'zod';
 
 import type { TokenEvaluatorContext } from '../TokenEvaluatorContext.ts';

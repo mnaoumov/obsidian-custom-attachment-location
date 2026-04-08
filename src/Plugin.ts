@@ -9,10 +9,10 @@ import type {
   AttachmentPathContext,
   GetAvailablePathForAttachmentsExtendedFnParams,
   GetAvailablePathForAttachmentsFnExtended
-} from 'obsidian-dev-utils/obsidian/AttachmentPath';
-import type { PathOrFile } from 'obsidian-dev-utils/obsidian/FileSystem';
+} from 'obsidian-dev-utils/obsidian/attachment-path';
+import type { PathOrFile } from 'obsidian-dev-utils/obsidian/file-system';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
+import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import type {
   ClipboardManager,
   ImportedAttachment
@@ -35,7 +35,7 @@ import {
   Vault
 } from 'obsidian';
 import { convertAsyncToSync } from 'obsidian-dev-utils/async';
-import { blobToJpegArrayBuffer } from 'obsidian-dev-utils/Blob';
+import { blobToJpegArrayBuffer } from 'obsidian-dev-utils/blob';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   extractDefaultExportInterop,
@@ -46,13 +46,14 @@ import {
 import {
   DUMMY_PATH,
   getAvailablePathForAttachments
-} from 'obsidian-dev-utils/obsidian/AttachmentPath';
+} from 'obsidian-dev-utils/obsidian/attachment-path';
+import { AllWindowsEventHandler } from 'obsidian-dev-utils/obsidian/components/all-windows-event-handler';
 import {
   getAbstractFileOrNull,
   getFileOrNull,
   getPath,
   isNote
-} from 'obsidian-dev-utils/obsidian/FileSystem';
+} from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   encodeUrl,
@@ -61,19 +62,19 @@ import {
   LinkStyle,
   testAngleBrackets,
   testWikilink
-} from 'obsidian-dev-utils/obsidian/Link';
+} from 'obsidian-dev-utils/obsidian/link';
 import {
   getAllLinks,
   getCacheSafe
-} from 'obsidian-dev-utils/obsidian/MetadataCache';
+} from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { registerPatch } from 'obsidian-dev-utils/obsidian/monkey-around';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-base';
 import {
   EmptyFolderBehavior,
   registerRenameDeleteHandlers
-} from 'obsidian-dev-utils/obsidian/RenameDeleteHandler';
-import { createFolderSafe } from 'obsidian-dev-utils/obsidian/Vault';
+} from 'obsidian-dev-utils/obsidian/rename-delete-handler';
+import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 import {
   basename,
   dirname,
@@ -249,7 +250,7 @@ export class Plugin extends PluginBase<PluginTypes> {
       }
     });
 
-    this.registerPopupDocumentDomEvent('change', this.handleInputFileChange.bind(this), { capture: true });
+    new AllWindowsEventHandler(this.app, this).registerAllDocumentsDomEvent('change', this.handleInputFileChange.bind(this), { capture: true });
 
     await this.handleActiveLeafChange(this.app.workspace.getLeavesOfType(ViewType.Markdown)[0] ?? null);
 

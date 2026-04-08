@@ -1,4 +1,4 @@
-import { blobToDataUrl } from 'obsidian-dev-utils/Blob';
+import { blobToDataUrl } from 'obsidian-dev-utils/blob';
 import { trimEnd } from 'obsidian-dev-utils/string';
 
 import type { Plugin } from './Plugin.ts';

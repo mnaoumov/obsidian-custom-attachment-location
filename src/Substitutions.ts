@@ -7,8 +7,8 @@ import type { Promisable } from 'type-fest';
 // eslint-disable-next-line import-x/no-namespace -- Need to pass entire obsidian module.
 import * as obsidian from 'obsidian';
 import { printError } from 'obsidian-dev-utils/error';
-import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/AttachmentPath';
-import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/Validation';
+import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/attachment-path';
+import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/validation';
 import {
   basename,
   dirname,

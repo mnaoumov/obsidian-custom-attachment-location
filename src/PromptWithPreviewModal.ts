@@ -11,10 +11,10 @@ import {
   convertAsyncToSync,
   invokeAsyncSafely
 } from 'obsidian-dev-utils/async';
-import { CssClass } from 'obsidian-dev-utils/CssClass';
+import { CssClass } from 'obsidian-dev-utils/css-class';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { addPluginCssClasses } from 'obsidian-dev-utils/obsidian/Plugin/PluginContext';
-import { trashSafe } from 'obsidian-dev-utils/obsidian/Vault';
+import { addPluginCssClasses } from 'obsidian-dev-utils/obsidian/plugin/plugin-context';
+import { trashSafe } from 'obsidian-dev-utils/obsidian/vault';
 
 import type { TokenEvaluatorContext } from './TokenEvaluatorContext.ts';
 

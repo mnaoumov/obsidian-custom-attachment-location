@@ -1,4 +1,4 @@
-import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/AttachmentPath';
+import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/attachment-path';
 import { z } from 'zod';
 
 import type { TokenEvaluatorContext } from '../TokenEvaluatorContext.ts';
