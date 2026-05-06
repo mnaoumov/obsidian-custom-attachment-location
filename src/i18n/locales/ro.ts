@@ -1,6 +1,6 @@
 import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
-import type { PluginTypes } from '../../PluginTypes.ts';
+import type { PluginTypes } from '../../plugin-types.ts';
 
 export const ro: Translations<PluginTypes> = {
   attachmentCollector: {

@@ -1,0 +1,35 @@
+import { getNestedPropertyValue } from 'obsidian-dev-utils/object-utils';
+import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
+import { z } from 'zod';
+
+import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
+
+import { TokenBase } from './token-base.ts';
+
+const formatSchema = z.strictObject({
+  key: z.string()
+});
+type Format = z.infer<typeof formatSchema>;
+
+export class FrontmatterToken extends TokenBase<Format> {
+  public constructor() {
+    super('frontmatter', formatSchema);
+  }
+
+  protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
+    const file = getFileOrNull(ctx.app, ctx.noteFilePath);
+    if (!file) {
+      return '';
+    }
+
+    const cache = ctx.app.metadataCache.getFileCache(file);
+
+    if (!cache?.frontmatter) {
+      return '';
+    }
+
+    const value = getNestedPropertyValue(cache.frontmatter, format.key) ?? '';
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string -- Need to convert to string.
+    return String(value);
+  }
+}
