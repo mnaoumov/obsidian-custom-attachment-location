@@ -2,6 +2,19 @@
   "name": "obsidian-custom-attachment-location",
   "version": "10.3.4",
   "description": "Customize attachment location with variables(${noteFileName}, ${date:format}, etc) like typora.",
+  "keywords": [],
+  "license": "MIT",
+  "author": {
+    "name": "RainCat1998",
+    "url": "https://github.com/RainCat1998"
+  },
+  "contributors": [
+    {
+      "name": "Michael Naumov",
+      "url": "https://github.com/mnaoumov/"
+    }
+  ],
+  "type": "module",
   "main": "main.js",
   "scripts": {
     "build": "jiti scripts/build.ts",
@@ -20,18 +33,14 @@
     "spellcheck": "jiti scripts/spellcheck.ts",
     "version": "jiti scripts/version.ts"
   },
-  "keywords": [],
-  "author": {
-    "name": "RainCat1998",
-    "url": "https://github.com/RainCat1998"
+  "overrides": {
+    "@antfu/utils": "9.2.0",
+    "boolean": "npm:dry-uninstall",
+    "dompurify": "3.0.1",
+    "eslint": "latest",
+    "type-fest": "latest",
+    "typescript": "latest"
   },
-  "contributors": [
-    {
-      "name": "Michael Naumov",
-      "url": "https://github.com/mnaoumov/"
-    }
-  ],
-  "license": "MIT",
   "devDependencies": {
     "@commitlint/cli": "latest",
     "@commitlint/config-conventional": "latest",
@@ -42,8 +51,7 @@
     "@types/semver": "latest",
     "acorn": "^8.15.0",
     "better-typescript-lib": "latest",
-    "commitizen": "latest",
-    "cz-conventional-changelog": "latest",
+    "czg": "latest",
     "electron": "39.2.7",
     "eslint": "latest",
     "husky": "latest",
@@ -59,14 +67,5 @@
     "type-fest": "latest",
     "typescript": "latest",
     "zod": "latest"
-  },
-  "overrides": {
-    "@antfu/utils": "9.2.0",
-    "boolean": "npm:dry-uninstall",
-    "dompurify": "3.0.1",
-    "eslint": "latest",
-    "type-fest": "latest",
-    "typescript": "latest"
-  },
-  "type": "module"
+  }
 }
