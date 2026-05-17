@@ -45,7 +45,7 @@ import {
   join,
   makeFileName
 } from 'obsidian-dev-utils/path';
-import { isReferenceCache } from 'obsidian-typings/implementations';
+import { isReferenceCache } from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import type { Plugin } from './plugin.ts';
 

@@ -16,12 +16,12 @@ import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/re
 import type {
   ClipboardManager,
   ImportedAttachment
-} from 'obsidian-typings';
+} from '@obsidian-typings/obsidian-public-latest';
 import type {
   ConfigItem,
   SharedFile,
   ShareReceiver
-} from 'obsidian-typings/implementations';
+} from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import { webUtils } from 'electron';
 import {
@@ -87,7 +87,7 @@ import {
   isReferenceCache,
   parentFolderPath,
   ViewType
-} from 'obsidian-typings/implementations';
+} from '@obsidian-typings/obsidian-public-latest/implementations';
 import { compare } from 'semver';
 
 import type { PluginTypes } from './plugin-types.ts';

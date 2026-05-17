@@ -1,6 +1,6 @@
 import type { TFile } from 'obsidian';
 import type { PromiseResolve } from 'obsidian-dev-utils/async';
-import type { EmbedComponent } from 'obsidian-typings';
+import type { EmbedComponent } from '@obsidian-typings/obsidian-public-latest';
 
 import {
   ButtonComponent,
