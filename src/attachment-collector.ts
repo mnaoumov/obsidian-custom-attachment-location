@@ -377,7 +377,7 @@ async function collectAttachmentsInAbstractFilesImpl(
     abortSignal.throwIfAborted();
     return;
   }
-  consoleDebugComponent.debug(`Collect attachments in files:\n${abstractFiles.map((abstractFile) => abstractFile.path).join('\n')}`);
+  consoleDebugComponent.consoleDebug(`Collect attachments in files:\n${abstractFiles.map((abstractFile) => abstractFile.path).join('\n')}`);
   const noteFilesSet = new Set<TFile>();
 
   for (const abstractFile of abstractFiles) {

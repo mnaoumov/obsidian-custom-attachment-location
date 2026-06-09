@@ -1,6 +1,6 @@
 import { INFINITE_TIMEOUT } from 'obsidian-dev-utils/abort-controller';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { PathSettings } from 'obsidian-dev-utils/obsidian/path-settings';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { escapeRegExp } from 'obsidian-dev-utils/reg-exp';
 
 export const SAMPLE_CUSTOM_TOKENS = String.raw`registerCustomToken('foo', (ctx) => {

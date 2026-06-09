@@ -2,7 +2,7 @@ import type {
   App,
   TFile
 } from 'obsidian';
-import type { PartialDeep } from 'type-fest';
+import type { StrictProxyPartial } from 'obsidian-dev-utils/strict-proxy';
 
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -151,18 +151,17 @@ vi.mock('obsidian', async (importOriginal) => {
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { promptWithPreview } from './prompt-with-preview-modal.ts';
 
-function createApp(overrides: PartialDeep<App>): PartialDeep<App> {
-  const appPartial = castTo<PartialDeep<App>>({
+function createApp(overrides: StrictProxyPartial<App>): App {
+  return strictProxy<App>({
     embedRegistry: createEmbedRegistry({}),
     vault: castTo<App['vault']>({
       createBinary: vi.fn((path: string): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path })))
     }),
     ...overrides
   });
-  return castTo<PartialDeep<App>>(strictProxy<App>(appPartial));
 }
 
-function createCtx(overrides: PartialDeep<TokenEvaluatorContext>): TokenEvaluatorContext {
+function createCtx(overrides: StrictProxyPartial<TokenEvaluatorContext>): TokenEvaluatorContext {
   return strictProxy<TokenEvaluatorContext>({
     app: createApp({}),
     attachmentFileContent: undefined,

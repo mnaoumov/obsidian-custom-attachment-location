@@ -19,8 +19,8 @@ import type {
   GetAvailablePathForAttachmentsExtendedFnParams,
   GetAvailablePathForAttachmentsFnExtended
 } from 'obsidian-dev-utils/obsidian/attachment-path';
+import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import type { PathOrFile } from 'obsidian-dev-utils/obsidian/file-system';
-import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 
 import {
   isReferenceCache,
@@ -60,6 +60,10 @@ import { CallbackLayoutReadyComponent } from 'obsidian-dev-utils/obsidian/compon
 import { MenuEventRegistrarComponent } from 'obsidian-dev-utils/obsidian/components/menu-event-registrar-component';
 import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
+import {
+  EmptyFolderBehavior,
+  RenameDeleteHandlerComponent
+} from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import {
   getAbstractFileOrNull,
@@ -83,10 +87,6 @@ import {
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
-import {
-  EmptyFolderBehavior,
-  registerRenameDeleteHandlers
-} from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 import {
   basename,
@@ -218,19 +218,23 @@ export class Plugin extends PluginBase {
   public override async onload(): Promise<void> {
     await super.onload();
 
-    registerRenameDeleteHandlers(this, () => {
-      const settings: Partial<RenameDeleteHandlerSettings> = {
-        emptyFolderBehavior: this.pluginSettingsComponent.settings.emptyFolderBehavior,
-        isNote: (path) => isNoteEx(this, path, this.pluginSettingsComponent),
-        isPathIgnored: (path) => this.pluginSettingsComponent.settings.isPathIgnored(path),
-        shouldHandleDeletions: this.pluginSettingsComponent.settings.shouldDeleteOrphanAttachments,
-        shouldHandleRenames: this.pluginSettingsComponent.settings.shouldHandleRenames,
-        shouldRenameAttachmentFiles: this.pluginSettingsComponent.settings.shouldRenameAttachmentFiles,
-        shouldRenameAttachmentFolder: this.pluginSettingsComponent.settings.shouldRenameAttachmentFolder,
-        shouldUpdateFileNameAliases: true
-      };
-      return settings;
-    });
+    this.addChild(
+      new RenameDeleteHandlerComponent({
+        abortSignalComponent: this.abortSignalComponent,
+        app: this.app,
+        pluginId: this.manifest.id,
+        settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => ({
+          emptyFolderBehavior: this.pluginSettingsComponent.settings.emptyFolderBehavior,
+          isNote: (path: string): boolean => isNoteEx(this, path, this.pluginSettingsComponent),
+          isPathIgnored: (path: string): boolean => this.pluginSettingsComponent.settings.isPathIgnored(path),
+          shouldHandleDeletions: this.pluginSettingsComponent.settings.shouldDeleteOrphanAttachments,
+          shouldHandleRenames: this.pluginSettingsComponent.settings.shouldHandleRenames,
+          shouldRenameAttachmentFiles: this.pluginSettingsComponent.settings.shouldRenameAttachmentFiles,
+          shouldRenameAttachmentFolder: this.pluginSettingsComponent.settings.shouldRenameAttachmentFolder,
+          shouldUpdateFileNameAliases: true
+        })
+      })
+    );
 
     const menuEventRegistrar = this.addChild(new MenuEventRegistrarComponent(this.app));
     this.addChild(

@@ -8,7 +8,6 @@ import type {
   TFolder
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
-import type { PartialDeep } from 'type-fest';
 
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -227,7 +226,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       abortSignal: new AbortController().signal
     });
     plugin = strictProxy<Plugin>({
-      app: castTo<PartialDeep<App>>(app),
+      app,
       manifest: strictProxy<Plugin['manifest']>({ name: 'My Plugin' })
     });
     handler = new MoveAttachmentToProperFolderCommandHandler({

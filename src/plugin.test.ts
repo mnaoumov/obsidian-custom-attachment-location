@@ -5,7 +5,7 @@ import type {
   TFile,
   WorkspaceLeaf
 } from 'obsidian';
-import type { PartialDeep } from 'type-fest';
+import type { StrictProxyPartial } from 'obsidian-dev-utils/strict-proxy';
 
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -157,6 +157,10 @@ interface PluginWithOriginal {
   getAvailablePathForAttachmentsOriginal(filename: string, extension: string, file: null | TFile): Promise<string>;
 }
 
+interface RenameDeleteHandlerComponentParamsProbe {
+  settingsBuilder(): RenameDeleteSettingsProbe;
+}
+
 interface RenameDeleteSettingsProbe {
   isNote(path: string): boolean;
   isPathIgnored(path: string): boolean;
@@ -213,6 +217,7 @@ const hoisted = vi.hoisted(() => ({
   mockImportFilesOriginal: vi.fn((..._args: unknown[]): Promise<void> => noopAsync()),
   mockIsNoteEx: vi.fn((..._args: unknown[]): boolean => true),
   mockRegisterCustomTokens: vi.fn(),
+  mockRenameDeleteHandlerComponent: vi.fn((_params: unknown): void => undefined),
   mockSettings: {
     attachmentRenameMode: 'None',
     convertImagesToJpegMode: 'None',
@@ -545,11 +550,15 @@ vi.mock('obsidian-dev-utils/obsidian/plugin/plugin-event-source', () => ({
   }
 }));
 
-vi.mock('obsidian-dev-utils/obsidian/rename-delete-handler', async (importOriginal) => {
-  const original = await importOriginal<typeof import('obsidian-dev-utils/obsidian/rename-delete-handler')>();
+vi.mock('obsidian-dev-utils/obsidian/components/rename-delete-handler-component', async (importOriginal) => {
+  const original = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/rename-delete-handler-component')>();
   return {
     ...original,
-    registerRenameDeleteHandlers: vi.fn()
+    RenameDeleteHandlerComponent: class {
+      public constructor(params: unknown) {
+        hoisted.mockRenameDeleteHandlerComponent(params);
+      }
+    }
   };
 });
 
@@ -582,7 +591,6 @@ import {
   getAllLinks,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import { registerRenameDeleteHandlers } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 
 import { Plugin } from './plugin.ts';
 /* eslint-enable import-x/first, import-x/imports-first -- vi.mock must precede imports. */
@@ -611,7 +619,7 @@ function createMenuItem(hasFileIcon: boolean): MockMenuItem {
   return menuItem;
 }
 
-function createMockApp(overrides: PartialDeep<App>): App {
+function createMockApp(overrides: StrictProxyPartial<App>): App {
   const workspaceOn = vi.fn((name: string, handler: (...args: unknown[]) => unknown): EventRefLike => {
     hoisted.capturedEvents.push({ handler, name: `workspace:${name}` });
     return { id: name };
@@ -621,10 +629,10 @@ function createMockApp(overrides: PartialDeep<App>): App {
     return { id: name };
   });
   return strictProxy<App>({
-    fileManager: castTo<PartialDeep<App['fileManager']>>({
+    fileManager: castTo<App['fileManager']>({
       generateMarkdownLink: vi.fn((_file: TFile, _sourcePath: string): string => '[[link]]')
     }),
-    shareReceiver: castTo<PartialDeep<App['shareReceiver']>>(Object.create({ importFiles: hoisted.mockImportFilesOriginal })),
+    shareReceiver: castTo<App['shareReceiver']>(Object.create({ importFiles: hoisted.mockImportFilesOriginal })),
     vault: castTo<App['vault']>({
       adapter: {},
       create: vi.fn((): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path: '' }))),
@@ -634,7 +642,7 @@ function createMockApp(overrides: PartialDeep<App>): App {
       getConfig: vi.fn((_name: string): unknown => 'config'),
       on: vaultOn
     }),
-    workspace: castTo<PartialDeep<App['workspace']>>({
+    workspace: castTo<App['workspace']>({
       getActiveFile: vi.fn((): null | TFile => null),
       getActiveViewOfType: vi.fn((): unknown => null),
       getLeavesOfType: vi.fn((): WorkspaceLeaf[] => []),
@@ -644,7 +652,7 @@ function createMockApp(overrides: PartialDeep<App>): App {
   });
 }
 
-function createPlugin(appOverrides?: PartialDeep<App>): Plugin {
+function createPlugin(appOverrides?: StrictProxyPartial<App>): Plugin {
   const app = createMockApp(appOverrides ?? {});
   const manifest = castTo<PluginManifest>({ dir: 'plugins/x', id: 'custom-attachment-location', name: 'Custom Attachment Location', version: '10.0.0' });
   return new Plugin(app, manifest);
@@ -798,8 +806,8 @@ describe('Plugin', () => {
     it('should provide rename-delete handler settings through the registered builder', async () => {
       const plugin = createPlugin();
       await plugin.onload();
-      const builder = castTo<ReturnType<typeof vi.fn>>(registerRenameDeleteHandlers).mock.calls[0]?.[1] as () => unknown;
-      const settings = castTo<RenameDeleteSettingsProbe>(builder());
+      const params = castTo<RenameDeleteHandlerComponentParamsProbe>(hoisted.mockRenameDeleteHandlerComponent.mock.calls[0]?.[0]);
+      const settings = params.settingsBuilder();
       expect(settings.isNote('note.md')).toBe(true);
       expect(settings.isPathIgnored('note.md')).toBe(false);
     });

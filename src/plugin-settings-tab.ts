@@ -14,10 +14,10 @@ import {
   invokeAsyncSafely
 } from 'obsidian-dev-utils/async';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { SettingGroupEx } from 'obsidian-dev-utils/obsidian/setting-group-ex';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -50,6 +50,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   }
 
   public override display(): void {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
     super.display();
     this.containerEl.empty();
 
@@ -202,6 +203,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addToggle((toggle) => {
             this.bind(toggle, 'shouldHandleRenames', {
               onChanged: () => {
+                // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
                 this.display();
               }
             });
@@ -702,6 +704,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               await this.pluginSettingsComponent.editAndSave((settings) => {
                 settings.customTokensStr = SAMPLE_CUSTOM_TOKENS;
               });
+              // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
               this.display();
             }));
           });

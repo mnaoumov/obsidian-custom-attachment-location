@@ -4,8 +4,8 @@ import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
 import { debounce } from 'obsidian';
 import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/validation';
 import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
 import { replaceAll } from 'obsidian-dev-utils/string';

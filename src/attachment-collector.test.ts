@@ -6,7 +6,6 @@ import type {
   TFolder
 } from 'obsidian';
 import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
-import type { PartialDeep } from 'type-fest';
 import type {
   Mock,
   MockInstance
@@ -291,7 +290,7 @@ describe('attachment-collector', () => {
       settings: castTo<PluginSettingsComponent['settings']>(settings)
     });
     plugin = strictProxy<Plugin>({
-      app: castTo<PartialDeep<App>>(app),
+      app,
       getSequenceNumber: (noteFilePath: string, attachmentPath: string) => getSequenceNumber(noteFilePath, attachmentPath),
       manifest: strictProxy<Plugin['manifest']>({ name: 'Plugin' })
     });
@@ -400,7 +399,7 @@ describe('attachment-collector', () => {
   describe('collectAttachmentsEntireVault', () => {
     it('should enqueue an operation for the vault root', () => {
       const abortSignalComponent = strictProxy<Parameters<typeof collectAttachmentsEntireVault>[1]>({ abortSignal: new AbortController().signal });
-      const consoleDebugComponent = strictProxy<Parameters<typeof collectAttachmentsEntireVault>[3]>({ debug: vi.fn() });
+      const consoleDebugComponent = strictProxy<Parameters<typeof collectAttachmentsEntireVault>[3]>({ consoleDebug: vi.fn() });
       collectAttachmentsEntireVault(plugin, abortSignalComponent, pluginSettingsComponent, consoleDebugComponent);
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
       expect(params.app).toBe(app);
@@ -409,7 +408,7 @@ describe('attachment-collector', () => {
 
     it('should run the operation against the vault root', async () => {
       const abortSignalComponent = strictProxy<Parameters<typeof collectAttachmentsEntireVault>[1]>({ abortSignal: new AbortController().signal });
-      const consoleDebugComponent = strictProxy<Parameters<typeof collectAttachmentsEntireVault>[3]>({ debug: vi.fn() });
+      const consoleDebugComponent = strictProxy<Parameters<typeof collectAttachmentsEntireVault>[3]>({ consoleDebug: vi.fn() });
       mockAbortSignalAny.mockReturnValue(new AbortController().signal);
       mockLoop.mockResolvedValue(undefined);
       mockConfirm.mockResolvedValue(true);
@@ -426,7 +425,7 @@ describe('attachment-collector', () => {
   describe('collectAttachmentsInAbstractFiles', () => {
     it('should enqueue an operation for the given files', () => {
       const abortSignalComponent = strictProxy<Parameters<typeof collectAttachmentsInAbstractFiles>[2]>({ abortSignal: new AbortController().signal });
-      const consoleDebugComponent = strictProxy<Parameters<typeof collectAttachmentsInAbstractFiles>[4]>({ debug: vi.fn() });
+      const consoleDebugComponent = strictProxy<Parameters<typeof collectAttachmentsInAbstractFiles>[4]>({ consoleDebug: vi.fn() });
       const files = [strictProxy<TAbstractFile>({ path: 'a.md' })];
       collectAttachmentsInAbstractFiles(plugin, files, abortSignalComponent, pluginSettingsComponent, consoleDebugComponent);
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
@@ -715,7 +714,7 @@ describe('attachment-collector', () => {
 
     beforeEach(() => {
       abortSignalComponent = strictProxy<Parameters<typeof collectAttachmentsInAbstractFiles>[2]>({ abortSignal: new AbortController().signal });
-      consoleDebugComponent = strictProxy<Parameters<typeof collectAttachmentsInAbstractFiles>[4]>({ debug: vi.fn() });
+      consoleDebugComponent = strictProxy<Parameters<typeof collectAttachmentsInAbstractFiles>[4]>({ consoleDebug: vi.fn() });
       mockAbortSignalAny.mockReturnValue(new AbortController().signal);
       mockLoop.mockResolvedValue(undefined);
     });

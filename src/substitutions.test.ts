@@ -2,7 +2,7 @@ import type {
   App,
   EditorPosition
 } from 'obsidian';
-import type { PartialDeep } from 'type-fest';
+import type { StrictProxyPartial } from 'obsidian-dev-utils/strict-proxy';
 import type { MockInstance } from 'vitest';
 
 import { printError } from 'obsidian-dev-utils/error';
@@ -46,18 +46,18 @@ const CLOSE_BRACE = '}';
 function createPlugin(activeEditorOverrides?: ActiveEditorOverrides): Plugin {
   const cursor = activeEditorOverrides?.cursor;
   const filePath = activeEditorOverrides?.filePath;
-  const editor: PartialDeep<NonNullable<App['workspace']['activeEditor']>['editor']> = {
+  const editor: StrictProxyPartial<NonNullable<App['workspace']['activeEditor']>['editor']> = {
     getCursor: () => castTo<EditorPosition>(cursor)
   };
-  const activeEditor: null | PartialDeep<App['workspace']['activeEditor']> = activeEditorOverrides
+  const activeEditor: null | StrictProxyPartial<App['workspace']['activeEditor']> = activeEditorOverrides
     ? {
       editor,
       ...filePath ? { file: { path: filePath } } : {}
     }
     : null;
-  const app: PartialDeep<App> = {
-    workspace: { activeEditor }
-  };
+  const app = strictProxy<App>({
+    workspace: castTo<App['workspace']>({ activeEditor })
+  });
 
   return strictProxy<Plugin>({ app });
 }

@@ -1,12 +1,10 @@
-import type { App as ObsidianApp } from 'obsidian';
+import type { AsyncEventRef } from 'obsidian-dev-utils/async-events';
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
-import type { PartialDeep } from 'type-fest';
 
 import { noopAsync } from 'obsidian-dev-utils/function';
-import { castTo } from 'obsidian-dev-utils/object-utils';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
@@ -47,11 +45,13 @@ class MockDataHandler implements DataHandler {
 
 function createComponent(data: unknown = {}): PluginSettingsComponent {
   const app = App.createConfigured__();
-  const plugin = strictProxy<Plugin>({ app: castTo<PartialDeep<ObsidianApp>>(app.asOriginalType__()) });
+  const plugin = strictProxy<Plugin>({ app: app.asOriginalType__() });
   return new PluginSettingsComponent({
     dataHandler: new MockDataHandler(data),
     plugin,
-    pluginEventSource: strictProxy<PluginEventSource>({})
+    pluginEventSource: strictProxy<PluginEventSource>({
+      on: (): AsyncEventRef => strictProxy<AsyncEventRef>({})
+    })
   });
 }
 
@@ -230,73 +230,73 @@ describe('PluginSettingsComponent', () => {
   describe('legacy settings converter', () => {
     it('should map warningVersion into version', async () => {
       const component = createComponent({ warningVersion: '8.0.0' });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.version).toBe('8.0.0');
     });
 
     it('should map autoRenameFiles into shouldRenameAttachmentFiles', async () => {
       const component = createComponent({ autoRenameFiles: true });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.shouldRenameAttachmentFiles).toBe(true);
     });
 
     it('should map autoRenameFolder into shouldRenameAttachmentFolder', async () => {
       const component = createComponent({ autoRenameFolder: false });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.shouldRenameAttachmentFolder).toBe(false);
     });
 
     it('should map shouldRenameAttachments into shouldRenameAttachmentFolder', async () => {
       const component = createComponent({ shouldRenameAttachments: false });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.shouldRenameAttachmentFolder).toBe(false);
     });
 
     it('should map deleteOrphanAttachments into shouldDeleteOrphanAttachments', async () => {
       const component = createComponent({ deleteOrphanAttachments: true });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.shouldDeleteOrphanAttachments).toBe(true);
     });
 
     it('should map renameCollectedFiles into shouldRenameCollectedAttachments', async () => {
       const component = createComponent({ renameCollectedFiles: true });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.shouldRenameCollectedAttachments).toBe(true);
     });
 
     it('should map shouldConvertPastedImagesToJpeg true into OnlyPastedClipboardPngImages', async () => {
       const component = createComponent({ shouldConvertPastedImagesToJpeg: true });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.convertImagesToJpegMode).toBe(ConvertImagesToJpegMode.OnlyPastedClipboardPngImages);
     });
 
     it('should map convertImagesToJpeg false into None', async () => {
       const component = createComponent({ convertImagesToJpeg: false });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.convertImagesToJpegMode).toBe(ConvertImagesToJpegMode.None);
     });
 
     it('should map shouldDuplicateCollectedAttachments true into Copy', async () => {
       const component = createComponent({ shouldDuplicateCollectedAttachments: true });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.collectAttachmentUsedByMultipleNotesMode).toBe(CollectAttachmentUsedByMultipleNotesMode.Copy);
     });
 
     it('should map shouldDuplicateCollectedAttachments false into Skip', async () => {
       const component = createComponent({ shouldDuplicateCollectedAttachments: false });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.collectAttachmentUsedByMultipleNotesMode).toBe(CollectAttachmentUsedByMultipleNotesMode.Skip);
     });
 
     it('should map keepEmptyAttachmentFolders into shouldKeepEmptyAttachmentFolders and then emptyFolderBehavior Keep', async () => {
       const component = createComponent({ keepEmptyAttachmentFolders: true });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.Keep);
     });
 
     it('should map keepEmptyAttachmentFolders false into emptyFolderBehavior DeleteWithEmptyParents', async () => {
       const component = createComponent({ keepEmptyAttachmentFolders: false });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.DeleteWithEmptyParents);
     });
 
@@ -305,26 +305,26 @@ describe('PluginSettingsComponent', () => {
         emptyAttachmentFolderBehavior: EmptyFolderBehavior.Delete,
         keepEmptyAttachmentFolders: true
       });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.Delete);
     });
 
     it('should map replaceWhitespace true into a whitespace replacement appended to special characters', async () => {
       const component = createComponent({ replaceWhitespace: true });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.specialCharacters).toContain(' ');
       expect(component.settings.specialCharactersReplacement).toBe('-');
     });
 
     it('should map replaceWhitespace false into an empty whitespace replacement', async () => {
       const component = createComponent({ replaceWhitespace: false });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.specialCharactersReplacement).toBe('-');
     });
 
     it('should map whitespaceReplacement into special characters and replacement', async () => {
       const component = createComponent({ whitespaceReplacement: '_' });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.specialCharacters.endsWith(' ')).toBe(true);
       expect(component.settings.specialCharactersReplacement).toBe('_');
     });
@@ -334,7 +334,7 @@ describe('PluginSettingsComponent', () => {
         customTokensStr: 'registerCustomToken();',
         version: '8.0.0'
       });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.customTokensStr).toContain('// registerCustomToken();');
     });
 
@@ -344,7 +344,7 @@ describe('PluginSettingsComponent', () => {
         markdownUrlFormat: '${generatedAttachmentFilePath}',
         version: '9.1.0'
       });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.markdownUrlFormat).toBe('');
     });
 
@@ -353,7 +353,7 @@ describe('PluginSettingsComponent', () => {
         specialCharacters: '#^[]|*\\<>:?',
         version: '9.15.0'
       });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.specialCharacters).toBe('#^[]|*\\<>:?/');
     });
 
@@ -362,14 +362,14 @@ describe('PluginSettingsComponent', () => {
         // eslint-disable-next-line no-template-curly-in-string -- Legacy token format.
         generatedAttachmentFileName: 'file-${date:YYYYMMDD}'
       });
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       // eslint-disable-next-line no-template-curly-in-string -- Expected converted token format.
       expect(component.settings.generatedAttachmentFileName).toBe('file-${date:{momentJsFormat:\'YYYYMMDD\'}}');
     });
 
     it('should leave settings at defaults when no legacy keys are present', async () => {
       const component = createComponent({});
-      await component.loadFromFile(true);
+      await component.loadWithPromises();
       expect(component.settings.shouldRenameAttachmentFolder).toBe(true);
       expect(component.settings.attachmentRenameMode).toBe(AttachmentRenameMode.OnlyPastedImages);
     });

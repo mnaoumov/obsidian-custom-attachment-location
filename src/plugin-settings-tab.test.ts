@@ -1,18 +1,16 @@
 import type {
-  App as AppType,
   ButtonComponent,
   DropdownComponent,
   Plugin as ObsidianPlugin,
   TextComponent,
   ToggleComponent
 } from 'obsidian';
+import type { AsyncEventRef } from 'obsidian-dev-utils/async-events';
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { CodeHighlighterComponent } from 'obsidian-dev-utils/obsidian/setting-components/code-highlighter-component';
-import type { PartialDeep } from 'type-fest';
 
 import { noopAsync } from 'obsidian-dev-utils/function';
-import { castTo } from 'obsidian-dev-utils/object-utils';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
@@ -86,16 +84,17 @@ const originalSetName = SettingEx.prototype.setName;
 async function createTab(): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const originalApp = app.asOriginalType__();
-  const appMock = castTo<PartialDeep<AppType>>(originalApp);
-  const plugin = strictProxy<Plugin>({ app: appMock });
+  const plugin = strictProxy<Plugin>({ app: originalApp });
   const pluginSettingsComponent = new PluginSettingsComponent({
     dataHandler: new MockDataHandler(),
     plugin,
-    pluginEventSource: strictProxy<PluginEventSource>({})
+    pluginEventSource: strictProxy<PluginEventSource>({
+      on: (): AsyncEventRef => strictProxy<AsyncEventRef>({})
+    })
   });
-  await pluginSettingsComponent.loadFromFile(true);
+  await pluginSettingsComponent.loadWithPromises();
 
-  const obsidianPlugin = strictProxy<ObsidianPlugin>({ app: appMock });
+  const obsidianPlugin = strictProxy<ObsidianPlugin>({ app: originalApp });
 
   const buttons: ButtonComponentClass[] = [];
   const toggles: CapturedToggle[] = [];
@@ -159,6 +158,7 @@ async function createTab(): Promise<CreatedTab> {
     pluginSettingsComponent
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
   tab.display();
   addButtonSpy.mockRestore();
   addToggleSpy.mockRestore();
@@ -265,6 +265,7 @@ describe('PluginSettingsTab', () => {
       });
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
     tab.display();
     addToggleSpy.mockRestore();
     const folderToggle = toggles.find((entry) => entry.name === 'Should rename attachment folders');
