@@ -1,3 +1,4 @@
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import { z } from 'zod';
 
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
@@ -25,17 +26,18 @@ export class NoteFolderNameToken extends TokenBase<Format> {
   protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
     const folderParts = ctx.noteFolderPath.split('/');
     let folderPartIndex = folderParts.length - 1;
-    switch (format.pick?.from) {
+    const pick = format.pick;
+    switch (pick?.from) {
       case 'end':
-        folderPartIndex = folderParts.length - 1 - format.pick.index;
+        folderPartIndex = folderParts.length - 1 - pick.index;
         break;
       case 'start':
-        folderPartIndex = format.pick.index;
+        folderPartIndex = pick.index;
         break;
       case undefined:
         break;
       default:
-        throw new Error(`Invalid pick from: ${format.pick?.from as string | undefined ?? ''}`);
+        throw new Error(`Invalid pick from: ${ensureNonNullable(pick).from as string}`);
     }
 
     return formatString(folderParts[folderPartIndex] ?? '', format);

@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const de: Translations<PluginTypes> = {
+export const de = {
   attachmentCollector: {
     confirm: {
       part1: 'Möchten Sie Anhänge für alle Notizen in Ordnern rekursiv sammeln?',

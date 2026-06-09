@@ -69,36 +69,36 @@ export enum TokenValidationMode {
   Validate = 'Validate'
 }
 
-export interface ValidatePathOptions {
-  areTokensAllowed: boolean;
-  path: string;
-  plugin: Plugin;
+export interface ValidatePathParams {
+  readonly areTokensAllowed: boolean;
+  readonly path: string;
+  readonly plugin: Plugin;
 }
 
 type RegisterCustomTokenFn = (token: string, evaluator: TokenEvaluator) => void;
 
 type RegisterCustomTokensWrapperFn = (registerCustomToken: RegisterCustomTokenFn) => void;
 
-interface SubstitutionsOptions {
-  actionContext: ActionContext;
-  attachmentFileContent?: ArrayBuffer | undefined;
-  attachmentFileStat?: FileStats | undefined;
-  cursorLine?: number | undefined;
-  generatedAttachmentFileName?: string;
-  generatedAttachmentFilePath?: string;
-  noteFilePath: string;
-  oldNoteFilePath?: string | undefined;
-  originalAttachmentFileName?: string;
-  plugin: Plugin;
-  sequenceNumber?: number | undefined;
+interface SubstitutionsConstructorParams {
+  readonly actionContext: ActionContext;
+  readonly attachmentFileContent?: ArrayBuffer | undefined;
+  readonly attachmentFileStat?: FileStats | undefined;
+  readonly cursorLine?: number | undefined;
+  readonly generatedAttachmentFileName?: string;
+  readonly generatedAttachmentFilePath?: string;
+  readonly noteFilePath: string;
+  readonly oldNoteFilePath?: string | undefined;
+  readonly originalAttachmentFileName?: string;
+  readonly plugin: Plugin;
+  readonly sequenceNumber?: number | undefined;
 }
 
 interface ValidateFileNameOptions {
-  areSingleDotsAllowed: boolean;
-  fileName: string;
-  isEmptyAllowed: boolean;
-  plugin: Plugin;
-  tokenValidationMode: TokenValidationMode;
+  readonly areSingleDotsAllowed: boolean;
+  readonly fileName: string;
+  readonly isEmptyAllowed: boolean;
+  readonly plugin: Plugin;
+  readonly tokenValidationMode: TokenValidationMode;
 }
 
 export class Substitutions {
@@ -128,33 +128,33 @@ export class Substitutions {
   private readonly originalAttachmentFileName: string;
   private readonly sequenceNumber: number | undefined;
 
-  public constructor(options: SubstitutionsOptions) {
-    this.plugin = options.plugin;
-    this.app = options.plugin.app;
-    this.actionContext = options.actionContext;
+  public constructor(params: SubstitutionsConstructorParams) {
+    this.plugin = params.plugin;
+    this.app = params.plugin.app;
+    this.actionContext = params.actionContext;
 
-    this.noteFilePath = options.noteFilePath;
+    this.noteFilePath = params.noteFilePath;
     this.noteFileName = basename(this.noteFilePath, extname(this.noteFilePath));
     this.noteFolderName = dotToEmpty(basename(dirname(this.noteFilePath)));
     this.noteFolderPath = dotToEmpty(dirname(this.noteFilePath));
 
-    this.oldNoteFilePath = options.oldNoteFilePath ?? '';
+    this.oldNoteFilePath = params.oldNoteFilePath ?? '';
     this.oldNoteFileName = basename(this.oldNoteFilePath, extname(this.oldNoteFilePath));
     this.oldNoteFolderName = dotToEmpty(basename(dirname(this.oldNoteFilePath)));
     this.oldNoteFolderPath = dotToEmpty(dirname(this.oldNoteFilePath));
 
-    const originalAttachmentFileName = options.originalAttachmentFileName ?? '';
+    const originalAttachmentFileName = params.originalAttachmentFileName ?? '';
     const originalAttachmentFileExtension = extname(originalAttachmentFileName);
     this.originalAttachmentFileName = basename(originalAttachmentFileName, originalAttachmentFileExtension);
     this.originalAttachmentFileExtension = originalAttachmentFileExtension.slice(1);
 
-    this.attachmentFileContent = options.attachmentFileContent;
-    this.attachmentFileStat = options.attachmentFileStat;
+    this.attachmentFileContent = params.attachmentFileContent;
+    this.attachmentFileStat = params.attachmentFileStat;
 
-    this.generatedAttachmentFileName = options.generatedAttachmentFileName ?? '';
-    this.generatedAttachmentFilePath = options.generatedAttachmentFilePath ?? '';
+    this.generatedAttachmentFileName = params.generatedAttachmentFileName ?? '';
+    this.generatedAttachmentFilePath = params.generatedAttachmentFilePath ?? '';
 
-    if (options.cursorLine === undefined) {
+    if (params.cursorLine === undefined) {
       this.cursorLine = null;
 
       if (this.app.workspace.activeEditor?.file?.path === this.noteFilePath) {
@@ -164,10 +164,10 @@ export class Substitutions {
         }
       }
     } else {
-      this.cursorLine = options.cursorLine;
+      this.cursorLine = params.cursorLine;
     }
 
-    this.sequenceNumber = options.sequenceNumber;
+    this.sequenceNumber = params.sequenceNumber;
   }
 
   public static isRegisteredToken(token: string): boolean {
@@ -344,17 +344,17 @@ export async function validateFileName(options: ValidateFileNameOptions): Promis
   return '';
 }
 
-export async function validatePath(options: ValidatePathOptions): Promise<string> {
-  if (options.areTokensAllowed) {
-    const unknownToken = await validateTokens(options.plugin, options.path);
+export async function validatePath(params: ValidatePathParams): Promise<string> {
+  if (params.areTokensAllowed) {
+    const unknownToken = await validateTokens(params.plugin, params.path);
     if (unknownToken) {
       return `Unknown token: ${unknownToken}`;
     }
-  } else if (scanTokens(options.path, { throwOnError: false }).length > 0) {
+  } else if (scanTokens(params.path, { throwOnError: false }).length > 0) {
     return 'Tokens are not allowed in path';
   }
 
-  let path = trimStart(options.path, '/');
+  let path = trimStart(params.path, '/');
   path = trimEnd(path, '/');
 
   if (path === '') {
@@ -367,7 +367,7 @@ export async function validatePath(options: ValidatePathOptions): Promise<string
       areSingleDotsAllowed: true,
       fileName: part,
       isEmptyAllowed: true,
-      plugin: options.plugin,
+      plugin: params.plugin,
       tokenValidationMode: TokenValidationMode.Skip
     });
 
@@ -408,12 +408,7 @@ async function validateTokens(plugin: Plugin, str: string): Promise<null | strin
     plugin
   });
 
-  let tokens: Token[];
-  try {
-    tokens = extractTokens(str);
-  } catch (e) {
-    return `Invalid token syntax: ${(e as Error).message}`;
-  }
+  const tokens = extractTokens(str);
 
   for (const t of tokens) {
     if (!Substitutions.isRegisteredToken(t.token)) {

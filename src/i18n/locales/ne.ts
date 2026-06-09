@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const ne: Translations<PluginTypes> = {
+export const ne = {
   attachmentCollector: {
     confirm: {
       part1: 'के तपाईं फोल्डरहरूभित्रका सबै नोटहरूका लागि संलग्नकहरूलाई पुनरावर्ती रूपमा सङ्कलन गर्न चाहनुहुन्छ?',

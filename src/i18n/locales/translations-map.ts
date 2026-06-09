@@ -1,7 +1,3 @@
-import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
 import { am } from './am.ts';
 import { ar } from './ar.ts';
 import { be } from './be.ts';
@@ -84,4 +80,4 @@ const translationsMapImpl = {
   'zh-TW': zhTW
 } as const;
 
-export const translationsMap: TranslationsMap<PluginTypes> = translationsMapImpl;
+export const translationsMap = translationsMapImpl;

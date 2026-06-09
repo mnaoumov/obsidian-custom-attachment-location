@@ -1,4 +1,7 @@
-import type { BindOptionsExtended } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab-base';
+import type {
+  BindOptionsExtended,
+  PluginSettingsTabBaseConstructorParams
+} from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 import type { ConditionalKeys } from 'type-fest';
 
 import {
@@ -13,12 +16,12 @@ import {
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
-import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab-base';
+import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { SettingGroupEx } from 'obsidian-dev-utils/obsidian/setting-group-ex';
 
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
-import type { PluginTypes } from './plugin-types.ts';
 
 import {
   AttachmentRenameMode,
@@ -34,7 +37,18 @@ import { Substitutions } from './substitutions.ts';
 const VISIBLE_SPACE_CHARACTER = '␣';
 const JPEG_QUALITY_PRECISION = 2;
 
-export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
+interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+}
+
+export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
+  private readonly pluginSettingsComponent2: PluginSettingsComponent;
+
+  public constructor(params: PluginSettingsTabConstructorParams) {
+    super(params);
+    this.pluginSettingsComponent2 = params.pluginSettingsComponent;
+  }
+
   public override display(): void {
     super.display();
     this.containerEl.empty();
@@ -58,7 +72,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       shouldShowPlaceholderForDefaultValues: false
     };
 
-    this.plugin.settingsManager.shouldDebounceCustomTokensValidation = true;
+    this.pluginSettingsComponent2.shouldDebounceCustomTokensValidation = true;
 
     new SettingGroupEx(this.containerEl)
       .setHeading(t(($) => $.pluginSettingsTab.groups.core))
@@ -198,7 +212,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
           .setName(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.name))
           .setDesc(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.description))
           .addToggle((toggle) => {
-            if (this.plugin.settings.shouldHandleRenames) {
+            if (this.pluginSettingsComponent.settings.shouldHandleRenames) {
               this.bind(toggle, 'shouldRenameAttachmentFolder');
             } else {
               toggle.setDisabled(true);
@@ -217,7 +231,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
             f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.description.part2));
           }))
           .addToggle((toggle) => {
-            if (this.plugin.settings.shouldHandleRenames) {
+            if (this.pluginSettingsComponent.settings.shouldHandleRenames) {
               this.bind(toggle, 'shouldRenameAttachmentFiles');
             } else {
               toggle.setDisabled(true);
@@ -669,13 +683,13 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
             button.setButtonText(t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title));
             button.setWarning();
             button.onClick(convertAsyncToSync(async () => {
-              if (this.plugin.settings.customTokensStr === SAMPLE_CUSTOM_TOKENS) {
+              if (this.pluginSettingsComponent.settings.customTokensStr === SAMPLE_CUSTOM_TOKENS) {
                 return;
               }
 
               if (
-                this.plugin.settings.customTokensStr !== '' && !await confirm({
-                  app: this.plugin.app,
+                this.pluginSettingsComponent.settings.customTokensStr !== '' && !await confirm({
+                  app: this.app,
                   cancelButtonText: t(($) => $.obsidianDevUtils.buttons.cancel),
                   message: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.message),
                   okButtonText: t(($) => $.obsidianDevUtils.buttons.ok),
@@ -685,7 +699,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
                 return;
               }
 
-              await this.plugin.settingsManager.editAndSave((settings) => {
+              await this.pluginSettingsComponent.editAndSave((settings) => {
                 settings.customTokensStr = SAMPLE_CUSTOM_TOKENS;
               });
               this.display();
@@ -738,7 +752,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
 
   public override hide(): void {
     super.hide();
-    this.plugin.settingsManager.shouldDebounceCustomTokensValidation = false;
+    this.pluginSettingsComponent2.shouldDebounceCustomTokensValidation = false;
   }
 }
 

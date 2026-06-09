@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const hu: Translations<PluginTypes> = {
+export const hu = {
   attachmentCollector: {
     confirm: {
       part1: 'Szeretnéd összegyűjteni a mellékleteket a mappákban lévő összes jegyzethez rekurzívan?',

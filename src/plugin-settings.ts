@@ -1,5 +1,5 @@
 import { INFINITE_TIMEOUT } from 'obsidian-dev-utils/abort-controller';
-import { PathSettings } from 'obsidian-dev-utils/obsidian/plugin/path-settings';
+import { PathSettings } from 'obsidian-dev-utils/obsidian/path-settings';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { escapeRegExp } from 'obsidian-dev-utils/reg-exp';
 

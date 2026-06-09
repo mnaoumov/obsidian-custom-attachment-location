@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const no: Translations<PluginTypes> = {
+export const no = {
   attachmentCollector: {
     confirm: {
       part1: 'Vil du samle vedlegg for alle notater i mapper rekursivt?',

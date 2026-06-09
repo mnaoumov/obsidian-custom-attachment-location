@@ -1,15 +1,18 @@
+import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
+import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
 import { debounce } from 'obsidian';
+import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-manager-base';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/rename-delete-handler';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/validation';
 import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
 import { replaceAll } from 'obsidian-dev-utils/string';
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import { compare } from 'semver';
 
-import type { PluginTypes } from './plugin-types.ts';
+import type { Plugin } from './plugin.ts';
 
 import {
   CollectAttachmentUsedByMultipleNotesMode,
@@ -24,6 +27,12 @@ import {
 } from './substitutions.ts';
 
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
+
+interface PluginSettingsComponentConstructorParams {
+  readonly dataHandler: DataHandler;
+  readonly plugin: Plugin;
+  readonly pluginEventSource: PluginEventSource;
+}
 
 class LegacySettings {
   public autoRenameFiles = false;
@@ -215,20 +224,26 @@ ${commentOut(this.legacySettings.customTokensStr)}
     return replaceAll(
       str,
       /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi,
-      (_, token, momentJsFormat) => {
-        return `\${${token}:{momentJsFormat:'${momentJsFormat}'}}`;
+      ({ capturedGroupArgs: [token, momentJsFormat] }) => {
+        return `\${${ensureNonNullable(token)}:{momentJsFormat:'${ensureNonNullable(momentJsFormat)}'}}`;
       }
     );
   }
 }
 
-export class PluginSettingsManager extends PluginSettingsManagerBase<PluginTypes> {
+export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginSettings> {
   public shouldDebounceCustomTokensValidation = false;
+
   private readonly customTokensValidatorDebounced = debounce(this.customTokensValidatorImpl.bind(this), CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS);
   private lastCustomTokenValidatorResult: string | undefined = undefined;
+  private readonly plugin: Plugin;
 
-  protected override createDefaultSettings(): PluginSettings {
-    return new PluginSettings();
+  public constructor(params: PluginSettingsComponentConstructorParams) {
+    super({
+      ...params,
+      pluginSettingsClass: PluginSettings
+    });
+    this.plugin = params.plugin;
   }
 
   protected override registerLegacySettingsConverters(): void {

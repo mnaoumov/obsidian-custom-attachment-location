@@ -8,7 +8,9 @@ import { printError } from 'obsidian-dev-utils/error';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { join } from 'obsidian-dev-utils/path';
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { Plugin } from './plugin.ts';
 
 import {
@@ -24,6 +26,7 @@ export async function getAttachmentFolderFullPathForPath(
   actionContext: ActionContext,
   notePath: string,
   attachmentFileName: string,
+  pluginSettingsComponent: PluginSettingsComponent,
   oldNoteFilePath?: string,
   attachmentFileContent?: ArrayBuffer,
   attachmentFileStat?: FileStats
@@ -38,25 +41,30 @@ export async function getAttachmentFolderFullPathForPath(
       oldNoteFilePath,
       originalAttachmentFileName: attachmentFileName,
       plugin
-    })
+    }),
+    pluginSettingsComponent
   );
 }
 
-export async function getGeneratedAttachmentFileBaseName(plugin: Plugin, substitutions: Substitutions): Promise<string> {
+export async function getGeneratedAttachmentFileBaseName(
+  plugin: Plugin,
+  substitutions: Substitutions,
+  pluginSettingsComponent: PluginSettingsComponent
+): Promise<string> {
   let baseTemplate: string;
   switch (substitutions.actionContext) {
     case ActionContext.CollectAttachments:
-      baseTemplate = plugin.settings.collectedAttachmentFileName;
+      baseTemplate = pluginSettingsComponent.settings.collectedAttachmentFileName;
       break;
     case ActionContext.RenameNote:
-      baseTemplate = plugin.settings.renamedAttachmentFileName;
+      baseTemplate = pluginSettingsComponent.settings.renamedAttachmentFileName;
       break;
     default:
-      baseTemplate = plugin.settings.generatedAttachmentFileName;
+      baseTemplate = pluginSettingsComponent.settings.generatedAttachmentFileName;
       break;
   }
 
-  baseTemplate ||= plugin.settings.generatedAttachmentFileName;
+  baseTemplate ||= pluginSettingsComponent.settings.generatedAttachmentFileName;
 
   const path = await resolvePathTemplate(plugin, baseTemplate, substitutions, true);
   let validationMessage = await validatePath({
@@ -66,7 +74,7 @@ export async function getGeneratedAttachmentFileBaseName(plugin: Plugin, substit
   });
   if (!validationMessage) {
     const parts = path.split('/');
-    const fileName = parts.at(-1) ?? '';
+    const fileName = ensureNonNullable(parts.at(-1));
     // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
     validationMessage = await validateFileName({
       areSingleDotsAllowed: false,
@@ -102,8 +110,8 @@ function cleanFilePathPart(plugin: Plugin, part: string): string {
   return cleanPart;
 }
 
-async function getAttachmentFolderPath(plugin: Plugin, substitutions: Substitutions): Promise<string> {
-  return await resolvePathTemplate(plugin, plugin.settings.attachmentFolderPath, substitutions, false);
+async function getAttachmentFolderPath(plugin: Plugin, substitutions: Substitutions, pluginSettingsComponent: PluginSettingsComponent): Promise<string> {
+  return await resolvePathTemplate(plugin, pluginSettingsComponent.settings.attachmentFolderPath, substitutions, false);
 }
 
 function isRelativePath(path: string): boolean {

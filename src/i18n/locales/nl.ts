@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const nl: Translations<PluginTypes> = {
+export const nl = {
   attachmentCollector: {
     confirm: {
       part1: 'Wil je bijlagen voor alle notities in mappen recursief verzamelen?',

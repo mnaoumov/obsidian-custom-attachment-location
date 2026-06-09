@@ -3,7 +3,7 @@
 import type { Translations } from "obsidian-dev-utils/obsidian/i18n/i18n";
 import type { PluginTypes } from "../../PluginTypes.ts";
 
-export const yourLanguageLocale: Translations<PluginTypes> = {};
+export const yourLanguageLocale = {};
 
 /* Partial locale definition (you have to define all keys) */
 

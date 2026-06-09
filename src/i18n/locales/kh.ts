@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const kh: Translations<PluginTypes> = {
+export const kh = {
   attachmentCollector: {
     confirm: {
       part1: 'តើអ្នកចង់ប្រមូលឯកសារភ្ជាប់សម្រាប់កំណត់ត្រាទាំងអស់ក្នុងថតដោយធ្វើជាច្រើនកម្រិត (recursive) ដែរឬទេ?',

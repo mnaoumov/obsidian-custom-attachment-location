@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const vi: Translations<PluginTypes> = {
+export const vi = {
   attachmentCollector: {
     confirm: {
       part1: 'Bạn có muốn thu thập tệp đính kèm cho tất cả ghi chú trong các thư mục (đệ quy) không?',

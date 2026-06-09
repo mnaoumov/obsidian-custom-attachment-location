@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const zh: Translations<PluginTypes> = {
+export const zh = {
   attachmentCollector: {
     confirm: {
       part1: '是否要递归收集文件夹中所有笔记的附件？',

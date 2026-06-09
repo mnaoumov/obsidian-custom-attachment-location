@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const sq: Translations<PluginTypes> = {
+export const sq = {
   attachmentCollector: {
     confirm: {
       part1: 'Dëshiron të mbledhësh bashkëngjitjet për të gjitha shënimet në dosje në mënyrë rekursive?',

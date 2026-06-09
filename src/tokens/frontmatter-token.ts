@@ -1,5 +1,6 @@
 import { getNestedPropertyValue } from 'obsidian-dev-utils/object-utils';
 import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
+import { ensureGenericObject } from 'obsidian-dev-utils/type-guards';
 import { z } from 'zod';
 
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
@@ -28,7 +29,7 @@ export class FrontmatterToken extends TokenBase<Format> {
       return '';
     }
 
-    const value = getNestedPropertyValue(cache.frontmatter, format.key) ?? '';
+    const value = getNestedPropertyValue(ensureGenericObject(cache.frontmatter), format.key) ?? '';
     // eslint-disable-next-line @typescript-eslint/no-base-to-string -- Need to convert to string.
     return String(value);
   }

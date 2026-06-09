@@ -20,18 +20,18 @@ export class RandomToken extends TokenBase<Format> {
   protected override evaluateImpl(_ctx: TokenEvaluatorContext, format: Format): string {
     let symbols = '';
     if (format.digits) {
-      symbols += this.getRangeStr('0', '9');
+      symbols += getRangeStr('0', '9');
     }
     if (format.letters) {
       switch (format.letterCase) {
         case 'lower':
-          symbols += this.getRangeStr('a', 'z');
+          symbols += getRangeStr('a', 'z');
           break;
         case 'mixed':
-          symbols += this.getRangeStr('a', 'z') + this.getRangeStr('A', 'Z');
+          symbols += getRangeStr('a', 'z') + getRangeStr('A', 'Z');
           break;
         case 'upper':
-          symbols += this.getRangeStr('A', 'Z');
+          symbols += getRangeStr('A', 'Z');
           break;
         default:
           throw new Error(`Invalid letter case: ${format.letterCase as string}`);
@@ -47,21 +47,21 @@ export class RandomToken extends TokenBase<Format> {
 
     return ans;
   }
+}
 
-  private getRangeStr(from: string, to: string): string {
-    if (from.length !== 1) {
-      throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
-    }
-    if (to.length !== 1) {
-      throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
-    }
-
-    let str = '';
-
-    for (let i = from.charCodeAt(0); i <= to.charCodeAt(0); i++) {
-      str += String.fromCharCode(i);
-    }
-
-    return str;
+export function getRangeStr(from: string, to: string): string {
+  if (from.length !== 1) {
+    throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
   }
+  if (to.length !== 1) {
+    throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
+  }
+
+  let str = '';
+
+  for (let i = from.charCodeAt(0); i <= to.charCodeAt(0); i++) {
+    str += String.fromCharCode(i);
+  }
+
+  return str;
 }

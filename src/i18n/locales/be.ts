@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const be: Translations<PluginTypes> = {
+export const be = {
   attachmentCollector: {
     confirm: {
       part1: 'Сабраць укладанні для ўсіх нататак у папках рэкурсіўна?',

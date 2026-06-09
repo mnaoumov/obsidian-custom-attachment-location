@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const fa: Translations<PluginTypes> = {
+export const fa = {
   attachmentCollector: {
     confirm: {
       part1: 'آیا می‌خواهید پیوست‌های همهٔ یادداشت‌ها را در پوشه‌ها به‌صورت بازگشتی جمع‌آوری کنید؟',

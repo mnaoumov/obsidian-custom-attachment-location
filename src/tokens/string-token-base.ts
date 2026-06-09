@@ -1,4 +1,5 @@
 import { extractDefaultExportInterop } from 'obsidian-dev-utils/object-utils';
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import slugify_ from 'slugify';
 import { z } from 'zod';
 
@@ -16,17 +17,18 @@ export const stringFormatSchema = z.strictObject({
 type StringFormat = z.infer<typeof stringFormatSchema>;
 
 export function formatString(value: string, format: StringFormat): string {
-  switch (format.trim?.side) {
+  const trim = format.trim;
+  switch (trim?.side) {
     case 'left':
-      value = value.slice(0, format.trim.length);
+      value = value.slice(0, trim.length);
       break;
     case 'right':
-      value = value.slice(-format.trim.length);
+      value = value.slice(-trim.length);
       break;
     case undefined:
       break;
     default:
-      throw new Error(`Invalid trim side: ${format.trim?.side as string | undefined ?? ''}`);
+      throw new Error(`Invalid trim side: ${ensureNonNullable(trim).side as string}`);
   }
 
   if (format.slugify) {

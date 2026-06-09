@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const uk: Translations<PluginTypes> = {
+export const uk = {
   attachmentCollector: {
     confirm: {
       part1: 'Бажаєте зібрати вкладення для всіх нотаток у папках рекурсивно?',

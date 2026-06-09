@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const uz: Translations<PluginTypes> = {
+export const uz = {
   attachmentCollector: {
     confirm: {
       part1: 'Papkalardagi barcha qaydlar uchun ilovalarni rekursiv tarzda to‘plamoqchimisiz?',

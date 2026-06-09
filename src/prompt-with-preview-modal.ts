@@ -1,6 +1,6 @@
+import type { EmbedComponent } from '@obsidian-typings/obsidian-public-latest';
 import type { TFile } from 'obsidian';
 import type { PromiseResolve } from 'obsidian-dev-utils/async';
-import type { EmbedComponent } from '@obsidian-typings/obsidian-public-latest';
 
 import {
   ButtonComponent,
@@ -18,17 +18,17 @@ import { trashSafe } from 'obsidian-dev-utils/obsidian/vault';
 
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 
-interface PromptWithPreviewModalOptions {
-  ctx: TokenEvaluatorContext;
-  defaultValue: string;
-  valueValidator: (value: string) => Promise<null | string>;
+interface PromptWithPreviewOptions {
+  readonly ctx: TokenEvaluatorContext;
+  readonly defaultValue: string;
+  valueValidator(value: string): Promise<null | string>;
 }
 
 class PreviewModal extends Modal {
   private embedComponent?: EmbedComponent;
   private tempFile?: TFile;
 
-  public constructor(private readonly options: PromptWithPreviewModalOptions) {
+  public constructor(private readonly options: PromptWithPreviewOptions) {
     super(options.ctx.app);
     addPluginCssClasses(this.containerEl, 'preview-modal');
   }
@@ -78,7 +78,7 @@ class PromptWithPreviewModal extends Modal {
   private isOkClicked = false;
   private value = '';
 
-  public constructor(private readonly options: PromptWithPreviewModalOptions, private readonly resolve: PromiseResolve<null | string>) {
+  public constructor(private readonly options: PromptWithPreviewOptions, private readonly resolve: PromiseResolve<null | string>) {
     super(options.ctx.app);
     addPluginCssClasses(this.containerEl, CssClass.PromptModal);
   }
@@ -169,7 +169,7 @@ class PromptWithPreviewModal extends Modal {
   }
 }
 
-export function promptWithPreview(options: PromptWithPreviewModalOptions): Promise<null | string> {
+export function promptWithPreview(options: PromptWithPreviewOptions): Promise<null | string> {
   return new Promise((resolve) => {
     const modal = new PromptWithPreviewModal(options, resolve);
     modal.open();

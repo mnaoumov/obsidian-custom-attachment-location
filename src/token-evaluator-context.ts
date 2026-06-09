@@ -3,8 +3,10 @@ import type {
   FileStats
 } from 'obsidian';
 
+import { AttachmentPathContext } from 'obsidian-dev-utils/obsidian/attachment-path';
+
 import type { Plugin } from './plugin.ts';
-import type { ValidatePathOptions } from './substitutions.ts';
+import type { ValidatePathParams } from './substitutions.ts';
 
 /**
  * An action context.
@@ -219,5 +221,39 @@ export interface TokenEvaluatorContext {
   /**
    * Validates a path.
    */
-  validatePath(options: ValidatePathOptions): Promise<string>;
+  validatePath(options: ValidatePathParams): Promise<string>;
+}
+
+/**
+ * Converts an {@link ActionContext} to an {@link AttachmentPathContext}.
+ *
+ * `AttachmentPathContext` is a subset of `ActionContext` by string value.
+ * Contexts that have no equivalent map to `AttachmentPathContext.Unknown`.
+ */
+export function actionContextToAttachmentPathContext(context: ActionContext): AttachmentPathContext {
+  switch (context) {
+    case ActionContext.DeleteNote:
+      return AttachmentPathContext.DeleteNote;
+    case ActionContext.RenameNote:
+      return AttachmentPathContext.RenameNote;
+    default:
+      return AttachmentPathContext.Unknown;
+  }
+}
+
+/**
+ * Converts an {@link AttachmentPathContext} to an {@link ActionContext}.
+ *
+ * `AttachmentPathContext` is a subset of `ActionContext` by string value.
+ * Contexts that have no equivalent map to `ActionContext.Unknown`.
+ */
+export function attachmentPathContextToActionContext(context: AttachmentPathContext): ActionContext {
+  switch (context) {
+    case AttachmentPathContext.DeleteNote:
+      return ActionContext.DeleteNote;
+    case AttachmentPathContext.RenameNote:
+      return ActionContext.RenameNote;
+    default:
+      return ActionContext.Unknown;
+  }
 }

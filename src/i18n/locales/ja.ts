@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const ja: Translations<PluginTypes> = {
+export const ja = {
   attachmentCollector: {
     confirm: {
       part1: 'フォルダ内のすべてのノートの添付ファイルを再帰的に収集しますか？',

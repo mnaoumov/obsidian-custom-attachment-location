@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const ar: Translations<PluginTypes> = {
+export const ar = {
   attachmentCollector: {
     confirm: {
       part1: 'هل تريد جمع المرفقات لكل الملاحظات داخل المجلدات بشكلٍ متكرر؟',

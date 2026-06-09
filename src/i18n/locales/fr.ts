@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const fr: Translations<PluginTypes> = {
+export const fr = {
   attachmentCollector: {
     confirm: {
       part1: 'Voulez-vous collecter les pièces jointes pour toutes les notes dans les dossiers de manière récursive ?',

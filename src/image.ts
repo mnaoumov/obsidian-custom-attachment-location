@@ -1,7 +1,7 @@
 import { blobToDataUrl } from 'obsidian-dev-utils/blob';
 import { trimEnd } from 'obsidian-dev-utils/string';
 
-import type { Plugin } from './plugin.ts';
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { DefaultImageSizeDimension } from './plugin-settings.ts';
 
@@ -16,13 +16,13 @@ const IMAGE_MIME_TYPE_IMAGE_MAP: Record<string, string> = {
   webp: 'image/webp'
 };
 
-export async function getImageSize(plugin: Plugin, extension: string, content: ArrayBuffer): Promise<null | string> {
+export async function getImageSize(extension: string, content: ArrayBuffer, pluginSettingsComponent: PluginSettingsComponent): Promise<null | string> {
   const mimeType = IMAGE_MIME_TYPE_IMAGE_MAP[extension.toLowerCase()];
   if (!mimeType) {
     return null;
   }
 
-  if (!plugin.settings.defaultImageSize) {
+  if (!pluginSettingsComponent.settings.defaultImageSize) {
     return null;
   }
 
@@ -42,9 +42,9 @@ export async function getImageSize(plugin: Plugin, extension: string, content: A
   const PX = 'px';
   const PERCENTAGE = '%';
 
-  if (plugin.settings.defaultImageSize.endsWith(PX)) {
-    const dimensionInPixels = Number(trimEnd(plugin.settings.defaultImageSize, PX));
-    if (plugin.settings.defaultImageSizeDimension === DefaultImageSizeDimension.Width) {
+  if (pluginSettingsComponent.settings.defaultImageSize.endsWith(PX)) {
+    const dimensionInPixels = Number(trimEnd(pluginSettingsComponent.settings.defaultImageSize, PX));
+    if (pluginSettingsComponent.settings.defaultImageSizeDimension === DefaultImageSizeDimension.Width) {
       width = dimensionInPixels;
       height = Math.trunc(width / image.width * image.height);
     } else {
@@ -52,7 +52,7 @@ export async function getImageSize(plugin: Plugin, extension: string, content: A
       width = Math.trunc(height / image.height * image.width);
     }
   } else {
-    const percentage = Number(trimEnd(plugin.settings.defaultImageSize, PERCENTAGE));
+    const percentage = Number(trimEnd(pluginSettingsComponent.settings.defaultImageSize, PERCENTAGE));
     const FULL_IMAGE_PERCENTAGE = 100;
     width = Math.trunc(image.width / FULL_IMAGE_PERCENTAGE * percentage);
     height = Math.trunc(image.height / FULL_IMAGE_PERCENTAGE * percentage);

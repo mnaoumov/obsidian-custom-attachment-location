@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const ko: Translations<PluginTypes> = {
+export const ko = {
   attachmentCollector: {
     confirm: {
       part1: '폴더의 모든 노트에 대해 첨부 파일을 재귀적으로 수집하시겠습니까?',

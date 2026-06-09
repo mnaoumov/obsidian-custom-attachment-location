@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const ro: Translations<PluginTypes> = {
+export const ro = {
   attachmentCollector: {
     confirm: {
       part1: 'Doriți să colectați atașamentele pentru toate notițele din foldere în mod recursiv?',

@@ -1,7 +1,10 @@
 import type {
+  App,
   TAbstractFile,
   TFile
 } from 'obsidian';
+import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+import type { Promisable } from 'type-fest';
 
 import {
   Notice,
@@ -9,12 +12,7 @@ import {
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { toJson } from 'obsidian-dev-utils/object-utils';
-import {
-  AbstractFileCommandBase,
-  AbstractFileCommandInvocationBase,
-  AbstractFilesCommandInvocationBase,
-  ArrayDelegatingAbstractFileCommandInvocation
-} from 'obsidian-dev-utils/obsidian/commands/abstract-file-command-base';
+import { AbstractFileCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler';
 import {
   isFile,
   isFolder
@@ -28,7 +26,9 @@ import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { copySafe } from 'obsidian-dev-utils/obsidian/vault';
 import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
+import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 import type { Plugin } from '../plugin.ts';
 
 import {
@@ -39,22 +39,43 @@ import { selectMode } from '../modals/move-attachment-to-proper-folder-used-by-m
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
 import { ActionContext } from '../token-evaluator-context.ts';
 
+interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
+  readonly abortSignalComponent: AbortSignalComponent;
+  readonly app: App;
+  readonly plugin: Plugin;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+}
+
 interface MoveAttachmentToProperFolderContext {
   mode?: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
 }
 
-class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommandInvocationBase<Plugin> {
-  public constructor(plugin: Plugin, abstractFiles: TAbstractFile[]) {
-    super(plugin, abstractFiles);
+export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileCommandHandler {
+  private readonly abortSignalComponent: AbortSignalComponent;
+  private readonly app: App;
+  private readonly plugin: Plugin;
+  private readonly pluginSettingsComponent: PluginSettingsComponent;
+
+  public constructor(params: MoveAttachmentToProperFolderCommandHandlerConstructorParams) {
+    super({
+      icon: 'move',
+      id: 'move-attachment-to-proper-folder',
+      name: t(($) => $.commands.moveAttachmentToProperFolder)
+    });
+
+    this.abortSignalComponent = params.abortSignalComponent;
+    this.app = params.app;
+    this.plugin = params.plugin;
+    this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
-  protected override canExecute(): boolean {
+  protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
     if (!super.canExecute()) {
       return false;
     }
 
-    for (const abstractFile of this.abstractFiles) {
-      if (isFile(abstractFile) && isNoteEx(this.plugin, abstractFile)) {
+    for (const abstractFile of abstractFiles) {
+      if (isFile(abstractFile) && isNoteEx(this.plugin, abstractFile, this.pluginSettingsComponent)) {
         return false;
       }
     }
@@ -62,17 +83,21 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
     return true;
   }
 
-  protected override async execute(): Promise<void> {
+  protected override executeAbstractFile(abstractFile: TAbstractFile): Promisable<void> {
+    return this.executeAbstractFiles([abstractFile]);
+  }
+
+  protected override async executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void> {
     const attachmentFilesSet = new Set<TFile>();
 
-    for (const abstractFile of this.abstractFiles) {
-      if (isFile(abstractFile) && !isNoteEx(this.plugin, abstractFile)) {
+    for (const abstractFile of abstractFiles) {
+      if (isFile(abstractFile) && !isNoteEx(this.plugin, abstractFile, this.pluginSettingsComponent)) {
         attachmentFilesSet.add(abstractFile);
       }
 
       if (isFolder(abstractFile)) {
         Vault.recurseChildren(abstractFile, (child) => {
-          if (isFile(child) && !isNoteEx(this.plugin, child)) {
+          if (isFile(child) && !isNoteEx(this.plugin, child, this.pluginSettingsComponent)) {
             attachmentFilesSet.add(child);
           }
         });
@@ -83,7 +108,7 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
     attachmentFiles.sort((a, b) => a.path.localeCompare(b.path));
 
     const abortController = new AbortController();
-    const combinedAbortSignal = abortSignalAny(abortController.signal, this.plugin.abortSignal);
+    const combinedAbortSignal = abortSignalAny(abortController.signal, this.abortSignalComponent.abortSignal);
     const ctx: MoveAttachmentToProperFolderContext = {};
 
     await loop({
@@ -93,7 +118,7 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
       items: attachmentFiles,
       processItem: async (attachmentFile) => {
         combinedAbortSignal.throwIfAborted();
-        if (this.plugin.settings.isPathIgnored(attachmentFile.path)) {
+        if (this.pluginSettingsComponent.settings.isPathIgnored(attachmentFile.path)) {
           console.warn(`Cannot move attachment to proper folder as attachment path is ignored: ${attachmentFile.path}.`);
           return;
         }
@@ -108,8 +133,16 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
     });
   }
 
+  protected override shouldAddToAbstractFileMenu(): boolean {
+    return true;
+  }
+
+  protected override shouldAddToAbstractFilesMenu(): boolean {
+    return true;
+  }
+
   private async moveAttachmentToProperFolder(attachmentFile: TFile, ctx: MoveAttachmentToProperFolderContext): Promise<boolean> {
-    let backlinks = await getBacklinksForFileSafe(this.plugin.app, attachmentFile);
+    let backlinks = await getBacklinksForFileSafe(this.app, attachmentFile);
     if (backlinks.keys().length === 0) {
       new Notice(t(($) => $.moveAttachmentToProperFolder.unusedAttachment, { attachmentPath: attachmentFile.path }));
       return true;
@@ -118,17 +151,20 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
     let backlinksToCopy: string[] = [];
     const that = this;
 
-    if (backlinks.keys().length > 1 && !await handleMode(ctx.mode ?? this.plugin.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)) {
+    if (
+      backlinks.keys().length > 1 && !await handleMode(ctx.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)
+    ) {
       return false;
     }
 
     for (const backlink of backlinksToCopy) {
-      const backlinkFile = this.plugin.app.vault.getFileByPath(backlink);
+      const backlinkFile = this.app.vault.getFileByPath(backlink);
       if (!backlinkFile) {
         continue;
       }
 
-      const link = backlinks.get(backlink)?.[0];
+      const references = ensureNonNullable(backlinks.get(backlink));
+      const link = references[0];
       if (!link) {
         continue;
       }
@@ -138,6 +174,7 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
         attachmentFile,
         noteFilePath: backlink,
         plugin: this.plugin,
+        pluginSettingsComponent: this.pluginSettingsComponent,
         reference: link
       });
       if (!newAttachmentPath) {
@@ -145,17 +182,17 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
         continue;
       }
 
-      const linkJsons = new Set((backlinks.get(backlink) ?? []).map((reference) => toJson(reference)));
+      const linkJsons = new Set(references.map((reference) => toJson(reference)));
 
-      await copySafe(this.plugin.app, attachmentFile, newAttachmentPath);
-      await editLinks(this.plugin.app, backlinkFile, (link2) => {
+      await copySafe(this.app, attachmentFile, newAttachmentPath);
+      await editLinks(this.app, backlinkFile, (link2) => {
         const linkJson = toJson(link2);
         if (!linkJsons.has(linkJson)) {
           return;
         }
 
         return updateLink({
-          app: this.plugin.app,
+          app: this.app,
           link: link2,
           newSourcePathOrFile: backlinkFile,
           newTargetPathOrFile: newAttachmentPath,
@@ -165,10 +202,10 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
     }
 
     // eslint-disable-next-line require-atomic-updates -- Don't have a better way to do this.
-    backlinks = await getBacklinksForFileSafe(this.plugin.app, attachmentFile);
+    backlinks = await getBacklinksForFileSafe(this.app, attachmentFile);
 
     if (backlinks.keys().length === 0) {
-      await deleteIfNotUsed(this.plugin.app, attachmentFile);
+      await deleteIfNotUsed(this.app, attachmentFile);
     }
 
     return true;
@@ -176,7 +213,10 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
     async function handleMode(mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode): Promise<boolean> {
       switch (mode) {
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel:
-          if (that.plugin.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode === MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel) {
+          if (
+            that.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode
+              === MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel
+          ) {
             await selectMode(that.plugin.app, attachmentFile.path, Array.from(backlinks.keys()), true);
           }
           return false;
@@ -207,32 +247,5 @@ class MoveAttachmentToProperFolderCommandInvocation extends AbstractFilesCommand
           return false;
       }
     }
-  }
-}
-
-export class MoveAttachmentToProperFolderCommand extends AbstractFileCommandBase<Plugin> {
-  public constructor(plugin: Plugin) {
-    super({
-      icon: 'move',
-      id: 'move-attachment-to-proper-folder',
-      name: t(($) => $.commands.moveAttachmentToProperFolder),
-      plugin
-    });
-  }
-
-  protected override createCommandInvocationForAbstractFile(file: null | TAbstractFile): AbstractFileCommandInvocationBase<Plugin> {
-    return new ArrayDelegatingAbstractFileCommandInvocation(this.plugin, file, this.createCommandInvocationForAbstractFiles.bind(this));
-  }
-
-  protected override createCommandInvocationForAbstractFiles(abstractFiles: TAbstractFile[]): AbstractFilesCommandInvocationBase<Plugin> {
-    return new MoveAttachmentToProperFolderCommandInvocation(this.plugin, abstractFiles);
-  }
-
-  protected override shouldAddToAbstractFileMenu(): boolean {
-    return true;
-  }
-
-  protected override shouldAddToAbstractFilesMenu(): boolean {
-    return true;
   }
 }

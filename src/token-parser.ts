@@ -1,5 +1,6 @@
 import { parseExpressionAt } from 'acorn';
 import { parse } from 'json5';
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 export interface ScannedToken {
   end: number;
@@ -18,7 +19,7 @@ interface ParseHeadAtResult {
 }
 
 interface ScanTokensOptions {
-  throwOnError?: boolean;
+  readonly throwOnError?: boolean;
 }
 
 export function parseFormatObject(formatText: string, tokenName: string): Record<string, unknown> {
@@ -26,13 +27,33 @@ export function parseFormatObject(formatText: string, tokenName: string): Record
   try {
     parsed = parse(formatText);
   } catch (e) {
-    throw new Error(`Invalid JSON5: ${(e as Error).message}`);
+    throw new Error('Invalid JSON5', { cause: e });
   }
 
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error(`Format for token '${tokenName}' must be a JSON5 object`);
   }
   return parsed as Record<string, unknown>;
+}
+
+export function parseObjectExpressionEndExclusive(
+  str: string,
+  objectStart: number,
+  tokenName: string,
+  throwOnError: boolean
+): null | number {
+  try {
+    const node = parseExpressionAt(str, objectStart, { ecmaVersion: 'latest' });
+    if (node.type !== 'ObjectExpression') {
+      throw new Error(`Expected object literal, got ${node.type}`);
+    }
+    return node.end;
+  } catch (e) {
+    if (throwOnError) {
+      throw new Error(`Invalid JSON5 object for token '${tokenName}'`, { cause: e });
+    }
+    return null;
+  }
 }
 
 export function scanTokens(str: string, options?: ScanTokensOptions): ScannedToken[] {
@@ -64,39 +85,16 @@ function parseHeadAt(
     return null;
   }
 
-  const tokenName = (head.groups?.['Token'] ?? '').trim();
-  if (!tokenName) {
-    if (throwOnError) {
-      throw new Error('Empty token name');
-    }
-    return null;
-  }
+  // `groups` is always present because the regexp declares named groups.
+  const groups = ensureNonNullable(head.groups);
+  // The `Token` named group is guaranteed to be present and non-empty because the regexp requires `[a-zA-Z0-9_]+`.
+  const tokenName = ensureNonNullable(groups['Token']).trim();
 
   return {
-    hasColon: Boolean(head.groups?.['Colon']),
+    hasColon: Boolean(groups['Colon']),
     indexAfterHead: TOKEN_HEAD_REGEXP.lastIndex,
     tokenName
   };
-}
-
-function parseObjectExpressionEndExclusive(
-  str: string,
-  objectStart: number,
-  tokenName: string,
-  throwOnError: boolean
-): null | number {
-  try {
-    const node = parseExpressionAt(str, objectStart, { ecmaVersion: 'latest' });
-    if (node.type !== 'ObjectExpression') {
-      throw new Error(`Expected object literal, got ${node.type}`);
-    }
-    return node.end;
-  } catch (e) {
-    if (throwOnError) {
-      throw new Error(`Invalid JSON5 object for token '${tokenName}': ${(e as Error).message}`);
-    }
-    return null;
-  }
 }
 
 function parseTokenAt(str: string, start: number, throwOnError: boolean): null | ScannedToken {
@@ -164,7 +162,7 @@ function parseTokenAt(str: string, start: number, throwOnError: boolean): null |
 
 function skipWhitespace(str: string, start: number): number {
   let i = start;
-  while (i < str.length && /\s/.test(str[i] ?? '')) {
+  while (i < str.length && /\s/.test(ensureNonNullable(str[i]))) {
     i++;
   }
   return i;

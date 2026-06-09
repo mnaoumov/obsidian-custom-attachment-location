@@ -1,8 +1,4 @@
-import type { Translations } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-
-import type { PluginTypes } from '../../plugin-types.ts';
-
-export const ga: Translations<PluginTypes> = {
+export const ga = {
   attachmentCollector: {
     confirm: {
       part1: 'Ar mhaith leat na ceangaltáin a bhailiú do gach nóta i bhfillteáin go hathchúrsach?',
