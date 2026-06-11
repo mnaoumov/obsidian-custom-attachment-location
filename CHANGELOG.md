@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 10.3.7
+
+- chore: update version script
+- fix: $(noteFileCreationDate) re <https://github.com/mnaoumov/obsidian-custom-attachment-location/issues/21>
+- chore: update libs
+
 ## 10.3.6
 
 - chore: update libs
