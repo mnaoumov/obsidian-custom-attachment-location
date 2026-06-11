@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.3.6
+
+- chore: update libs
+
 ## 10.3.5
 
 - chore: update libs
