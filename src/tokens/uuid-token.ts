@@ -16,6 +16,7 @@ export class UuidToken extends TokenBase<Format> {
   }
 
   protected override evaluateImpl(_ctx: TokenEvaluatorContext, format: Format): string {
+    // eslint-disable-next-line n/no-unsupported-features/node-builtins -- crypto.randomUUID is the Web Crypto API, available in Obsidian's Electron renderer; the rule incorrectly flags it as a Node experimental builtin.
     let uuid = crypto.randomUUID() as string;
     if (format.case === 'upper') {
       uuid = uuid.toUpperCase();

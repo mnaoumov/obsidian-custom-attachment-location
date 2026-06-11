@@ -732,7 +732,7 @@ export class Plugin extends PluginBase {
   private async importFiles(next: ImportFilesFn, files: SharedFile[]): Promise<void> {
     for (const file of files) {
       const fileUri = window.Capacitor.convertFileSrc(file.uri);
-      // eslint-disable-next-line no-restricted-globals -- `requestUrl()` doesn't work for those Capacitor urls.
+      // eslint-disable-next-line no-restricted-globals, n/no-unsupported-features/node-builtins -- `requestUrl()` doesn't work for those Capacitor urls; fetch is a stable Web API in Obsidian's Electron renderer, the rule incorrectly flags it as a Node experimental builtin.
       const response = await fetch(fileUri);
       const attachmentFileContent = await response.arrayBuffer();
       const substitutions = new Substitutions({
