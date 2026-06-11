@@ -66,8 +66,7 @@ export const hu = {
         displayText: 'Egyik sem'
       },
       onlyPastedImages: {
-        description:
-          'csak a beillesztett képek kerülnek átnevezésre. Csak akkor érvényes, amikor a PNG kép tartalma közvetlenül a vágólapról van beillesztve. Jellemzően képernyőképek beillesztésénél.',
+        description: 'csak a beillesztett képek kerülnek átnevezésre. Csak akkor érvényes, amikor a PNG kép tartalma közvetlenül a vágólapról van beillesztve. Jellemzően képernyőképek beillesztésénél.',
         displayText: 'Csak beillesztett képek'
       }
     },
@@ -114,8 +113,7 @@ export const hu = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Az egyéni tokenek kommentbe kerültek, mert frissíteni kell őket a 9.0.0 verzióban bevezetett új formátumra.\n// További információért lásd a dokumentációt (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens).',
+      codeComment: '// Az egyéni tokenek kommentbe kerültek, mert frissíteni kell őket a 9.0.0 verzióban bevezetett új formátumra.\n// További információért lásd a dokumentációt (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens).',
       deprecated: {
         part1: 'A 9.0.0 verzióban az egyéni token regisztráció formátuma megváltozott. Kérjük, frissítsd a tokenjeidet ennek megfelelően. Lásd a',
         part2: 'dokumentációt',
@@ -147,8 +145,7 @@ export const hu = {
       invalidCustomTokensCode: 'Érvénytelen egyéni token kód',
       invalidRegularExpression: 'Érvénytelen reguláris kifejezés {{regExp}}',
       specialCharactersMustNotContainSlash: 'A speciális karakterek nem tartalmazhatnak / jelet',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'A speciális karakterek helyettesítése nem tartalmazhat érvénytelen fájlnév elérési út karaktereket.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'A speciális karakterek helyettesítése nem tartalmazhat érvénytelen fájlnév elérési út karaktereket.'
     }
   },
   pluginSettingsTab: {
@@ -283,8 +280,7 @@ export const hu = {
       title: 'Visszaállítás minta egyéni tokenekre'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Beillesztett képek JPEG-re konvertálása. Csak akkor érvényes, amikor a PNG kép tartalma közvetlenül a vágólapról van beillesztve. Jellemzően képernyőképek beillesztésénél.',
+      description: 'Beillesztett képek JPEG-re konvertálása. Csak akkor érvényes, amikor a PNG kép tartalma közvetlenül a vágólapról van beillesztve. Jellemzően képernyőképek beillesztésénél.',
       name: 'Beillesztett képek JPEG-re konvertálása'
     },
     shouldDeleteOrphanAttachments: {

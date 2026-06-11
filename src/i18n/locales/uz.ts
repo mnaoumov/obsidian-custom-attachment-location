@@ -66,8 +66,7 @@ export const uz = {
         displayText: 'Hech biri'
       },
       onlyPastedImages: {
-        description:
-          'Faqat yopishtirilgan rasmlar qayta nomlanadi. Faqqt PNG rasm kontenti bevosita buferdan yopishtirilganida amal qiladi. Odatda skrinshotlar uchun.',
+        description: 'Faqat yopishtirilgan rasmlar qayta nomlanadi. Faqqt PNG rasm kontenti bevosita buferdan yopishtirilganida amal qiladi. Odatda skrinshotlar uchun.',
         displayText: 'Faqat yopishtirilgan rasmlar'
       }
     },
@@ -114,8 +113,7 @@ export const uz = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Maxsus tokenlar komment qilindi, chunki ular 9.0.0 versiyasidagi yangi format bo\'yicha yangilanishi kerak.\n// Qo\'shimcha ma\'lumot uchun hujjatlarga murojaat qiling.',
+      codeComment: '// Maxsus tokenlar komment qilindi, chunki ular 9.0.0 versiyasidagi yangi format bo\'yicha yangilanishi kerak.\n// Qo\'shimcha ma\'lumot uchun hujjatlarga murojaat qiling.',
       deprecated: {
         part1: '9.0.0 versiyasida maxsus tokenlar ro\'yxatga olish formati o\'zgardi. Iltimos, tokenlaringizni yangilang. Batafsil ma\'lumot uchun',
         part2: 'hujjatga murojaat qiling',
@@ -147,8 +145,7 @@ export const uz = {
       invalidCustomTokensCode: 'Noto\'g\'ri maxsus token kodi',
       invalidRegularExpression: 'Noto\'g\'ri tartibiy ifoda {{regExp}}',
       specialCharactersMustNotContainSlash: 'Maxsus belgilar / ni o\'z ichiga olmang',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Maxsus belgi o\'rnini bosuvchi fayl nomi yoki yo\'l belgilari bo\'lmasligi kerak.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Maxsus belgi o\'rnini bosuvchi fayl nomi yoki yo\'l belgilari bo\'lmasligi kerak.'
     }
   },
   pluginSettingsTab: {
@@ -177,8 +174,7 @@ export const uz = {
         part2: 'Qo\'shimcha ma\'lumot uchun qarang',
         part3: 'hujjatlar',
         part4: '',
-        part5:
-          '⚠️ Maxsus tokenlar istalgan JavaScript kodi bo\'lishi mumkin. Noto\'g\'ri yozilganda ma\'lumot yo\'qolishi mumkin. O\'z xataringizga foydalaning.'
+        part5: '⚠️ Maxsus tokenlar istalgan JavaScript kodi bo\'lishi mumkin. Noto\'g\'ri yozilganda ma\'lumot yo\'qolishi mumkin. O\'z xataringizga foydalaning.'
       },
       name: 'Maxsus tokenlar'
     },
@@ -280,8 +276,7 @@ export const uz = {
       title: 'Namuna tokenlarga qaytarish'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Yopishtirilgan rasmlarni JPEG formatiga aylantirish-aylantirilmasligini belgilaydi. Bu faqat PNG rasmlar bo\'lsa va to\'g\'ridan-to\'g\'ri panodan yopishtirilganda ishlatiladi. Odatda, skrinshotlar uchun.',
+      description: 'Yopishtirilgan rasmlarni JPEG formatiga aylantirish-aylantirilmasligini belgilaydi. Bu faqat PNG rasmlar bo\'lsa va to\'g\'ridan-to\'g\'ri panodan yopishtirilganda ishlatiladi. Odatda, skrinshotlar uchun.',
       name: 'Yopishtirilgan rasmlarni JPEG-ga o\'zgartirish'
     },
     shouldDeleteOrphanAttachments: {

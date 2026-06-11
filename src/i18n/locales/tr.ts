@@ -113,8 +113,7 @@ export const tr = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Özel tokenler yorum satırı yapıldı, 9.0.0 sürümünde değişen formata güncellenmesi gerekiyor.\n// Daha fazla bilgi için dokümantasyona bakınız.',
+      codeComment: '// Özel tokenler yorum satırı yapıldı, 9.0.0 sürümünde değişen formata güncellenmesi gerekiyor.\n// Daha fazla bilgi için dokümantasyona bakınız.',
       deprecated: {
         part1: '9.0.0 sürümünde özel token kayıt formatı değişti. Lütfen tokenlerinizi güncelleyin. Detaylar için',
         part2: 'dokümantasyona',
@@ -277,8 +276,7 @@ export const tr = {
       title: 'Örnek tokenlara sıfırla'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Yapıştırılan görüntülerin JPEG\'e dönüştürülüp dönüştürülmeyeceği. Sadece PNG içeriği direkt olarak pano’dan yapıştırıldığında geçerlidir. Genellikle ekran görüntüleri için.',
+      description: 'Yapıştırılan görüntülerin JPEG\'e dönüştürülüp dönüştürülmeyeceği. Sadece PNG içeriği direkt olarak pano’dan yapıştırıldığında geçerlidir. Genellikle ekran görüntüleri için.',
       name: 'Yapıştırılan görüntüleri JPEG\'e dönüştür'
     },
     shouldDeleteOrphanAttachments: {

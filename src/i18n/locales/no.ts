@@ -66,8 +66,7 @@ export const no = {
         displayText: 'Ingen'
       },
       onlyPastedImages: {
-        description:
-          'bare innlimte bilder omdøpes. Gjelder bare når PNG-bildeinnhold limes inn fra utklippstavlen direkte. Vanligvis for å lime inn skjermbilder.',
+        description: 'bare innlimte bilder omdøpes. Gjelder bare når PNG-bildeinnhold limes inn fra utklippstavlen direkte. Vanligvis for å lime inn skjermbilder.',
         displayText: 'Bare innlimte bilder'
       }
     },
@@ -114,8 +113,7 @@ export const no = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Tilpassede tokens ble kommentert ut da de må oppdateres til det nye formatet introdusert i plugin versjon 9.0.0.\n// Se dokumentasjonen (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for mer informasjon.',
+      codeComment: '// Tilpassede tokens ble kommentert ut da de må oppdateres til det nye formatet introdusert i plugin versjon 9.0.0.\n// Se dokumentasjonen (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for mer informasjon.',
       deprecated: {
         part1: 'I plugin versjon 9.0.0 endret formatet for tilpasset token-registrering. Vennligst oppdater tokens dine tilsvarende. Se',
         part2: 'dokumentasjonen',
@@ -278,8 +276,7 @@ export const no = {
       title: 'Tilbakestill til eksempel tilpassede tokens'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Om innlimte bilder skal konverteres til JPEG. Gjelder bare når PNG-bildeinnhold limes inn fra utklippstavlen direkte. Vanligvis for å lime inn skjermbilder.',
+      description: 'Om innlimte bilder skal konverteres til JPEG. Gjelder bare når PNG-bildeinnhold limes inn fra utklippstavlen direkte. Vanligvis for å lime inn skjermbilder.',
       name: 'Skal konvertere innlimte bilder til JPEG'
     },
     shouldDeleteOrphanAttachments: {

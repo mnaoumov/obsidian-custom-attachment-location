@@ -66,8 +66,7 @@ export const id = {
         displayText: 'Tidak ada'
       },
       onlyPastedImages: {
-        description:
-          'hanya gambar yang ditempel yang akan diubah namanya. Berlaku hanya ketika konten gambar PNG ditempel langsung dari clipboard. Biasanya, untuk menempel screenshot.',
+        description: 'hanya gambar yang ditempel yang akan diubah namanya. Berlaku hanya ketika konten gambar PNG ditempel langsung dari clipboard. Biasanya, untuk menempel screenshot.',
         displayText: 'Hanya gambar yang ditempel'
       }
     },
@@ -114,8 +113,7 @@ export const id = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Token kustom dikomentari karena harus diperbarui ke format baru yang diperkenalkan di versi plugin 9.0.0.\n// Lihat dokumentasi (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) untuk informasi lebih lanjut.',
+      codeComment: '// Token kustom dikomentari karena harus diperbarui ke format baru yang diperkenalkan di versi plugin 9.0.0.\n// Lihat dokumentasi (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) untuk informasi lebih lanjut.',
       deprecated: {
         part1: 'Di versi plugin 9.0.0, format registrasi token kustom berubah. Silakan perbarui token Anda sesuai. Lihat',
         part2: 'dokumentasi',
@@ -147,8 +145,7 @@ export const id = {
       invalidCustomTokensCode: 'Kode token kustom tidak valid',
       invalidRegularExpression: 'Ekspresi reguler tidak valid {{regExp}}',
       specialCharactersMustNotContainSlash: 'Karakter khusus tidak boleh mengandung /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Penggantian karakter khusus tidak boleh mengandung karakter jalur nama file yang tidak valid.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Penggantian karakter khusus tidak boleh mengandung karakter jalur nama file yang tidak valid.'
     }
   },
   pluginSettingsTab: {
@@ -179,8 +176,7 @@ export const id = {
         part2: 'Lihat',
         part3: 'dokumentasi',
         part4: 'untuk informasi lebih lanjut.',
-        part5:
-          '⚠️ Token kustom dapat berupa kode JavaScript arbitrer. Jika ditulis dengan buruk, dapat menyebabkan kehilangan data. Gunakan dengan risiko sendiri.'
+        part5: '⚠️ Token kustom dapat berupa kode JavaScript arbitrer. Jika ditulis dengan buruk, dapat menyebabkan kehilangan data. Gunakan dengan risiko sendiri.'
       },
       name: 'Token kustom'
     },
@@ -284,8 +280,7 @@ export const id = {
       title: 'Atur ulang ke token kustom sampel'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Apakah akan mengkonversi gambar yang ditempel ke JPEG. Berlaku hanya ketika konten gambar PNG ditempel langsung dari clipboard. Biasanya, untuk menempel screenshot.',
+      description: 'Apakah akan mengkonversi gambar yang ditempel ke JPEG. Berlaku hanya ketika konten gambar PNG ditempel langsung dari clipboard. Biasanya, untuk menempel screenshot.',
       name: 'Haruskah mengkonversi gambar yang ditempel ke JPEG'
     },
     shouldDeleteOrphanAttachments: {

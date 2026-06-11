@@ -66,8 +66,7 @@ export const pl = {
         displayText: 'Żadne'
       },
       onlyPastedImages: {
-        description:
-          'tylko wklejone obrazy są przemianowywane. Dotyczy tylko sytuacji, gdy zawartość obrazu PNG jest wklejana bezpośrednio ze schowka. Zazwyczaj do wklejania zrzutów ekranu.',
+        description: 'tylko wklejone obrazy są przemianowywane. Dotyczy tylko sytuacji, gdy zawartość obrazu PNG jest wklejana bezpośrednio ze schowka. Zazwyczaj do wklejania zrzutów ekranu.',
         displayText: 'Tylko wklejone obrazy'
       }
     },
@@ -114,8 +113,7 @@ export const pl = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Niestandardowe tokeny zostały zakomentowane, ponieważ muszą zostać zaktualizowane do nowego formatu wprowadzonego w wersji wtyczki 9.0.0.\n// Zapoznaj się z dokumentacją (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens), aby uzyskać więcej informacji.',
+      codeComment: '// Niestandardowe tokeny zostały zakomentowane, ponieważ muszą zostać zaktualizowane do nowego formatu wprowadzonego w wersji wtyczki 9.0.0.\n// Zapoznaj się z dokumentacją (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens), aby uzyskać więcej informacji.',
       deprecated: {
         part1: 'W wersji wtyczki 9.0.0 zmienił się format rejestracji niestandardowych tokenów. Proszę zaktualizować swoje tokeny odpowiednio. Zapoznaj się z',
         part2: 'dokumentacją',
@@ -147,8 +145,7 @@ export const pl = {
       invalidCustomTokensCode: 'Nieprawidłowy kod niestandardowych tokenów',
       invalidRegularExpression: 'Nieprawidłowe wyrażenie regularne {{regExp}}',
       specialCharactersMustNotContainSlash: 'Znaki specjalne nie mogą zawierać /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Zamiana znaków specjalnych nie może zawierać nieprawidłowych znaków ścieżki nazwy pliku.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Zamiana znaków specjalnych nie może zawierać nieprawidłowych znaków ścieżki nazwy pliku.'
     }
   },
   pluginSettingsTab: {
@@ -177,8 +174,7 @@ export const pl = {
         part2: 'Zobacz',
         part3: 'dokumentację',
         part4: 'aby uzyskać więcej informacji.',
-        part5:
-          '⚠️ Niestandardowe tokeny mogą być dowolnym kodem JavaScript. Jeśli są napisane nieprawidłowo, mogą spowodować utratę danych. Używasz ich na własne ryzyko.'
+        part5: '⚠️ Niestandardowe tokeny mogą być dowolnym kodem JavaScript. Jeśli są napisane nieprawidłowo, mogą spowodować utratę danych. Używasz ich na własne ryzyko.'
       },
       name: 'Niestandardowe tokeny'
     },
@@ -280,8 +276,7 @@ export const pl = {
       title: 'Resetuj do przykładowych niestandardowych tokenów'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Czy konwertować wklejone obrazy do JPEG. Dotyczy tylko sytuacji, gdy zawartość obrazu PNG jest wklejana bezpośrednio ze schowka (zazwyczaj przy wklejaniu zrzutów ekranu).',
+      description: 'Czy konwertować wklejone obrazy do JPEG. Dotyczy tylko sytuacji, gdy zawartość obrazu PNG jest wklejana bezpośrednio ze schowka (zazwyczaj przy wklejaniu zrzutów ekranu).',
       name: 'Czy konwertować wklejone obrazy do JPEG'
     },
     shouldDeleteOrphanAttachments: {

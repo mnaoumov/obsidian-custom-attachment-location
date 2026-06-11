@@ -66,8 +66,7 @@ export const vi = {
         displayText: 'Không'
       },
       onlyPastedImages: {
-        description:
-          'Chỉ các hình ảnh được dán mới được đổi tên. Chỉ áp dụng khi nội dung hình ảnh PNG được dán trực tiếp từ clipboard. Thông thường dùng để dán ảnh chụp màn hình.',
+        description: 'Chỉ các hình ảnh được dán mới được đổi tên. Chỉ áp dụng khi nội dung hình ảnh PNG được dán trực tiếp từ clipboard. Thông thường dùng để dán ảnh chụp màn hình.',
         displayText: 'Chỉ hình ảnh được dán'
       }
     },
@@ -114,8 +113,7 @@ export const vi = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Các token tùy chỉnh bị chú thích vì cần cập nhật theo định dạng mới được giới thiệu trong phiên bản plugin 9.0.0.\n// Vui lòng tham khảo tài liệu để biết thêm thông tin.',
+      codeComment: '// Các token tùy chỉnh bị chú thích vì cần cập nhật theo định dạng mới được giới thiệu trong phiên bản plugin 9.0.0.\n// Vui lòng tham khảo tài liệu để biết thêm thông tin.',
       deprecated: {
         part1: 'Trong phiên bản plugin 9.0.0, định dạng đăng ký token tùy chỉnh đã thay đổi. Vui lòng cập nhật các token của bạn tương ứng. Tham khảo',
         part2: 'tài liệu',
@@ -147,8 +145,7 @@ export const vi = {
       invalidCustomTokensCode: 'Mã token tùy chỉnh không hợp lệ',
       invalidRegularExpression: 'Biểu thức chính quy không hợp lệ {{regExp}}',
       specialCharactersMustNotContainSlash: 'Ký tự đặc biệt không được chứa dấu /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Chuỗi thay thế ký tự đặc biệt không được chứa ký tự tên tệp hoặc đường dẫn không hợp lệ.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Chuỗi thay thế ký tự đặc biệt không được chứa ký tự tên tệp hoặc đường dẫn không hợp lệ.'
     }
   },
   pluginSettingsTab: {
@@ -279,8 +276,7 @@ export const vi = {
       title: 'Đặt lại token mẫu'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Có nên chuyển đổi hình ảnh dán sang định dạng JPEG không. Chỉ áp dụng khi nội dung ảnh PNG được dán trực tiếp từ clipboard. Thường dùng cho ảnh chụp màn hình.',
+      description: 'Có nên chuyển đổi hình ảnh dán sang định dạng JPEG không. Chỉ áp dụng khi nội dung ảnh PNG được dán trực tiếp từ clipboard. Thường dùng cho ảnh chụp màn hình.',
       name: 'Chuyển hình ảnh dán sang JPEG'
     },
     shouldDeleteOrphanAttachments: {

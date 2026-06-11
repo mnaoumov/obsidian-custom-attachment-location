@@ -66,8 +66,7 @@ export const ro = {
         displayText: 'Niciunul'
       },
       onlyPastedImages: {
-        description:
-          'doar imaginile lipite sunt redenumite. Se aplică doar când conținutul imaginii PNG este lipit direct din clipboard. De obicei, pentru capturi de ecran.',
+        description: 'doar imaginile lipite sunt redenumite. Se aplică doar când conținutul imaginii PNG este lipit direct din clipboard. De obicei, pentru capturi de ecran.',
         displayText: 'Doar imaginile lipite'
       }
     },
@@ -114,11 +113,9 @@ export const ro = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Tokenurile personalizate au fost comentate deoarece trebuie actualizate la noul format introdus în versiunea 9.0.0 a pluginului.\n// Consultă documentația (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) pentru mai multe informații.',
+      codeComment: '// Tokenurile personalizate au fost comentate deoarece trebuie actualizate la noul format introdus în versiunea 9.0.0 a pluginului.\n// Consultă documentația (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) pentru mai multe informații.',
       deprecated: {
-        part1:
-          'În versiunea 9.0.0 a pluginului, formatul de înregistrare a tokenurilor personalizate s-a schimbat. Actualizează tokenurile corespunzător. Consultă',
+        part1: 'În versiunea 9.0.0 a pluginului, formatul de înregistrare a tokenurilor personalizate s-a schimbat. Actualizează tokenurile corespunzător. Consultă',
         part2: 'documentația',
         part3: 'pentru mai multe informații'
       }
@@ -148,8 +145,7 @@ export const ro = {
       invalidCustomTokensCode: 'Cod de token personalizat invalid',
       invalidRegularExpression: 'Expresie regulată invalidă {{regExp}}',
       specialCharactersMustNotContainSlash: 'Caracterele speciale nu trebuie să conțină /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Înlocuirea caracterelor speciale nu trebuie să conțină caractere invalide de cale de fișier.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Înlocuirea caracterelor speciale nu trebuie să conțină caractere invalide de cale de fișier.'
     }
   },
   pluginSettingsTab: {
@@ -178,8 +174,7 @@ export const ro = {
         part2: 'Vezi',
         part3: 'documentația',
         part4: 'pentru mai multe informații.',
-        part5:
-          '⚠️ Tokenurile personalizate pot conține cod JavaScript arbitrar. Dacă sunt scrise greșit, pot cauza pierderi de date. Folosiți-le pe propria răspundere.'
+        part5: '⚠️ Tokenurile personalizate pot conține cod JavaScript arbitrar. Dacă sunt scrise greșit, pot cauza pierderi de date. Folosiți-le pe propria răspundere.'
       },
       name: 'Tokenuri personalizate'
     },
@@ -281,8 +276,7 @@ export const ro = {
       title: 'Resetează la tokenuri exemplu'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Stabilește dacă imaginile lipite să fie convertite în JPEG. Se aplică numai când conținutul unei imagini PNG este lipit direct din clipboard. De obicei, pentru capturi de ecran.',
+      description: 'Stabilește dacă imaginile lipite să fie convertite în JPEG. Se aplică numai când conținutul unei imagini PNG este lipit direct din clipboard. De obicei, pentru capturi de ecran.',
       name: 'Convertiți imaginile lipite în JPEG'
     },
     shouldDeleteOrphanAttachments: {

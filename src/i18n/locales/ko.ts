@@ -66,8 +66,7 @@ export const ko = {
         displayText: '없음'
       },
       onlyPastedImages: {
-        description:
-          '붙여넣은 이미지만 이름이 변경됩니다. PNG 이미지 내용이 클립보드에서 직접 붙여넣어질 때만 적용됩니다. 일반적으로 스크린샷 붙여넣기에 사용됩니다.',
+        description: '붙여넣은 이미지만 이름이 변경됩니다. PNG 이미지 내용이 클립보드에서 직접 붙여넣어질 때만 적용됩니다. 일반적으로 스크린샷 붙여넣기에 사용됩니다.',
         displayText: '붙여넣은 이미지만'
       }
     },
@@ -114,8 +113,7 @@ export const ko = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// 사용자 정의 토큰은 플러그인 버전 9.0.0에서 도입된 새 형식으로 업데이트해야 하므로 주석 처리되었습니다.\n// 자세한 내용은 문서(https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)를 참조하세요.',
+      codeComment: '// 사용자 정의 토큰은 플러그인 버전 9.0.0에서 도입된 새 형식으로 업데이트해야 하므로 주석 처리되었습니다.\n// 자세한 내용은 문서(https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens)를 참조하세요.',
       deprecated: {
         part1: '플러그인 버전 9.0.0에서 사용자 정의 토큰 등록 형식이 변경되었습니다. 토큰을 적절히 업데이트하세요. 자세한 내용은',
         part2: '문서',
@@ -278,8 +276,7 @@ export const ko = {
       title: '샘플 사용자 정의 토큰으로 재설정'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        '붙여넣은 이미지를 JPEG로 변환할지 여부입니다. PNG 이미지 내용이 클립보드에서 직접 붙여넣어질 때만 적용됩니다. 일반적으로 스크린샷 붙여넣기에 사용됩니다.',
+      description: '붙여넣은 이미지를 JPEG로 변환할지 여부입니다. PNG 이미지 내용이 클립보드에서 직접 붙여넣어질 때만 적용됩니다. 일반적으로 스크린샷 붙여넣기에 사용됩니다.',
       name: '붙여넣은 이미지를 JPEG로 변환'
     },
     shouldDeleteOrphanAttachments: {

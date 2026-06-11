@@ -289,18 +289,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addDropdown((dropdown) => {
             dropdown.addOptions({
               /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip]: t(($) =>
-                $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText
-              ),
-              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll]: t(($) =>
-                $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText
-              ),
-              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel]: t(($) =>
-                $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText
-              ),
-              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(($) =>
-                $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText
-              )
+              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip]: t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText),
+              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll]: t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.copyAll.displayText),
+              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel]: t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.cancel.displayText),
+              [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText)
               /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
             });
             this.bind(dropdown, 'moveAttachmentToProperFolderUsedByMultipleNotesMode');
@@ -528,12 +520,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             dropdown.addOptions({
               /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
               [ConvertImagesToJpegMode.None]: t(($) => $.pluginSettings.convertImagesToJpegMode.none.displayText),
-              [ConvertImagesToJpegMode.OnlyPastedClipboardPngImages]: t(($) =>
-                $.pluginSettings.convertImagesToJpegMode.onlyPastedClipboardPngImages.displayText
-              ),
-              [ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles]: t(($) =>
-                $.pluginSettings.convertImagesToJpegMode.allImagesExceptAlreadyJpeg.displayText
-              ),
+              [ConvertImagesToJpegMode.OnlyPastedClipboardPngImages]: t(($) => $.pluginSettings.convertImagesToJpegMode.onlyPastedClipboardPngImages.displayText),
+              [ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles]: t(($) => $.pluginSettings.convertImagesToJpegMode.allImagesExceptAlreadyJpeg.displayText),
               [ConvertImagesToJpegMode.AllImages]: t(($) => $.pluginSettings.convertImagesToJpegMode.allImages.displayText)
               /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
             });

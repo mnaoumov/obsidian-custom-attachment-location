@@ -66,8 +66,7 @@ export const sq = {
         displayText: 'Asnjë'
       },
       onlyPastedImages: {
-        description:
-          'vetëm imazhet e ngjitura riemërtohen. Aplikohet vetëm kur një imazh PNG ngjitet drejtpërdrejt nga clipboard. Zakonisht përdoret për pamjet e ekranit.',
+        description: 'vetëm imazhet e ngjitura riemërtohen. Aplikohet vetëm kur një imazh PNG ngjitet drejtpërdrejt nga clipboard. Zakonisht përdoret për pamjet e ekranit.',
         displayText: 'Vetëm imazhet e ngjitura'
       }
     },
@@ -114,11 +113,9 @@ export const sq = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Tokenat e personalizuar u komentuan pasi duhet të përditësohen me formatin e ri të prezantuar në versionin 9.0.0 të shtesës.\n// Referojuni dokumentacionit (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) për më shumë informacione.',
+      codeComment: '// Tokenat e personalizuar u komentuan pasi duhet të përditësohen me formatin e ri të prezantuar në versionin 9.0.0 të shtesës.\n// Referojuni dokumentacionit (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) për më shumë informacione.',
       deprecated: {
-        part1:
-          'Në versionin 9.0.0 të shtesës formati i regjistrimit të tokenave të personalizuar ndryshoi. Ju lutemi përditësoni tokenat tuaj siç duhet. Referojuni',
+        part1: 'Në versionin 9.0.0 të shtesës formati i regjistrimit të tokenave të personalizuar ndryshoi. Ju lutemi përditësoni tokenat tuaj siç duhet. Referojuni',
         part2: 'dokumentacionit',
         part3: 'për më shumë informacione'
       }
@@ -148,8 +145,7 @@ export const sq = {
       invalidCustomTokensCode: 'Kod i pavlefshëm i tokenave të personalizuar',
       invalidRegularExpression: 'Shprehje e rregullt e pavlefshme {{regExp}}',
       specialCharactersMustNotContainSlash: 'Karaketret specialë nuk duhet të përmbajnë /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Zëvendësimi i karaktereve specialë nuk duhet të përmbajë karaktere të pavlefshëm për shtegun e skedarit.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Zëvendësimi i karaktereve specialë nuk duhet të përmbajë karaktere të pavlefshëm për shtegun e skedarit.'
     }
   },
   pluginSettingsTab: {
@@ -178,8 +174,7 @@ export const sq = {
         part2: 'Shih',
         part3: 'dokumentacionin',
         part4: 'për më shumë informacione.',
-        part5:
-          '⚠️ Tokenat e personalizuar mund të përmbajnë kod arbitrar JavaScript. Nëse shkruhen gabim, mund të shkaktojnë humbje të të dhënave. Përdoreni me kujdes.'
+        part5: '⚠️ Tokenat e personalizuar mund të përmbajnë kod arbitrar JavaScript. Nëse shkruhen gabim, mund të shkaktojnë humbje të të dhënave. Përdoreni me kujdes.'
       },
       name: 'Tokena të personalizuar'
     },
@@ -281,8 +276,7 @@ export const sq = {
       title: 'Rivendos tek tokenat shembullorë'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Nëse imazhet e ngjitura duhet të konvertohen në JPEG. Aplikohet vetëm kur përmbajtja e një PNG ngjitet nga clipboard. Zakonisht për pamjet e ekranit.',
+      description: 'Nëse imazhet e ngjitura duhet të konvertohen në JPEG. Aplikohet vetëm kur përmbajtja e një PNG ngjitet nga clipboard. Zakonisht për pamjet e ekranit.',
       name: 'Konverto imazhet e ngjitura në JPEG'
     },
     shouldDeleteOrphanAttachments: {

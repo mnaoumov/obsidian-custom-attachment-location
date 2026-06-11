@@ -66,8 +66,7 @@ export const es = {
         displayText: 'Ninguno'
       },
       onlyPastedImages: {
-        description:
-          'solo las imágenes pegadas son renombradas. Se aplica solo cuando el contenido de imagen PNG se pega directamente desde el portapapeles. Típicamente, para pegar capturas de pantalla.',
+        description: 'solo las imágenes pegadas son renombradas. Se aplica solo cuando el contenido de imagen PNG se pega directamente desde el portapapeles. Típicamente, para pegar capturas de pantalla.',
         displayText: 'Solo imágenes pegadas'
       }
     },
@@ -114,11 +113,9 @@ export const es = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Los tokens personalizados fueron comentados ya que deben ser actualizados al nuevo formato introducido en la versión del plugin 9.0.0.\n// Consulta la documentación (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) para más información.',
+      codeComment: '// Los tokens personalizados fueron comentados ya que deben ser actualizados al nuevo formato introducido en la versión del plugin 9.0.0.\n// Consulta la documentación (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) para más información.',
       deprecated: {
-        part1:
-          'En la versión del plugin 9.0.0, el formato de registro de tokens personalizados cambió. Por favor actualiza tus tokens en consecuencia. Consulta la',
+        part1: 'En la versión del plugin 9.0.0, el formato de registro de tokens personalizados cambió. Por favor actualiza tus tokens en consecuencia. Consulta la',
         part2: 'documentación',
         part3: 'para más información'
       }
@@ -148,8 +145,7 @@ export const es = {
       invalidCustomTokensCode: 'Código de tokens personalizados inválido',
       invalidRegularExpression: 'Expresión regular inválida {{regExp}}',
       specialCharactersMustNotContainSlash: 'Los caracteres especiales no deben contener /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'El reemplazo de caracteres especiales no debe contener caracteres de ruta de nombre de archivo inválidos.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'El reemplazo de caracteres especiales no debe contener caracteres de ruta de nombre de archivo inválidos.'
     }
   },
   pluginSettingsTab: {
@@ -180,8 +176,7 @@ export const es = {
         part2: 'Ver',
         part3: 'documentación',
         part4: 'para más información.',
-        part5:
-          '⚠️ Los tokens personalizados pueden ser código JavaScript arbitrario. Si están mal escritos, pueden causar pérdida de datos. Úsalos bajo tu propio riesgo.'
+        part5: '⚠️ Los tokens personalizados pueden ser código JavaScript arbitrario. Si están mal escritos, pueden causar pérdida de datos. Úsalos bajo tu propio riesgo.'
       },
       name: 'Tokens personalizados'
     },
@@ -285,8 +280,7 @@ export const es = {
       title: 'Resetear a tokens personalizados de muestra'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Si convertir imágenes pegadas a JPEG. Se aplica solo cuando el contenido de imagen PNG se pega directamente desde el portapapeles. Típicamente, para pegar capturas de pantalla.',
+      description: 'Si convertir imágenes pegadas a JPEG. Se aplica solo cuando el contenido de imagen PNG se pega directamente desde el portapapeles. Típicamente, para pegar capturas de pantalla.',
       name: 'Si convertir imágenes pegadas a JPEG'
     },
     shouldDeleteOrphanAttachments: {

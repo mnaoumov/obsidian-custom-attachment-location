@@ -66,8 +66,7 @@ export const cs = {
         displayText: 'Žádné'
       },
       onlyPastedImages: {
-        description:
-          'přejmenovány jsou pouze vložené obrázky. Platí pouze když je obsah PNG obrázku vložen přímo ze schránky. Typicky pro vkládání snímků obrazovky.',
+        description: 'přejmenovány jsou pouze vložené obrázky. Platí pouze když je obsah PNG obrázku vložen přímo ze schránky. Typicky pro vkládání snímků obrazovky.',
         displayText: 'Pouze vložené obrázky'
       }
     },
@@ -114,8 +113,7 @@ export const cs = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Vlastní tokeny byly zakomentovány, protože musí být aktualizovány na nový formát zavedený ve verzi pluginu 9.0.0.\n// Odkazujte na dokumentaci (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) pro více informací.',
+      codeComment: '// Vlastní tokeny byly zakomentovány, protože musí být aktualizovány na nový formát zavedený ve verzi pluginu 9.0.0.\n// Odkazujte na dokumentaci (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) pro více informací.',
       deprecated: {
         part1: 'Ve verzi pluginu 9.0.0 se změnil formát registrace vlastních tokenů. Aktualizujte prosím své tokeny odpovídajícím způsobem. Odkazujte na',
         part2: 'dokumentaci',
@@ -282,8 +280,7 @@ export const cs = {
       title: 'Resetovat na ukázkové vlastní tokeny'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Zda převést vložené obrázky na JPEG. Platí pouze když je obsah PNG obrázku vložen přímo ze schránky. Typicky pro vkládání snímků obrazovky.',
+      description: 'Zda převést vložené obrázky na JPEG. Platí pouze když je obsah PNG obrázku vložen přímo ze schránky. Typicky pro vkládání snímků obrazovky.',
       name: 'Zda převést vložené obrázky na JPEG'
     },
     shouldDeleteOrphanAttachments: {

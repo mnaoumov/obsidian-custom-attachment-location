@@ -66,8 +66,7 @@ export const da = {
         displayText: 'Ingen'
       },
       onlyPastedImages: {
-        description:
-          'kun indsatte billeder omdøbes. Gælder kun når PNG-billedindholdet indsættes direkte fra udklipsholderen. Typisk til indsættelse af skærmbilleder.',
+        description: 'kun indsatte billeder omdøbes. Gælder kun når PNG-billedindholdet indsættes direkte fra udklipsholderen. Typisk til indsættelse af skærmbilleder.',
         displayText: 'Kun indsatte billeder'
       }
     },
@@ -114,8 +113,7 @@ export const da = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Brugerdefinerede tokens blev kommenteret ud, da de skal opdateres til det nye format introduceret i plugin version 9.0.0.\n// Se dokumentationen (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for flere oplysninger.',
+      codeComment: '// Brugerdefinerede tokens blev kommenteret ud, da de skal opdateres til det nye format introduceret i plugin version 9.0.0.\n// Se dokumentationen (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) for flere oplysninger.',
       deprecated: {
         part1: 'I plugin version 9.0.0 ændrede formatet for brugerdefineret token-registrering sig. Opdater venligst dine tokens i overensstemmelse hermed. Se',
         part2: 'dokumentationen',
@@ -282,8 +280,7 @@ export const da = {
       title: 'Nulstil til eksempel-brugerdefinerede tokens'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Om indsatte billeder skal konverteres til JPEG. Gælder kun når PNG-billedindholdet indsættes direkte fra udklipsholderen. Typisk til indsættelse af skærmbilleder.',
+      description: 'Om indsatte billeder skal konverteres til JPEG. Gælder kun når PNG-billedindholdet indsættes direkte fra udklipsholderen. Typisk til indsættelse af skærmbilleder.',
       name: 'Skal konvertere indsatte billeder til JPEG'
     },
     shouldDeleteOrphanAttachments: {

@@ -66,8 +66,7 @@ export const ga = {
         displayText: 'Dada'
       },
       onlyPastedImages: {
-        description:
-          'ní athainmnítear ach íomhánna greamaithe. Bainean seo leis nuair a ghreamaitear ábhair íomhá PNG ón ghearrtáisce go díreach. Go típúl, chun grênghrafaí a ghreamadh.',
+        description: 'ní athainmnítear ach íomhánna greamaithe. Bainean seo leis nuair a ghreamaitear ábhair íomhá PNG ón ghearrtáisce go díreach. Go típúl, chun grênghrafaí a ghreamadh.',
         displayText: 'Íomhánna greamaithe amháin'
       }
     },
@@ -114,8 +113,7 @@ export const ga = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Cuireadh comharthaí saincheaptha i gcomhrá mar gheall ar gá iad a nuashonrú chuig an fhormáid nua a tugadh isteach i leagan 9.0.0 an phlugain.\n// Féach ar an doiciméadú (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) le haghaidh tuilleadh eolais.',
+      codeComment: '// Cuireadh comharthaí saincheaptha i gcomhrá mar gheall ar gá iad a nuashonrú chuig an fhormáid nua a tugadh isteach i leagan 9.0.0 an phlugain.\n// Féach ar an doiciméadú (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) le haghaidh tuilleadh eolais.',
       deprecated: {
         part1: 'I leagan 9.0.0 an phlugain, d\'athraigh formáid chlárúcháin comharthaí saincheaptha. Nuashonraigh do chomharthaí dá réir. Féach ar an',
         part2: 'doiciméadú',
@@ -147,8 +145,7 @@ export const ga = {
       invalidCustomTokensCode: 'Cód comharthaí saincheaptha neamhbhailí',
       invalidRegularExpression: 'Slonn rialta neamhbhailí {{regExp}}',
       specialCharactersMustNotContainSlash: 'Níor cheart go mbeadh / sna carachtair speisialta',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Níor cheart go mbeadh carachtair conair ainm comhaid neamhbhailí in ionadú carachtar speisialta.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Níor cheart go mbeadh carachtair conair ainm comhaid neamhbhailí in ionadú carachtar speisialta.'
     }
   },
   pluginSettingsTab: {
@@ -179,8 +176,7 @@ export const ga = {
         part2: 'Féach ar an',
         part3: 'doiciméadú',
         part4: 'le haghaidh tuilleadh eolais.',
-        part5:
-          '⚠️ Is féidir le comharthaí saincheaptha a bheith ina chód JavaScript treallach. Má tá siad drochscríofa, is féidir leo cailliúint sonraí a chur faoi deara. Úsáid iad ar do riosca féin.'
+        part5: '⚠️ Is féidir le comharthaí saincheaptha a bheith ina chód JavaScript treallach. Má tá siad drochscríofa, is féidir leo cailliúint sonraí a chur faoi deara. Úsáid iad ar do riosca féin.'
       },
       name: 'Comharthaí saincheaptha'
     },
@@ -284,8 +280,7 @@ export const ga = {
       title: 'Athshocraigh chuig comharthaí saincheaptha samplacha'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Cibé an gcaithfear íomhánna greamaithe a thiontú go JPEG. Baineann seo leis nuair a ghreamaitear ábhair íomhá PNG ón ghearrtáisce go díreach. Go típúl, chun grênghrafaí a ghreamadh.',
+      description: 'Cibé an gcaithfear íomhánna greamaithe a thiontú go JPEG. Baineann seo leis nuair a ghreamaitear ábhair íomhá PNG ón ghearrtáisce go díreach. Go típúl, chun grênghrafaí a ghreamadh.',
       name: 'An gcaithfear íomhánna greamaithe a thiontú go JPEG'
     },
     shouldDeleteOrphanAttachments: {

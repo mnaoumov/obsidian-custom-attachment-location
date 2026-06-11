@@ -66,8 +66,7 @@ export const ca = {
         displayText: 'Cap'
       },
       onlyPastedImages: {
-        description:
-          'només les imatges enganxades es reanomenen. S\'aplica només quan el contingut de la imatge PNG s\'enganxa directament des del porta-retalls. Típicament, per enganxar captures de pantalla.',
+        description: 'només les imatges enganxades es reanomenen. S\'aplica només quan el contingut de la imatge PNG s\'enganxa directament des del porta-retalls. Típicament, per enganxar captures de pantalla.',
         displayText: 'Només imatges enganxades'
       }
     },
@@ -114,11 +113,9 @@ export const ca = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Els tokens personalitzats van ser comentats ja que han de ser actualitzats al nou format introduït a la versió del plugin 9.0.0.\n// Consulteu la documentació (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) per a més informació.',
+      codeComment: '// Els tokens personalitzats van ser comentats ja que han de ser actualitzats al nou format introduït a la versió del plugin 9.0.0.\n// Consulteu la documentació (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) per a més informació.',
       deprecated: {
-        part1:
-          'A la versió del plugin 9.0.0, el format de registre de tokens personalitzats va canviar. Si us plau, actualitzeu els vostres tokens en conseqüència. Consulteu la',
+        part1: 'A la versió del plugin 9.0.0, el format de registre de tokens personalitzats va canviar. Si us plau, actualitzeu els vostres tokens en conseqüència. Consulteu la',
         part2: 'documentació',
         part3: 'per a més informació'
       }
@@ -148,8 +145,7 @@ export const ca = {
       invalidCustomTokensCode: 'Codi de tokens personalitzats no vàlid',
       invalidRegularExpression: 'Expressió regular no vàlida {{regExp}}',
       specialCharactersMustNotContainSlash: 'Els caràcters especials no han de contenir /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'El reemplaçament de caràcters especials no ha de contenir caràcters de camí de nom de fitxer no vàlids.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'El reemplaçament de caràcters especials no ha de contenir caràcters de camí de nom de fitxer no vàlids.'
     }
   },
   pluginSettingsTab: {
@@ -180,8 +176,7 @@ export const ca = {
         part2: 'Vegeu la',
         part3: 'documentació',
         part4: 'per a més informació.',
-        part5:
-          '⚠️ Els tokens personalitzats poden ser codi JavaScript arbitrari. Si estan mal escrits, poden causar pèrdua de dades. Utilitzeu-los sota la vostra responsabilitat.'
+        part5: '⚠️ Els tokens personalitzats poden ser codi JavaScript arbitrari. Si estan mal escrits, poden causar pèrdua de dades. Utilitzeu-los sota la vostra responsabilitat.'
       },
       name: 'Tokens personalitzats'
     },
@@ -285,8 +280,7 @@ export const ca = {
       title: 'Restablir als tokens personalitzats de mostra'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Si convertir les imatges enganxades a JPEG. S\'aplica només quan el contingut de la imatge PNG s\'enganxa directament des del porta-retalls. Típicament, per enganxar captures de pantalla.',
+      description: 'Si convertir les imatges enganxades a JPEG. S\'aplica només quan el contingut de la imatge PNG s\'enganxa directament des del porta-retalls. Típicament, per enganxar captures de pantalla.',
       name: 'Si convertir les imatges enganxades a JPEG'
     },
     shouldDeleteOrphanAttachments: {

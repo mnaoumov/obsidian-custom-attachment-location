@@ -66,8 +66,7 @@ export const nl = {
         displayText: 'Geen'
       },
       onlyPastedImages: {
-        description:
-          'alleen geplakte afbeeldingen worden hernoemd. Geldt alleen wanneer PNG afbeeldingsinhoud direct vanuit het klembord wordt geplakt. Meestal voor het plakken van screenshots.',
+        description: 'alleen geplakte afbeeldingen worden hernoemd. Geldt alleen wanneer PNG afbeeldingsinhoud direct vanuit het klembord wordt geplakt. Meestal voor het plakken van screenshots.',
         displayText: 'Alleen geplakte afbeeldingen'
       }
     },
@@ -114,8 +113,7 @@ export const nl = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Aangepaste tokens zijn uitgecommentarieerd omdat ze moeten worden bijgewerkt naar het nieuwe formaat geïntroduceerd in plugin versie 9.0.0.\n// Raadpleeg de documentatie (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) voor meer informatie.',
+      codeComment: '// Aangepaste tokens zijn uitgecommentarieerd omdat ze moeten worden bijgewerkt naar het nieuwe formaat geïntroduceerd in plugin versie 9.0.0.\n// Raadpleeg de documentatie (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) voor meer informatie.',
       deprecated: {
         part1: 'In plugin versie 9.0.0 is het formaat van aangepaste token registratie veranderd. Werk je tokens dienovereenkomstig bij. Raadpleeg de',
         part2: 'documentatie',
@@ -147,8 +145,7 @@ export const nl = {
       invalidCustomTokensCode: 'Ongeldige aangepaste tokens code',
       invalidRegularExpression: 'Ongeldige reguliere expressie {{regExp}}',
       specialCharactersMustNotContainSlash: 'Speciale karakters mogen geen / bevatten',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Speciale karakter vervanging mag geen ongeldige bestandsnaam pad karakters bevatten.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Speciale karakter vervanging mag geen ongeldige bestandsnaam pad karakters bevatten.'
     }
   },
   pluginSettingsTab: {
@@ -177,8 +174,7 @@ export const nl = {
         part2: 'Zie de',
         part3: 'documentatie',
         part4: 'voor meer informatie.',
-        part5:
-          '⚠️ Aangepaste tokens kunnen willekeurige JavaScript code zijn. Als ze slecht geschreven zijn, kunnen ze gegevensverlies veroorzaken. Gebruik ze op eigen risico.'
+        part5: '⚠️ Aangepaste tokens kunnen willekeurige JavaScript code zijn. Als ze slecht geschreven zijn, kunnen ze gegevensverlies veroorzaken. Gebruik ze op eigen risico.'
       },
       name: 'Aangepaste tokens'
     },
@@ -280,8 +276,7 @@ export const nl = {
       title: 'Reset naar voorbeeld aangepaste tokens'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Of geplakte afbeeldingen moeten worden geconverteerd naar JPEG. Geldt alleen wanneer PNG afbeeldingsinhoud direct vanuit het klembord wordt geplakt. Meestal voor het plakken van screenshots.',
+      description: 'Of geplakte afbeeldingen moeten worden geconverteerd naar JPEG. Geldt alleen wanneer PNG afbeeldingsinhoud direct vanuit het klembord wordt geplakt. Meestal voor het plakken van screenshots.',
       name: 'Moet geplakte afbeeldingen converteren naar JPEG'
     },
     shouldDeleteOrphanAttachments: {

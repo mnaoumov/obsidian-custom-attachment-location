@@ -66,8 +66,7 @@ export const ja = {
         displayText: 'なし'
       },
       onlyPastedImages: {
-        description:
-          '貼り付けた画像のみがリネームされます。PNG画像の内容がクリップボードから直接貼り付けられた場合にのみ適用されます。通常、スクリーンショットの貼り付けに使用されます。',
+        description: '貼り付けた画像のみがリネームされます。PNG画像の内容がクリップボードから直接貼り付けられた場合にのみ適用されます。通常、スクリーンショットの貼り付けに使用されます。',
         displayText: '貼り付けた画像のみ'
       }
     },
@@ -114,8 +113,7 @@ export const ja = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// カスタムトークンは、プラグイン バージョン 9.0.0 で導入された新しい形式に更新する必要があるため、コメントアウトされました。\n// 詳細については、ドキュメント (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) を参照してください。',
+      codeComment: '// カスタムトークンは、プラグイン バージョン 9.0.0 で導入された新しい形式に更新する必要があるため、コメントアウトされました。\n// 詳細については、ドキュメント (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) を参照してください。',
       deprecated: {
         part1: 'プラグイン バージョン 9.0.0 では、カスタムトークン登録の形式が変更されました。トークンを適切に更新してください。詳細については',
         part2: 'ドキュメント',
@@ -178,8 +176,7 @@ export const ja = {
         part2: '詳細については',
         part3: 'ドキュメント',
         part4: 'を参照してください。',
-        part5:
-          '⚠️ カスタムトークンは任意のJavaScriptコードにすることができます。不適切に記述された場合、データ損失を引き起こす可能性があります。自己責任で使用してください。'
+        part5: '⚠️ カスタムトークンは任意のJavaScriptコードにすることができます。不適切に記述された場合、データ損失を引き起こす可能性があります。自己責任で使用してください。'
       },
       name: 'カスタムトークン'
     },
@@ -283,8 +280,7 @@ export const ja = {
       title: 'サンプルカスタムトークンにリセット'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        '貼り付けた画像をJPEGに変換するかどうか。PNG画像の内容がクリップボードから直接貼り付けられた場合にのみ適用されます。通常、スクリーンショットの貼り付けに使用されます。',
+      description: '貼り付けた画像をJPEGに変換するかどうか。PNG画像の内容がクリップボードから直接貼り付けられた場合にのみ適用されます。通常、スクリーンショットの貼り付けに使用されます。',
       name: '貼り付けた画像をJPEGに変換する'
     },
     shouldDeleteOrphanAttachments: {

@@ -66,8 +66,7 @@ export const lv = {
         displayText: 'Neviens'
       },
       onlyPastedImages: {
-        description:
-          'tikai ielīmētās attēli tiek pārdēvēti. Attiecas tikai tad, kad PNG attēla saturs tiek ielīmēts tieši no starpliktuvnes. Parasti ekrānuzņēmumu ielīmēšanai.',
+        description: 'tikai ielīmētās attēli tiek pārdēvēti. Attiecas tikai tad, kad PNG attēla saturs tiek ielīmēts tieši no starpliktuvnes. Parasti ekrānuzņēmumu ielīmēšanai.',
         displayText: 'Tikai ielīmētie attēli'
       }
     },
@@ -114,8 +113,7 @@ export const lv = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Pielāgotie tokeni tika komentēti, jo tie ir jāatjaunina uz jauno formātu, kas ieviests spraudņa versijā 9.0.0.\n// Sīkāku informāciju skatiet dokumentācijā (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens).',
+      codeComment: '// Pielāgotie tokeni tika komentēti, jo tie ir jāatjaunina uz jauno formātu, kas ieviests spraudņa versijā 9.0.0.\n// Sīkāku informāciju skatiet dokumentācijā (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens).',
       deprecated: {
         part1: 'Spraudņa versijā 9.0.0 pielāgoto tokenu reģistrācijas formāts mainījās. Lūdzu, atjauniniet savus tokenus attiecīgi. Sīkāku informāciju skatiet',
         part2: 'dokumentācijā',
@@ -147,8 +145,7 @@ export const lv = {
       invalidCustomTokensCode: 'Nederīgs pielāgoto tokenu kods',
       invalidRegularExpression: 'Nederīga regulārā izteiksme {{regExp}}',
       specialCharactersMustNotContainSlash: 'Īpašajos rakstzīmēs nedrīkst būt /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Īpašo rakstzīmju aizstāšana nedrīkst saturēt nederīgus faila nosaukuma ceļa rakstzīmes.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Īpašo rakstzīmju aizstāšana nedrīkst saturēt nederīgus faila nosaukuma ceļa rakstzīmes.'
     }
   },
   pluginSettingsTab: {
@@ -279,8 +276,7 @@ export const lv = {
       title: 'Atiestatīt uz parauga pielāgotajiem tokeniem'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Vai konvertēt ielīmētos attēlus uz JPEG. Attiecas tikai tad, kad PNG attēla saturs tiek ielīmēts tieši no starpliktuvnes. Parasti ekrānuzņēmumu ielīmēšanai.',
+      description: 'Vai konvertēt ielīmētos attēlus uz JPEG. Attiecas tikai tad, kad PNG attēla saturs tiek ielīmēts tieši no starpliktuvnes. Parasti ekrānuzņēmumu ielīmēšanai.',
       name: 'Vai konvertēt ielīmētos attēlus uz JPEG'
     },
     shouldDeleteOrphanAttachments: {

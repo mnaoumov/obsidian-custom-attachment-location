@@ -113,8 +113,7 @@ export const ar = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// تم تعليق الرموز المخصصة لأنها تحتاج إلى تحديث للتنسيق الجديد المُقدم في إصدار الإضافة 9.0.0.\n// راجع الوثائق (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) لمزيد من المعلومات.',
+      codeComment: '// تم تعليق الرموز المخصصة لأنها تحتاج إلى تحديث للتنسيق الجديد المُقدم في إصدار الإضافة 9.0.0.\n// راجع الوثائق (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) لمزيد من المعلومات.',
       deprecated: {
         part1: 'في إصدار الإضافة 9.0.0، تغير تنسيق تسجيل الرمز المخصص. يرجى تحديث رموزك وفقاً لذلك. راجع',
         part2: 'الوثائق',

@@ -66,8 +66,7 @@ export const ms = {
         displayText: 'Tiada'
       },
       onlyPastedImages: {
-        description:
-          'hanya imej yang ditampal akan dinamakan semula. Berlaku hanya apabila kandungan imej PNG ditampal terus dari papan keratan. Biasanya, untuk menampal tangkapan skrin.',
+        description: 'hanya imej yang ditampal akan dinamakan semula. Berlaku hanya apabila kandungan imej PNG ditampal terus dari papan keratan. Biasanya, untuk menampal tangkapan skrin.',
         displayText: 'Hanya imej yang ditampal'
       }
     },
@@ -114,8 +113,7 @@ export const ms = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Token kustom telah dikomenkan kerana perlu dikemas kini ke format baharu yang diperkenalkan dalam versi pemalam 9.0.0.\n// Rujuk dokumentasi (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) untuk maklumat lanjut.',
+      codeComment: '// Token kustom telah dikomenkan kerana perlu dikemas kini ke format baharu yang diperkenalkan dalam versi pemalam 9.0.0.\n// Rujuk dokumentasi (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) untuk maklumat lanjut.',
       deprecated: {
         part1: 'Dalam versi pemalam 9.0.0, format pendaftaran token kustom telah berubah. Sila kemas kini token anda dengan sewajarnya. Rujuk',
         part2: 'dokumentasi',
@@ -147,8 +145,7 @@ export const ms = {
       invalidCustomTokensCode: 'Kod token kustom tidak sah',
       invalidRegularExpression: 'Ungkapan biasa tidak sah {{regExp}}',
       specialCharactersMustNotContainSlash: 'Aksara khas tidak boleh mengandungi /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Penggantian aksara khas tidak boleh mengandungi aksara laluan nama fail yang tidak sah.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Penggantian aksara khas tidak boleh mengandungi aksara laluan nama fail yang tidak sah.'
     }
   },
   pluginSettingsTab: {
@@ -177,8 +174,7 @@ export const ms = {
         part2: 'Lihat',
         part3: 'dokumentasi',
         part4: 'untuk maklumat lanjut.',
-        part5:
-          '⚠️ Token kustom boleh menjadi kod JavaScript sewenang-wenangnya. Jika ditulis dengan buruk, ia boleh menyebabkan kehilangan data. Gunakan dengan risiko sendiri.'
+        part5: '⚠️ Token kustom boleh menjadi kod JavaScript sewenang-wenangnya. Jika ditulis dengan buruk, ia boleh menyebabkan kehilangan data. Gunakan dengan risiko sendiri.'
       },
       name: 'Token kustom'
     },
@@ -280,8 +276,7 @@ export const ms = {
       title: 'Tetapkan semula kepada token kustom sampel'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Sama ada untuk menukar imej yang ditampal kepada JPEG. Berlaku hanya apabila kandungan imej PNG ditampal terus dari papan keratan. Biasanya, untuk menampal tangkapan skrin.',
+      description: 'Sama ada untuk menukar imej yang ditampal kepada JPEG. Berlaku hanya apabila kandungan imej PNG ditampal terus dari papan keratan. Biasanya, untuk menampal tangkapan skrin.',
       name: 'Sama ada menukar imej yang ditampal kepada JPEG'
     },
     shouldDeleteOrphanAttachments: {

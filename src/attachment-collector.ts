@@ -275,8 +275,7 @@ export function collectAttachmentsInAbstractFiles(
   addToQueue({
     abortSignal: abortSignalComponent.abortSignal,
     app: plugin.app,
-    operationFn: (abortSignal) =>
-      collectAttachmentsInAbstractFilesImpl(plugin, abstractFiles, abortSignal, pluginSettingsComponent, consoleDebugComponent, abortSignalComponent),
+    operationFn: (abortSignal) => collectAttachmentsInAbstractFilesImpl(plugin, abstractFiles, abortSignal, pluginSettingsComponent, consoleDebugComponent, abortSignalComponent),
     operationName: t(($) => $.menuItems.collectAttachmentsInFile),
     timeoutInMilliseconds: pluginSettingsComponent.settings.getTimeoutInMilliseconds()
   });

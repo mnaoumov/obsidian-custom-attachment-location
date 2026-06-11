@@ -66,8 +66,7 @@ export const de = {
         displayText: 'Keine'
       },
       onlyPastedImages: {
-        description:
-          'nur eingefügte Bilder werden umbenannt. Gilt nur, wenn der PNG-Bildinhalt direkt aus der Zwischenablage eingefügt wird. Typischerweise für das Einfügen von Screenshots.',
+        description: 'nur eingefügte Bilder werden umbenannt. Gilt nur, wenn der PNG-Bildinhalt direkt aus der Zwischenablage eingefügt wird. Typischerweise für das Einfügen von Screenshots.',
         displayText: 'Nur eingefügte Bilder'
       }
     },
@@ -114,11 +113,9 @@ export const de = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Benutzerdefinierte Tokens wurden auskommentiert, da sie auf das neue Format aktualisiert werden müssen, das in Plugin-Version 9.0.0 eingeführt wurde.\n// Siehe Dokumentation (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) für weitere Informationen.',
+      codeComment: '// Benutzerdefinierte Tokens wurden auskommentiert, da sie auf das neue Format aktualisiert werden müssen, das in Plugin-Version 9.0.0 eingeführt wurde.\n// Siehe Dokumentation (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) für weitere Informationen.',
       deprecated: {
-        part1:
-          'In Plugin-Version 9.0.0 hat sich das Format der benutzerdefinierten Token-Registrierung geändert. Bitte aktualisieren Sie Ihre Tokens entsprechend. Siehe',
+        part1: 'In Plugin-Version 9.0.0 hat sich das Format der benutzerdefinierten Token-Registrierung geändert. Bitte aktualisieren Sie Ihre Tokens entsprechend. Siehe',
         part2: 'Dokumentation',
         part3: 'für weitere Informationen'
       }
@@ -179,8 +176,7 @@ export const de = {
         part2: 'Siehe',
         part3: 'Dokumentation',
         part4: 'für weitere Informationen.',
-        part5:
-          '⚠️ Benutzerdefinierte Tokens können beliebiger JavaScript-Code sein. Wenn sie schlecht geschrieben sind, können sie Datenverlust verursachen. Verwenden Sie sie auf eigene Gefahr.'
+        part5: '⚠️ Benutzerdefinierte Tokens können beliebiger JavaScript-Code sein. Wenn sie schlecht geschrieben sind, können sie Datenverlust verursachen. Verwenden Sie sie auf eigene Gefahr.'
       },
       name: 'Benutzerdefinierte Tokens'
     },
@@ -284,8 +280,7 @@ export const de = {
       title: 'Auf Beispiel-Tokens zurücksetzen'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Ob eingefügte Bilder in JPEG konvertiert werden sollen. Gilt nur, wenn der PNG-Bildinhalt direkt aus der Zwischenablage eingefügt wird. Typischerweise für das Einfügen von Screenshots.',
+      description: 'Ob eingefügte Bilder in JPEG konvertiert werden sollen. Gilt nur, wenn der PNG-Bildinhalt direkt aus der Zwischenablage eingefügt wird. Typischerweise für das Einfügen von Screenshots.',
       name: 'Soll eingefügte Bilder in JPEG konvertieren'
     },
     shouldDeleteOrphanAttachments: {

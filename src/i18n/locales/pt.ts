@@ -66,8 +66,7 @@ export const pt = {
         displayText: 'Nenhum'
       },
       onlyPastedImages: {
-        description:
-          'apenas imagens coladas são renomeadas. Aplica-se apenas quando o conteúdo da imagem PNG é colado diretamente da área de transferência. Tipicamente, para colar capturas de ecrã.',
+        description: 'apenas imagens coladas são renomeadas. Aplica-se apenas quando o conteúdo da imagem PNG é colado diretamente da área de transferência. Tipicamente, para colar capturas de ecrã.',
         displayText: 'Apenas imagens coladas'
       }
     },
@@ -114,8 +113,7 @@ export const pt = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Os tokens personalizados foram comentados pois necessitam de ser atualizados para o novo formato introduzido na versão 9.0.0 do plugin.\n// Consulte a documentação (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) para mais informações.',
+      codeComment: '// Os tokens personalizados foram comentados pois necessitam de ser atualizados para o novo formato introduzido na versão 9.0.0 do plugin.\n// Consulte a documentação (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) para mais informações.',
       deprecated: {
         part1: 'Na versão 9.0.0 do plugin, o formato de registo de tokens personalizados mudou. Por favor, atualize os seus tokens em conformidade. Consulte a',
         part2: 'documentação',
@@ -147,8 +145,7 @@ export const pt = {
       invalidCustomTokensCode: 'Código de tokens personalizados inválido',
       invalidRegularExpression: 'Expressão regular inválida {{regExp}}',
       specialCharactersMustNotContainSlash: 'Caracteres especiais não devem conter /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'A substituição de caracteres especiais não deve conter caracteres inválidos de caminho de nome de ficheiro.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'A substituição de caracteres especiais não deve conter caracteres inválidos de caminho de nome de ficheiro.'
     }
   },
   pluginSettingsTab: {
@@ -279,8 +276,7 @@ export const pt = {
       title: 'Repor tokens personalizados para o exemplo'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Defina se as imagens coladas devem ser convertidas para JPEG. Aplica-se apenas quando o conteúdo da imagem PNG é colado diretamente da área de transferência. Tipicamente, útil para capturas de ecrã.',
+      description: 'Defina se as imagens coladas devem ser convertidas para JPEG. Aplica-se apenas quando o conteúdo da imagem PNG é colado diretamente da área de transferência. Tipicamente, útil para capturas de ecrã.',
       name: 'Converter imagens coladas para JPEG'
     },
     shouldDeleteOrphanAttachments: {

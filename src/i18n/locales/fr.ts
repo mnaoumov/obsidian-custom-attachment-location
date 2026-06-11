@@ -66,8 +66,7 @@ export const fr = {
         displayText: 'Aucun'
       },
       onlyPastedImages: {
-        description:
-          'seules les images collées sont renommées. S\'applique uniquement lorsque le contenu d\'image PNG est collé directement depuis le presse-papiers. Typiquement, pour coller des captures d\'\u00e9cran.',
+        description: 'seules les images collées sont renommées. S\'applique uniquement lorsque le contenu d\'image PNG est collé directement depuis le presse-papiers. Typiquement, pour coller des captures d\'\u00e9cran.',
         displayText: 'Images collées uniquement'
       }
     },
@@ -114,11 +113,9 @@ export const fr = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment:
-        '// Les jetons personnalisés ont été commentés car ils doivent être mis à jour vers le nouveau format introduit dans la version 9.0.0 du plugin.\n// Consultez la documentation (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) pour plus d\'informations.',
+      codeComment: '// Les jetons personnalisés ont été commentés car ils doivent être mis à jour vers le nouveau format introduit dans la version 9.0.0 du plugin.\n// Consultez la documentation (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) pour plus d\'informations.',
       deprecated: {
-        part1:
-          'Dans la version 9.0.0 du plugin, le format d\'enregistrement des jetons personnalisés a changé. Veuillez mettre à jour vos jetons en conséquence. Consultez la',
+        part1: 'Dans la version 9.0.0 du plugin, le format d\'enregistrement des jetons personnalisés a changé. Veuillez mettre à jour vos jetons en conséquence. Consultez la',
         part2: 'documentation',
         part3: 'pour plus d\'informations'
       }
@@ -148,8 +145,7 @@ export const fr = {
       invalidCustomTokensCode: 'Code de jetons personnalisés invalide',
       invalidRegularExpression: 'Expression régulière invalide {{regExp}}',
       specialCharactersMustNotContainSlash: 'Les caractères spéciaux ne doivent pas contenir /',
-      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters:
-        'Le remplacement des caractères spéciaux ne doit pas contenir de caractères de chemin de fichier invalides.'
+      specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters: 'Le remplacement des caractères spéciaux ne doit pas contenir de caractères de chemin de fichier invalides.'
     }
   },
   pluginSettingsTab: {
@@ -180,8 +176,7 @@ export const fr = {
         part2: 'Voir la',
         part3: 'documentation',
         part4: 'pour plus d\'informations.',
-        part5:
-          '⚠️ Les jetons personnalisés peuvent être du code JavaScript arbitraire. S\'ils sont mal écrits, ils peuvent causer une perte de données. Utilisez-les à vos propres risques.'
+        part5: '⚠️ Les jetons personnalisés peuvent être du code JavaScript arbitraire. S\'ils sont mal écrits, ils peuvent causer une perte de données. Utilisez-les à vos propres risques.'
       },
       name: 'Jetons personnalisés'
     },
@@ -285,8 +280,7 @@ export const fr = {
       title: 'Réinitialiser aux jetons personnalisés d\'exemple'
     },
     shouldConvertPastedImagesToJpeg: {
-      description:
-        'Convertir les images collées en JPEG. S\'applique uniquement lorsque le contenu d\'image PNG est collé directement depuis le presse-papiers. Typiquement, pour coller des captures d\'écran.',
+      description: 'Convertir les images collées en JPEG. S\'applique uniquement lorsque le contenu d\'image PNG est collé directement depuis le presse-papiers. Typiquement, pour coller des captures d\'écran.',
       name: 'Convertir les images collées en JPEG'
     },
     shouldDeleteOrphanAttachments: {

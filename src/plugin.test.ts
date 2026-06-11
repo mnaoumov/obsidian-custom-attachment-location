@@ -675,9 +675,7 @@ function findEvent(name: string): CapturedEvent | undefined {
 }
 
 function formatTimestamp(date: Date): string {
-  return `${pad(date.getFullYear(), 4)}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${
-    pad(date.getSeconds())
-  }`;
+  return `${pad(date.getFullYear(), 4)}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 
   function pad(value: number, length = 2): string {
     return String(value).padStart(length, '0');
