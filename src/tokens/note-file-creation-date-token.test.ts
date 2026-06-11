@@ -4,9 +4,11 @@ import type {
 } from 'obsidian';
 
 import { castTo } from 'obsidian-dev-utils/object-utils';
+import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/attachment-path';
 import { getFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
+  afterEach,
   describe,
   expect,
   it,
@@ -35,6 +37,10 @@ function createContext(format: TokenEvaluatorContext['format']): TokenEvaluatorC
 }
 
 describe('NoteFileCreationDateToken', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should be named noteFileCreationDate', () => {
     const token = new NoteFileCreationDateToken();
     expect(token.name).toBe('noteFileCreationDate');
@@ -50,5 +56,17 @@ describe('NoteFileCreationDateToken', () => {
     const result = token.evaluate(createContext({ momentJsFormat: 'YYYY-MM-DD' }));
     expect(result).toBe(moment(CTIME).format('YYYY-MM-DD'));
     expect(getFile).toHaveBeenCalledWith(app, 'note.md');
+  });
+
+  it('should format the current date for the dummy path', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(CTIME);
+    vi.mocked(getFile).mockClear();
+
+    const token = new NoteFileCreationDateToken();
+    const context = createContext({ momentJsFormat: 'YYYY-MM-DD' });
+    context.noteFilePath = DUMMY_PATH;
+    const result = token.evaluate(context);
+    expect(result).toBe(moment(CTIME).format('YYYY-MM-DD'));
+    expect(getFile).not.toHaveBeenCalled();
   });
 });
