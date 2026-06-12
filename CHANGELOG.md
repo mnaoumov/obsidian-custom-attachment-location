@@ -12,19 +12,7 @@
 
 ## 10.3.5
 
-- chore: update libs
-- refactor: complete obsidian-dev-utils migration and reach 100% coverage Finish the uncommitted migration to the modern obsidian-dev-utils architecture (commands -> command-handlers wired via CommandHandlerComponent; plugin-settings-manager -> PluginSettingsComponent + PluginDataHandler; dependency upgrade obsidian-dev-utils ^66 -> ^69 with $name override shorthand; add the unit test toolchain) and author a full suite bringing coverage from 0% to 100% (508 tests) across the token subsystem, substitutions, attachment logic, command handlers, plugin wiring, settings, and modals. Fix stale capitalized casing in cspell ignorePaths (en-gb/pt-br/zh-tw) left over from the kebab-case rename, and replace genuinely-unreachable guards with ensureNonNullable (no v8-ignore).
-- chore: update libs
-- chore: update libs
-- refactor: migrate to @obsidian-typings/obsidian-public-latest - Replace obsidian-typings with @obsidian-typings/obsidian-public-latest - Update vitest config: replace ssr.noExternal with server.deps.inline - Add DOM.Iterable to tsconfig lib - Remove obsolete overrides (@antfu/utils, boolean, dompurify) - Upgrade dependencies via npm-check-updates
-- build: replace commitizen with czg Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
-- refactor: rename files and directories to kebab-case Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
-- chore: update libs
 - chore: update template
-- chore: update libs Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
-- chore: add @total-typescript/ts-reset, better-typescript-lib, and libReplacement Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
-- chore: unify rules
-- chore: add English language requirement to issue templates Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 ## 10.3.4
 
