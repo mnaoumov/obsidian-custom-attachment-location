@@ -12,6 +12,7 @@ import { replaceAll } from 'obsidian-dev-utils/string';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import { compare } from 'semver';
 
+import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import type { Plugin } from './plugin.ts';
 
 import {
@@ -29,6 +30,7 @@ import {
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
 
 interface PluginSettingsComponentConstructorParams {
+  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly dataHandler: DataHandler;
   readonly plugin: Plugin;
   readonly pluginEventSource: PluginEventSource;
@@ -234,16 +236,16 @@ ${commentOut(this.legacySettings.customTokensStr)}
 export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginSettings> {
   public shouldDebounceCustomTokensValidation = false;
 
+  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   private readonly customTokensValidatorDebounced = debounce(this.customTokensValidatorImpl.bind(this), CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS);
   private lastCustomTokenValidatorResult: string | undefined = undefined;
-  private readonly plugin: Plugin;
 
   public constructor(params: PluginSettingsComponentConstructorParams) {
     super({
       ...params,
       pluginSettingsClass: PluginSettings
     });
-    this.plugin = params.plugin;
+    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
   }
 
   protected override registerLegacySettingsConverters(): void {
@@ -256,14 +258,14 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     this.registerValidator('attachmentFolderPath', async (value) =>
       await validatePath({
         areTokensAllowed: true,
-        path: value,
-        plugin: this.plugin
+        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
+        path: value
       }));
     this.registerValidator('generatedAttachmentFileName', async (value) =>
       await validatePath({
         areTokensAllowed: true,
-        path: value,
-        plugin: this.plugin
+        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
+        path: value
       }));
 
     this.registerValidator('specialCharactersReplacement', (value): MaybeReturn<string> => {
@@ -282,9 +284,9 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     this.registerValidator('duplicateNameSeparator', async (value): Promise<MaybeReturn<string>> => {
       return await validateFileName({
         areSingleDotsAllowed: false,
+        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
         fileName: `foo${value}1`,
         isEmptyAllowed: false,
-        plugin: this.plugin,
         tokenValidationMode: TokenValidationMode.Error
       });
     });

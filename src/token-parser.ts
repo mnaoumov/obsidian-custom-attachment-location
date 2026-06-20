@@ -13,9 +13,9 @@ export interface ScannedToken {
 const TOKEN_HEAD_REGEXP = /\$\{\s*(?<Token>[a-zA-Z0-9_]+)\s*(?<Colon>:\s*)?/y;
 
 interface ParseHeadAtResult {
-  hasColon: boolean;
-  indexAfterHead: number;
-  tokenName: string;
+  readonly hasColon: boolean;
+  readonly indexAfterHead: number;
+  readonly tokenName: string;
 }
 
 interface ScanTokensOptions {

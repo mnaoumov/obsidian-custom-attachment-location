@@ -5,22 +5,22 @@ import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/componen
 import { FolderCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/folder-command-handler';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
+import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
-import type { Plugin } from '../plugin.ts';
 
 import { collectAttachmentsInAbstractFiles } from '../attachment-collector.ts';
 
 interface CollectAttachmentsInCurrentFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly consoleDebugComponent: ConsoleDebugComponent;
-  readonly plugin: Plugin;
+  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 export class CollectAttachmentsInCurrentFolderCommandHandler extends FolderCommandHandler {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
-  private readonly plugin: Plugin;
+  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: CollectAttachmentsInCurrentFolderCommandHandlerConstructorParams) {
@@ -31,12 +31,12 @@ export class CollectAttachmentsInCurrentFolderCommandHandler extends FolderComma
     });
 
     this.abortSignalComponent = params.abortSignalComponent;
-    this.plugin = params.plugin;
+    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.consoleDebugComponent = params.consoleDebugComponent;
   }
 
   protected override executeFolder(folder: TFolder): void {
-    collectAttachmentsInAbstractFiles(this.plugin, [folder], this.abortSignalComponent, this.pluginSettingsComponent, this.consoleDebugComponent);
+    collectAttachmentsInAbstractFiles(this.customAttachmentLocationComponent, [folder], this.abortSignalComponent, this.pluginSettingsComponent, this.consoleDebugComponent);
   }
 }

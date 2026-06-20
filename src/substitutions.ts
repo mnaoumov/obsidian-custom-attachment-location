@@ -19,7 +19,7 @@ import {
   trimStart
 } from 'obsidian-dev-utils/string';
 
-import type { Plugin } from './plugin.ts';
+import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 import type { TokenBase } from './tokens/token-base.ts';
 
@@ -71,8 +71,8 @@ export enum TokenValidationMode {
 
 export interface ValidatePathParams {
   readonly areTokensAllowed: boolean;
+  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly path: string;
-  readonly plugin: Plugin;
 }
 
 type RegisterCustomTokenFn = (token: string, evaluator: TokenEvaluator) => void;
@@ -84,20 +84,20 @@ interface SubstitutionsConstructorParams {
   readonly attachmentFileContent?: ArrayBuffer | undefined;
   readonly attachmentFileStat?: FileStats | undefined;
   readonly cursorLine?: number | undefined;
+  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly generatedAttachmentFileName?: string;
   readonly generatedAttachmentFilePath?: string;
   readonly noteFilePath: string;
   readonly oldNoteFilePath?: string | undefined;
   readonly originalAttachmentFileName?: string;
-  readonly plugin: Plugin;
   readonly sequenceNumber?: number | undefined;
 }
 
 interface ValidateFileNameOptions {
   readonly areSingleDotsAllowed: boolean;
+  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly fileName: string;
   readonly isEmptyAllowed: boolean;
-  readonly plugin: Plugin;
   readonly tokenValidationMode: TokenValidationMode;
 }
 
@@ -108,9 +108,9 @@ export class Substitutions {
   }
 
   public readonly actionContext: ActionContext;
-  public readonly noteFolderPath: string;
+  public readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
 
-  public readonly plugin: Plugin;
+  public readonly noteFolderPath: string;
   private readonly app: App;
   private readonly attachmentFileContent: ArrayBuffer | undefined;
   private readonly attachmentFileStat: FileStats | undefined;
@@ -129,8 +129,8 @@ export class Substitutions {
   private readonly sequenceNumber: number | undefined;
 
   public constructor(params: SubstitutionsConstructorParams) {
-    this.plugin = params.plugin;
-    this.app = params.plugin.app;
+    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
+    this.app = params.customAttachmentLocationComponent.app;
     this.actionContext = params.actionContext;
 
     this.noteFilePath = params.noteFilePath;
@@ -236,6 +236,7 @@ export class Substitutions {
         attachmentFileContent: this.attachmentFileContent,
         attachmentFileStat: this.attachmentFileStat,
         cursorLine: this.cursorLine,
+        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
         fillTemplate: this.fillTemplate.bind(this),
         format,
         fullTemplate: template,
@@ -252,7 +253,6 @@ export class Substitutions {
         oldNoteFolderPath: this.oldNoteFolderPath,
         originalAttachmentFileExtension: this.originalAttachmentFileExtension,
         originalAttachmentFileName: this.originalAttachmentFileName,
-        plugin: this.plugin,
         sequenceNumber: this.sequenceNumber ?? 0,
         token: t.token,
         tokenEndOffset: t.end,
@@ -304,7 +304,7 @@ export async function validateFileName(options: ValidateFileNameOptions): Promis
     case TokenValidationMode.Skip:
       break;
     case TokenValidationMode.Validate: {
-      const validationMessage = await validateTokens(options.plugin, options.fileName);
+      const validationMessage = await validateTokens(options.customAttachmentLocationComponent, options.fileName);
       if (validationMessage) {
         return validationMessage;
       }
@@ -346,7 +346,7 @@ export async function validateFileName(options: ValidateFileNameOptions): Promis
 
 export async function validatePath(params: ValidatePathParams): Promise<string> {
   if (params.areTokensAllowed) {
-    const unknownToken = await validateTokens(params.plugin, params.path);
+    const unknownToken = await validateTokens(params.customAttachmentLocationComponent, params.path);
     if (unknownToken) {
       return `Unknown token: ${unknownToken}`;
     }
@@ -365,9 +365,9 @@ export async function validatePath(params: ValidatePathParams): Promise<string> 
   for (const part of pathParts) {
     const partValidationError = await validateFileName({
       areSingleDotsAllowed: true,
+      customAttachmentLocationComponent: params.customAttachmentLocationComponent,
       fileName: part,
       isEmptyAllowed: true,
-      plugin: params.plugin,
       tokenValidationMode: TokenValidationMode.Skip
     });
 
@@ -400,12 +400,12 @@ function removeTokens(str: string): string {
   return out;
 }
 
-async function validateTokens(plugin: Plugin, str: string): Promise<null | string> {
+async function validateTokens(customAttachmentLocationComponent: CustomAttachmentLocationComponent, str: string): Promise<null | string> {
   const FAKE_SUBSTITUTION = new Substitutions({
     actionContext: ActionContext.ValidateTokens,
+    customAttachmentLocationComponent,
     noteFilePath: DUMMY_PATH,
-    originalAttachmentFileName: DUMMY_PATH,
-    plugin
+    originalAttachmentFileName: DUMMY_PATH
   });
 
   const tokens = extractTokens(str);

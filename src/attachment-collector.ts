@@ -50,8 +50,8 @@ import {
 } from 'obsidian-dev-utils/path';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
+import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-import type { Plugin } from './plugin.ts';
 
 import {
   getAttachmentFolderFullPathForPath,
@@ -65,15 +65,15 @@ import { ActionContext } from './token-evaluator-context.ts';
 export interface GetProperAttachmentPathParams {
   readonly actionContext: ActionContext;
   readonly attachmentFile: TFile;
+  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly noteFilePath: string;
-  readonly plugin: Plugin;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly reference: Reference;
 }
 
 interface AttachmentMoveResult {
-  newAttachmentPath: null | string;
-  oldAttachmentPath: string;
+  readonly newAttachmentPath: null | string;
+  readonly oldAttachmentPath: string;
 }
 
 interface CollectAttachmentContext {
@@ -82,14 +82,14 @@ interface CollectAttachmentContext {
 }
 
 export async function collectAttachments(
-  plugin: Plugin,
+  customAttachmentLocationComponent: CustomAttachmentLocationComponent,
   note: TFile,
   ctx: CollectAttachmentContext,
   abortSignal: AbortSignal,
   pluginSettingsComponent: PluginSettingsComponent
 ): Promise<void> {
   abortSignal.throwIfAborted();
-  const app = plugin.app;
+  const app = customAttachmentLocationComponent.app;
 
   if (ctx.isAborted) {
     return;
@@ -123,7 +123,7 @@ export async function collectAttachments(
         return;
       }
 
-      const attachmentMoveResult = await prepareAttachmentToMove(plugin, link, note.path, note.path, oldAttachmentPaths, pluginSettingsComponent);
+      const attachmentMoveResult = await prepareAttachmentToMove(customAttachmentLocationComponent, link, note.path, note.path, oldAttachmentPaths, pluginSettingsComponent);
       abortSignal.throwIfAborted();
       if (!attachmentMoveResult) {
         continue;
@@ -243,18 +243,18 @@ export async function collectAttachments(
 }
 
 export function collectAttachmentsEntireVault(
-  plugin: Plugin,
+  customAttachmentLocationComponent: CustomAttachmentLocationComponent,
   abortSignalComponent: AbortSignalComponent,
   pluginSettingsComponent: PluginSettingsComponent,
   consoleDebugComponent: ConsoleDebugComponent
 ): void {
   addToQueue({
     abortSignal: abortSignalComponent.abortSignal,
-    app: plugin.app,
+    app: customAttachmentLocationComponent.app,
     operationFn: (abortSignal) =>
       collectAttachmentsInAbstractFilesImpl(
-        plugin,
-        [plugin.app.vault.getRoot()],
+        customAttachmentLocationComponent,
+        [customAttachmentLocationComponent.app.vault.getRoot()],
         abortSignal,
         pluginSettingsComponent,
         consoleDebugComponent,
@@ -266,7 +266,7 @@ export function collectAttachmentsEntireVault(
 }
 
 export function collectAttachmentsInAbstractFiles(
-  plugin: Plugin,
+  customAttachmentLocationComponent: CustomAttachmentLocationComponent,
   abstractFiles: TAbstractFile[],
   abortSignalComponent: AbortSignalComponent,
   pluginSettingsComponent: PluginSettingsComponent,
@@ -274,28 +274,28 @@ export function collectAttachmentsInAbstractFiles(
 ): void {
   addToQueue({
     abortSignal: abortSignalComponent.abortSignal,
-    app: plugin.app,
-    operationFn: (abortSignal) => collectAttachmentsInAbstractFilesImpl(plugin, abstractFiles, abortSignal, pluginSettingsComponent, consoleDebugComponent, abortSignalComponent),
+    app: customAttachmentLocationComponent.app,
+    operationFn: (abortSignal) => collectAttachmentsInAbstractFilesImpl(customAttachmentLocationComponent, abstractFiles, abortSignal, pluginSettingsComponent, consoleDebugComponent, abortSignalComponent),
     operationName: t(($) => $.menuItems.collectAttachmentsInFile),
     timeoutInMilliseconds: pluginSettingsComponent.settings.getTimeoutInMilliseconds()
   });
 }
 
 export async function getProperAttachmentPath(params: GetProperAttachmentPathParams): Promise<null | string> {
-  const attachmentFileContent = await params.plugin.app.vault.readBinary(params.attachmentFile);
+  const attachmentFileContent = await params.customAttachmentLocationComponent.app.vault.readBinary(params.attachmentFile);
   const newAttachmentName = params.pluginSettingsComponent.settings.shouldRenameCollectedAttachments
     ? makeFileName(
       await getGeneratedAttachmentFileBaseName(
-        params.plugin,
+        params.customAttachmentLocationComponent,
         new Substitutions({
           actionContext: params.actionContext,
           attachmentFileContent,
           attachmentFileStat: params.attachmentFile.stat,
           cursorLine: isReferenceCache(params.reference) ? params.reference.position.start.line : 0,
+          customAttachmentLocationComponent: params.customAttachmentLocationComponent,
           noteFilePath: params.noteFilePath,
           originalAttachmentFileName: params.attachmentFile.name,
-          plugin: params.plugin,
-          sequenceNumber: await params.plugin.getSequenceNumber(params.noteFilePath, params.attachmentFile.path)
+          sequenceNumber: await params.customAttachmentLocationComponent.getSequenceNumber(params.noteFilePath, params.attachmentFile.path)
         }),
         params.pluginSettingsComponent
       ),
@@ -304,7 +304,7 @@ export async function getProperAttachmentPath(params: GetProperAttachmentPathPar
     : params.attachmentFile.name;
 
   const newAttachmentFolderPath = await getAttachmentFolderFullPathForPath(
-    params.plugin,
+    params.customAttachmentLocationComponent,
     params.actionContext,
     params.noteFilePath,
     newAttachmentName,
@@ -322,17 +322,17 @@ export async function getProperAttachmentPath(params: GetProperAttachmentPathPar
   return newAttachmentPath;
 }
 
-export function isNoteEx(plugin: Plugin, pathOrFile: null | PathOrAbstractFile, pluginSettingsComponent: PluginSettingsComponent): boolean {
-  if (!pathOrFile || !isNote(plugin.app, pathOrFile)) {
+export function isNoteEx(customAttachmentLocationComponent: CustomAttachmentLocationComponent, pathOrFile: null | PathOrAbstractFile, pluginSettingsComponent: PluginSettingsComponent): boolean {
+  if (!pathOrFile || !isNote(customAttachmentLocationComponent.app, pathOrFile)) {
     return false;
   }
 
-  const path = getPath(plugin.app, pathOrFile);
+  const path = getPath(customAttachmentLocationComponent.app, pathOrFile);
   return pluginSettingsComponent.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
 }
 
 async function collectAttachmentsInAbstractFilesImpl(
-  plugin: Plugin,
+  customAttachmentLocationComponent: CustomAttachmentLocationComponent,
   abstractFiles: TAbstractFile[],
   abortSignal: AbortSignal,
   pluginSettingsComponent: PluginSettingsComponent,
@@ -349,7 +349,7 @@ async function collectAttachmentsInAbstractFilesImpl(
   }
 
   const canCollectAttachments = !!singleFile || (await confirm({
-    app: plugin.app,
+    app: customAttachmentLocationComponent.app,
     cancelButtonText: t(($) => $.obsidianDevUtils.buttons.cancel),
     message: createFragment((f) => {
       f.appendText(t(($) => $.attachmentCollector.confirm.part1));
@@ -380,13 +380,13 @@ async function collectAttachmentsInAbstractFilesImpl(
   const noteFilesSet = new Set<TFile>();
 
   for (const abstractFile of abstractFiles) {
-    if (isFile(abstractFile) && isNote(plugin.app, abstractFile)) {
+    if (isFile(abstractFile) && isNote(customAttachmentLocationComponent.app, abstractFile)) {
       noteFilesSet.add(abstractFile);
     }
 
     if (isFolder(abstractFile)) {
       Vault.recurseChildren(abstractFile, (child) => {
-        if (isFile(child) && isNote(plugin.app, child)) {
+        if (isFile(child) && isNote(customAttachmentLocationComponent.app, child)) {
           noteFilesSet.add(child);
         }
       });
@@ -411,13 +411,13 @@ async function collectAttachmentsInAbstractFilesImpl(
         console.warn(`Cannot collect attachments in the note as note path is ignored: ${noteFile.path}.`);
         return;
       }
-      await collectAttachments(plugin, noteFile, ctx, combinedAbortSignal, pluginSettingsComponent);
+      await collectAttachments(customAttachmentLocationComponent, noteFile, ctx, combinedAbortSignal, pluginSettingsComponent);
       combinedAbortSignal.throwIfAborted();
       if (ctx.isAborted) {
         abortController.abort();
       }
     },
-    progressBarTitle: `${plugin.manifest.name}: ${t(($) => $.attachmentCollector.progressBar.title)}`,
+    progressBarTitle: `${customAttachmentLocationComponent.pluginName}: ${t(($) => $.attachmentCollector.progressBar.title)}`,
     shouldContinueOnError: true,
     shouldShowProgressBar: true
   });
@@ -437,14 +437,14 @@ async function getCanvasLinks(app: App, canvasFile: TFile): Promise<ReferenceCac
 }
 
 async function prepareAttachmentToMove(
-  plugin: Plugin,
+  customAttachmentLocationComponent: CustomAttachmentLocationComponent,
   reference: Reference,
   newNotePath: string,
   oldNotePath: string,
   oldAttachmentPaths: Set<string>,
   pluginSettingsComponent: PluginSettingsComponent
 ): Promise<AttachmentMoveResult | null> {
-  const app = plugin.app;
+  const app = customAttachmentLocationComponent.app;
 
   const oldAttachmentFile = extractLinkFile(app, reference, oldNotePath, true);
 
@@ -452,7 +452,7 @@ async function prepareAttachmentToMove(
     return null;
   }
 
-  if (isNoteEx(plugin, oldAttachmentFile, pluginSettingsComponent)) {
+  if (isNoteEx(customAttachmentLocationComponent, oldAttachmentFile, pluginSettingsComponent)) {
     return null;
   }
 
@@ -470,8 +470,8 @@ async function prepareAttachmentToMove(
   const newAttachmentPath = await getProperAttachmentPath({
     actionContext: ActionContext.CollectAttachments,
     attachmentFile: oldAttachmentFile,
+    customAttachmentLocationComponent,
     noteFilePath: newNotePath,
-    plugin,
     pluginSettingsComponent,
     reference
   });

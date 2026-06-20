@@ -19,7 +19,7 @@ export class HeadingToken extends TokenBase<Format> {
   protected override async evaluateImpl(ctx: TokenEvaluatorContext, format: Format): Promise<string> {
     const headingsInfo = await this.initHeadings(ctx);
     const rawHeading = headingsInfo.get(format.level) ?? '';
-    return ctx.plugin.replaceSpecialCharacters(rawHeading);
+    return ctx.customAttachmentLocationComponent.replaceSpecialCharacters(rawHeading);
   }
 
   private async initHeadings(ctx: TokenEvaluatorContext): Promise<Map<HeadingLevel, string>> {
