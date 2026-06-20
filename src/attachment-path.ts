@@ -1,8 +1,11 @@
 import type {
   App,
-  FileStats
+  FileStats,
+  Reference,
+  TFile
 } from 'obsidian';
 
+import { isReferenceCache } from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   normalizePath,
   Notice
@@ -10,7 +13,10 @@ import {
 import { printError } from 'obsidian-dev-utils/error';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import { join } from 'obsidian-dev-utils/path';
+import {
+  join,
+  makeFileName
+} from 'obsidian-dev-utils/path';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
@@ -23,6 +29,16 @@ import {
   validatePath
 } from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
+
+export interface GetProperAttachmentPathParams {
+  readonly actionContext: ActionContext;
+  readonly app: App;
+  readonly attachmentFile: TFile;
+  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
+  readonly noteFilePath: string;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly reference: Reference;
+}
 
 export async function getAttachmentFolderFullPathForPath(
   customAttachmentLocationComponent: CustomAttachmentLocationComponent,
@@ -103,6 +119,48 @@ export async function getGeneratedAttachmentFileBaseName(
     throw new Error(errorMessage);
   }
   return path;
+}
+
+export async function getProperAttachmentPath(params: GetProperAttachmentPathParams): Promise<null | string> {
+  const attachmentFileContent = await params.customAttachmentLocationComponent.app.vault.readBinary(params.attachmentFile);
+  const newAttachmentName = params.pluginSettingsComponent.settings.shouldRenameCollectedAttachments
+    ? makeFileName(
+      await getGeneratedAttachmentFileBaseName(
+        params.app,
+        new Substitutions({
+          actionContext: params.actionContext,
+          app: params.app,
+          attachmentFileContent,
+          attachmentFileStat: params.attachmentFile.stat,
+          cursorLine: isReferenceCache(params.reference) ? params.reference.position.start.line : 0,
+          noteFilePath: params.noteFilePath,
+          originalAttachmentFileName: params.attachmentFile.name,
+          pluginSettingsComponent: params.pluginSettingsComponent,
+          sequenceNumber: await params.customAttachmentLocationComponent.getSequenceNumber(params.noteFilePath, params.attachmentFile.path)
+        }),
+        params.pluginSettingsComponent
+      ),
+      params.attachmentFile.extension
+    )
+    : params.attachmentFile.name;
+
+  const newAttachmentFolderPath = await getAttachmentFolderFullPathForPath(
+    params.customAttachmentLocationComponent,
+    params.actionContext,
+    params.noteFilePath,
+    newAttachmentName,
+    params.pluginSettingsComponent,
+    undefined,
+    attachmentFileContent,
+    params.attachmentFile.stat
+  );
+  const newAttachmentPath = join(newAttachmentFolderPath, newAttachmentName);
+
+  if (params.attachmentFile.path === newAttachmentPath) {
+    return null;
+  }
+
+  return newAttachmentPath;
 }
 
 function cleanFilePathPart(pluginSettingsComponent: PluginSettingsComponent, part: string): string {

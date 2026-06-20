@@ -1,27 +1,16 @@
 import type { TFolder } from 'obsidian';
-import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
-import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
 
 import { FolderCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/folder-command-handler';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
-import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
-import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
-
-import { collectAttachmentsInAbstractFiles } from '../attachment-collector.ts';
+import type { AttachmentCollector } from '../attachment-collector.ts';
 
 interface CollectAttachmentsInCurrentFolderCommandHandlerConstructorParams {
-  readonly abortSignalComponent: AbortSignalComponent;
-  readonly consoleDebugComponent: ConsoleDebugComponent;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
-  readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly attachmentCollector: AttachmentCollector;
 }
 
 export class CollectAttachmentsInCurrentFolderCommandHandler extends FolderCommandHandler {
-  private readonly abortSignalComponent: AbortSignalComponent;
-  private readonly consoleDebugComponent: ConsoleDebugComponent;
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
-  private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly attachmentCollector: AttachmentCollector;
 
   public constructor(params: CollectAttachmentsInCurrentFolderCommandHandlerConstructorParams) {
     super({
@@ -30,13 +19,10 @@ export class CollectAttachmentsInCurrentFolderCommandHandler extends FolderComma
       name: t(($) => $.commands.collectAttachmentsCurrentFolder)
     });
 
-    this.abortSignalComponent = params.abortSignalComponent;
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
-    this.pluginSettingsComponent = params.pluginSettingsComponent;
-    this.consoleDebugComponent = params.consoleDebugComponent;
+    this.attachmentCollector = params.attachmentCollector;
   }
 
   protected override executeFolder(folder: TFolder): void {
-    collectAttachmentsInAbstractFiles(this.customAttachmentLocationComponent, [folder], this.abortSignalComponent, this.pluginSettingsComponent, this.consoleDebugComponent);
+    this.attachmentCollector.collectAttachmentsInAbstractFiles([folder]);
   }
 }

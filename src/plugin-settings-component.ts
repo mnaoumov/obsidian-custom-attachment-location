@@ -1,4 +1,5 @@
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
+import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
@@ -8,6 +9,10 @@ import {
 } from 'obsidian';
 import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import {
+  getPath,
+  isNote
+} from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/validation';
 import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
@@ -246,6 +251,15 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       pluginSettingsClass: PluginSettings
     });
     this.app = params.app;
+  }
+
+  public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
+    if (!pathOrFile || !isNote(this.app, pathOrFile)) {
+      return false;
+    }
+
+    const path = getPath(this.app, pathOrFile);
+    return this.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
   }
 
   public replaceSpecialCharacters(str: string): string {

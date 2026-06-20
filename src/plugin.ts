@@ -14,7 +14,7 @@ import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
-import { isNoteEx } from './attachment-collector.ts';
+import { AttachmentCollector } from './attachment-collector.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
@@ -64,7 +64,7 @@ export class Plugin extends PluginBase {
         pluginId: this.manifest.id,
         settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => ({
           emptyFolderBehavior: pluginSettingsComponent.settings.emptyFolderBehavior,
-          isNote: (path: string): boolean => isNoteEx(customAttachmentLocationComponent, path, pluginSettingsComponent),
+          isNote: (path: string): boolean => pluginSettingsComponent.isNoteEx(path),
           isPathIgnored: (path: string): boolean => pluginSettingsComponent.settings.isPathIgnored(path),
           shouldHandleDeletions: pluginSettingsComponent.settings.shouldDeleteOrphanAttachments,
           shouldHandleRenames: pluginSettingsComponent.settings.shouldHandleRenames,
@@ -75,29 +75,29 @@ export class Plugin extends PluginBase {
       })
     );
 
+    const attachmentCollector = new AttachmentCollector({
+      abortSignalComponent: this.abortSignalComponent,
+      app: this.app,
+      consoleDebugComponent: this.consoleDebugComponent,
+      customAttachmentLocationComponent,
+      pluginName: this.manifest.name,
+      pluginSettingsComponent
+    });
+
     const menuEventRegistrar = this.addChild(new MenuEventRegistrarComponent(this.app));
     this.addChild(
       new CommandHandlerComponent({
         activeFileProvider: new AppActiveFileProvider(this.app),
         commandHandlers: [
           new CollectAttachmentsInFileCommandHandler({
-            abortSignalComponent: this.abortSignalComponent,
             app: this.app,
-            consoleDebugComponent: this.consoleDebugComponent,
-            customAttachmentLocationComponent,
-            pluginSettingsComponent
+            attachmentCollector
           }),
           new CollectAttachmentsInCurrentFolderCommandHandler({
-            abortSignalComponent: this.abortSignalComponent,
-            consoleDebugComponent: this.consoleDebugComponent,
-            customAttachmentLocationComponent,
-            pluginSettingsComponent
+            attachmentCollector
           }),
           new CollectAttachmentsEntireVaultCommandHandler({
-            abortSignalComponent: this.abortSignalComponent,
-            consoleDebugComponent: this.consoleDebugComponent,
-            customAttachmentLocationComponent,
-            pluginSettingsComponent
+            attachmentCollector
           }),
           new MoveAttachmentToProperFolderCommandHandler({
             abortSignalComponent: this.abortSignalComponent,

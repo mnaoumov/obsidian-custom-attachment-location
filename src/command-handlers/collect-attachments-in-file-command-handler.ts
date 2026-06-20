@@ -2,8 +2,6 @@ import type {
   App,
   TAbstractFile
 } from 'obsidian';
-import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
-import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
 import type { Promisable } from 'type-fest';
 
 import { noopAsync } from 'obsidian-dev-utils/function';
@@ -14,25 +12,16 @@ import {
 } from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
-import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
-import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
-
-import { collectAttachmentsInAbstractFiles } from '../attachment-collector.ts';
+import type { AttachmentCollector } from '../attachment-collector.ts';
 
 interface CollectAttachmentsInFileCommandHandlerConstructorParams {
-  readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
-  readonly consoleDebugComponent: ConsoleDebugComponent;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
-  readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly attachmentCollector: AttachmentCollector;
 }
 
 export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandHandler {
-  private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
-  private readonly consoleDebugComponent: ConsoleDebugComponent;
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
-  private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly attachmentCollector: AttachmentCollector;
 
   public constructor(params: CollectAttachmentsInFileCommandHandlerConstructorParams) {
     super({
@@ -44,10 +33,7 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
     });
 
     this.app = params.app;
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
-    this.abortSignalComponent = params.abortSignalComponent;
-    this.pluginSettingsComponent = params.pluginSettingsComponent;
-    this.consoleDebugComponent = params.consoleDebugComponent;
+    this.attachmentCollector = params.attachmentCollector;
   }
 
   protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
@@ -69,7 +55,7 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
   }
 
   protected override executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void> {
-    collectAttachmentsInAbstractFiles(this.customAttachmentLocationComponent, abstractFiles, this.abortSignalComponent, this.pluginSettingsComponent, this.consoleDebugComponent);
+    this.attachmentCollector.collectAttachmentsInAbstractFiles(abstractFiles);
     return noopAsync();
   }
 

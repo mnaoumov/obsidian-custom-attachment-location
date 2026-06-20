@@ -31,10 +31,7 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
-import {
-  getProperAttachmentPath,
-  isNoteEx
-} from '../attachment-collector.ts';
+import { getProperAttachmentPath } from '../attachment-path.ts';
 import { selectMode } from '../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
 import { ActionContext } from '../token-evaluator-context.ts';
@@ -75,7 +72,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     }
 
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && isNoteEx(this.customAttachmentLocationComponent, abstractFile, this.pluginSettingsComponent)) {
+      if (isFile(abstractFile) && this.pluginSettingsComponent.isNoteEx(abstractFile)) {
         return false;
       }
     }
@@ -91,13 +88,13 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     const attachmentFilesSet = new Set<TFile>();
 
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && !isNoteEx(this.customAttachmentLocationComponent, abstractFile, this.pluginSettingsComponent)) {
+      if (isFile(abstractFile) && !this.pluginSettingsComponent.isNoteEx(abstractFile)) {
         attachmentFilesSet.add(abstractFile);
       }
 
       if (isFolder(abstractFile)) {
         Vault.recurseChildren(abstractFile, (child) => {
-          if (isFile(child) && !isNoteEx(this.customAttachmentLocationComponent, child, this.pluginSettingsComponent)) {
+          if (isFile(child) && !this.pluginSettingsComponent.isNoteEx(child)) {
             attachmentFilesSet.add(child);
           }
         });
