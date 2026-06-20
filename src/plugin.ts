@@ -40,7 +40,6 @@ export class Plugin extends PluginBase {
 
     const attachmentPathManager = new AttachmentPathManager({
       app: this.app,
-      customAttachmentLocationComponent: null as unknown as CustomAttachmentLocationComponent, // FIXME
       pluginSettingsComponent
     });
 

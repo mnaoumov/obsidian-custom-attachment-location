@@ -164,31 +164,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.attachmentPathManager = params.attachmentPathManager;
   }
 
-  public async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
-    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
-    if (!oldAttachmentFile) {
-      return 0;
-    }
-
-    const cache = await getCacheSafe(this.app, noteFilePath);
-    if (!cache) {
-      return 0;
-    }
-
-    let sequenceNumber = 1;
-    for (const link of getAllLinks(cache)) {
-      const linkFile = extractLinkFile(this.app, link, noteFilePath);
-
-      if (linkFile === oldAttachmentFile) {
-        return sequenceNumber;
-      }
-
-      sequenceNumber++;
-    }
-
-    return 0;
-  }
-
   public override onload(): void {
     super.onload();
     this.registerEvent(this.app.workspace.on('file-open', convertAsyncToSync(this.handleFileOpen.bind(this))));
@@ -514,7 +489,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         generatedAttachmentFileName = attachmentFileName;
       } else {
         const cursorLine = await this.getCursorLine(noteFilePath, params.oldAttachmentPathOrFile);
-        const sequenceNumber = await this.getSequenceNumber(noteFilePath, params.oldAttachmentPathOrFile);
+        const sequenceNumber = await this.attachmentPathManager.getSequenceNumber(noteFilePath, params.oldAttachmentPathOrFile);
         const generatedAttachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(
           new Substitutions({
             actionContext: attachmentPathContextToActionContext(params.context),

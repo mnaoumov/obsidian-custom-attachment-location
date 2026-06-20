@@ -4,6 +4,7 @@ import type {
   Reference,
   TFile
 } from 'obsidian';
+import type { PathOrFile } from 'obsidian-dev-utils/obsidian/file-system';
 
 import { isReferenceCache } from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
@@ -12,14 +13,19 @@ import {
 } from 'obsidian';
 import { printError } from 'obsidian-dev-utils/error';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
+import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
+import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
+import {
+  getAllLinks,
+  getCacheSafe
+} from 'obsidian-dev-utils/obsidian/metadata-cache';
 import {
   join,
   makeFileName
 } from 'obsidian-dev-utils/path';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
-import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import {
@@ -39,7 +45,6 @@ export interface AttachmentPathManagerGetProperAttachmentPathParams {
 
 interface AttachmentPathManagerConstructorParams {
   readonly app: App;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -54,12 +59,10 @@ interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
 
 export class AttachmentPathManager {
   private readonly app: App;
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: AttachmentPathManagerConstructorParams) {
     this.app = params.app;
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -143,7 +146,7 @@ export class AttachmentPathManager {
             noteFilePath: params.noteFilePath,
             originalAttachmentFileName: params.attachmentFile.name,
             pluginSettingsComponent: this.pluginSettingsComponent,
-            sequenceNumber: await this.customAttachmentLocationComponent.getSequenceNumber(params.noteFilePath, params.attachmentFile.path)
+            sequenceNumber: await this.getSequenceNumber(params.noteFilePath, params.attachmentFile.path)
           })
         ),
         params.attachmentFile.extension
@@ -164,6 +167,31 @@ export class AttachmentPathManager {
     }
 
     return newAttachmentPath;
+  }
+
+  public async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
+    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
+    if (!oldAttachmentFile) {
+      return 0;
+    }
+
+    const cache = await getCacheSafe(this.app, noteFilePath);
+    if (!cache) {
+      return 0;
+    }
+
+    let sequenceNumber = 1;
+    for (const link of getAllLinks(cache)) {
+      const linkFile = extractLinkFile(this.app, link, noteFilePath);
+
+      if (linkFile === oldAttachmentFile) {
+        return sequenceNumber;
+      }
+
+      sequenceNumber++;
+    }
+
+    return 0;
   }
 
   private cleanFilePathPart(part: string): string {
