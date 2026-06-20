@@ -221,7 +221,7 @@ export interface TokenEvaluatorContext {
   /**
    * Validates a path.
    */
-  validatePath(options: ValidatePathParams): Promise<string>;
+  validatePath(params: ValidatePathParams): Promise<string>;
 }
 
 /**

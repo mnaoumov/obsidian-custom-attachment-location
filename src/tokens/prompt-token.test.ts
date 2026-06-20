@@ -19,34 +19,34 @@ import { promptWithPreview } from '../prompt-with-preview-modal.ts';
 import { ActionContext } from '../token-evaluator-context.ts';
 import { PromptToken } from './prompt-token.ts';
 
-interface CreateContextOptions {
+interface CreateContextParams {
   readonly actionContext: ActionContext;
   readonly format: TokenEvaluatorContext['format'];
   readonly originalAttachmentFileName: string;
   validatePath?(params: ValidatePathParams): Promise<string>;
 }
 
-interface PromptWithPreviewOptions {
+interface PromptWithPreviewParams {
   readonly ctx: TokenEvaluatorContext;
   readonly defaultValue: string;
   valueValidator(value: string): Promise<null | string>;
 }
 
 vi.mock('../prompt-with-preview-modal.ts', () => ({
-  promptWithPreview: vi.fn<(options: PromptWithPreviewOptions) => Promise<null | string>>()
+  promptWithPreview: vi.fn<(params: PromptWithPreviewParams) => Promise<null | string>>()
 }));
 
 const app = strictProxy<App>({});
 const plugin = strictProxy<Plugin>({});
 
-function createContext(options: CreateContextOptions): TokenEvaluatorContext {
+function createContext(params: CreateContextParams): TokenEvaluatorContext {
   return castTo<TokenEvaluatorContext>({
-    actionContext: options.actionContext,
+    actionContext: params.actionContext,
     app,
-    format: options.format,
-    originalAttachmentFileName: options.originalAttachmentFileName,
+    format: params.format,
+    originalAttachmentFileName: params.originalAttachmentFileName,
     plugin,
-    validatePath: vi.fn(options.validatePath ?? ((): Promise<string> => Promise.resolve('')))
+    validatePath: vi.fn(params.validatePath ?? ((): Promise<string> => Promise.resolve('')))
   });
 }
 

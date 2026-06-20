@@ -18,7 +18,7 @@ import { trashSafe } from 'obsidian-dev-utils/obsidian/vault';
 
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 
-interface PromptWithPreviewOptions {
+interface PromptWithPreviewParams {
   readonly ctx: TokenEvaluatorContext;
   readonly defaultValue: string;
   valueValidator(value: string): Promise<null | string>;
@@ -28,8 +28,8 @@ class PreviewModal extends Modal {
   private embedComponent?: EmbedComponent;
   private tempFile?: TFile;
 
-  public constructor(private readonly options: PromptWithPreviewOptions) {
-    super(options.ctx.app);
+  public constructor(private readonly params: PromptWithPreviewParams) {
+    super(params.ctx.app);
     addPluginCssClasses(this.containerEl, 'preview-modal');
   }
 
@@ -49,18 +49,18 @@ class PreviewModal extends Modal {
   }
 
   private async onOpenAsync(): Promise<void> {
-    const embeddableCreator = this.app.embedRegistry.embedByExtension[this.options.ctx.originalAttachmentFileExtension];
+    const embeddableCreator = this.app.embedRegistry.embedByExtension[this.params.ctx.originalAttachmentFileExtension];
 
-    if (!embeddableCreator || !this.options.ctx.attachmentFileContent) {
+    if (!embeddableCreator || !this.params.ctx.attachmentFileContent) {
       return;
     }
 
-    const fullFileName = `${this.options.ctx.originalAttachmentFileName}.${this.options.ctx.originalAttachmentFileExtension}`;
+    const fullFileName = `${this.params.ctx.originalAttachmentFileName}.${this.params.ctx.originalAttachmentFileExtension}`;
 
     this.titleEl.setText(t(($) => $.promptWithPreviewModal.previewModal.title, { fullFileName }));
 
     const tempPath = `__temp${String(Date.now())}__${fullFileName}`;
-    this.tempFile = await this.app.vault.createBinary(tempPath, this.options.ctx.attachmentFileContent);
+    this.tempFile = await this.app.vault.createBinary(tempPath, this.params.ctx.attachmentFileContent);
 
     const previewContainer = this.contentEl.createDiv('preview-container');
 
@@ -78,7 +78,7 @@ class PromptWithPreviewModal extends Modal {
   private isOkClicked = false;
   private value = '';
 
-  public constructor(private readonly options: PromptWithPreviewOptions, private readonly resolve: PromiseResolve<null | string>) {
+  public constructor(private readonly options: PromptWithPreviewParams, private readonly resolve: PromiseResolve<null | string>) {
     super(options.ctx.app);
     addPluginCssClasses(this.containerEl, CssClass.PromptModal);
   }
@@ -169,9 +169,9 @@ class PromptWithPreviewModal extends Modal {
   }
 }
 
-export function promptWithPreview(options: PromptWithPreviewOptions): Promise<null | string> {
+export function promptWithPreview(params: PromptWithPreviewParams): Promise<null | string> {
   return new Promise((resolve) => {
-    const modal = new PromptWithPreviewModal(options, resolve);
+    const modal = new PromptWithPreviewModal(params, resolve);
     modal.open();
   });
 }

@@ -95,7 +95,7 @@ interface SubstitutionsConstructorParams {
   readonly sequenceNumber?: number | undefined;
 }
 
-interface ValidateFileNameOptions {
+interface ValidateFileNameParams {
   readonly app: App;
   readonly areSingleDotsAllowed: boolean;
   readonly fileName: string;
@@ -296,10 +296,10 @@ export function parseCustomTokens(customTokensStr: string): CustomToken[] | null
   }
 }
 
-export async function validateFileName(options: ValidateFileNameOptions): Promise<string> {
-  switch (options.tokenValidationMode) {
+export async function validateFileName(params: ValidateFileNameParams): Promise<string> {
+  switch (params.tokenValidationMode) {
     case TokenValidationMode.Error: {
-      if (scanTokens(options.fileName, { throwOnError: false }).length > 0) {
+      if (scanTokens(params.fileName, { throwOnError: false }).length > 0) {
         return 'Tokens are not allowed in file name';
       }
       break;
@@ -307,41 +307,41 @@ export async function validateFileName(options: ValidateFileNameOptions): Promis
     case TokenValidationMode.Skip:
       break;
     case TokenValidationMode.Validate: {
-      const validationMessage = await validateTokens(options.app, options.fileName, options.pluginSettingsComponent);
+      const validationMessage = await validateTokens(params.app, params.fileName, params.pluginSettingsComponent);
       if (validationMessage) {
         return validationMessage;
       }
       break;
     }
     default:
-      throw new Error(`Invalid token validation mode: ${options.tokenValidationMode as string}`);
+      throw new Error(`Invalid token validation mode: ${params.tokenValidationMode as string}`);
   }
 
   let cleanFileName: string;
   try {
-    cleanFileName = removeTokens(options.fileName);
+    cleanFileName = removeTokens(params.fileName);
   } catch {
-    return `Invalid token syntax in file name "${options.fileName}"`;
+    return `Invalid token syntax in file name "${params.fileName}"`;
   }
 
   if (cleanFileName === '.' || cleanFileName === '..') {
-    return options.areSingleDotsAllowed ? '' : 'Single dots are not allowed in file name';
+    return params.areSingleDotsAllowed ? '' : 'Single dots are not allowed in file name';
   }
 
   if (!cleanFileName) {
-    return options.isEmptyAllowed ? '' : 'File name is empty';
+    return params.isEmptyAllowed ? '' : 'File name is empty';
   }
 
   if (getOsUnsafePathCharsRegExp().test(cleanFileName)) {
-    return `File name "${options.fileName}" contains invalid symbols`;
+    return `File name "${params.fileName}" contains invalid symbols`;
   }
 
   if (MORE_THAN_TWO_DOTS_REG_EXP.test(cleanFileName)) {
-    return `File name "${options.fileName}" contains more than two dots`;
+    return `File name "${params.fileName}" contains more than two dots`;
   }
 
   if (TRAILING_DOTS_REG_EXP.test(cleanFileName)) {
-    return `File name "${options.fileName}" contains trailing dots`;
+    return `File name "${params.fileName}" contains trailing dots`;
   }
 
   return '';
