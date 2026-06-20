@@ -123,7 +123,7 @@ export async function collectAttachments(
         return;
       }
 
-      const attachmentMoveResult = await prepareAttachmentToMove(customAttachmentLocationComponent, link, note.path, note.path, oldAttachmentPaths, pluginSettingsComponent);
+      let attachmentMoveResult = await prepareAttachmentToMove(customAttachmentLocationComponent, link, note.path, note.path, oldAttachmentPaths, pluginSettingsComponent);
       abortSignal.throwIfAborted();
       if (!attachmentMoveResult) {
         continue;
@@ -146,7 +146,7 @@ export async function collectAttachments(
           collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode
         ): Promise<boolean> {
           abortSignal.throwIfAborted();
-          const result = ensureNonNullable(attachmentMoveResult);
+          let result = ensureNonNullable(attachmentMoveResult);
 
           switch (collectAttachmentUsedByMultipleNotesMode) {
             case CollectAttachmentUsedByMultipleNotesMode.Cancel:
@@ -164,7 +164,10 @@ export async function collectAttachments(
                 return false;
               }
               // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
-              result.newAttachmentPath = await copySafe(app, result.oldAttachmentPath, result.newAttachmentPath);
+              result = {
+                ...result,
+                newAttachmentPath: await copySafe(app, result.oldAttachmentPath, result.newAttachmentPath)
+              };
               await editLinks(app, note, (link2): MaybeReturn<string> => {
                 const linkFile = extractLinkFile(app, link2, note);
                 if (linkFile?.path !== result.oldAttachmentPath) {
@@ -234,7 +237,10 @@ export async function collectAttachments(
         }
 
         // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
-        attachmentMoveResult.newAttachmentPath = await renameSafe(app, attachmentMoveResult.oldAttachmentPath, attachmentMoveResult.newAttachmentPath);
+        attachmentMoveResult = {
+          ...attachmentMoveResult,
+          newAttachmentPath: await renameSafe(app, attachmentMoveResult.oldAttachmentPath, attachmentMoveResult.newAttachmentPath)
+        };
       }
     }
   } finally {
