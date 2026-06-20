@@ -2,7 +2,10 @@ import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
-import { debounce } from 'obsidian';
+import {
+  App,
+  debounce
+} from 'obsidian';
 import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
@@ -11,9 +14,6 @@ import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
 import { replaceAll } from 'obsidian-dev-utils/string';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import { compare } from 'semver';
-
-import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
-import type { Plugin } from './plugin.ts';
 
 import {
   CollectAttachmentUsedByMultipleNotesMode,
@@ -30,9 +30,8 @@ import {
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
 
 interface PluginSettingsComponentConstructorParams {
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
+  readonly app: App;
   readonly dataHandler: DataHandler;
-  readonly plugin: Plugin;
   readonly pluginEventSource: PluginEventSource;
 }
 
@@ -236,7 +235,8 @@ ${commentOut(this.legacySettings.customTokensStr)}
 export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginSettings> {
   public shouldDebounceCustomTokensValidation = false;
 
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
+  private readonly app: App;
+
   private readonly customTokensValidatorDebounced = debounce(this.customTokensValidatorImpl.bind(this), CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS);
   private lastCustomTokenValidatorResult: string | undefined = undefined;
 
@@ -245,7 +245,16 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       ...params,
       pluginSettingsClass: PluginSettings
     });
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
+    this.app = params.app;
+  }
+
+  public replaceSpecialCharacters(str: string): string {
+    if (!this.settings.specialCharacters) {
+      return str;
+    }
+
+    str = str.replace(this.settings.specialCharactersRegExp, this.settings.specialCharactersReplacement);
+    return str;
   }
 
   protected override registerLegacySettingsConverters(): void {
@@ -257,15 +266,17 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   protected override registerValidators(): void {
     this.registerValidator('attachmentFolderPath', async (value) =>
       await validatePath({
+        app: this.app,
         areTokensAllowed: true,
-        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
-        path: value
+        path: value,
+        pluginSettingsComponent: this
       }));
     this.registerValidator('generatedAttachmentFileName', async (value) =>
       await validatePath({
+        app: this.app,
         areTokensAllowed: true,
-        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
-        path: value
+        path: value,
+        pluginSettingsComponent: this
       }));
 
     this.registerValidator('specialCharactersReplacement', (value): MaybeReturn<string> => {
@@ -283,10 +294,11 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 
     this.registerValidator('duplicateNameSeparator', async (value): Promise<MaybeReturn<string>> => {
       return await validateFileName({
+        app: this.app,
         areSingleDotsAllowed: false,
-        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
         fileName: `foo${value}1`,
         isEmptyAllowed: false,
+        pluginSettingsComponent: this,
         tokenValidationMode: TokenValidationMode.Error
       });
     });

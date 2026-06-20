@@ -1,4 +1,7 @@
-import type { FileStats } from 'obsidian';
+import type {
+  App,
+  FileStats
+} from 'obsidian';
 
 import {
   normalizePath,
@@ -32,22 +35,23 @@ export async function getAttachmentFolderFullPathForPath(
   attachmentFileStat?: FileStats
 ): Promise<string> {
   return await getAttachmentFolderPath(
-    customAttachmentLocationComponent,
+    customAttachmentLocationComponent.app,
     new Substitutions({
       actionContext,
+      app: customAttachmentLocationComponent.app,
       attachmentFileContent,
       attachmentFileStat,
-      customAttachmentLocationComponent,
       noteFilePath: notePath,
       oldNoteFilePath,
-      originalAttachmentFileName: attachmentFileName
+      originalAttachmentFileName: attachmentFileName,
+      pluginSettingsComponent
     }),
     pluginSettingsComponent
   );
 }
 
 export async function getGeneratedAttachmentFileBaseName(
-  customAttachmentLocationComponent: CustomAttachmentLocationComponent,
+  app: App,
   substitutions: Substitutions,
   pluginSettingsComponent: PluginSettingsComponent
 ): Promise<string> {
@@ -66,21 +70,23 @@ export async function getGeneratedAttachmentFileBaseName(
 
   baseTemplate ||= pluginSettingsComponent.settings.generatedAttachmentFileName;
 
-  const path = await resolvePathTemplate(customAttachmentLocationComponent, baseTemplate, substitutions, true);
+  const path = await resolvePathTemplate(app, pluginSettingsComponent, baseTemplate, substitutions, true);
   let validationMessage = await validatePath({
+    app,
     areTokensAllowed: false,
-    customAttachmentLocationComponent,
-    path
+    path,
+    pluginSettingsComponent
   });
   if (!validationMessage) {
     const parts = path.split('/');
     const fileName = ensureNonNullable(parts.at(-1));
     // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
     validationMessage = await validateFileName({
+      app,
       areSingleDotsAllowed: false,
-      customAttachmentLocationComponent,
       fileName,
       isEmptyAllowed: false,
+      pluginSettingsComponent,
       tokenValidationMode: TokenValidationMode.Error
     });
   }
@@ -99,35 +105,36 @@ export async function getGeneratedAttachmentFileBaseName(
   return path;
 }
 
-function cleanFilePathPart(customAttachmentLocationComponent: CustomAttachmentLocationComponent, part: string): string {
+function cleanFilePathPart(pluginSettingsComponent: PluginSettingsComponent, part: string): string {
   let cleanPart = part.trimEnd();
   if (cleanPart === '.' || cleanPart === '..') {
     return cleanPart;
   }
 
   cleanPart = cleanPart.replace(/[\s.]+$/, '');
-  cleanPart = customAttachmentLocationComponent.replaceSpecialCharacters(cleanPart);
+  cleanPart = pluginSettingsComponent.replaceSpecialCharacters(cleanPart);
   return cleanPart;
 }
 
-async function getAttachmentFolderPath(customAttachmentLocationComponent: CustomAttachmentLocationComponent, substitutions: Substitutions, pluginSettingsComponent: PluginSettingsComponent): Promise<string> {
-  return await resolvePathTemplate(customAttachmentLocationComponent, pluginSettingsComponent.settings.attachmentFolderPath, substitutions, false);
+async function getAttachmentFolderPath(app: App, substitutions: Substitutions, pluginSettingsComponent: PluginSettingsComponent): Promise<string> {
+  return await resolvePathTemplate(app, pluginSettingsComponent, pluginSettingsComponent.settings.attachmentFolderPath, substitutions, false);
 }
 
 function isRelativePath(path: string): boolean {
   return path === '.' || path.startsWith('./') || path === '..' || path.startsWith('../');
 }
 
-async function resolvePathTemplate(customAttachmentLocationComponent: CustomAttachmentLocationComponent, template: string, substitutions: Substitutions, isFileNamePart: boolean): Promise<string> {
+async function resolvePathTemplate(app: App, pluginSettingsComponent: PluginSettingsComponent, template: string, substitutions: Substitutions, isFileNamePart: boolean): Promise<string> {
   try {
     let resolvedPath = await substitutions.fillTemplate(template);
-    const resolvedPathParts = resolvedPath.split('/').map((part) => cleanFilePathPart(customAttachmentLocationComponent, part));
+    const resolvedPathParts = resolvedPath.split('/').map((part) => cleanFilePathPart(pluginSettingsComponent, part));
     resolvedPath = resolvedPathParts.join('/');
 
     const validationError = await validatePath({
+      app,
       areTokensAllowed: false,
-      customAttachmentLocationComponent,
-      path: resolvedPath
+      path: resolvedPath,
+      pluginSettingsComponent
     });
     if (validationError) {
       throw new Error(`Resolved path ${resolvedPath} is invalid: ${validationError}`);

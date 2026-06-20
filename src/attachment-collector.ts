@@ -64,6 +64,7 @@ import { ActionContext } from './token-evaluator-context.ts';
 
 export interface GetProperAttachmentPathParams {
   readonly actionContext: ActionContext;
+  readonly app: App;
   readonly attachmentFile: TFile;
   readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly noteFilePath: string;
@@ -292,15 +293,16 @@ export async function getProperAttachmentPath(params: GetProperAttachmentPathPar
   const newAttachmentName = params.pluginSettingsComponent.settings.shouldRenameCollectedAttachments
     ? makeFileName(
       await getGeneratedAttachmentFileBaseName(
-        params.customAttachmentLocationComponent,
+        params.app,
         new Substitutions({
           actionContext: params.actionContext,
+          app: params.app,
           attachmentFileContent,
           attachmentFileStat: params.attachmentFile.stat,
           cursorLine: isReferenceCache(params.reference) ? params.reference.position.start.line : 0,
-          customAttachmentLocationComponent: params.customAttachmentLocationComponent,
           noteFilePath: params.noteFilePath,
           originalAttachmentFileName: params.attachmentFile.name,
+          pluginSettingsComponent: params.pluginSettingsComponent,
           sequenceNumber: await params.customAttachmentLocationComponent.getSequenceNumber(params.noteFilePath, params.attachmentFile.path)
         }),
         params.pluginSettingsComponent
@@ -475,6 +477,7 @@ async function prepareAttachmentToMove(
 
   const newAttachmentPath = await getProperAttachmentPath({
     actionContext: ActionContext.CollectAttachments,
+    app: customAttachmentLocationComponent.app,
     attachmentFile: oldAttachmentFile,
     customAttachmentLocationComponent,
     noteFilePath: newNotePath,

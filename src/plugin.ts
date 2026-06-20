@@ -29,7 +29,13 @@ type SaveAttachmentFn = App['saveAttachment'];
 
 export class Plugin extends PluginBase {
   public override onloadImpl(): void {
-    let pluginSettingsComponent = null as unknown as PluginSettingsComponent; // FIXME
+    const pluginSettingsComponent = this.addChild(
+      new PluginSettingsComponent({
+        app: this.app,
+        dataHandler: new PluginDataHandler(this),
+        pluginEventSource: new PluginEventSourceImpl(this)
+      })
+    );
 
     const customAttachmentLocationComponent = this.addChild(
       new CustomAttachmentLocationComponent({
@@ -38,15 +44,6 @@ export class Plugin extends PluginBase {
         pluginName: this.manifest.name,
         pluginSettingsComponent,
         pluginVersion: this.manifest.version
-      })
-    );
-
-    pluginSettingsComponent = this.addChild(
-      new PluginSettingsComponent({
-        customAttachmentLocationComponent,
-        dataHandler: new PluginDataHandler(this),
-        plugin: this,
-        pluginEventSource: new PluginEventSourceImpl(this)
       })
     );
 

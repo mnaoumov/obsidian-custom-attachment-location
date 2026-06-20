@@ -33,9 +33,10 @@ export class PromptToken extends TokenBase<Format> {
       defaultValue: format.defaultValueTemplate,
       valueValidator: (value) =>
         ctx.validatePath({
+          app: ctx.app,
           areTokensAllowed: false,
-          customAttachmentLocationComponent: ctx.customAttachmentLocationComponent,
-          path: value
+          path: value,
+          pluginSettingsComponent: ctx.pluginSettingsComponent
         })
     });
     if (promptResult === null) {

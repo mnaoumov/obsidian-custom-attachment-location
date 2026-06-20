@@ -19,7 +19,7 @@ import {
   trimStart
 } from 'obsidian-dev-utils/string';
 
-import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 import type { TokenBase } from './tokens/token-base.ts';
 
@@ -70,9 +70,10 @@ export enum TokenValidationMode {
 }
 
 export interface ValidatePathParams {
+  readonly app: App;
   readonly areTokensAllowed: boolean;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly path: string;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 type RegisterCustomTokenFn = (token: string, evaluator: TokenEvaluator) => void;
@@ -81,23 +82,25 @@ type RegisterCustomTokensWrapperFn = (registerCustomToken: RegisterCustomTokenFn
 
 interface SubstitutionsConstructorParams {
   readonly actionContext: ActionContext;
+  readonly app: App;
   readonly attachmentFileContent?: ArrayBuffer | undefined;
   readonly attachmentFileStat?: FileStats | undefined;
   readonly cursorLine?: number | undefined;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly generatedAttachmentFileName?: string;
   readonly generatedAttachmentFilePath?: string;
   readonly noteFilePath: string;
   readonly oldNoteFilePath?: string | undefined;
   readonly originalAttachmentFileName?: string;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly sequenceNumber?: number | undefined;
 }
 
 interface ValidateFileNameOptions {
+  readonly app: App;
   readonly areSingleDotsAllowed: boolean;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly fileName: string;
   readonly isEmptyAllowed: boolean;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly tokenValidationMode: TokenValidationMode;
 }
 
@@ -108,7 +111,6 @@ export class Substitutions {
   }
 
   public readonly actionContext: ActionContext;
-  public readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
 
   public readonly noteFolderPath: string;
   private readonly app: App;
@@ -126,12 +128,13 @@ export class Substitutions {
   private readonly oldNoteFolderPath: string;
   private readonly originalAttachmentFileExtension: string;
   private readonly originalAttachmentFileName: string;
+  private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly sequenceNumber: number | undefined;
 
   public constructor(params: SubstitutionsConstructorParams) {
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
-    this.app = params.customAttachmentLocationComponent.app;
+    this.app = params.app;
     this.actionContext = params.actionContext;
+    this.pluginSettingsComponent = params.pluginSettingsComponent;
 
     this.noteFilePath = params.noteFilePath;
     this.noteFileName = basename(this.noteFilePath, extname(this.noteFilePath));
@@ -236,7 +239,6 @@ export class Substitutions {
         attachmentFileContent: this.attachmentFileContent,
         attachmentFileStat: this.attachmentFileStat,
         cursorLine: this.cursorLine,
-        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
         fillTemplate: this.fillTemplate.bind(this),
         format,
         fullTemplate: template,
@@ -253,6 +255,7 @@ export class Substitutions {
         oldNoteFolderPath: this.oldNoteFolderPath,
         originalAttachmentFileExtension: this.originalAttachmentFileExtension,
         originalAttachmentFileName: this.originalAttachmentFileName,
+        pluginSettingsComponent: this.pluginSettingsComponent,
         sequenceNumber: this.sequenceNumber ?? 0,
         token: t.token,
         tokenEndOffset: t.end,
@@ -304,7 +307,7 @@ export async function validateFileName(options: ValidateFileNameOptions): Promis
     case TokenValidationMode.Skip:
       break;
     case TokenValidationMode.Validate: {
-      const validationMessage = await validateTokens(options.customAttachmentLocationComponent, options.fileName);
+      const validationMessage = await validateTokens(options.app, options.fileName, options.pluginSettingsComponent);
       if (validationMessage) {
         return validationMessage;
       }
@@ -346,7 +349,7 @@ export async function validateFileName(options: ValidateFileNameOptions): Promis
 
 export async function validatePath(params: ValidatePathParams): Promise<string> {
   if (params.areTokensAllowed) {
-    const unknownToken = await validateTokens(params.customAttachmentLocationComponent, params.path);
+    const unknownToken = await validateTokens(params.app, params.path, params.pluginSettingsComponent);
     if (unknownToken) {
       return `Unknown token: ${unknownToken}`;
     }
@@ -364,10 +367,11 @@ export async function validatePath(params: ValidatePathParams): Promise<string> 
   const pathParts = path.split('/');
   for (const part of pathParts) {
     const partValidationError = await validateFileName({
+      app: params.app,
       areSingleDotsAllowed: true,
-      customAttachmentLocationComponent: params.customAttachmentLocationComponent,
       fileName: part,
       isEmptyAllowed: true,
+      pluginSettingsComponent: params.pluginSettingsComponent,
       tokenValidationMode: TokenValidationMode.Skip
     });
 
@@ -400,12 +404,13 @@ function removeTokens(str: string): string {
   return out;
 }
 
-async function validateTokens(customAttachmentLocationComponent: CustomAttachmentLocationComponent, str: string): Promise<null | string> {
+async function validateTokens(app: App, str: string, pluginSettingsComponent: PluginSettingsComponent): Promise<null | string> {
   const FAKE_SUBSTITUTION = new Substitutions({
     actionContext: ActionContext.ValidateTokens,
-    customAttachmentLocationComponent,
+    app,
     noteFilePath: DUMMY_PATH,
-    originalAttachmentFileName: DUMMY_PATH
+    originalAttachmentFileName: DUMMY_PATH,
+    pluginSettingsComponent
   });
 
   const tokens = extractTokens(str);

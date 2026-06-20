@@ -5,7 +5,7 @@ import type {
 
 import { AttachmentPathContext } from 'obsidian-dev-utils/obsidian/attachment-path';
 
-import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { ValidatePathParams } from './substitutions.ts';
 
 /**
@@ -101,11 +101,6 @@ export interface TokenEvaluatorContext {
   cursorLine: null | number;
 
   /**
-   * A plugin instance.
-   */
-  customAttachmentLocationComponent: CustomAttachmentLocationComponent;
-
-  /**
    * Fills a template with the current context.
    */
   fillTemplate(template: string): Promise<string>;
@@ -190,6 +185,11 @@ export interface TokenEvaluatorContext {
    * A name of the original attachment file.
    */
   originalAttachmentFileName: string;
+
+  /**
+   * Plugin settings component.
+   */
+  pluginSettingsComponent: PluginSettingsComponent;
 
   /**
    * A sequence number of the attachment file.

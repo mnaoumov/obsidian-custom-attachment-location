@@ -197,15 +197,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.registerEvent(this.app.workspace.on('receive-files-menu', this.handleReceiveFilesMenu.bind(this)));
   }
 
-  public replaceSpecialCharacters(str: string): string {
-    if (!this.pluginSettingsComponent.settings.specialCharacters) {
-      return str;
-    }
-
-    str = str.replace(this.pluginSettingsComponent.settings.specialCharactersRegExp, this.pluginSettingsComponent.settings.specialCharactersReplacement);
-    return str;
-  }
-
   public async saveAttachment(
     attachmentFileBaseName: string,
     attachmentFileExtension: string,
@@ -254,14 +245,15 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
 
     if (shouldRename) {
       attachmentFileBaseName = await getGeneratedAttachmentFileBaseName(
-        this,
+        this.app,
         new Substitutions({
           actionContext: ActionContext.SaveAttachment,
+          app: this.app,
           attachmentFileContent,
           attachmentFileStat: this.arrayBufferFileStatMap.get(attachmentFileContent),
-          customAttachmentLocationComponent: this,
           noteFilePath: activeNoteFile.path,
-          originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension)
+          originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
+          pluginSettingsComponent: this.pluginSettingsComponent
         }),
         this.pluginSettingsComponent
       );
@@ -271,13 +263,14 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     if (this.pluginSettingsComponent.settings.markdownUrlFormat) {
       const markdownUrl = await new Substitutions({
         actionContext: ActionContext.SaveAttachment,
+        app: this.app,
         attachmentFileContent,
         attachmentFileStat: this.arrayBufferFileStatMap.get(attachmentFileContent),
-        customAttachmentLocationComponent: this,
         generatedAttachmentFileName: attachmentFile.name,
         generatedAttachmentFilePath: attachmentFile.path,
         noteFilePath: activeNoteFile.path,
-        originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension)
+        originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
+        pluginSettingsComponent: this.pluginSettingsComponent
       }).fillTemplate(this.pluginSettingsComponent.settings.markdownUrlFormat);
       this.pathMarkdownUrlMap.set(attachmentFile.path, markdownUrl);
     } else {
@@ -526,16 +519,17 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         const cursorLine = await this.getCursorLine(noteFilePath, params.oldAttachmentPathOrFile);
         const sequenceNumber = await this.getSequenceNumber(noteFilePath, params.oldAttachmentPathOrFile);
         const generatedAttachmentFileBaseName = await getGeneratedAttachmentFileBaseName(
-          this,
+          this.app,
           new Substitutions({
             actionContext: attachmentPathContextToActionContext(params.context),
+            app: this.app,
             attachmentFileContent,
             attachmentFileStat,
             cursorLine,
-            customAttachmentLocationComponent: this,
             noteFilePath,
             oldNoteFilePath,
             originalAttachmentFileName: attachmentFileName,
+            pluginSettingsComponent: this.pluginSettingsComponent,
             sequenceNumber
           }),
           this.pluginSettingsComponent
@@ -724,12 +718,13 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       const attachmentFileContent = await response.arrayBuffer();
       const substitutions = new Substitutions({
         actionContext: ActionContext.ImportFiles,
+        app: this.app,
         attachmentFileContent,
-        customAttachmentLocationComponent: this,
         noteFilePath: this.app.workspace.getActiveFile()?.path ?? '',
-        originalAttachmentFileName: file.name
+        originalAttachmentFileName: file.name,
+        pluginSettingsComponent: this.pluginSettingsComponent
       });
-      const attachmentFileBaseName = await getGeneratedAttachmentFileBaseName(this, substitutions, this.pluginSettingsComponent);
+      const attachmentFileBaseName = await getGeneratedAttachmentFileBaseName(this.app, substitutions, this.pluginSettingsComponent);
       const attachmentFileExtension = extname(file.name).slice(1);
       file.name = IMPORT_FILES_PREFIX + makeFileName(attachmentFileBaseName, attachmentFileExtension);
     }

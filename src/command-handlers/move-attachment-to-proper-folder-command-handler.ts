@@ -170,6 +170,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
       const newAttachmentPath = await getProperAttachmentPath({
         actionContext: ActionContext.MoveAttachmentToProperFolder,
+        app: this.app,
         attachmentFile,
         customAttachmentLocationComponent: this.customAttachmentLocationComponent,
         noteFilePath: backlink,
