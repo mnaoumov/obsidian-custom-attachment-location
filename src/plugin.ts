@@ -182,35 +182,6 @@ export class Plugin extends PluginBase {
     );
 
     this.addChild(new CallbackLayoutReadyComponent(this.app, this.onLayoutReady.bind(this)));
-  }
-
-  public async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
-    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
-    if (!oldAttachmentFile) {
-      return 0;
-    }
-
-    const cache = await getCacheSafe(this.app, noteFilePath);
-    if (!cache) {
-      return 0;
-    }
-
-    let sequenceNumber = 1;
-    for (const link of getAllLinks(cache)) {
-      const linkFile = extractLinkFile(this.app, link, noteFilePath);
-
-      if (linkFile === oldAttachmentFile) {
-        return sequenceNumber;
-      }
-
-      sequenceNumber++;
-    }
-
-    return 0;
-  }
-
-  public override async onload(): Promise<void> {
-    await super.onload();
 
     this.addChild(
       new RenameDeleteHandlerComponent({
@@ -282,6 +253,31 @@ export class Plugin extends PluginBase {
 
     this.registerEvent(this.app.workspace.on('receive-text-menu', this.handleReceiveTextMenu.bind(this)));
     this.registerEvent(this.app.workspace.on('receive-files-menu', this.handleReceiveFilesMenu.bind(this)));
+  }
+
+  public async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
+    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
+    if (!oldAttachmentFile) {
+      return 0;
+    }
+
+    const cache = await getCacheSafe(this.app, noteFilePath);
+    if (!cache) {
+      return 0;
+    }
+
+    let sequenceNumber = 1;
+    for (const link of getAllLinks(cache)) {
+      const linkFile = extractLinkFile(this.app, link, noteFilePath);
+
+      if (linkFile === oldAttachmentFile) {
+        return sequenceNumber;
+      }
+
+      sequenceNumber++;
+    }
+
+    return 0;
   }
 
   public replaceSpecialCharacters(str: string): string {
