@@ -1,13 +1,10 @@
-import type { App } from 'obsidian';
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
-import { TFile } from 'obsidian';
 import { AppActiveFileProvider } from 'obsidian-dev-utils/obsidian/active-file-provider';
 import { CommandHandlerComponent } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler-component';
 import { PluginCommandRegistrar } from 'obsidian-dev-utils/obsidian/command-registrar';
 import { MenuEventRegistrarComponent } from 'obsidian-dev-utils/obsidian/components/menu-event-registrar-component';
-import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
 import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
@@ -22,11 +19,10 @@ import { CollectAttachmentsInFileCommandHandler } from './command-handlers/colle
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
+import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PrismComponent } from './prism-component.ts';
-
-type SaveAttachmentFn = App['saveAttachment'];
 
 export class Plugin extends PluginBase {
   public override onloadImpl(): void {
@@ -120,14 +116,13 @@ export class Plugin extends PluginBase {
       })
     );
 
-    const patch = this.addChild(new MonkeyAroundComponent());
-    patch.registerPatch(this.app, {
-      saveAttachment: (): SaveAttachmentFn => {
-        return (name, extension, data): Promise<TFile> => {
-          return customAttachmentLocationComponent.saveAttachment(name, extension, data);
-        };
-      }
-    });
+    this.addChild(
+      new AppSaveAttachmentPatchComponent({
+        app: this.app,
+        customAttachmentLocationComponent
+      })
+    );
+
     this.addChild(new PrismComponent());
   }
 

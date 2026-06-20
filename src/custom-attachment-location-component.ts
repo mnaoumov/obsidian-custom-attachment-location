@@ -1,23 +1,10 @@
 import type {
-  ClipboardManager,
-  ImportedAttachment
-} from '@obsidian-typings/obsidian-public-latest';
-import type {
-  ConfigItem,
-  SharedFile,
-  ShareReceiver
-} from '@obsidian-typings/obsidian-public-latest/implementations';
-import type {
   App,
   DataWriteOptions,
-  FileManager,
   FileStats,
   WorkspaceLeaf
 } from 'obsidian';
-import type {
-  GetAvailablePathForAttachmentsExtendedFnParams,
-  GetAvailablePathForAttachmentsFnExtended
-} from 'obsidian-dev-utils/obsidian/attachment-path';
+import type { GetAvailablePathForAttachmentsExtendedFnParams } from 'obsidian-dev-utils/obsidian/attachment-path';
 import type { PathOrFile } from 'obsidian-dev-utils/obsidian/file-system';
 
 import {
@@ -41,7 +28,6 @@ import { blobToJpegArrayBuffer } from 'obsidian-dev-utils/blob';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   extractDefaultExportInterop,
-  getPrototypeOf,
   normalizeOptionalProperties,
   removeUndefinedProperties
 } from 'obsidian-dev-utils/object-utils';
@@ -51,23 +37,14 @@ import {
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 import { AllWindowsEventComponent } from 'obsidian-dev-utils/obsidian/components/all-windows-event-component';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
-import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
-  getAbstractFileOrNull,
   getFileOrNull,
   getPath,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
-import {
-  encodeUrl,
-  extractLinkFile,
-  generateMarkdownLink,
-  LinkStyle,
-  testAngleBrackets,
-  testWikilink
-} from 'obsidian-dev-utils/obsidian/link';
+import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
 import {
   getAllLinks,
   getCacheSafe
@@ -77,7 +54,6 @@ import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 import {
   basename,
   dirname,
-  extname,
   join,
   makeFileName
 } from 'obsidian-dev-utils/path';
@@ -91,6 +67,17 @@ import {
   getImageSize,
   getMimeType
 } from './image.ts';
+import { ClipboardManagerInsertFilesPatchComponent } from './patches/clipboard-manager-insert-files-patch-component.ts';
+import { FileArrayBufferPatchComponent } from './patches/file-array-buffer-patch-component.ts';
+import { FileManagerGenerateMarkdownLinkPatchComponent } from './patches/file-manager-generate-markdown-link-patch-component.ts';
+import {
+  IMPORT_FILES_PREFIX,
+  ShareReceiverImportFilesPatchComponent
+} from './patches/share-receiver-import-files-patch-component.ts';
+import { VaultGetAvailablePathForAttachmentsPatchComponent } from './patches/vault-get-available-path-for-attachments-patch-component.ts';
+import { VaultGetAvailablePathPatchComponent } from './patches/vault-get-available-path-patch-component.ts';
+import { VaultGetConfigPatchComponent } from './patches/vault-get-config-patch-component.ts';
+import { WebUtilsGetPathForFilePatchComponent } from './patches/web-utils-get-path-for-file-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import {
   AttachmentRenameMode,
@@ -105,22 +92,11 @@ import {
 
 const moment = extractDefaultExportInterop(moment_);
 
-type ArrayBufferFn = File['arrayBuffer'];
-interface FileEx {
-  path: string;
-}
-type GenerateMarkdownLinkFn = FileManager['generateMarkdownLink'];
-type GetAvailablePathFn = Vault['getAvailablePath'];
 type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
-type GetConfigFn = Vault['getConfig'];
-type GetPathForFileFn = typeof webUtils['getPathForFile'];
-type ImportFilesFn = ShareReceiver['importFiles'];
-type InsertFilesFn = ClipboardManager['insertFiles'];
 
 const PASTED_IMAGE_NAME_REG_EXP = /Pasted image (?<Timestamp>\d{14})/;
 const PASTED_IMAGE_DATE_FORMAT = 'YYYYMMDDHHmmss';
 const THRESHOLD_IN_SECONDS = 10;
-const IMPORT_FILES_PREFIX = '__IMPORT_FILES__';
 
 interface CustomAttachmentLocationComponentConstructorParams {
   readonly app: App;
@@ -131,6 +107,10 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly pluginVersion: string;
 }
 
+interface CustomAttachmentLocationComponentGetAvailablePathForAttachmentsParams extends GetAvailablePathForAttachmentsExtendedFnParams {
+  readonly __brand?: 'CustomAttachmentLocationComponentGetAvailablePathForAttachmentsParams';
+}
+
 interface PluginConvertImageToJpegParams {
   readonly attachmentFileContent: ArrayBuffer;
   readonly attachmentFileExtension: string;
@@ -139,19 +119,24 @@ interface PluginConvertImageToJpegParams {
 
 export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   public override readonly app: App;
+  public readonly arrayBufferFileStatMap = new WeakMap<ArrayBuffer, FileStats>();
+  public readonly imageAttachmentSizeMap = new Map<string, string>();
+  public pathMarkdownUrlMap = new Map<string, string>();
   public readonly pluginDir: string;
+
   public readonly pluginName: string;
+
   public readonly pluginVersion: string;
-  private readonly arrayBufferFileStatMap = new WeakMap<ArrayBuffer, FileStats>();
 
+  public get currentAttachmentFolderPath(): null | string {
+    return this._currentAttachmentFolderPath;
+  }
+
+  private _currentAttachmentFolderPath: null | string = null;
   private readonly attachmentPathManager: AttachmentPathManager;
-
-  private currentAttachmentFolderPath: null | string = null;
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn | null = null;
-  private readonly imageAttachmentSizeMap = new Map<string, string>();
   private isMarkdownViewPatched = false;
   private lastOpenFilePath: null | string = null;
-  private readonly pathMarkdownUrlMap = new Map<string, string>();
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: CustomAttachmentLocationComponentConstructorParams) {
@@ -164,271 +149,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.attachmentPathManager = params.attachmentPathManager;
   }
 
-  public override onload(): void {
-    super.onload();
-    this.registerEvent(this.app.workspace.on('file-open', convertAsyncToSync(this.handleFileOpen.bind(this))));
-    this.registerEvent(this.app.vault.on('rename', convertAsyncToSync(this.handleRename.bind(this))));
-
-    this.registerEvent(this.app.workspace.on('receive-text-menu', this.handleReceiveTextMenu.bind(this)));
-    this.registerEvent(this.app.workspace.on('receive-files-menu', this.handleReceiveFilesMenu.bind(this)));
-  }
-
-  public async saveAttachment(
-    attachmentFileBaseName: string,
-    attachmentFileExtension: string,
-    attachmentFileContent: ArrayBuffer
-  ): Promise<TFile> {
-    const activeNoteFile = this.app.workspace.getActiveFile();
-    if (!activeNoteFile || this.pluginSettingsComponent.settings.isPathIgnored(activeNoteFile.path)) {
-      return await this.saveAttachmentCore(attachmentFileBaseName, attachmentFileExtension, attachmentFileContent);
-    }
-
-    let isPastedImage = false;
-    const match = PASTED_IMAGE_NAME_REG_EXP.exec(attachmentFileBaseName);
-    if (match) {
-      const timestampString = ensureNonNullable(match.groups?.['Timestamp']);
-      const parsedDate = moment(timestampString, PASTED_IMAGE_DATE_FORMAT);
-      if (parsedDate.isValid()) {
-        if (moment().diff(parsedDate, 'seconds') < THRESHOLD_IN_SECONDS) {
-          isPastedImage = true;
-        }
-      }
-    }
-
-    let convertImageToJpegOptions: PluginConvertImageToJpegParams = {
-      attachmentFileContent,
-      attachmentFileExtension,
-      isPastedImage
-    };
-    convertImageToJpegOptions = await this.convertImageToJpeg(convertImageToJpegOptions);
-    attachmentFileExtension = convertImageToJpegOptions.attachmentFileExtension;
-    attachmentFileContent = convertImageToJpegOptions.attachmentFileContent;
-
-    let shouldRename = false;
-
-    switch (this.pluginSettingsComponent.settings.attachmentRenameMode) {
-      case AttachmentRenameMode.All:
-        shouldRename = true;
-        break;
-      case AttachmentRenameMode.None:
-        break;
-      case AttachmentRenameMode.OnlyPastedImages:
-        shouldRename = isPastedImage;
-        break;
-      default:
-        throw new Error('Invalid attachment rename mode');
-    }
-
-    if (shouldRename) {
-      attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(
-        new Substitutions({
-          actionContext: ActionContext.SaveAttachment,
-          app: this.app,
-          attachmentFileContent,
-          attachmentFileStat: this.arrayBufferFileStatMap.get(attachmentFileContent),
-          noteFilePath: activeNoteFile.path,
-          originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
-          pluginSettingsComponent: this.pluginSettingsComponent
-        })
-      );
-    }
-
-    const attachmentFile = await this.saveAttachmentCore(attachmentFileBaseName, attachmentFileExtension, attachmentFileContent);
-    if (this.pluginSettingsComponent.settings.markdownUrlFormat) {
-      const markdownUrl = await new Substitutions({
-        actionContext: ActionContext.SaveAttachment,
-        app: this.app,
-        attachmentFileContent,
-        attachmentFileStat: this.arrayBufferFileStatMap.get(attachmentFileContent),
-        generatedAttachmentFileName: attachmentFile.name,
-        generatedAttachmentFilePath: attachmentFile.path,
-        noteFilePath: activeNoteFile.path,
-        originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
-        pluginSettingsComponent: this.pluginSettingsComponent
-      }).fillTemplate(this.pluginSettingsComponent.settings.markdownUrlFormat);
-      this.pathMarkdownUrlMap.set(attachmentFile.path, markdownUrl);
-    } else {
-      this.pathMarkdownUrlMap.delete(attachmentFile.path);
-    }
-    return attachmentFile;
-  }
-
-  protected override async onLayoutReady(): Promise<void> {
-    Substitutions.registerCustomTokens(this.pluginSettingsComponent.settings.customTokensStr);
-    await this.pluginSettingsComponent.loadFromFile(false);
-
-    const patch = this.addChild(new MonkeyAroundComponent());
-    patch.registerPatch(this.app.vault, {
-      getAvailablePath: (): GetAvailablePathFn => this.getAvailablePath.bind(this),
-      getAvailablePathForAttachments: (next: GetAvailablePathForAttachmentsFn): GetAvailablePathForAttachmentsFnExtended => {
-        const that = this;
-
-        return Object.assign(nextCopy, {
-          extended: this.getAvailablePathForAttachments.bind(this)
-        });
-
-        function nextCopy(filename: string, extension: string, file: null | TFile): Promise<string> {
-          return next.call(that.app.vault, filename, extension, file);
-        }
-      },
-      getConfig: (next: GetConfigFn): GetConfigFn => {
-        return (name: ConfigItem): unknown => {
-          return this.getConfig(next, name);
-        };
-      }
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Actually not available on some platforms.
-    if (webUtils) {
-      patch.registerPatch(webUtils, {
-        getPathForFile: (next: GetPathForFileFn): GetPathForFileFn => {
-          return (file: File): string => {
-            return this.getPathForFile(file, next);
-          };
-        }
-      });
-    }
-
-    patch.registerPatch(this.app.fileManager, {
-      generateMarkdownLink: (next: GenerateMarkdownLinkFn): GenerateMarkdownLinkFn => {
-        return (file: TFile, sourcePath: string, subpath?: string, alias?: string): string => {
-          return this.generateMarkdownLink(next, file, sourcePath, subpath, alias);
-        };
-      }
-    });
-
-    patch.registerPatch(getPrototypeOf(this.app.shareReceiver), {
-      importFiles: (next: ImportFilesFn): ImportFilesFn => {
-        return (files: SharedFile[]): Promise<void> => {
-          return this.importFiles(next, files);
-        };
-      }
-    });
-
-    this.addChild(new AllWindowsEventComponent(this.app)).registerAllDocumentsDomEvent('change', this.handleInputFileChange.bind(this), { capture: true });
-
-    await this.handleActiveLeafChange(this.app.workspace.getLeavesOfType(ViewType.Markdown)[0] ?? null);
-
-    if (!this.isMarkdownViewPatched) {
-      this.registerEvent(this.app.workspace.on('active-leaf-change', convertAsyncToSync(this.handleActiveLeafChange.bind(this))));
-    }
-
-    await this.showReleaseNotes();
-  }
-
-  private async convertImageToJpeg(params: PluginConvertImageToJpegParams): Promise<PluginConvertImageToJpegParams> {
-    const mimeType = getMimeType(params.attachmentFileExtension);
-    let shouldConvertImageToJpeg = false;
-
-    if (mimeType) {
-      switch (this.pluginSettingsComponent.settings.convertImagesToJpegMode) {
-        case ConvertImagesToJpegMode.AllImages:
-          shouldConvertImageToJpeg = true;
-          break;
-        case ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles:
-          if (mimeType !== 'image/jpeg') {
-            shouldConvertImageToJpeg = true;
-          }
-          break;
-        case ConvertImagesToJpegMode.None:
-          break;
-        case ConvertImagesToJpegMode.OnlyPastedClipboardPngImages:
-          if (params.isPastedImage && mimeType === 'image/png') {
-            shouldConvertImageToJpeg = true;
-          }
-          break;
-        default:
-          throw new Error(`Invalid convert images to JPEG mode: ${this.pluginSettingsComponent.settings.convertImagesToJpegMode as string}`);
-      }
-    }
-
-    if (shouldConvertImageToJpeg && mimeType) {
-      return {
-        ...params,
-        attachmentFileContent: await blobToJpegArrayBuffer(
-          new Blob([params.attachmentFileContent], { type: mimeType }),
-          this.pluginSettingsComponent.settings.jpegQuality
-        ),
-        attachmentFileExtension: 'jpg'
-      };
-    }
-
-    return params;
-  }
-
-  private async fileArrayBuffer(next: ArrayBufferFn, file: File): Promise<ArrayBuffer> {
-    const arrayBuffer = await next.call(file);
-    if (this.app.vault.adapter instanceof FileSystemAdapter) {
-      const path = webUtils.getPathForFile(file);
-      if (await this.setFileStat(arrayBuffer, path)) {
-        return arrayBuffer;
-      }
-    }
-
-    this.arrayBufferFileStatMap.set(arrayBuffer, {
-      ctime: 0,
-      mtime: file.lastModified,
-      size: file.size
-    });
-    return arrayBuffer;
-  }
-
-  private generateMarkdownLink(next: GenerateMarkdownLinkFn, file: TFile, sourcePath: string, subpath?: string, alias?: string): string {
-    if (alias === undefined) {
-      const imageSize = this.imageAttachmentSizeMap.get(file.path);
-      if (imageSize) {
-        this.imageAttachmentSizeMap.delete(file.path);
-        alias = imageSize;
-      }
-    }
-    let defaultLink = next.call(this.app.fileManager, file, sourcePath, subpath, alias);
-
-    if (!this.pluginSettingsComponent.settings.markdownUrlFormat) {
-      return defaultLink;
-    }
-
-    const markdownUrl = this.pathMarkdownUrlMap.get(file.path);
-
-    if (!markdownUrl) {
-      return defaultLink;
-    }
-
-    if (testWikilink(defaultLink)) {
-      defaultLink = generateMarkdownLink({
-        app: this.app,
-        linkStyle: LinkStyle.Markdown,
-        originalLink: defaultLink,
-        sourcePathOrFile: sourcePath,
-        targetPathOrFile: file
-      });
-    }
-
-    if (testAngleBrackets(defaultLink)) {
-      return defaultLink.replace(/\]\(<.+?>\)/, `](<${markdownUrl}>)`);
-    }
-
-    return defaultLink.replace(/\]\(.+?\)/, `](${encodeUrl(markdownUrl)})`);
-  }
-
-  private getAvailablePath(attachmentFileName: string, attachmentExtension: string): string {
-    let suffixNum = 0;
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Easiest infinite loop.
-    while (true) {
-      const path = makeFileName(
-        suffixNum === 0 ? attachmentFileName : `${attachmentFileName}${this.pluginSettingsComponent.settings.duplicateNameSeparator}${String(suffixNum)}`,
-        attachmentExtension
-      );
-
-      if (!getAbstractFileOrNull(this.app, path, true)) {
-        return path;
-      }
-
-      suffixNum++;
-    }
-  }
-
-  private async getAvailablePathForAttachments(params: GetAvailablePathForAttachmentsExtendedFnParams): Promise<string> {
+  public async getAvailablePathForAttachments(params: CustomAttachmentLocationComponentGetAvailablePathForAttachmentsParams): Promise<string> {
     const {
       attachmentFileExtension,
       notePathOrFile,
@@ -529,12 +250,225 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     return attachmentPath;
   }
 
-  private getConfig(next: GetConfigFn, name: ConfigItem): unknown {
-    if (name !== 'attachmentFolderPath' || this.currentAttachmentFolderPath === null) {
-      return next.call(this.app.vault, name);
+  public override onload(): void {
+    super.onload();
+    this.registerEvent(this.app.workspace.on('file-open', convertAsyncToSync(this.handleFileOpen.bind(this))));
+    this.registerEvent(this.app.vault.on('rename', convertAsyncToSync(this.handleRename.bind(this))));
+
+    this.registerEvent(this.app.workspace.on('receive-text-menu', this.handleReceiveTextMenu.bind(this)));
+    this.registerEvent(this.app.workspace.on('receive-files-menu', this.handleReceiveFilesMenu.bind(this)));
+  }
+
+  public async saveAttachment(
+    attachmentFileBaseName: string,
+    attachmentFileExtension: string,
+    attachmentFileContent: ArrayBuffer
+  ): Promise<TFile> {
+    const activeNoteFile = this.app.workspace.getActiveFile();
+    if (!activeNoteFile || this.pluginSettingsComponent.settings.isPathIgnored(activeNoteFile.path)) {
+      return await this.saveAttachmentCore(attachmentFileBaseName, attachmentFileExtension, attachmentFileContent);
     }
 
-    return this.currentAttachmentFolderPath;
+    let isPastedImage = false;
+    const match = PASTED_IMAGE_NAME_REG_EXP.exec(attachmentFileBaseName);
+    if (match) {
+      const timestampString = ensureNonNullable(match.groups?.['Timestamp']);
+      const parsedDate = moment(timestampString, PASTED_IMAGE_DATE_FORMAT);
+      if (parsedDate.isValid()) {
+        if (moment().diff(parsedDate, 'seconds') < THRESHOLD_IN_SECONDS) {
+          isPastedImage = true;
+        }
+      }
+    }
+
+    let convertImageToJpegOptions: PluginConvertImageToJpegParams = {
+      attachmentFileContent,
+      attachmentFileExtension,
+      isPastedImage
+    };
+    convertImageToJpegOptions = await this.convertImageToJpeg(convertImageToJpegOptions);
+    attachmentFileExtension = convertImageToJpegOptions.attachmentFileExtension;
+    attachmentFileContent = convertImageToJpegOptions.attachmentFileContent;
+
+    let shouldRename = false;
+
+    switch (this.pluginSettingsComponent.settings.attachmentRenameMode) {
+      case AttachmentRenameMode.All:
+        shouldRename = true;
+        break;
+      case AttachmentRenameMode.None:
+        break;
+      case AttachmentRenameMode.OnlyPastedImages:
+        shouldRename = isPastedImage;
+        break;
+      default:
+        throw new Error('Invalid attachment rename mode');
+    }
+
+    if (shouldRename) {
+      attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(
+        new Substitutions({
+          actionContext: ActionContext.SaveAttachment,
+          app: this.app,
+          attachmentFileContent,
+          attachmentFileStat: this.arrayBufferFileStatMap.get(attachmentFileContent),
+          noteFilePath: activeNoteFile.path,
+          originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
+          pluginSettingsComponent: this.pluginSettingsComponent
+        })
+      );
+    }
+
+    const attachmentFile = await this.saveAttachmentCore(attachmentFileBaseName, attachmentFileExtension, attachmentFileContent);
+    if (this.pluginSettingsComponent.settings.markdownUrlFormat) {
+      const markdownUrl = await new Substitutions({
+        actionContext: ActionContext.SaveAttachment,
+        app: this.app,
+        attachmentFileContent,
+        attachmentFileStat: this.arrayBufferFileStatMap.get(attachmentFileContent),
+        generatedAttachmentFileName: attachmentFile.name,
+        generatedAttachmentFilePath: attachmentFile.path,
+        noteFilePath: activeNoteFile.path,
+        originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
+        pluginSettingsComponent: this.pluginSettingsComponent
+      }).fillTemplate(this.pluginSettingsComponent.settings.markdownUrlFormat);
+      this.pathMarkdownUrlMap.set(attachmentFile.path, markdownUrl);
+    } else {
+      this.pathMarkdownUrlMap.delete(attachmentFile.path);
+    }
+    return attachmentFile;
+  }
+
+  public async setFileStat(arrayBuffer: ArrayBuffer, filePath: string): Promise<boolean> {
+    if (!filePath) {
+      return false;
+    }
+
+    if (this.app.vault.adapter instanceof FileSystemAdapter) {
+      const stats = await this.app.vault.adapter.fsPromises.stat(filePath);
+      this.arrayBufferFileStatMap.set(arrayBuffer, {
+        ctime: stats.ctimeMs,
+        mtime: stats.mtimeMs,
+        size: stats.size
+      });
+      return true;
+    }
+
+    if (this.app.vault.adapter instanceof CapacitorAdapter) {
+      const stats = await this.app.vault.adapter.fs.stat(filePath);
+      this.arrayBufferFileStatMap.set(arrayBuffer, {
+        ctime: stats.ctime ?? 0,
+        mtime: stats.mtime ?? 0,
+        size: arrayBuffer.byteLength
+      });
+      return true;
+    }
+
+    return false;
+  }
+
+  protected override async onLayoutReady(): Promise<void> {
+    Substitutions.registerCustomTokens(this.pluginSettingsComponent.settings.customTokensStr);
+    await this.pluginSettingsComponent.loadFromFile(false);
+
+    this.addChild(
+      new VaultGetAvailablePathForAttachmentsPatchComponent({
+        customAttachmentLocationComponent: this,
+        vault: this.app.vault
+      })
+    );
+
+    this.addChild(
+      new VaultGetAvailablePathPatchComponent({
+        app: this.app,
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        vault: this.app.vault
+      })
+    );
+
+    this.addChild(
+      new VaultGetConfigPatchComponent({
+        customAttachmentLocationComponent: this,
+        vault: this.app.vault
+      })
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Actually not available on some platforms.
+    if (webUtils) {
+      this.addChild(
+        new WebUtilsGetPathForFilePatchComponent({
+          webUtils
+        })
+      );
+    }
+
+    this.addChild(
+      new FileManagerGenerateMarkdownLinkPatchComponent({
+        app: this.app,
+        customAttachmentLocationComponent: this,
+        fileManager: this.app.fileManager,
+        pluginSettingsComponent: this.pluginSettingsComponent
+      })
+    );
+
+    this.addChild(
+      new ShareReceiverImportFilesPatchComponent({
+        app: this.app,
+        attachmentPathManager: this.attachmentPathManager,
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        shareReceiver: this.app.shareReceiver
+      })
+    );
+
+    this.addChild(new AllWindowsEventComponent(this.app)).registerAllDocumentsDomEvent('change', this.handleInputFileChange.bind(this), { capture: true });
+
+    await this.handleActiveLeafChange(this.app.workspace.getLeavesOfType(ViewType.Markdown)[0] ?? null);
+
+    if (!this.isMarkdownViewPatched) {
+      this.registerEvent(this.app.workspace.on('active-leaf-change', convertAsyncToSync(this.handleActiveLeafChange.bind(this))));
+    }
+
+    await this.showReleaseNotes();
+  }
+
+  private async convertImageToJpeg(params: PluginConvertImageToJpegParams): Promise<PluginConvertImageToJpegParams> {
+    const mimeType = getMimeType(params.attachmentFileExtension);
+    let shouldConvertImageToJpeg = false;
+
+    if (mimeType) {
+      switch (this.pluginSettingsComponent.settings.convertImagesToJpegMode) {
+        case ConvertImagesToJpegMode.AllImages:
+          shouldConvertImageToJpeg = true;
+          break;
+        case ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles:
+          if (mimeType !== 'image/jpeg') {
+            shouldConvertImageToJpeg = true;
+          }
+          break;
+        case ConvertImagesToJpegMode.None:
+          break;
+        case ConvertImagesToJpegMode.OnlyPastedClipboardPngImages:
+          if (params.isPastedImage && mimeType === 'image/png') {
+            shouldConvertImageToJpeg = true;
+          }
+          break;
+        default:
+          throw new Error(`Invalid convert images to JPEG mode: ${this.pluginSettingsComponent.settings.convertImagesToJpegMode as string}`);
+      }
+    }
+
+    if (shouldConvertImageToJpeg && mimeType) {
+      return {
+        ...params,
+        attachmentFileContent: await blobToJpegArrayBuffer(
+          new Blob([params.attachmentFileContent], { type: mimeType }),
+          this.pluginSettingsComponent.settings.jpegQuality
+        ),
+        attachmentFileExtension: 'jpg'
+      };
+    }
+
+    return params;
   }
 
   private async getCursorLine(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
@@ -566,14 +500,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     return 0;
   }
 
-  private getPathForFile(file: File, next: GetPathForFileFn): string {
-    const fileEx = file as Partial<FileEx>;
-    if (fileEx.path) {
-      return fileEx.path;
-    }
-    return next(file);
-  }
-
   private async handleActiveLeafChange(leaf: null | WorkspaceLeaf): Promise<void> {
     if (this.isMarkdownViewPatched) {
       return;
@@ -591,22 +517,19 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
 
     const markdownView = leaf.view as MarkdownView;
 
-    const that = this;
-    const patch = this.addChild(new MonkeyAroundComponent());
-    patch.registerPatch(getPrototypeOf(markdownView.editMode.clipboardManager), {
-      insertFiles: (next: InsertFilesFn): InsertFilesFn => {
-        return function insertFilesPatched(this: ClipboardManager, importedAttachments: ImportedAttachment[]): Promise<void> {
-          return that.insertFiles(next, this, importedAttachments);
-        };
-      }
-    });
+    this.addChild(
+      new ClipboardManagerInsertFilesPatchComponent({
+        clipboardManager: markdownView.editMode.clipboardManager,
+        customAttachmentLocationComponent: this
+      })
+    );
 
     this.isMarkdownViewPatched = true;
   }
 
   private async handleFileOpen(file: null | TFile): Promise<void> {
     if (file === null || this.pluginSettingsComponent.settings.isPathIgnored(file.path)) {
-      this.currentAttachmentFolderPath = null;
+      this._currentAttachmentFolderPath = null;
       this.lastOpenFilePath = null;
       return;
     }
@@ -616,7 +539,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     }
 
     this.lastOpenFilePath = file.path;
-    this.currentAttachmentFolderPath = await this.attachmentPathManager.getAttachmentFolderFullPathForPath({
+    this._currentAttachmentFolderPath = await this.attachmentPathManager.getAttachmentFolderFullPathForPath({
       actionContext: ActionContext.OpenFile,
       attachmentFileName: DUMMY_PATH,
       notePath: file.path
@@ -632,16 +555,14 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       return;
     }
 
-    const that = this;
     for (const file of evt.target.files ?? []) {
-      const patch = this.addChild(new MonkeyAroundComponent());
-      patch.registerPatch(file, {
-        arrayBuffer: (next: ArrayBufferFn): ArrayBufferFn => {
-          return function arrayBufferPatched(this: File): Promise<ArrayBuffer> {
-            return that.fileArrayBuffer(next, this);
-          };
-        }
-      });
+      this.addChild(
+        new FileArrayBufferPatchComponent({
+          app: this.app,
+          customAttachmentLocationComponent: this,
+          file
+        })
+      );
     }
   }
 
@@ -678,36 +599,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     await this.handleFileOpen(this.app.workspace.getActiveFile());
   }
 
-  private async importFiles(next: ImportFilesFn, files: SharedFile[]): Promise<void> {
-    for (const file of files) {
-      const fileUri = window.Capacitor.convertFileSrc(file.uri);
-      // eslint-disable-next-line no-restricted-globals, n/no-unsupported-features/node-builtins -- `requestUrl()` doesn't work for those Capacitor urls; fetch is a stable Web API in Obsidian's Electron renderer, the rule incorrectly flags it as a Node experimental builtin.
-      const response = await fetch(fileUri);
-      const attachmentFileContent = await response.arrayBuffer();
-      const substitutions = new Substitutions({
-        actionContext: ActionContext.ImportFiles,
-        app: this.app,
-        attachmentFileContent,
-        noteFilePath: this.app.workspace.getActiveFile()?.path ?? '',
-        originalAttachmentFileName: file.name,
-        pluginSettingsComponent: this.pluginSettingsComponent
-      });
-      const attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(substitutions);
-      const attachmentFileExtension = extname(file.name).slice(1);
-      file.name = IMPORT_FILES_PREFIX + makeFileName(attachmentFileBaseName, attachmentFileExtension);
-    }
-
-    return next.call(this.app.shareReceiver, files);
-  }
-
-  private async insertFiles(next: InsertFilesFn, clipboardManager: ClipboardManager, importedAttachments: ImportedAttachment[]): Promise<void> {
-    for (const importedAttachment of importedAttachments) {
-      const arrayBuffer = await importedAttachment.data;
-      await this.setFileStat(arrayBuffer, importedAttachment.filepath);
-    }
-    return next.call(clipboardManager, importedAttachments);
-  }
-
   private async saveAttachmentCore(
     attachmentFileBaseName: string,
     attachmentFileExtension: string,
@@ -742,34 +633,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         mtime: attachmentFileStat?.mtime ? Math.trunc(attachmentFileStat.mtime) : undefined
       }))
     );
-  }
-
-  private async setFileStat(arrayBuffer: ArrayBuffer, filePath: string): Promise<boolean> {
-    if (!filePath) {
-      return false;
-    }
-
-    if (this.app.vault.adapter instanceof FileSystemAdapter) {
-      const stats = await this.app.vault.adapter.fsPromises.stat(filePath);
-      this.arrayBufferFileStatMap.set(arrayBuffer, {
-        ctime: stats.ctimeMs,
-        mtime: stats.mtimeMs,
-        size: stats.size
-      });
-      return true;
-    }
-
-    if (this.app.vault.adapter instanceof CapacitorAdapter) {
-      const stats = await this.app.vault.adapter.fs.stat(filePath);
-      this.arrayBufferFileStatMap.set(arrayBuffer, {
-        ctime: stats.ctime ?? 0,
-        mtime: stats.mtime ?? 0,
-        size: arrayBuffer.byteLength
-      });
-      return true;
-    }
-
-    return false;
   }
 
   private async showReleaseNotes(): Promise<void> {
