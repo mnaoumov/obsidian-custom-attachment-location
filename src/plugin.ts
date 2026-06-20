@@ -12,7 +12,6 @@ import type {
   DataWriteOptions,
   FileManager,
   FileStats,
-  PluginManifest,
   WorkspaceLeaf
 } from 'obsidian';
 import type {
@@ -55,7 +54,6 @@ import {
 import { CommandHandlerComponent } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler-component';
 import { PluginCommandRegistrar } from 'obsidian-dev-utils/obsidian/command-registrar';
 import { AllWindowsEventComponent } from 'obsidian-dev-utils/obsidian/components/all-windows-event-component';
-import { I18nComponent } from 'obsidian-dev-utils/obsidian/components/i18n-component';
 import { CallbackLayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
 import { MenuEventRegistrarComponent } from 'obsidian-dev-utils/obsidian/components/menu-event-registrar-component';
 import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
@@ -71,7 +69,7 @@ import {
   getPath,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
-import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
+import { t, type TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   encodeUrl,
   extractLinkFile,
@@ -162,11 +160,9 @@ export class Plugin extends PluginBase {
   private isMarkdownViewPatched = false;
   private lastOpenFilePath: null | string = null;
   private readonly pathMarkdownUrlMap = new Map<string, string>();
-  private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private pluginSettingsComponent!: PluginSettingsComponent;
 
-  public constructor(app: App, manifest: PluginManifest) {
-    super(app, manifest);
-
+  public override onloadImpl(): void {
     this.pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
         dataHandler: new PluginDataHandler(this),
@@ -185,8 +181,6 @@ export class Plugin extends PluginBase {
       })
     );
 
-    this.removeChild(this.i18nComponent);
-    this.i18nComponent = this.addChild(new I18nComponent(translationsMap));
     this.addChild(new CallbackLayoutReadyComponent(this.app, this.onLayoutReady.bind(this)));
   }
 
@@ -1014,5 +1008,9 @@ export class Plugin extends PluginBase {
       message: releaseNotes,
       title: t(($) => $.releaseNotes.title)
     });
+  }
+
+  protected override createTranslationsMap(): TranslationsMap {
+    return translationsMap;
   }
 }
