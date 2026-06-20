@@ -28,10 +28,10 @@ import { copySafe } from 'obsidian-dev-utils/obsidian/vault';
 import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
+import type { AttachmentPathManager } from '../attachment-path-manager.ts';
 import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
-import { getProperAttachmentPath } from '../attachment-path.ts';
 import { selectMode } from '../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../plugin-settings.ts';
 import { ActionContext } from '../token-evaluator-context.ts';
@@ -39,6 +39,7 @@ import { ActionContext } from '../token-evaluator-context.ts';
 interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
+  readonly attachmentPathManager: AttachmentPathManager;
   readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -50,6 +51,7 @@ interface MoveAttachmentToProperFolderContext {
 export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileCommandHandler {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
+  private readonly attachmentPathManager: AttachmentPathManager;
   private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
@@ -64,6 +66,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     this.app = params.app;
     this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
+    this.attachmentPathManager = params.attachmentPathManager;
   }
 
   protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
@@ -165,13 +168,10 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         continue;
       }
 
-      const newAttachmentPath = await getProperAttachmentPath({
+      const newAttachmentPath = await this.attachmentPathManager.getProperAttachmentPath({
         actionContext: ActionContext.MoveAttachmentToProperFolder,
-        app: this.app,
         attachmentFile,
-        customAttachmentLocationComponent: this.customAttachmentLocationComponent,
         noteFilePath: backlink,
-        pluginSettingsComponent: this.pluginSettingsComponent,
         reference: link
       });
       if (!newAttachmentPath) {

@@ -15,6 +15,7 @@ import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import { AttachmentCollector } from './attachment-collector.ts';
+import { AttachmentPathManager } from './attachment-path-manager.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
@@ -37,9 +38,16 @@ export class Plugin extends PluginBase {
       })
     );
 
+    const attachmentPathManager = new AttachmentPathManager({
+      app: this.app,
+      customAttachmentLocationComponent: null as unknown as CustomAttachmentLocationComponent, // FIXME
+      pluginSettingsComponent
+    });
+
     const customAttachmentLocationComponent = this.addChild(
       new CustomAttachmentLocationComponent({
         app: this.app,
+        attachmentPathManager,
         pluginDir: this.manifest.dir ?? '',
         pluginName: this.manifest.name,
         pluginSettingsComponent,
@@ -78,8 +86,8 @@ export class Plugin extends PluginBase {
     const attachmentCollector = new AttachmentCollector({
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
+      attachmentPathManager,
       consoleDebugComponent: this.consoleDebugComponent,
-      customAttachmentLocationComponent,
       pluginName: this.manifest.name,
       pluginSettingsComponent
     });
@@ -102,6 +110,7 @@ export class Plugin extends PluginBase {
           new MoveAttachmentToProperFolderCommandHandler({
             abortSignalComponent: this.abortSignalComponent,
             app: this.app,
+            attachmentPathManager,
             customAttachmentLocationComponent,
             pluginSettingsComponent
           })

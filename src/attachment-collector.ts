@@ -41,10 +41,9 @@ import {
 } from 'obsidian-dev-utils/obsidian/vault';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
-import type { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
+import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
-import { getProperAttachmentPath } from './attachment-path.ts';
 import { getCanvasLinks } from './canvas-links.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
@@ -59,8 +58,8 @@ interface AttachmentCollectorCollectAttachmentsParams {
 interface AttachmentCollectorConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
+  readonly attachmentPathManager: AttachmentPathManager;
   readonly consoleDebugComponent: ConsoleDebugComponent;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly pluginName: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -85,18 +84,18 @@ interface CollectAttachmentContext {
 export class AttachmentCollector {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
+  private readonly attachmentPathManager: AttachmentPathManager;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   private readonly pluginName: string;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: AttachmentCollectorConstructorParams) {
     this.app = params.app;
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
     this.pluginName = params.pluginName;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.abortSignalComponent = params.abortSignalComponent;
     this.consoleDebugComponent = params.consoleDebugComponent;
+    this.attachmentPathManager = params.attachmentPathManager;
   }
 
   public collectAttachmentsEntireVault(): void {
@@ -403,13 +402,10 @@ export class AttachmentCollector {
       return null;
     }
 
-    const newAttachmentPath = await getProperAttachmentPath({
+    const newAttachmentPath = await this.attachmentPathManager.getProperAttachmentPath({
       actionContext: ActionContext.CollectAttachments,
-      app: this.app,
       attachmentFile: oldAttachmentFile,
-      customAttachmentLocationComponent: this.customAttachmentLocationComponent,
       noteFilePath: params.newNotePath,
-      pluginSettingsComponent: this.pluginSettingsComponent,
       reference: params.reference
     });
 

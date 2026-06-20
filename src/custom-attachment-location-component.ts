@@ -85,10 +85,8 @@ import { trimStart } from 'obsidian-dev-utils/string';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import { compare } from 'semver';
 
-import {
-  getAttachmentFolderFullPathForPath,
-  getGeneratedAttachmentFileBaseName
-} from './attachment-path.ts';
+import type { AttachmentPathManager } from './attachment-path-manager.ts';
+
 import {
   getImageSize,
   getMimeType
@@ -126,6 +124,7 @@ const IMPORT_FILES_PREFIX = '__IMPORT_FILES__';
 
 interface CustomAttachmentLocationComponentConstructorParams {
   readonly app: App;
+  readonly attachmentPathManager: AttachmentPathManager;
   readonly pluginDir: string;
   readonly pluginName: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -143,8 +142,9 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   public readonly pluginDir: string;
   public readonly pluginName: string;
   public readonly pluginVersion: string;
-
   private readonly arrayBufferFileStatMap = new WeakMap<ArrayBuffer, FileStats>();
+
+  private readonly attachmentPathManager: AttachmentPathManager;
 
   private currentAttachmentFolderPath: null | string = null;
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn | null = null;
@@ -161,6 +161,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.pluginVersion = params.pluginVersion;
     this.pluginDir = params.pluginDir;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
+    this.attachmentPathManager = params.attachmentPathManager;
   }
 
   public async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
@@ -244,8 +245,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     }
 
     if (shouldRename) {
-      attachmentFileBaseName = await getGeneratedAttachmentFileBaseName(
-        this.app,
+      attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(
         new Substitutions({
           actionContext: ActionContext.SaveAttachment,
           app: this.app,
@@ -254,8 +254,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
           noteFilePath: activeNoteFile.path,
           originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
           pluginSettingsComponent: this.pluginSettingsComponent
-        }),
-        this.pluginSettingsComponent
+        })
       );
     }
 
@@ -502,24 +501,21 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       });
     } else {
       const attachmentFileName = makeFileName(attachmentFileBaseName, attachmentFileExtension);
-      const attachmentFolderFullPath = await getAttachmentFolderFullPathForPath(
-        this,
-        attachmentPathContextToActionContext(params.context),
-        noteFilePath,
-        attachmentFileName,
-        this.pluginSettingsComponent,
-        oldNoteFilePath,
+      const attachmentFolderFullPath = await this.attachmentPathManager.getAttachmentFolderFullPathForPath({
+        actionContext: attachmentPathContextToActionContext(params.context),
         attachmentFileContent,
-        attachmentFileStat
-      );
+        attachmentFileName,
+        attachmentFileStat,
+        notePath: noteFilePath,
+        oldNoteFilePath
+      });
       let generatedAttachmentFileName: string;
       if (shouldSkipGeneratedAttachmentFileName) {
         generatedAttachmentFileName = attachmentFileName;
       } else {
         const cursorLine = await this.getCursorLine(noteFilePath, params.oldAttachmentPathOrFile);
         const sequenceNumber = await this.getSequenceNumber(noteFilePath, params.oldAttachmentPathOrFile);
-        const generatedAttachmentFileBaseName = await getGeneratedAttachmentFileBaseName(
-          this.app,
+        const generatedAttachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(
           new Substitutions({
             actionContext: attachmentPathContextToActionContext(params.context),
             app: this.app,
@@ -531,8 +527,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
             originalAttachmentFileName: attachmentFileName,
             pluginSettingsComponent: this.pluginSettingsComponent,
             sequenceNumber
-          }),
-          this.pluginSettingsComponent
+          })
         );
         generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, attachmentFileExtension);
       }
@@ -646,13 +641,11 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     }
 
     this.lastOpenFilePath = file.path;
-    this.currentAttachmentFolderPath = await getAttachmentFolderFullPathForPath(
-      this,
-      ActionContext.OpenFile,
-      file.path,
-      DUMMY_PATH,
-      this.pluginSettingsComponent
-    );
+    this.currentAttachmentFolderPath = await this.attachmentPathManager.getAttachmentFolderFullPathForPath({
+      actionContext: ActionContext.OpenFile,
+      attachmentFileName: DUMMY_PATH,
+      notePath: file.path
+    });
   }
 
   private handleInputFileChange(evt: Event): void {
@@ -724,7 +717,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         originalAttachmentFileName: file.name,
         pluginSettingsComponent: this.pluginSettingsComponent
       });
-      const attachmentFileBaseName = await getGeneratedAttachmentFileBaseName(this.app, substitutions, this.pluginSettingsComponent);
+      const attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(substitutions);
       const attachmentFileExtension = extname(file.name).slice(1);
       file.name = IMPORT_FILES_PREFIX + makeFileName(attachmentFileBaseName, attachmentFileExtension);
     }
