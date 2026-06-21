@@ -1,14 +1,8 @@
-import type {
-  TFile,
-  Vault
-} from 'obsidian';
-import type { GetAvailablePathForAttachmentsFnExtended } from 'obsidian-dev-utils/obsidian/attachment-path';
+import type { Vault } from 'obsidian';
 
 import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 
 import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
-
-type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
 
 interface VaultGetAvailablePathForAttachmentsPatchComponentConstructorParams {
   readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
@@ -26,16 +20,20 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
   }
 
   public override onload(): void {
-    const vault = this.vault;
-    this.registerPatch(this.vault, {
-      getAvailablePathForAttachments: (originalFn: GetAvailablePathForAttachmentsFn): GetAvailablePathForAttachmentsFnExtended => {
-        return Object.assign(originalFnCopy, {
+    this.registerMethodPatch({
+      obj: this.vault,
+      methodName: 'getAvailablePathForAttachments',
+      patchHandler: ({
+        fallback
+      }) => {
+        return fallback();
+      },
+      postPatchHandler: ({
+        patchedMethod
+      }) => {
+        return Object.assign(patchedMethod, {
           extended: this.customAttachmentLocationComponent.getAvailablePathForAttachments.bind(this.customAttachmentLocationComponent)
-        });
-
-        function originalFnCopy(filename: string, extension: string, file: null | TFile): Promise<string> {
-          return originalFn.call(vault, filename, extension, file);
-        }
+        })
       }
     });
   }
