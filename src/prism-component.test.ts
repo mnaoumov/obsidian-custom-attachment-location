@@ -1,5 +1,5 @@
 import { loadPrism } from '@obsidian-typings/obsidian-public-latest/implementations';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
+import { waitForAllAsyncOperations } from 'obsidian-dev-utils/async';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import {
   beforeEach,
@@ -11,17 +11,6 @@ import {
 
 vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
   loadPrism: vi.fn()
-}));
-
-/*
- * Deliberate exception to the "reuse the real obsidian-dev-utils helpers" rule:
- * invokeAsyncSafely is stubbed ONLY so the fire-and-forget initPrism scheduling
- * done inside the real ComponentEx.onload override becomes awaitable here. The
- * real ComponentEx base class and its real load()/unload()/register() lifecycle
- * are used unmocked.
- */
-vi.mock('obsidian-dev-utils/async', () => ({
-  invokeAsyncSafely: vi.fn()
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
@@ -39,7 +28,6 @@ interface PrismLike {
 }
 
 const mockLoadPrism = vi.mocked(loadPrism);
-const mockInvokeAsyncSafely = vi.mocked(invokeAsyncSafely);
 
 function asPrivate(component: PrismComponent): PrismComponentPrivate {
   return castTo<PrismComponentPrivate>(component);
@@ -64,20 +52,22 @@ describe('PrismComponent', () => {
   });
 
   describe('onload', () => {
-    it('should schedule initPrism when loaded through the real lifecycle', () => {
+    it('should schedule initPrism when loaded through the real lifecycle', async () => {
+      mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(createPrism(true)));
       component.load();
-      expect(mockInvokeAsyncSafely).toHaveBeenCalledOnce();
+      // The real onload schedules initPrism via the real invokeAsyncSafely (fire-and-forget).
+      // Drain the tracked operation, then assert it ran.
+      await waitForAllAsyncOperations();
+      expect(mockLoadPrism).toHaveBeenCalledOnce();
     });
 
     it('should run initPrism when the scheduled callback is invoked', async () => {
-      let scheduled: Parameters<typeof invokeAsyncSafely>[0] | undefined;
-      mockInvokeAsyncSafely.mockImplementation((fn) => {
-        scheduled = fn;
-      });
-      mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(createPrism(true)));
+      const prism = createPrism(true);
+      mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
       component.load();
-      await scheduled?.();
-      expect(mockLoadPrism).toHaveBeenCalledOnce();
+      // Drain the fire-and-forget initPrism scheduled by the real lifecycle, then assert its effect.
+      await waitForAllAsyncOperations();
+      expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeDefined();
     });
   });
 
