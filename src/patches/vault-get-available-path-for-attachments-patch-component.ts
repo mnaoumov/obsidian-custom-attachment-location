@@ -21,8 +21,8 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
 
   public override onload(): void {
     this.registerMethodPatch({
-      obj: this.vault,
       methodName: 'getAvailablePathForAttachments',
+      obj: this.vault,
       patchHandler: ({
         fallback
       }) => {
@@ -33,7 +33,7 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
       }) => {
         return Object.assign(patchedMethod, {
           extended: this.customAttachmentLocationComponent.getAvailablePathForAttachments.bind(this.customAttachmentLocationComponent)
-        })
+        });
       }
     });
   }

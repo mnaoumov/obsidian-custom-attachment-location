@@ -107,9 +107,7 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly pluginVersion: string;
 }
 
-interface CustomAttachmentLocationComponentGetAvailablePathForAttachmentsParams extends GetAvailablePathForAttachmentsExtendedFnParams {
-  readonly __brand?: 'CustomAttachmentLocationComponentGetAvailablePathForAttachmentsParams';
-}
+type CustomAttachmentLocationComponentGetAvailablePathForAttachmentsParams = GetAvailablePathForAttachmentsExtendedFnParams;
 
 interface PluginConvertImageToJpegParams {
   readonly attachmentFileContent: ArrayBuffer;

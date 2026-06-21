@@ -25,6 +25,10 @@ import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PrismComponent } from './prism-component.ts';
 
 export class Plugin extends PluginBase {
+  protected override createTranslationsMap(): TranslationsMap {
+    return translationsMap;
+  }
+
   protected override onloadImpl(): void {
     const pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
@@ -124,9 +128,5 @@ export class Plugin extends PluginBase {
     );
 
     this.addChild(new PrismComponent());
-  }
-
-  protected override createTranslationsMap(): TranslationsMap {
-    return translationsMap;
   }
 }

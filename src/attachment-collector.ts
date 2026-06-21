@@ -101,7 +101,6 @@ export class AttachmentCollector {
   public collectAttachmentsEntireVault(): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      app: this.app,
       operationFn: (abortSignal) =>
         this.collectAttachmentsInAbstractFilesImpl(
           [this.app.vault.getRoot()],
@@ -115,7 +114,6 @@ export class AttachmentCollector {
   public collectAttachmentsInAbstractFiles(abstractFiles: TAbstractFile[]): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      app: this.app,
       operationFn: (abortSignal) => this.collectAttachmentsInAbstractFilesImpl(abstractFiles, abortSignal),
       operationName: t(($) => $.menuItems.collectAttachmentsInFile),
       timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
