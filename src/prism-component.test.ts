@@ -13,20 +13,15 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
   loadPrism: vi.fn()
 }));
 
+/*
+ * Deliberate exception to the "reuse the real obsidian-dev-utils helpers" rule:
+ * invokeAsyncSafely is stubbed ONLY so the fire-and-forget initPrism scheduling
+ * done inside the real ComponentEx.onload override becomes awaitable here. The
+ * real ComponentEx base class and its real load()/unload()/register() lifecycle
+ * are used unmocked.
+ */
 vi.mock('obsidian-dev-utils/async', () => ({
   invokeAsyncSafely: vi.fn()
-}));
-
-const onloadCalls: number[] = [];
-
-vi.mock('obsidian-dev-utils/obsidian/components/component-ex', () => ({
-  ComponentEx: class {
-    public register = vi.fn<(cb: () => void) => void>();
-
-    public onload(): void {
-      onloadCalls.push(1);
-    }
-  }
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
@@ -37,7 +32,6 @@ import {
 
 interface PrismComponentPrivate {
   initPrism(): Promise<void>;
-  register: ReturnType<typeof vi.fn<(cb: () => void) => void>>;
 }
 
 interface PrismLike {
@@ -62,7 +56,6 @@ describe('PrismComponent', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    onloadCalls.length = 0;
     component = new PrismComponent();
   });
 
@@ -71,9 +64,8 @@ describe('PrismComponent', () => {
   });
 
   describe('onload', () => {
-    it('should call super.onload and schedule initPrism', () => {
-      component.onload();
-      expect(onloadCalls).toHaveLength(1);
+    it('should schedule initPrism when loaded through the real lifecycle', () => {
+      component.load();
       expect(mockInvokeAsyncSafely).toHaveBeenCalledOnce();
     });
 
@@ -83,7 +75,7 @@ describe('PrismComponent', () => {
         scheduled = fn;
       });
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(createPrism(true)));
-      component.onload();
+      component.load();
       await scheduled?.();
       expect(mockLoadPrism).toHaveBeenCalledOnce();
     });
@@ -95,25 +87,22 @@ describe('PrismComponent', () => {
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
       await asPrivate(component).initPrism();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeUndefined();
-      expect(asPrivate(component).register).not.toHaveBeenCalled();
     });
 
-    it('should register the tokenized string language and a cleanup callback', async () => {
+    it('should register the tokenized string language', async () => {
       const prism = createPrism(true);
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
       await asPrivate(component).initPrism();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeDefined();
-      expect(asPrivate(component).register).toHaveBeenCalledOnce();
     });
 
-    it('should delete the tokenized string language when the cleanup callback runs', async () => {
+    it('should delete the tokenized string language when the component is unloaded', async () => {
       const prism = createPrism(true);
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
+      component.load();
       await asPrivate(component).initPrism();
-      const registerMock = asPrivate(component).register;
-      const cleanup = registerMock.mock.calls[0]?.[0];
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeDefined();
-      cleanup?.();
+      component.unload();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeUndefined();
     });
   });

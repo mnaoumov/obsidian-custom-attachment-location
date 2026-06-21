@@ -30,14 +30,6 @@ const captured = {
   toggles: [] as CapturedToggle[]
 };
 
-vi.mock('obsidian-dev-utils/html-element', () => ({
-  createFragmentAsync: vi.fn(async (cb: (f: DocumentFragment) => Promise<void>) => {
-    const fragment = createFragment();
-    await cb(fragment);
-    return fragment;
-  })
-}));
-
 vi.mock('obsidian-dev-utils/obsidian/markdown', () => ({
   renderInternalLink: vi.fn((): Promise<HTMLElement> => Promise.resolve(createSpan()))
 }));
