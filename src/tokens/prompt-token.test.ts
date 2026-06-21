@@ -11,7 +11,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
+import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 import type { ValidatePathParams } from '../substitutions.ts';
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
@@ -37,7 +37,7 @@ vi.mock('../prompt-with-preview-modal.ts', () => ({
 }));
 
 const app = strictProxy<App>({});
-const plugin = strictProxy<Plugin>({});
+const pluginSettingsComponent = strictProxy<PluginSettingsComponent>({});
 
 function createContext(params: CreateContextParams): TokenEvaluatorContext {
   return castTo<TokenEvaluatorContext>({
@@ -45,7 +45,7 @@ function createContext(params: CreateContextParams): TokenEvaluatorContext {
     app,
     format: params.format,
     originalAttachmentFileName: params.originalAttachmentFileName,
-    plugin,
+    pluginSettingsComponent,
     validatePath: vi.fn(params.validatePath ?? ((): Promise<string> => Promise.resolve('')))
   });
 }
@@ -112,9 +112,10 @@ describe('PromptToken', () => {
     expect(result).toBe('result');
     expect(capturedValidationResult).toBe('validation-error');
     expect(validatePath).toHaveBeenCalledWith({
+      app,
       areTokensAllowed: false,
       path: 'candidate',
-      plugin
+      pluginSettingsComponent
     });
   });
 

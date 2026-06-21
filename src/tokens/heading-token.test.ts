@@ -15,7 +15,7 @@ import {
   vi
 } from 'vitest';
 
-import type { Plugin } from '../plugin.ts';
+import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 import { HeadingToken } from './heading-token.ts';
@@ -32,7 +32,7 @@ function createContext(cursorLine: null | number, format: TokenEvaluatorContext[
     cursorLine,
     format,
     noteFilePath: 'note.md',
-    plugin: castTo<Plugin>({
+    pluginSettingsComponent: castTo<PluginSettingsComponent>({
       replaceSpecialCharacters: vi.fn((str: string) => `clean:${str}`)
     })
   });
