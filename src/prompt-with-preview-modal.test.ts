@@ -1,5 +1,7 @@
 import type {
   App,
+  ButtonComponent,
+  TextComponent,
   TFile
 } from 'obsidian';
 import type { StrictProxyPartial } from 'obsidian-dev-utils/strict-proxy';
@@ -8,6 +10,10 @@ import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
+import {
+  ButtonComponent as ButtonComponentClass,
+  TextComponent as TextComponentClass
+} from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
   beforeAll,
@@ -21,26 +27,15 @@ import {
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 
 import { translationsMap } from './i18n/locales/translations-map.ts';
-
-interface CapturedButton {
-  click(): void;
-  isDisabled: boolean;
-  text: string;
-}
-
-interface CapturedTextComponent {
-  changeValue(value: string): void;
-  inputEl: HTMLInputElement;
-  value: string;
-}
+import { promptWithPreview } from './prompt-with-preview-modal.ts';
 
 type EmbedByExtension = Partial<App['embedRegistry']['embedByExtension']>;
 
 type EmbedCreator = NonNullable<App['embedRegistry']['embedByExtension'][string]>;
 
 const captured = {
-  buttons: [] as CapturedButton[],
-  textComponents: [] as CapturedTextComponent[]
+  buttons: [] as ButtonComponent[],
+  textComponents: [] as TextComponent[]
 };
 
 const hoisted = vi.hoisted(() => ({
@@ -60,96 +55,14 @@ vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
   trashSafe: (...args: unknown[]): Promise<void> => hoisted.mockTrashSafe(...args)
 }));
 
-vi.mock('obsidian', async (importOriginal) => {
-  const original = await importOriginal<typeof import('obsidian')>();
+const originalOnClick = ButtonComponentClass.prototype.onClick;
+const originalOnChange = TextComponentClass.prototype.onChange;
 
-  function noopClick(_event: Event): void {
-    // Placeholder until a real handler is registered.
+function clickButton(button: ButtonComponent | undefined): void {
+  if (button) {
+    ButtonComponentClass.fromOriginalType2__(button).simulateClick__();
   }
-
-  class MockButtonComponent {
-    private clickHandler: (event: Event) => void = noopClick;
-    private readonly entry: CapturedButton;
-
-    public constructor(_containerEl: HTMLElement) {
-      this.entry = {
-        click: (): void => {
-          this.clickHandler(new Event('click'));
-        },
-        isDisabled: false,
-        text: ''
-      };
-      captured.buttons.push(this.entry);
-    }
-
-    public onClick(handler: (event: Event) => void): this {
-      this.clickHandler = handler;
-      return this;
-    }
-
-    public setButtonText(value: string): this {
-      this.entry.text = value;
-      return this;
-    }
-
-    public setClass(): this {
-      return this;
-    }
-
-    public setCta(): this {
-      return this;
-    }
-
-    public setDisabled(value: boolean): this {
-      this.entry.isDisabled = value;
-      return this;
-    }
-  }
-
-  class MockTextComponent {
-    public inputEl: HTMLInputElement;
-    public constructor(containerEl: HTMLElement) {
-      const inputEl = containerEl.createEl('input');
-      this.inputEl = inputEl;
-      captured.textComponents.push({
-        changeValue: (value: string): void => {
-          inputEl.value = value;
-          this.changeHandler(value);
-        },
-        inputEl,
-        get value(): string {
-          return inputEl.value;
-        }
-      });
-    }
-
-    public onChange(handler: (value: string) => void): this {
-      this.changeHandler = handler;
-      return this;
-    }
-
-    public setPlaceholder(value: string): this {
-      this.inputEl.placeholder = value;
-      return this;
-    }
-
-    public setValue(value: string): this {
-      this.inputEl.value = value;
-      return this;
-    }
-
-    private changeHandler: (value: string) => void = () => undefined;
-  }
-
-  return {
-    ...original,
-    ButtonComponent: MockButtonComponent,
-    TextComponent: MockTextComponent
-  };
-});
-
-// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { promptWithPreview } from './prompt-with-preview-modal.ts';
+}
 
 function createApp(overrides: StrictProxyPartial<App>): App {
   return strictProxy<App>({
@@ -193,6 +106,26 @@ async function flushOnOpen(): Promise<void> {
   }
 }
 
+function getButtonText(button: ButtonComponent): string {
+  return ButtonComponentClass.fromOriginalType2__(button).buttonEl.textContent;
+}
+
+function getInputEl(textComponent: TextComponent | undefined): HTMLInputElement | undefined {
+  if (!textComponent) {
+    return undefined;
+  }
+
+  return TextComponentClass.fromOriginalType4__(textComponent).inputEl;
+}
+
+function isButtonDisabled(button: ButtonComponent | undefined): boolean {
+  if (!button) {
+    return false;
+  }
+
+  return ButtonComponentClass.fromOriginalType2__(button).disabled;
+}
+
 beforeAll(async () => {
   await initI18N(translationsMap);
 });
@@ -205,11 +138,30 @@ describe('promptWithPreview', () => {
     hoisted.embedComponent.loadFile.mockClear();
     hoisted.embedComponent.unload.mockClear();
     hoisted.mockTrashSafe.mockClear();
+
+    // Capture the REAL test-mocks ButtonComponent/TextComponent instances created by the modal
+    // (via their onClick/onChange registration) so interactions can be driven through real DOM.
+    vi.spyOn(ButtonComponentClass.prototype, 'onClick').mockImplementation(function capturingOnClick(
+      this: ButtonComponentClass,
+      callback: (evt: MouseEvent) => unknown
+    ): ButtonComponentClass {
+      captured.buttons.push(castTo<ButtonComponent>(this));
+      return originalOnClick.call(this, callback);
+    });
+    vi.spyOn(TextComponentClass.prototype, 'onChange').mockImplementation(function capturingOnChange(
+      this: TextComponentClass,
+      callback: (value: string) => unknown
+    ): TextComponentClass {
+      captured.textComponents.push(castTo<TextComponent>(this));
+      return originalOnChange.call(this, callback);
+    });
+
     vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('should resolve with null when closed without clicking OK', async () => {
@@ -231,7 +183,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    expect(captured.buttons.map((button) => button.text)).toStrictEqual(['OK', 'Cancel', 'Preview attachment file']);
+    expect(captured.buttons.map(getButtonText)).toStrictEqual(['OK', 'Cancel', 'Preview attachment file']);
     await vi.advanceTimersByTimeAsync(0);
     await promise;
   });
@@ -243,7 +195,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    captured.buttons[0]?.click();
+    clickButton(captured.buttons[0]);
     const result = await promise;
     expect(result).toBe('filled-value');
   });
@@ -255,9 +207,8 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve('error'))
     });
     await flushOnOpen();
-    const textComponent = captured.textComponents[0];
-    textComponent?.inputEl.setCustomValidity('error');
-    captured.buttons[0]?.click();
+    getInputEl(captured.textComponents[0])?.setCustomValidity('error');
+    clickButton(captured.buttons[0]);
     await vi.advanceTimersByTimeAsync(0);
     const result = await promise;
     expect(result).toBeNull();
@@ -270,8 +221,8 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    captured.textComponents[0]?.changeValue('updated-value');
-    captured.buttons[0]?.click();
+    captured.textComponents[0]?.setValue('updated-value');
+    clickButton(captured.buttons[0]);
     const result = await promise;
     expect(result).toBe('updated-value');
   });
@@ -283,7 +234,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    captured.textComponents[0]?.inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    getInputEl(captured.textComponents[0])?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     const result = await promise;
     expect(result).toBe('filled-value');
   });
@@ -295,7 +246,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    captured.textComponents[0]?.inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    getInputEl(captured.textComponents[0])?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     const result = await promise;
     expect(result).toBeNull();
   });
@@ -307,7 +258,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    captured.textComponents[0]?.inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+    getInputEl(captured.textComponents[0])?.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
     await vi.advanceTimersByTimeAsync(0);
     const result = await promise;
     expect(result).toBeNull();
@@ -320,8 +271,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    const previewButton = captured.buttons[2];
-    expect(previewButton?.isDisabled).toBe(true);
+    expect(isButtonDisabled(captured.buttons[2])).toBe(true);
     await vi.advanceTimersByTimeAsync(0);
     await promise;
   });
@@ -339,7 +289,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    expect(captured.buttons[2]?.isDisabled).toBe(false);
+    expect(isButtonDisabled(captured.buttons[2])).toBe(false);
     await vi.advanceTimersByTimeAsync(0);
     await promise;
   });
@@ -359,7 +309,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    captured.buttons[2]?.click();
+    clickButton(captured.buttons[2]);
     await flushOnOpen();
     expect(embeddableCreator).toHaveBeenCalled();
     expect(hoisted.embedComponent.load).toHaveBeenCalled();
@@ -380,7 +330,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    captured.buttons[2]?.click();
+    clickButton(captured.buttons[2]);
     await flushOnOpen();
     expect(hoisted.embedComponent.load).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(0);
@@ -400,7 +350,7 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    captured.buttons[2]?.click();
+    clickButton(captured.buttons[2]);
     await flushOnOpen();
     await vi.advanceTimersByTimeAsync(0);
     await flushOnOpen();

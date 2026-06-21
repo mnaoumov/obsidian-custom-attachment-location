@@ -118,7 +118,6 @@ interface PluginConvertImageToJpegParams {
 }
 
 export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
-  public override readonly app: App;
   public readonly arrayBufferFileStatMap = new WeakMap<ArrayBuffer, FileStats>();
   public readonly imageAttachmentSizeMap = new Map<string, string>();
   public pathMarkdownUrlMap = new Map<string, string>();
@@ -141,7 +140,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
 
   public constructor(params: CustomAttachmentLocationComponentConstructorParams) {
     super(params.app);
-    this.app = params.app;
     this.pluginName = params.pluginName;
     this.pluginVersion = params.pluginVersion;
     this.pluginDir = params.pluginDir;

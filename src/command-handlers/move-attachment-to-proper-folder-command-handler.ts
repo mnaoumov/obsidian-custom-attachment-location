@@ -141,6 +141,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   }
 
   private async moveAttachmentToProperFolder(attachmentFile: TFile, ctx: MoveAttachmentToProperFolderContext): Promise<boolean> {
+    const app = this.app;
     let backlinks = await getBacklinksForFileSafe(this.app, attachmentFile);
     if (backlinks.keys().length === 0) {
       new Notice(t(($) => $.moveAttachmentToProperFolder.unusedAttachment, { attachmentPath: attachmentFile.path }));
@@ -214,7 +215,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
             that.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode
               === MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel
           ) {
-            await selectMode(that.customAttachmentLocationComponent.app, attachmentFile.path, Array.from(backlinks.keys()), true);
+            await selectMode(app, attachmentFile.path, Array.from(backlinks.keys()), true);
           }
           return false;
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll:
@@ -222,7 +223,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
           return true;
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt: {
           const { backlinksToCopy: backlinksToCopy2, mode: mode2, shouldUseSameActionForOtherProblematicAttachments } = await selectMode(
-            that.customAttachmentLocationComponent.app,
+            app,
             attachmentFile.path,
             Array.from(backlinks.keys())
           );

@@ -25,7 +25,7 @@ import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PrismComponent } from './prism-component.ts';
 
 export class Plugin extends PluginBase {
-  public override onloadImpl(): void {
+  protected override onloadImpl(): void {
     const pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
         app: this.app,
