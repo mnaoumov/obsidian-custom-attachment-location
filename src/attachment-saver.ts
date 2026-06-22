@@ -21,7 +21,10 @@ import type { MarkdownUrlMap } from './markdown-url-map.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { AttachmentRenameMode } from './plugin-settings.ts';
-import { Substitutions } from './substitutions.ts';
+import {
+  Substitutions,
+  Validator
+} from './substitutions.ts';
 import {
   ActionContext,
   actionContextToAttachmentPathContext
@@ -35,6 +38,7 @@ interface AttachmentSaverConstructorParams {
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly validator: Validator;
 }
 
 const PASTED_IMAGE_NAME_REG_EXP = /Pasted image (?<Timestamp>\d{14})/;
@@ -63,6 +67,7 @@ export class AttachmentSaver {
   private readonly imageSizeMap: ImageSizeMap;
   private readonly markdownUrlMap: MarkdownUrlMap;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly validator: Validator;
 
   public constructor(params: AttachmentSaverConstructorParams) {
     this.app = params.app;
@@ -72,6 +77,7 @@ export class AttachmentSaver {
     this.imageSizeMap = params.imageSizeMap;
     this.markdownUrlMap = params.markdownUrlMap;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
+    this.validator = params.validator;
   }
 
   public async saveAttachment(params: AttachmentSaverSaveAttachmentParams): Promise<TFile> {
@@ -132,7 +138,8 @@ export class AttachmentSaver {
           attachmentFileStats: this.arrayBufferMap.getFileStats(attachmentFileContent),
           noteFilePath: activeNoteFile.path,
           originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
-          pluginSettingsComponent: this.pluginSettingsComponent
+          pluginSettingsComponent: this.pluginSettingsComponent,
+          validator: this.validator
         })
       );
     }
@@ -152,7 +159,8 @@ export class AttachmentSaver {
         generatedAttachmentFilePath: attachmentFile.path,
         noteFilePath: activeNoteFile.path,
         originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
-        pluginSettingsComponent: this.pluginSettingsComponent
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        validator: this.validator
       }).fillTemplate(this.pluginSettingsComponent.settings.markdownUrlFormat);
       this.markdownUrlMap.set(attachmentFile.path, markdownUrl);
     } else {

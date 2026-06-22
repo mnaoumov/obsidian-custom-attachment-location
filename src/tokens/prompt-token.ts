@@ -32,8 +32,7 @@ export class PromptToken extends TokenBase<Format> {
       ctx,
       defaultValue: format.defaultValueTemplate,
       valueValidator: (value) =>
-        ctx.validatePath({
-          app: ctx.app,
+        ctx.validator.validatePath({
           areTokensAllowed: false,
           path: value,
           pluginSettingsComponent: ctx.pluginSettingsComponent

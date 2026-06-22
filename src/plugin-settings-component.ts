@@ -28,8 +28,7 @@ import {
 import {
   parseCustomTokens,
   TokenValidationMode,
-  validateFileName,
-  validatePath
+  Validator
 } from './substitutions.ts';
 
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
@@ -38,6 +37,7 @@ interface PluginSettingsComponentConstructorParams {
   readonly app: App;
   readonly dataHandler: DataHandler;
   readonly pluginEventSource: PluginEventSource;
+  readonly validator: Validator;
 }
 
 class LegacySettings {
@@ -241,9 +241,10 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   public shouldDebounceCustomTokensValidation = false;
 
   private readonly app: App;
-
   private readonly customTokensValidatorDebounced = debounce(this.customTokensValidatorImpl.bind(this), CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS);
+
   private lastCustomTokenValidatorResult: string | undefined = undefined;
+  private readonly validator: Validator;
 
   public constructor(params: PluginSettingsComponentConstructorParams) {
     super({
@@ -251,6 +252,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       pluginSettingsClass: PluginSettings
     });
     this.app = params.app;
+    this.validator = params.validator;
   }
 
   public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
@@ -279,15 +281,13 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 
   protected override registerValidators(): void {
     this.registerValidator('attachmentFolderPath', async (value) =>
-      await validatePath({
-        app: this.app,
+      await this.validator.validatePath({
         areTokensAllowed: true,
         path: value,
         pluginSettingsComponent: this
       }));
     this.registerValidator('generatedAttachmentFileName', async (value) =>
-      await validatePath({
-        app: this.app,
+      await this.validator.validatePath({
         areTokensAllowed: true,
         path: value,
         pluginSettingsComponent: this
@@ -307,8 +307,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     });
 
     this.registerValidator('duplicateNameSeparator', async (value): Promise<MaybeReturn<string>> => {
-      return await validateFileName({
-        app: this.app,
+      return await this.validator.validateFileName({
         areSingleDotsAllowed: false,
         fileName: `foo${value}1`,
         isEmptyAllowed: false,

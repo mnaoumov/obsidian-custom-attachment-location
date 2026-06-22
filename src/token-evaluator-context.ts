@@ -6,7 +6,7 @@ import type {
 import { AttachmentPathContext } from 'obsidian-dev-utils/obsidian/attachment-path';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-import type { ValidatePathParams } from './substitutions.ts';
+import type { Validator } from './substitutions.ts';
 
 /**
  * An action context.
@@ -219,9 +219,9 @@ export interface TokenEvaluatorContext {
   tokenWithFormat: string;
 
   /**
-   * Validates a path.
+   * Validator.
    */
-  validatePath(params: ValidatePathParams): Promise<string>;
+  validator: Validator;
 }
 
 /**

@@ -50,8 +50,7 @@ import { IMPORT_FILES_PREFIX } from './patches/share-receiver-import-files-patch
 import {
   Substitutions,
   TokenValidationMode,
-  validateFileName,
-  validatePath
+  Validator
 } from './substitutions.ts';
 import {
   ActionContext,
@@ -83,6 +82,7 @@ interface AttachmentPathManagerConstructorParams {
   readonly app: App;
   readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly validator: Validator;
 }
 
 interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
@@ -100,11 +100,13 @@ export class AttachmentPathManager {
   private readonly app: App;
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly validator: Validator;
 
   public constructor(params: AttachmentPathManagerConstructorParams) {
     this.app = params.app;
     this.getAvailablePathForAttachmentsOriginal = params.getAvailablePathForAttachmentsOriginal;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
+    this.validator = params.validator;
   }
 
   public async getAttachmentFolderFullPathForPath(params: AttachmentPathManagerGetAttachmentFolderFullPathForPathParams): Promise<string> {
@@ -117,7 +119,8 @@ export class AttachmentPathManager {
         noteFilePath: params.notePath,
         oldNoteFilePath: params.oldNoteFilePath,
         originalAttachmentFileName: params.attachmentFileName,
-        pluginSettingsComponent: this.pluginSettingsComponent
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        validator: this.validator
       })
     );
   }
@@ -187,7 +190,8 @@ export class AttachmentPathManager {
             oldNoteFilePath,
             originalAttachmentFileName: attachmentFileName,
             pluginSettingsComponent: this.pluginSettingsComponent,
-            sequenceNumber
+            sequenceNumber,
+            validator: this.validator
           })
         );
         generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, params.attachmentFileExtension);
@@ -232,8 +236,7 @@ export class AttachmentPathManager {
     baseTemplate ||= this.pluginSettingsComponent.settings.generatedAttachmentFileName;
 
     const path = await this.resolvePathTemplate(baseTemplate, substitutions, true);
-    let validationMessage = await validatePath({
-      app: this.app,
+    let validationMessage = await this.validator.validatePath({
       areTokensAllowed: false,
       path,
       pluginSettingsComponent: this.pluginSettingsComponent
@@ -242,8 +245,7 @@ export class AttachmentPathManager {
       const parts = path.split('/');
       const fileName = ensureNonNullable(parts.at(-1));
       // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
-      validationMessage = await validateFileName({
-        app: this.app,
+      validationMessage = await this.validator.validateFileName({
         areSingleDotsAllowed: false,
         fileName,
         isEmptyAllowed: false,
@@ -280,7 +282,8 @@ export class AttachmentPathManager {
             noteFilePath: params.noteFilePath,
             originalAttachmentFileName: params.attachmentFile.name,
             pluginSettingsComponent: this.pluginSettingsComponent,
-            sequenceNumber: await this.getSequenceNumber(params.noteFilePath, params.attachmentFile.path)
+            sequenceNumber: await this.getSequenceNumber(params.noteFilePath, params.attachmentFile.path),
+            validator: this.validator
           })
         ),
         params.attachmentFile.extension
@@ -378,8 +381,7 @@ export class AttachmentPathManager {
       const resolvedPathParts = resolvedPath.split('/').map((part) => this.cleanFilePathPart(part));
       resolvedPath = resolvedPathParts.join('/');
 
-      const validationError = await validatePath({
-        app: this.app,
+      const validationError = await this.validator.validatePath({
         areTokensAllowed: false,
         path: resolvedPath,
         pluginSettingsComponent: this.pluginSettingsComponent

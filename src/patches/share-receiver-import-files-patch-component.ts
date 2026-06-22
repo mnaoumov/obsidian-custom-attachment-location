@@ -11,7 +11,10 @@ import {
 import type { AttachmentPathManager } from '../attachment-path-manager.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
-import { Substitutions } from '../substitutions.ts';
+import {
+  Substitutions,
+  Validator
+} from '../substitutions.ts';
 import { ActionContext } from '../token-evaluator-context.ts';
 
 interface ShareReceiverImportFilesPatchComponentConstructorParams {
@@ -19,6 +22,7 @@ interface ShareReceiverImportFilesPatchComponentConstructorParams {
   readonly attachmentPathManager: AttachmentPathManager;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly shareReceiver: ShareReceiver;
+  readonly validator: Validator;
 }
 
 export const IMPORT_FILES_PREFIX = '__IMPORT_FILES__';
@@ -28,6 +32,7 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly shareReceiver: ShareReceiver;
+  private readonly validator: Validator;
 
   public constructor(params: ShareReceiverImportFilesPatchComponentConstructorParams) {
     super();
@@ -35,6 +40,7 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
     this.attachmentPathManager = params.attachmentPathManager;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.shareReceiver = params.shareReceiver;
+    this.validator = params.validator;
   }
 
   public override onload(): void {
@@ -56,7 +62,8 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
             attachmentFileContent,
             noteFilePath: this.app.workspace.getActiveFile()?.path ?? '',
             originalAttachmentFileName: file.name,
-            pluginSettingsComponent: this.pluginSettingsComponent
+            pluginSettingsComponent: this.pluginSettingsComponent,
+            validator: this.validator
           });
           const attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(substitutions);
           const attachmentFileExtension = extname(file.name).slice(1);

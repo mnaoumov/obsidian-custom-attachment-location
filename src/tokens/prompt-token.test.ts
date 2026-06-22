@@ -12,7 +12,7 @@ import {
 } from 'vitest';
 
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
-import type { ValidatePathParams } from '../substitutions.ts';
+import type { ValidatorValidatePathParams } from '../substitutions.ts';
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 import { promptWithPreview } from '../prompt-with-preview-modal.ts';
@@ -23,7 +23,7 @@ interface CreateContextParams {
   readonly actionContext: ActionContext;
   readonly format: TokenEvaluatorContext['format'];
   readonly originalAttachmentFileName: string;
-  validatePath?(params: ValidatePathParams): Promise<string>;
+  validatePath?(params: ValidatorValidatePathParams): Promise<string>;
 }
 
 interface PromptWithPreviewParams {
@@ -94,7 +94,7 @@ describe('PromptToken', () => {
   });
 
   it('should validate the prompted value through the context', async () => {
-    const validatePath = vi.fn<(params: ValidatePathParams) => Promise<string>>(() => Promise.resolve('validation-error'));
+    const validatePath = vi.fn<(params: ValidatorValidatePathParams) => Promise<string>>(() => Promise.resolve('validation-error'));
     let capturedValidationResult: null | string = null;
     vi.mocked(promptWithPreview).mockImplementation(async (options) => {
       capturedValidationResult = await options.valueValidator('candidate');

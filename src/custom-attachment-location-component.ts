@@ -34,7 +34,10 @@ import { VaultGetAvailablePathPatchComponent } from './patches/vault-get-availab
 import { VaultGetConfigPatchComponent } from './patches/vault-get-config-patch-component.ts';
 import { WebUtilsGetPathForFilePatchComponent } from './patches/web-utils-get-path-for-file-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
-import { Substitutions } from './substitutions.ts';
+import {
+  Substitutions,
+  Validator
+} from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 
 interface CustomAttachmentLocationComponentConstructorParams {
@@ -46,6 +49,7 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly pluginDir: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly pluginVersion: string;
+  readonly validator: Validator;
 }
 
 export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
@@ -64,10 +68,12 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   private isMarkdownViewPatched = false;
 
   private lastOpenFilePath: null | string = null;
+
   private readonly markdownUrlMap: MarkdownUrlMap;
   private readonly pluginDir: string;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly pluginVersion: string;
+  private readonly validator: Validator;
 
   public constructor(params: CustomAttachmentLocationComponentConstructorParams) {
     super(params.app);
@@ -78,6 +84,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.attachmentPathManager = params.attachmentPathManager;
     this.markdownUrlMap = params.markdownUrlMap;
     this.imageSizeMap = params.imageSizeMap;
+    this.validator = params.validator;
   }
 
   public override onload(): void {
@@ -139,7 +146,8 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         app: this.app,
         attachmentPathManager: this.attachmentPathManager,
         pluginSettingsComponent: this.pluginSettingsComponent,
-        shareReceiver: this.app.shareReceiver
+        shareReceiver: this.app.shareReceiver,
+        validator: this.validator
       })
     );
 

@@ -28,6 +28,7 @@ import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-p
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PrismComponent } from './prism-component.ts';
+import { Validator } from './substitutions.ts';
 
 export class Plugin extends PluginBase {
   protected override createTranslationsMap(): TranslationsMap {
@@ -35,11 +36,16 @@ export class Plugin extends PluginBase {
   }
 
   protected override onloadImpl(): void {
+    const validator = new Validator({
+      app: this.app
+    });
+
     const pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
         app: this.app,
         dataHandler: new PluginDataHandler(this),
-        pluginEventSource: new PluginEventSourceImpl(this)
+        pluginEventSource: new PluginEventSourceImpl(this),
+        validator
       })
     );
 
@@ -48,7 +54,8 @@ export class Plugin extends PluginBase {
     const attachmentPathManager = new AttachmentPathManager({
       app: this.app,
       getAvailablePathForAttachmentsOriginal,
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      validator
     });
 
     const arrayBufferMap = new ArrayBufferMap({
@@ -68,7 +75,8 @@ export class Plugin extends PluginBase {
       imageManager,
       imageSizeMap,
       markdownUrlMap,
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      validator
     });
 
     this.addChild(
@@ -80,7 +88,8 @@ export class Plugin extends PluginBase {
         markdownUrlMap,
         pluginDir: this.manifest.dir ?? '',
         pluginSettingsComponent,
-        pluginVersion: this.manifest.version
+        pluginVersion: this.manifest.version,
+        validator
       })
     );
 
