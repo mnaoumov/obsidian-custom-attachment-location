@@ -47,15 +47,15 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { IMPORT_FILES_PREFIX } from './patches/share-receiver-import-files-patch-component.ts';
-import {
-  Substitutions,
-  TokenValidationMode,
-  Validator
-} from './substitutions.ts';
+import { Substitutions } from './substitutions.ts';
 import {
   ActionContext,
   attachmentPathContextToActionContext
 } from './token-evaluator-context.ts';
+import {
+  TokenValidationMode,
+  TokenValidator
+} from './token-validator.ts';
 
 export interface AttachmentPathManagerGetAvailablePathForAttachmentsParams {
   readonly attachmentFileBaseName: string;
@@ -82,7 +82,7 @@ interface AttachmentPathManagerConstructorParams {
   readonly app: App;
   readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
   readonly pluginSettingsComponent: PluginSettingsComponent;
-  readonly validator: Validator;
+  readonly tokenValidator: TokenValidator;
 }
 
 interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
@@ -100,13 +100,13 @@ export class AttachmentPathManager {
   private readonly app: App;
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
-  private readonly validator: Validator;
+  private readonly tokenValidator: TokenValidator;
 
   public constructor(params: AttachmentPathManagerConstructorParams) {
     this.app = params.app;
     this.getAvailablePathForAttachmentsOriginal = params.getAvailablePathForAttachmentsOriginal;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
-    this.validator = params.validator;
+    this.tokenValidator = params.tokenValidator;
   }
 
   public async getAttachmentFolderFullPathForPath(params: AttachmentPathManagerGetAttachmentFolderFullPathForPathParams): Promise<string> {
@@ -120,7 +120,7 @@ export class AttachmentPathManager {
         oldNoteFilePath: params.oldNoteFilePath,
         originalAttachmentFileName: params.attachmentFileName,
         pluginSettingsComponent: this.pluginSettingsComponent,
-        validator: this.validator
+        tokenValidator: this.tokenValidator
       })
     );
   }
@@ -191,7 +191,7 @@ export class AttachmentPathManager {
             originalAttachmentFileName: attachmentFileName,
             pluginSettingsComponent: this.pluginSettingsComponent,
             sequenceNumber,
-            validator: this.validator
+            tokenValidator: this.tokenValidator
           })
         );
         generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, params.attachmentFileExtension);
@@ -236,7 +236,7 @@ export class AttachmentPathManager {
     baseTemplate ||= this.pluginSettingsComponent.settings.generatedAttachmentFileName;
 
     const path = await this.resolvePathTemplate(baseTemplate, substitutions, true);
-    let validationMessage = await this.validator.validatePath({
+    let validationMessage = await this.tokenValidator.validatePath({
       areTokensAllowed: false,
       path
     });
@@ -244,7 +244,7 @@ export class AttachmentPathManager {
       const parts = path.split('/');
       const fileName = ensureNonNullable(parts.at(-1));
       // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
-      validationMessage = await this.validator.validateFileName({
+      validationMessage = await this.tokenValidator.validateFileName({
         areSingleDotsAllowed: false,
         fileName,
         isEmptyAllowed: false,
@@ -281,7 +281,7 @@ export class AttachmentPathManager {
             originalAttachmentFileName: params.attachmentFile.name,
             pluginSettingsComponent: this.pluginSettingsComponent,
             sequenceNumber: await this.getSequenceNumber(params.noteFilePath, params.attachmentFile.path),
-            validator: this.validator
+            tokenValidator: this.tokenValidator
           })
         ),
         params.attachmentFile.extension
@@ -379,7 +379,7 @@ export class AttachmentPathManager {
       const resolvedPathParts = resolvedPath.split('/').map((part) => this.cleanFilePathPart(part));
       resolvedPath = resolvedPathParts.join('/');
 
-      const validationError = await this.validator.validatePath({
+      const validationError = await this.tokenValidator.validatePath({
         areTokensAllowed: false,
         path: resolvedPath
       });

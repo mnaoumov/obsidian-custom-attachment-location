@@ -21,14 +21,12 @@ import type { MarkdownUrlMap } from './markdown-url-map.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { AttachmentRenameMode } from './plugin-settings.ts';
-import {
-  Substitutions,
-  Validator
-} from './substitutions.ts';
+import { Substitutions } from './substitutions.ts';
 import {
   ActionContext,
   actionContextToAttachmentPathContext
 } from './token-evaluator-context.ts';
+import { TokenValidator } from './token-validator.ts';
 
 interface AttachmentSaverConstructorParams {
   readonly app: App;
@@ -38,7 +36,7 @@ interface AttachmentSaverConstructorParams {
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
   readonly pluginSettingsComponent: PluginSettingsComponent;
-  readonly validator: Validator;
+  readonly tokenValidator: TokenValidator;
 }
 
 const PASTED_IMAGE_NAME_REG_EXP = /Pasted image (?<Timestamp>\d{14})/;
@@ -67,7 +65,7 @@ export class AttachmentSaver {
   private readonly imageSizeMap: ImageSizeMap;
   private readonly markdownUrlMap: MarkdownUrlMap;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
-  private readonly validator: Validator;
+  private readonly tokenValidator: TokenValidator;
 
   public constructor(params: AttachmentSaverConstructorParams) {
     this.app = params.app;
@@ -77,7 +75,7 @@ export class AttachmentSaver {
     this.imageSizeMap = params.imageSizeMap;
     this.markdownUrlMap = params.markdownUrlMap;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
-    this.validator = params.validator;
+    this.tokenValidator = params.tokenValidator;
   }
 
   public async saveAttachment(params: AttachmentSaverSaveAttachmentParams): Promise<TFile> {
@@ -139,7 +137,7 @@ export class AttachmentSaver {
           noteFilePath: activeNoteFile.path,
           originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
           pluginSettingsComponent: this.pluginSettingsComponent,
-          validator: this.validator
+          tokenValidator: this.tokenValidator
         })
       );
     }
@@ -160,7 +158,7 @@ export class AttachmentSaver {
         noteFilePath: activeNoteFile.path,
         originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
         pluginSettingsComponent: this.pluginSettingsComponent,
-        validator: this.validator
+        tokenValidator: this.tokenValidator
       }).fillTemplate(this.pluginSettingsComponent.settings.markdownUrlFormat);
       this.markdownUrlMap.set(attachmentFile.path, markdownUrl);
     } else {

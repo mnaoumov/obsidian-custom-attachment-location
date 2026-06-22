@@ -7,20 +7,15 @@ import type { Promisable } from 'type-fest';
 // eslint-disable-next-line import-x/no-namespace -- Need to pass entire obsidian module.
 import * as obsidian from 'obsidian';
 import { printError } from 'obsidian-dev-utils/error';
-import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/attachment-path';
-import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/validation';
 import {
   basename,
   dirname,
   extname
 } from 'obsidian-dev-utils/path';
-import {
-  trimEnd,
-  trimStart
-} from 'obsidian-dev-utils/string';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
+import type { TokenValidator } from './token-validator.ts';
 import type { TokenBase } from './tokens/token-base.ts';
 
 import { ActionContext } from './token-evaluator-context.ts';
@@ -52,28 +47,6 @@ import { UuidToken } from './tokens/uuid-token.ts';
 
 export type TokenEvaluator = (ctx: TokenEvaluatorContext) => Promisable<string>;
 
-interface Token {
-  end: number;
-  formatText: null | string;
-  raw: string;
-  start: number;
-  token: string;
-}
-
-const MORE_THAN_TWO_DOTS_REG_EXP = /^\.{3,}$/;
-const TRAILING_DOTS_REG_EXP = /\.+$/;
-
-export enum TokenValidationMode {
-  Error = 'Error',
-  Skip = 'Skip',
-  Validate = 'Validate'
-}
-
-export interface ValidatorValidatePathParams {
-  readonly areTokensAllowed: boolean;
-  readonly path: string;
-}
-
 type RegisterCustomTokenFn = (token: string, evaluator: TokenEvaluator) => void;
 
 type RegisterCustomTokensWrapperFn = (registerCustomToken: RegisterCustomTokenFn) => void;
@@ -91,151 +64,7 @@ interface SubstitutionsConstructorParams {
   readonly originalAttachmentFileName?: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly sequenceNumber?: number | undefined;
-  readonly validator: Validator;
-}
-
-interface ValidatorConstructorParams {
-  readonly app: App;
-  readonly pluginSettingsComponent: PluginSettingsComponent;
-}
-
-interface ValidatorValidateFileNameParams {
-  readonly areSingleDotsAllowed: boolean;
-  readonly fileName: string;
-  readonly isEmptyAllowed: boolean;
-  readonly tokenValidationMode: TokenValidationMode;
-}
-
-export class Validator {
-  private readonly app: App;
-  private readonly pluginSettingsComponent: PluginSettingsComponent;
-
-  public constructor(params: ValidatorConstructorParams) {
-    this.app = params.app;
-    this.pluginSettingsComponent = params.pluginSettingsComponent;
-  }
-
-  public async validateFileName(params: ValidatorValidateFileNameParams): Promise<string> {
-    switch (params.tokenValidationMode) {
-      case TokenValidationMode.Error: {
-        if (scanTokens(params.fileName, { throwOnError: false }).length > 0) {
-          return 'Tokens are not allowed in file name';
-        }
-        break;
-      }
-      case TokenValidationMode.Skip:
-        break;
-      case TokenValidationMode.Validate: {
-        const validationMessage = await this.validateTokens(params.fileName);
-        if (validationMessage) {
-          return validationMessage;
-        }
-        break;
-      }
-      default:
-        throw new Error(`Invalid token validation mode: ${params.tokenValidationMode as string}`);
-    }
-
-    let cleanFileName: string;
-    try {
-      cleanFileName = removeTokens(params.fileName);
-    } catch {
-      return `Invalid token syntax in file name "${params.fileName}"`;
-    }
-
-    if (cleanFileName === '.' || cleanFileName === '..') {
-      return params.areSingleDotsAllowed ? '' : 'Single dots are not allowed in file name';
-    }
-
-    if (!cleanFileName) {
-      return params.isEmptyAllowed ? '' : 'File name is empty';
-    }
-
-    if (getOsUnsafePathCharsRegExp().test(cleanFileName)) {
-      return `File name "${params.fileName}" contains invalid symbols`;
-    }
-
-    if (MORE_THAN_TWO_DOTS_REG_EXP.test(cleanFileName)) {
-      return `File name "${params.fileName}" contains more than two dots`;
-    }
-
-    if (TRAILING_DOTS_REG_EXP.test(cleanFileName)) {
-      return `File name "${params.fileName}" contains trailing dots`;
-    }
-
-    return '';
-  }
-
-  public async validatePath(params: ValidatorValidatePathParams): Promise<string> {
-    if (params.areTokensAllowed) {
-      const unknownToken = await this.validateTokens(params.path);
-      if (unknownToken) {
-        return `Unknown token: ${unknownToken}`;
-      }
-    } else if (scanTokens(params.path, { throwOnError: false }).length > 0) {
-      return 'Tokens are not allowed in path';
-    }
-
-    let path = trimStart(params.path, '/');
-    path = trimEnd(path, '/');
-
-    if (path === '') {
-      return '';
-    }
-
-    const pathParts = path.split('/');
-    for (const part of pathParts) {
-      const partValidationError = await this.validateFileName({
-        areSingleDotsAllowed: true,
-        fileName: part,
-        isEmptyAllowed: true,
-        tokenValidationMode: TokenValidationMode.Skip
-      });
-
-      if (partValidationError) {
-        return partValidationError;
-      }
-    }
-
-    return '';
-  }
-
-  private async validateTokens(str: string): Promise<null | string> {
-    const FAKE_SUBSTITUTION = new Substitutions({
-      actionContext: ActionContext.ValidateTokens,
-      app: this.app,
-      noteFilePath: DUMMY_PATH,
-      originalAttachmentFileName: DUMMY_PATH,
-      pluginSettingsComponent: this.pluginSettingsComponent,
-      validator: this
-    });
-
-    const tokens = extractTokens(str);
-
-    for (const t of tokens) {
-      if (!Substitutions.isRegisteredToken(t.token)) {
-        return `Unknown token '${t.token}'.`;
-      }
-
-      // Validate the format object is parseable JSON5 (if present).
-      if (t.formatText !== null) {
-        try {
-          parseFormatObject(t.formatText, t.token);
-        } catch (e) {
-          return `Invalid format for token '${t.token}': ${(e as Error).message}`;
-        }
-      }
-
-      // Validate token-specific schema by evaluating in a safe context.
-      try {
-        await FAKE_SUBSTITUTION.fillTemplate(t.raw);
-      } catch (e) {
-        return `Invalid token '${t.raw}': ${(e as Error).message}`;
-      }
-    }
-
-    return null;
-  }
+  readonly tokenValidator: TokenValidator;
 }
 
 export class Substitutions {
@@ -264,7 +93,7 @@ export class Substitutions {
   private readonly originalAttachmentFileName: string;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly sequenceNumber: number | undefined;
-  private readonly validator: Validator;
+  private readonly tokenValidator: TokenValidator;
 
   public constructor(params: SubstitutionsConstructorParams) {
     this.app = params.app;
@@ -306,7 +135,7 @@ export class Substitutions {
     }
 
     this.sequenceNumber = params.sequenceNumber;
-    this.validator = params.validator;
+    this.tokenValidator = params.tokenValidator;
   }
 
   public static isRegisteredToken(token: string): boolean {
@@ -396,8 +225,8 @@ export class Substitutions {
         token: t.token,
         tokenEndOffset: t.end,
         tokenStartOffset: t.start,
-        tokenWithFormat: t.raw,
-        validator: this.validator
+        tokenValidator: this.tokenValidator,
+        tokenWithFormat: t.raw
       };
 
       const evaluated = await token.evaluate(ctx);
@@ -434,21 +263,4 @@ export function parseCustomTokens(customTokensStr: string): CustomToken[] | null
 
 function dotToEmpty(name: string): string {
   return name === '.' ? '' : name;
-}
-
-function extractTokens(str: string): Token[] {
-  return scanTokens(str, { throwOnError: false });
-}
-
-function removeTokens(str: string): string {
-  const tokens = scanTokens(str);
-  let out = '';
-  let lastOffset = 0;
-  for (const t of tokens) {
-    out += str.slice(lastOffset, t.start);
-    out += `__${t.token}__`;
-    lastOffset = t.end;
-  }
-  out += str.slice(lastOffset);
-  return out;
 }

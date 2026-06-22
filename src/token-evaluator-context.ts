@@ -6,7 +6,7 @@ import type {
 import { AttachmentPathContext } from 'obsidian-dev-utils/obsidian/attachment-path';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-import type { Validator } from './substitutions.ts';
+import type { TokenValidator } from './token-validator.ts';
 
 /**
  * An action context.
@@ -214,14 +214,14 @@ export interface TokenEvaluatorContext {
   tokenStartOffset: number;
 
   /**
+   * Validator.
+   */
+  tokenValidator: TokenValidator;
+
+  /**
    * A token with the format.
    */
   tokenWithFormat: string;
-
-  /**
-   * Validator.
-   */
-  validator: Validator;
 }
 
 /**

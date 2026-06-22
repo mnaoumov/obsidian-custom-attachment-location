@@ -26,11 +26,11 @@ import {
   ConvertImagesToJpegMode,
   PluginSettings
 } from './plugin-settings.ts';
+import { parseCustomTokens } from './substitutions.ts';
 import {
-  parseCustomTokens,
   TokenValidationMode,
-  Validator
-} from './substitutions.ts';
+  TokenValidator
+} from './token-validator.ts';
 
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
 
@@ -38,7 +38,7 @@ interface PluginSettingsComponentConstructorParams {
   readonly app: App;
   readonly dataHandler: DataHandler;
   readonly pluginEventSource: PluginEventSource;
-  readonly validatorWrapper: ValueWrapper<Validator>;
+  readonly validatorWrapper: ValueWrapper<TokenValidator>;
 }
 
 class LegacySettings {
@@ -247,9 +247,9 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 
   private lastCustomTokenValidatorResult: string | undefined = undefined;
 
-  private readonly validatorWrapper: ValueWrapper<Validator>;
+  private readonly validatorWrapper: ValueWrapper<TokenValidator>;
 
-  private get validator(): Validator {
+  private get validator(): TokenValidator {
     return this.validatorWrapper.value;
   }
 
