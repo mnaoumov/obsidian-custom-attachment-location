@@ -96,12 +96,29 @@ export interface AttachmentSaverGetAvailablePathForAttachmentsParams {
   readonly shouldSkipMissingAttachmentFolderCreation: boolean | undefined;
 }
 
+interface AttachmentSaverSaveAttachmentCoreParams {
+  readonly attachmentFileBaseName: string;
+  readonly attachmentFileContent: ArrayBuffer;
+  readonly attachmentFileExtension: string;
+}
+
+interface AttachmentSaverSaveAttachmentParams {
+  readonly attachmentFileBaseName: string;
+  readonly attachmentFileContent: ArrayBuffer;
+  readonly attachmentFileExtension: string;
+}
+
 type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
 
 interface PluginConvertImageToJpegParams {
   readonly attachmentFileContent: ArrayBuffer;
   readonly attachmentFileExtension: string;
   readonly isPastedImage: boolean;
+}
+
+interface PluginConvertImageToJpegResult {
+  readonly attachmentFileContent: ArrayBuffer;
+  readonly attachmentFileExtension: string;
 }
 
 export class AttachmentSaver {
@@ -216,14 +233,18 @@ export class AttachmentSaver {
     return attachmentPath;
   }
 
-  public async saveAttachment(
-    attachmentFileBaseName: string,
-    attachmentFileExtension: string,
-    attachmentFileContent: ArrayBuffer
-  ): Promise<TFile> {
+  public async saveAttachment(params: AttachmentSaverSaveAttachmentParams): Promise<TFile> {
+    let attachmentFileBaseName = params.attachmentFileBaseName;
+    let attachmentFileContent = params.attachmentFileContent;
+    let attachmentFileExtension = params.attachmentFileExtension;
+
     const activeNoteFile = this.app.workspace.getActiveFile();
     if (!activeNoteFile || this.pluginSettingsComponent.settings.isPathIgnored(activeNoteFile.path)) {
-      return await this.saveAttachmentCore(attachmentFileBaseName, attachmentFileExtension, attachmentFileContent);
+      return await this.saveAttachmentCore({
+        attachmentFileBaseName,
+        attachmentFileContent,
+        attachmentFileExtension
+      });
     }
 
     let isPastedImage = false;
@@ -238,14 +259,13 @@ export class AttachmentSaver {
       }
     }
 
-    let convertImageToJpegOptions: PluginConvertImageToJpegParams = {
+    const convertImageToJpegResult = await this.convertImageToJpeg({
       attachmentFileContent,
       attachmentFileExtension,
       isPastedImage
-    };
-    convertImageToJpegOptions = await this.convertImageToJpeg(convertImageToJpegOptions);
-    attachmentFileExtension = convertImageToJpegOptions.attachmentFileExtension;
-    attachmentFileContent = convertImageToJpegOptions.attachmentFileContent;
+    });
+    attachmentFileExtension = convertImageToJpegResult.attachmentFileExtension;
+    attachmentFileContent = convertImageToJpegResult.attachmentFileContent;
 
     let shouldRename = false;
 
@@ -276,7 +296,11 @@ export class AttachmentSaver {
       );
     }
 
-    const attachmentFile = await this.saveAttachmentCore(attachmentFileBaseName, attachmentFileExtension, attachmentFileContent);
+    const attachmentFile = await this.saveAttachmentCore({
+      attachmentFileBaseName,
+      attachmentFileContent,
+      attachmentFileExtension
+    });
     if (this.pluginSettingsComponent.settings.markdownUrlFormat) {
       const markdownUrl = await new Substitutions({
         actionContext: ActionContext.SaveAttachment,
@@ -296,7 +320,7 @@ export class AttachmentSaver {
     return attachmentFile;
   }
 
-  private async convertImageToJpeg(params: PluginConvertImageToJpegParams): Promise<PluginConvertImageToJpegParams> {
+  private async convertImageToJpeg(params: PluginConvertImageToJpegParams): Promise<PluginConvertImageToJpegResult> {
     const mimeType = getMimeType(params.attachmentFileExtension);
     let shouldConvertImageToJpeg = false;
 
@@ -324,7 +348,6 @@ export class AttachmentSaver {
 
     if (shouldConvertImageToJpeg && mimeType) {
       return {
-        ...params,
         attachmentFileContent: await blobToJpegArrayBuffer(
           new Blob([params.attachmentFileContent], { type: mimeType }),
           this.pluginSettingsComponent.settings.jpegQuality
@@ -333,7 +356,10 @@ export class AttachmentSaver {
       };
     }
 
-    return params;
+    return {
+      attachmentFileContent: params.attachmentFileContent,
+      attachmentFileExtension: params.attachmentFileExtension
+    };
   }
 
   private async getCursorLine(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
@@ -365,35 +391,31 @@ export class AttachmentSaver {
     return 0;
   }
 
-  private async saveAttachmentCore(
-    attachmentFileBaseName: string,
-    attachmentFileExtension: string,
-    attachmentFileContent: ArrayBuffer
-  ): Promise<TFile> {
+  private async saveAttachmentCore(params: AttachmentSaverSaveAttachmentCoreParams): Promise<TFile> {
     const noteFile = this.app.workspace.getActiveFile();
-    const attachmentFileStats = this.arrayBufferMap.getFileStats(attachmentFileContent);
+    const attachmentFileStats = this.arrayBufferMap.getFileStats(params.attachmentFileContent);
 
     const attachmentPath = await this.getAvailablePathForAttachments({
-      attachmentFileBaseName,
-      attachmentFileContent,
-      attachmentFileExtension,
+      attachmentFileBaseName: params.attachmentFileBaseName,
+      attachmentFileContent: params.attachmentFileContent,
+      attachmentFileExtension: params.attachmentFileExtension,
       attachmentFileStats,
       context: actionContextToAttachmentPathContext(ActionContext.SaveAttachment),
       notePathOrFile: noteFile,
-      oldAttachmentPathOrFile: makeFileName(attachmentFileBaseName, attachmentFileExtension),
+      oldAttachmentPathOrFile: makeFileName(params.attachmentFileBaseName, params.attachmentFileExtension),
       shouldSkipDuplicateCheck: false,
       shouldSkipGeneratedAttachmentFileName: true,
       shouldSkipMissingAttachmentFolderCreation: false
     });
 
-    const imageSize = await getImageSize(attachmentFileExtension, attachmentFileContent, this.pluginSettingsComponent);
+    const imageSize = await getImageSize(params.attachmentFileExtension, params.attachmentFileContent, this.pluginSettingsComponent);
     if (imageSize !== null) {
       this.imageSizeMap.set(attachmentPath, imageSize);
     }
 
     return await this.app.vault.createBinary(
       attachmentPath,
-      attachmentFileContent,
+      params.attachmentFileContent,
       removeUndefinedProperties(normalizeOptionalProperties<DataWriteOptions>({
         ctime: attachmentFileStats?.ctime ? Math.trunc(attachmentFileStats.ctime) : undefined,
         mtime: attachmentFileStats?.mtime ? Math.trunc(attachmentFileStats.mtime) : undefined

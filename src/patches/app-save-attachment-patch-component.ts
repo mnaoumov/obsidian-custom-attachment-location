@@ -26,7 +26,11 @@ export class AppSaveAttachmentPatchComponent extends MonkeyAroundComponent {
       patchHandler: ({
         originalArgs: [name, extension, data]
       }) => {
-        return this.attachmentSaver.saveAttachment(name, extension, data);
+        return this.attachmentSaver.saveAttachment({
+          attachmentFileBaseName: name,
+          attachmentFileContent: data,
+          attachmentFileExtension: extension
+        });
       }
     });
   }
