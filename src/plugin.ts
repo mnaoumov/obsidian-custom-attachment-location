@@ -10,6 +10,7 @@ import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/compon
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
+import { ValueWrapper } from 'obsidian-dev-utils/value-wrapper';
 
 import { ArrayBufferMap } from './array-buffer-map.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
@@ -36,18 +37,23 @@ export class Plugin extends PluginBase {
   }
 
   protected override onloadImpl(): void {
-    const validator = new Validator({
-      app: this.app
-    });
+    const validatorWrapper = ValueWrapper.unset<Validator>();
 
     const pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
         app: this.app,
         dataHandler: new PluginDataHandler(this),
         pluginEventSource: new PluginEventSourceImpl(this),
-        validator
+        validatorWrapper
       })
     );
+
+    const validator = new Validator({
+      app: this.app,
+      pluginSettingsComponent
+    });
+
+    validatorWrapper.value = validator;
 
     const getAvailablePathForAttachmentsOriginal = this.app.vault.getAvailablePathForAttachments.bind(this.app.vault);
 

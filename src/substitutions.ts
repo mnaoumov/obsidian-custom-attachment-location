@@ -72,7 +72,6 @@ export enum TokenValidationMode {
 export interface ValidatorValidatePathParams {
   readonly areTokensAllowed: boolean;
   readonly path: string;
-  readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 type RegisterCustomTokenFn = (token: string, evaluator: TokenEvaluator) => void;
@@ -97,21 +96,23 @@ interface SubstitutionsConstructorParams {
 
 interface ValidatorConstructorParams {
   readonly app: App;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 interface ValidatorValidateFileNameParams {
   readonly areSingleDotsAllowed: boolean;
   readonly fileName: string;
   readonly isEmptyAllowed: boolean;
-  readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly tokenValidationMode: TokenValidationMode;
 }
 
 export class Validator {
   private readonly app: App;
+  private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: ValidatorConstructorParams) {
     this.app = params.app;
+    this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
   public async validateFileName(params: ValidatorValidateFileNameParams): Promise<string> {
@@ -125,7 +126,7 @@ export class Validator {
       case TokenValidationMode.Skip:
         break;
       case TokenValidationMode.Validate: {
-        const validationMessage = await this.validateTokens(params.fileName, params.pluginSettingsComponent);
+        const validationMessage = await this.validateTokens(params.fileName);
         if (validationMessage) {
           return validationMessage;
         }
@@ -167,7 +168,7 @@ export class Validator {
 
   public async validatePath(params: ValidatorValidatePathParams): Promise<string> {
     if (params.areTokensAllowed) {
-      const unknownToken = await this.validateTokens(params.path, params.pluginSettingsComponent);
+      const unknownToken = await this.validateTokens(params.path);
       if (unknownToken) {
         return `Unknown token: ${unknownToken}`;
       }
@@ -188,7 +189,6 @@ export class Validator {
         areSingleDotsAllowed: true,
         fileName: part,
         isEmptyAllowed: true,
-        pluginSettingsComponent: params.pluginSettingsComponent,
         tokenValidationMode: TokenValidationMode.Skip
       });
 
@@ -200,13 +200,13 @@ export class Validator {
     return '';
   }
 
-  private async validateTokens(str: string, pluginSettingsComponent: PluginSettingsComponent): Promise<null | string> {
+  private async validateTokens(str: string): Promise<null | string> {
     const FAKE_SUBSTITUTION = new Substitutions({
       actionContext: ActionContext.ValidateTokens,
       app: this.app,
       noteFilePath: DUMMY_PATH,
       originalAttachmentFileName: DUMMY_PATH,
-      pluginSettingsComponent,
+      pluginSettingsComponent: this.pluginSettingsComponent,
       validator: this
     });
 

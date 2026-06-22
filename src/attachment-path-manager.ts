@@ -238,8 +238,7 @@ export class AttachmentPathManager {
     const path = await this.resolvePathTemplate(baseTemplate, substitutions, true);
     let validationMessage = await this.validator.validatePath({
       areTokensAllowed: false,
-      path,
-      pluginSettingsComponent: this.pluginSettingsComponent
+      path
     });
     if (!validationMessage) {
       const parts = path.split('/');
@@ -249,7 +248,6 @@ export class AttachmentPathManager {
         areSingleDotsAllowed: false,
         fileName,
         isEmptyAllowed: false,
-        pluginSettingsComponent: this.pluginSettingsComponent,
         tokenValidationMode: TokenValidationMode.Error
       });
     }
@@ -383,8 +381,7 @@ export class AttachmentPathManager {
 
       const validationError = await this.validator.validatePath({
         areTokensAllowed: false,
-        path: resolvedPath,
-        pluginSettingsComponent: this.pluginSettingsComponent
+        path: resolvedPath
       });
       if (validationError) {
         throw new Error(`Resolved path ${resolvedPath} is invalid: ${validationError}`);

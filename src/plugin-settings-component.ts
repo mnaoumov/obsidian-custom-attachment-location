@@ -2,6 +2,7 @@ import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
+import type { ValueWrapper } from 'obsidian-dev-utils/value-wrapper';
 
 import {
   App,
@@ -37,7 +38,7 @@ interface PluginSettingsComponentConstructorParams {
   readonly app: App;
   readonly dataHandler: DataHandler;
   readonly pluginEventSource: PluginEventSource;
-  readonly validator: Validator;
+  readonly validatorWrapper: ValueWrapper<Validator>;
 }
 
 class LegacySettings {
@@ -241,10 +242,16 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   public shouldDebounceCustomTokensValidation = false;
 
   private readonly app: App;
+
   private readonly customTokensValidatorDebounced = debounce(this.customTokensValidatorImpl.bind(this), CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS);
 
   private lastCustomTokenValidatorResult: string | undefined = undefined;
-  private readonly validator: Validator;
+
+  private readonly validatorWrapper: ValueWrapper<Validator>;
+
+  private get validator(): Validator {
+    return this.validatorWrapper.value;
+  }
 
   public constructor(params: PluginSettingsComponentConstructorParams) {
     super({
@@ -252,7 +259,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       pluginSettingsClass: PluginSettings
     });
     this.app = params.app;
-    this.validator = params.validator;
+    this.validatorWrapper = params.validatorWrapper;
   }
 
   public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
@@ -283,14 +290,12 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     this.registerValidator('attachmentFolderPath', async (value) =>
       await this.validator.validatePath({
         areTokensAllowed: true,
-        path: value,
-        pluginSettingsComponent: this
+        path: value
       }));
     this.registerValidator('generatedAttachmentFileName', async (value) =>
       await this.validator.validatePath({
         areTokensAllowed: true,
-        path: value,
-        pluginSettingsComponent: this
+        path: value
       }));
 
     this.registerValidator('specialCharactersReplacement', (value): MaybeReturn<string> => {
@@ -311,7 +316,6 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
         areSingleDotsAllowed: false,
         fileName: `foo${value}1`,
         isEmptyAllowed: false,
-        pluginSettingsComponent: this,
         tokenValidationMode: TokenValidationMode.Error
       });
     });
