@@ -1,16 +1,10 @@
 import { loadPrism } from '@obsidian-typings/obsidian-public-latest/implementations';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import { ComponentEx } from 'obsidian-dev-utils/obsidian/components/component-ex';
 
 export const TOKENIZED_STRING_LANGUAGE = 'custom-attachment-location-tokenized-string';
 
 export class PrismComponent extends ComponentEx {
-  public override onload(): void {
-    super.onload();
-    invokeAsyncSafely(this.initPrism.bind(this));
-  }
-
-  private async initPrism(): Promise<void> {
+  public override async onloadAsync(): Promise<void> {
     const prism = await loadPrism();
 
     const javascriptLanguage = prism.languages['javascript'];
