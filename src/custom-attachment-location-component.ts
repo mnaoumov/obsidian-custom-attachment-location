@@ -22,7 +22,6 @@ import { compare } from 'semver';
 
 import type { ArrayBufferMap } from './array-buffer-map.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
-import type { AttachmentSaver } from './attachment-saver.ts';
 import type { ImageSizeMap } from './image-size-map.ts';
 import type { MarkdownUrlMap } from './markdown-url-map.ts';
 
@@ -42,7 +41,6 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly app: App;
   readonly arrayBufferMap: ArrayBufferMap;
   readonly attachmentPathManager: AttachmentPathManager;
-  readonly attachmentSaver: AttachmentSaver;
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
   readonly pluginDir: string;
@@ -66,7 +64,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
 
   private readonly attachmentPathManager: AttachmentPathManager;
 
-  private readonly attachmentSaver: AttachmentSaver;
   private readonly imageSizeMap: ImageSizeMap;
   private isMarkdownViewPatched = false;
   private lastOpenFilePath: null | string = null;
@@ -76,7 +73,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   public constructor(params: CustomAttachmentLocationComponentConstructorParams) {
     super(params.app);
     this.arrayBufferMap = params.arrayBufferMap;
-    this.attachmentSaver = params.attachmentSaver;
     this.pluginName = params.pluginName;
     this.pluginVersion = params.pluginVersion;
     this.pluginDir = params.pluginDir;
@@ -101,7 +97,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
 
     this.addChild(
       new VaultGetAvailablePathForAttachmentsPatchComponent({
-        attachmentSaver: this.attachmentSaver,
+        attachmentPathManager: this.attachmentPathManager,
         vault: this.app.vault
       })
     );

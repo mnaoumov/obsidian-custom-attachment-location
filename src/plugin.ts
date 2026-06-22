@@ -43,8 +43,11 @@ export class Plugin extends PluginBase {
       })
     );
 
+    const getAvailablePathForAttachmentsOriginal = this.app.vault.getAvailablePathForAttachments.bind(this.app.vault);
+
     const attachmentPathManager = new AttachmentPathManager({
       app: this.app,
+      getAvailablePathForAttachmentsOriginal,
       pluginSettingsComponent
     });
 
@@ -73,7 +76,6 @@ export class Plugin extends PluginBase {
         app: this.app,
         arrayBufferMap,
         attachmentPathManager,
-        attachmentSaver,
         imageSizeMap,
         markdownUrlMap,
         pluginDir: this.manifest.dir ?? '',

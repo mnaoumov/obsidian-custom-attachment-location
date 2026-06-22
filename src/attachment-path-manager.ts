@@ -2,39 +2,75 @@ import type {
   App,
   FileStats,
   Reference,
-  TFile
+  TFile,
+  Vault
 } from 'obsidian';
 import type { PathOrFile } from 'obsidian-dev-utils/obsidian/file-system';
 
-import { isReferenceCache } from '@obsidian-typings/obsidian-public-latest/implementations';
+import {
+  isReferenceCache,
+  parentFolderPath
+} from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   normalizePath,
   Notice
 } from 'obsidian';
 import { printError } from 'obsidian-dev-utils/error';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
-import { getFileOrNull } from 'obsidian-dev-utils/obsidian/file-system';
+import {
+  AttachmentPathContext,
+  DUMMY_PATH,
+  getAvailablePathForAttachments
+} from 'obsidian-dev-utils/obsidian/attachment-path';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import {
+  getFileOrNull,
+  getPath,
+  isNote
+} from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
 import {
   getAllLinks,
   getCacheSafe
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 import {
+  basename,
+  dirname,
   join,
   makeFileName
 } from 'obsidian-dev-utils/path';
+import { trimStart } from 'obsidian-dev-utils/string';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { IMPORT_FILES_PREFIX } from './patches/share-receiver-import-files-patch-component.ts';
 import {
   Substitutions,
   TokenValidationMode,
   validateFileName,
   validatePath
 } from './substitutions.ts';
-import { ActionContext } from './token-evaluator-context.ts';
+import {
+  ActionContext,
+  attachmentPathContextToActionContext
+} from './token-evaluator-context.ts';
+
+export interface AttachmentPathManagerGetAvailablePathForAttachmentsParams {
+  readonly attachmentFileBaseName: string;
+  readonly attachmentFileContent?: ArrayBuffer | undefined;
+  readonly attachmentFileExtension: string;
+  readonly attachmentFileStats?: FileStats | undefined;
+  readonly context: AttachmentPathContext;
+  readonly notePathOrFile: null | PathOrFile;
+  readonly oldAttachmentPathOrFile: PathOrFile;
+  readonly oldNotePathOrFile?: PathOrFile | undefined;
+  readonly shouldSkipDuplicateCheck?: boolean;
+  readonly shouldSkipGeneratedAttachmentFileName?: boolean;
+  readonly shouldSkipMissingAttachmentFolderCreation: boolean | undefined;
+}
 
 export interface AttachmentPathManagerGetProperAttachmentPathParams {
   readonly actionContext: ActionContext;
@@ -45,6 +81,7 @@ export interface AttachmentPathManagerGetProperAttachmentPathParams {
 
 interface AttachmentPathManagerConstructorParams {
   readonly app: App;
+  readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -57,12 +94,16 @@ interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
   readonly oldNoteFilePath?: string | undefined;
 }
 
+type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
+
 export class AttachmentPathManager {
   private readonly app: App;
+  private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: AttachmentPathManagerConstructorParams) {
     this.app = params.app;
+    this.getAvailablePathForAttachmentsOriginal = params.getAvailablePathForAttachmentsOriginal;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -79,6 +120,99 @@ export class AttachmentPathManager {
         pluginSettingsComponent: this.pluginSettingsComponent
       })
     );
+  }
+
+  public async getAvailablePathForAttachments(params: AttachmentPathManagerGetAvailablePathForAttachmentsParams): Promise<string> {
+    let attachmentFileBaseName = params.attachmentFileBaseName;
+    let attachmentFileContent = params.attachmentFileContent;
+    let attachmentFileStats = params.attachmentFileStats;
+    let shouldSkipGeneratedAttachmentFileName = params.shouldSkipGeneratedAttachmentFileName;
+
+    if (attachmentFileBaseName === DUMMY_PATH) {
+      attachmentFileContent ??= new ArrayBuffer(0);
+      const now = Math.trunc(Date.now());
+      attachmentFileStats ??= {
+        ctime: now,
+        mtime: now,
+        size: 0
+      };
+    }
+
+    const noteFile = getFileOrNull(this.app, params.notePathOrFile);
+    const noteFilePath = params.notePathOrFile ? getPath(this.app, params.notePathOrFile) : undefined;
+    const oldNoteFilePath = params.oldNotePathOrFile ? getPath(this.app, params.oldNotePathOrFile) : undefined;
+
+    if (attachmentFileBaseName.startsWith(IMPORT_FILES_PREFIX)) {
+      attachmentFileBaseName = trimStart(attachmentFileBaseName, IMPORT_FILES_PREFIX);
+      shouldSkipGeneratedAttachmentFileName = true;
+    }
+    if (noteFile && this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
+      return this.getAvailablePathForAttachmentsOriginal(attachmentFileBaseName, params.attachmentFileExtension, noteFile);
+    }
+
+    let attachmentPath: string;
+    if (!noteFilePath || !isNote(this.app, noteFilePath)) {
+      attachmentPath = await getAvailablePathForAttachments({
+        app: this.app,
+        attachmentFileBaseName,
+        attachmentFileExtension: params.attachmentFileExtension,
+        notePathOrFile: params.notePathOrFile,
+        shouldSkipDuplicateCheck: params.shouldSkipDuplicateCheck ?? false,
+        shouldSkipMissingAttachmentFolderCreation: params.shouldSkipMissingAttachmentFolderCreation ?? true
+      });
+    } else {
+      const attachmentFileName = makeFileName(attachmentFileBaseName, params.attachmentFileExtension);
+      const attachmentFolderFullPath = await this.getAttachmentFolderFullPathForPath({
+        actionContext: attachmentPathContextToActionContext(params.context),
+        attachmentFileContent,
+        attachmentFileName,
+        attachmentFileStats,
+        notePath: noteFilePath,
+        oldNoteFilePath
+      });
+      let generatedAttachmentFileName: string;
+      if (shouldSkipGeneratedAttachmentFileName) {
+        generatedAttachmentFileName = attachmentFileName;
+      } else {
+        const cursorLine = await this.getCursorLine(noteFilePath, params.oldAttachmentPathOrFile);
+        const sequenceNumber = await this.getSequenceNumber(noteFilePath, params.oldAttachmentPathOrFile);
+        const generatedAttachmentFileBaseName = await this.getGeneratedAttachmentFileBaseName(
+          new Substitutions({
+            actionContext: attachmentPathContextToActionContext(params.context),
+            app: this.app,
+            attachmentFileContent,
+            attachmentFileStats,
+            cursorLine,
+            noteFilePath,
+            oldNoteFilePath,
+            originalAttachmentFileName: attachmentFileName,
+            pluginSettingsComponent: this.pluginSettingsComponent,
+            sequenceNumber
+          })
+        );
+        generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, params.attachmentFileExtension);
+      }
+      const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
+      if (params.shouldSkipDuplicateCheck) {
+        attachmentPath = generatedAttachmentFileNamePath;
+      } else {
+        const dir = dirname(generatedAttachmentFileNamePath);
+        const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.attachmentFileExtension ? `.${params.attachmentFileExtension}` : '');
+        attachmentPath = this.app.vault.getAvailablePath(join(dir, generatedAttachmentFileNameBaseName), params.attachmentFileExtension);
+      }
+    }
+
+    if (!params.shouldSkipMissingAttachmentFolderCreation) {
+      const folderPath = parentFolderPath(attachmentPath);
+      if (!await this.app.vault.exists(folderPath)) {
+        await createFolderSafe(this.app, folderPath);
+        if (this.pluginSettingsComponent.settings.emptyFolderBehavior === EmptyFolderBehavior.Keep) {
+          await this.app.vault.create(join(folderPath, '.gitkeep'), '');
+        }
+      }
+    }
+
+    return attachmentPath;
   }
 
   public async getGeneratedAttachmentFileBaseName(substitutions: Substitutions): Promise<string> {
@@ -207,6 +341,35 @@ export class AttachmentPathManager {
 
   private async getAttachmentFolderPath(substitutions: Substitutions): Promise<string> {
     return await this.resolvePathTemplate(this.pluginSettingsComponent.settings.attachmentFolderPath, substitutions, false);
+  }
+
+  private async getCursorLine(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
+    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
+    if (!oldAttachmentFile) {
+      return 0;
+    }
+
+    const cache = await getCacheSafe(this.app, noteFilePath);
+    if (!cache) {
+      return 0;
+    }
+
+    for (const link of getAllLinks(cache)) {
+      if (!isReferenceCache(link)) {
+        continue;
+      }
+
+      const linkFile = extractLinkFile(this.app, link, noteFilePath);
+      if (!linkFile) {
+        continue;
+      }
+
+      if (linkFile === oldAttachmentFile) {
+        return link.position.start.line;
+      }
+    }
+
+    return 0;
   }
 
   private async resolvePathTemplate(template: string, substitutions: Substitutions, isFileNamePart: boolean): Promise<string> {

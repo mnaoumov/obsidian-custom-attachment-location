@@ -2,21 +2,21 @@ import type { Vault } from 'obsidian';
 
 import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 
-import type { AttachmentSaver } from '../attachment-saver.ts';
+import type { AttachmentPathManager } from '../attachment-path-manager.ts';
 
 interface VaultGetAvailablePathForAttachmentsPatchComponentConstructorParams {
-  readonly attachmentSaver: AttachmentSaver;
+  readonly attachmentPathManager: AttachmentPathManager;
   readonly vault: Vault;
 }
 
 export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAroundComponent {
-  private readonly attachmentSaver: AttachmentSaver;
+  private readonly attachmentPathManager: AttachmentPathManager;
   private readonly vault: Vault;
 
   public constructor(params: VaultGetAvailablePathForAttachmentsPatchComponentConstructorParams) {
     super();
     this.vault = params.vault;
-    this.attachmentSaver = params.attachmentSaver;
+    this.attachmentPathManager = params.attachmentPathManager;
   }
 
   public override onload(): void {
@@ -32,7 +32,7 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
         patchedMethod
       }) => {
         return Object.assign(patchedMethod, {
-          extended: this.attachmentSaver.getAvailablePathForAttachments.bind(this.attachmentSaver)
+          extended: this.attachmentPathManager.getAvailablePathForAttachments.bind(this.attachmentPathManager)
         });
       }
     });
