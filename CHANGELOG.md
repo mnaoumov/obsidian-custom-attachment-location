@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 10.3.8
+
+- refactor: new template
+
 ## 10.3.7
 
 - chore: update version script
