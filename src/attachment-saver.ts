@@ -124,31 +124,23 @@ export class AttachmentSaver {
   }
 
   public async getAvailablePathForAttachments(params: AttachmentSaverGetAvailablePathForAttachmentsParams): Promise<string> {
-    const {
-      attachmentFileExtension,
-      notePathOrFile,
-      shouldSkipDuplicateCheck,
-      shouldSkipMissingAttachmentFolderCreation
-    } = params;
-    let {
-      attachmentFileBaseName,
-      attachmentFileContent,
-      attachmentFileStats: attachmentFileStat,
-      shouldSkipGeneratedAttachmentFileName
-    } = params;
+    let attachmentFileBaseName = params.attachmentFileBaseName;
+    let attachmentFileContent = params.attachmentFileContent;
+    let attachmentFileStats = params.attachmentFileStats;
+    let shouldSkipGeneratedAttachmentFileName = params.shouldSkipGeneratedAttachmentFileName;
 
     if (attachmentFileBaseName === DUMMY_PATH) {
       attachmentFileContent ??= new ArrayBuffer(0);
       const now = Math.trunc(Date.now());
-      attachmentFileStat ??= {
+      attachmentFileStats ??= {
         ctime: now,
         mtime: now,
         size: 0
       };
     }
 
-    const noteFile = getFileOrNull(this.app, notePathOrFile);
-    const noteFilePath = notePathOrFile ? getPath(this.app, notePathOrFile) : undefined;
+    const noteFile = getFileOrNull(this.app, params.notePathOrFile);
+    const noteFilePath = params.notePathOrFile ? getPath(this.app, params.notePathOrFile) : undefined;
     const oldNoteFilePath = params.oldNotePathOrFile ? getPath(this.app, params.oldNotePathOrFile) : undefined;
 
     if (attachmentFileBaseName.startsWith(IMPORT_FILES_PREFIX)) {
@@ -156,7 +148,7 @@ export class AttachmentSaver {
       shouldSkipGeneratedAttachmentFileName = true;
     }
     if (noteFile && this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path) && this.getAvailablePathForAttachmentsOriginal) {
-      return this.getAvailablePathForAttachmentsOriginal(attachmentFileBaseName, attachmentFileExtension, noteFile);
+      return this.getAvailablePathForAttachmentsOriginal(attachmentFileBaseName, params.attachmentFileExtension, noteFile);
     }
 
     let attachmentPath: string;
@@ -164,18 +156,18 @@ export class AttachmentSaver {
       attachmentPath = await getAvailablePathForAttachments({
         app: this.app,
         attachmentFileBaseName,
-        attachmentFileExtension,
-        notePathOrFile,
-        shouldSkipDuplicateCheck: shouldSkipDuplicateCheck ?? false,
-        shouldSkipMissingAttachmentFolderCreation: shouldSkipMissingAttachmentFolderCreation ?? true
+        attachmentFileExtension: params.attachmentFileExtension,
+        notePathOrFile: params.notePathOrFile,
+        shouldSkipDuplicateCheck: params.shouldSkipDuplicateCheck ?? false,
+        shouldSkipMissingAttachmentFolderCreation: params.shouldSkipMissingAttachmentFolderCreation ?? true
       });
     } else {
-      const attachmentFileName = makeFileName(attachmentFileBaseName, attachmentFileExtension);
+      const attachmentFileName = makeFileName(attachmentFileBaseName, params.attachmentFileExtension);
       const attachmentFolderFullPath = await this.attachmentPathManager.getAttachmentFolderFullPathForPath({
         actionContext: attachmentPathContextToActionContext(params.context),
         attachmentFileContent,
         attachmentFileName,
-        attachmentFileStats: attachmentFileStat,
+        attachmentFileStats,
         notePath: noteFilePath,
         oldNoteFilePath
       });
@@ -190,7 +182,7 @@ export class AttachmentSaver {
             actionContext: attachmentPathContextToActionContext(params.context),
             app: this.app,
             attachmentFileContent,
-            attachmentFileStats: attachmentFileStat,
+            attachmentFileStats,
             cursorLine,
             noteFilePath,
             oldNoteFilePath,
@@ -199,19 +191,19 @@ export class AttachmentSaver {
             sequenceNumber
           })
         );
-        generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, attachmentFileExtension);
+        generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, params.attachmentFileExtension);
       }
       const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
-      if (shouldSkipDuplicateCheck) {
+      if (params.shouldSkipDuplicateCheck) {
         attachmentPath = generatedAttachmentFileNamePath;
       } else {
         const dir = dirname(generatedAttachmentFileNamePath);
-        const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, attachmentFileExtension ? `.${attachmentFileExtension}` : '');
-        attachmentPath = this.app.vault.getAvailablePath(join(dir, generatedAttachmentFileNameBaseName), attachmentFileExtension);
+        const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.attachmentFileExtension ? `.${params.attachmentFileExtension}` : '');
+        attachmentPath = this.app.vault.getAvailablePath(join(dir, generatedAttachmentFileNameBaseName), params.attachmentFileExtension);
       }
     }
 
-    if (!shouldSkipMissingAttachmentFolderCreation) {
+    if (!params.shouldSkipMissingAttachmentFolderCreation) {
       const folderPath = parentFolderPath(attachmentPath);
       if (!await this.app.vault.exists(folderPath)) {
         await createFolderSafe(this.app, folderPath);
