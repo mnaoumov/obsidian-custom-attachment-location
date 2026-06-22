@@ -29,6 +29,14 @@ function createContext(byteLength: number | undefined, format: TokenEvaluatorCon
   });
 }
 
+function createStatsContext(size: number, byteLength: number | undefined, format: TokenEvaluatorContext['format']): TokenEvaluatorContext {
+  return castTo<TokenEvaluatorContext>({
+    attachmentFileContent: byteLength === undefined ? undefined : new ArrayBuffer(byteLength),
+    attachmentFileStats: { ctime: 0, mtime: 0, size },
+    format
+  });
+}
+
 describe('AttachmentFileSizeToken', () => {
   it('should be named attachmentFileSize', () => {
     const token = new AttachmentFileSizeToken();
@@ -57,6 +65,18 @@ describe('AttachmentFileSizeToken', () => {
     const token = new AttachmentFileSizeToken();
     const result = token.evaluate(createContext(1024 * 1024 * 3, { decimalPoints: 1, unit: 'MB' }));
     expect(result).toBe('3.0');
+  });
+
+  it('should report the file stats size without reading content', () => {
+    const token = new AttachmentFileSizeToken();
+    const result = token.evaluate(createStatsContext(4096, undefined, null));
+    expect(result).toBe('4096');
+  });
+
+  it('should prefer the file stats size over the content byte length', () => {
+    const token = new AttachmentFileSizeToken();
+    const result = token.evaluate(createStatsContext(4096, 1, null));
+    expect(result).toBe('4096');
   });
 
   it('should reject an invalid unit through the schema', () => {

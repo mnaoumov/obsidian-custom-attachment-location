@@ -16,7 +16,8 @@ export class AttachmentFileSizeToken extends TokenBase<Format> {
   }
 
   protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
-    const sizeInBytes = ctx.attachmentFileContent?.byteLength ?? 0;
+    // Prefer the already-available `TFile.stat` size over reading the whole binary, so the attachment content stays unread when no other token needs the bytes.
+    const sizeInBytes = ctx.attachmentFileStats?.size ?? ctx.attachmentFileContent?.byteLength ?? 0;
     const BYTES_IN_KB = 1024;
     const BYTES_IN_MB = BYTES_IN_KB * BYTES_IN_KB;
 
