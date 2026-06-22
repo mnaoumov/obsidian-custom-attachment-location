@@ -1,9 +1,10 @@
 import type {
   App,
   DataWriteOptions,
+  FileStats,
   TFile
 } from 'obsidian';
-import type { GetAvailablePathForAttachmentsExtendedFnParams } from 'obsidian-dev-utils/obsidian/attachment-path';
+import type { AttachmentPathContext } from 'obsidian-dev-utils/obsidian/attachment-path';
 import type { PathOrFile } from 'obsidian-dev-utils/obsidian/file-system';
 
 import {
@@ -81,7 +82,19 @@ const PASTED_IMAGE_DATE_FORMAT = 'YYYYMMDDHHmmss';
 const THRESHOLD_IN_SECONDS = 10;
 const moment = extractDefaultExportInterop(moment_);
 
-type AttachmentSaverGetAvailablePathForAttachmentsParams = GetAvailablePathForAttachmentsExtendedFnParams;
+export interface AttachmentSaverGetAvailablePathForAttachmentsParams {
+  readonly attachmentFileBaseName: string;
+  readonly attachmentFileContent?: ArrayBuffer | undefined;
+  readonly attachmentFileExtension: string;
+  readonly attachmentFileStats?: FileStats | undefined;
+  readonly context: AttachmentPathContext;
+  readonly notePathOrFile: null | PathOrFile;
+  readonly oldAttachmentPathOrFile: PathOrFile;
+  readonly oldNotePathOrFile?: PathOrFile | undefined;
+  readonly shouldSkipDuplicateCheck?: boolean;
+  readonly shouldSkipGeneratedAttachmentFileName?: boolean;
+  readonly shouldSkipMissingAttachmentFolderCreation: boolean | undefined;
+}
 
 type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
 
