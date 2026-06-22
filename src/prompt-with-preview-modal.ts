@@ -18,10 +18,17 @@ import { trashSafe } from 'obsidian-dev-utils/obsidian/vault';
 
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 
+interface PromptWithPreviewModalConstructorParams {
+  readonly ctx: TokenEvaluatorContext;
+  readonly defaultValue: string;
+  readonly promiseResolve: PromiseResolve<null | string>;
+  valueValidator(this: void, value: string): Promise<null | string>;
+}
+
 interface PromptWithPreviewParams {
   readonly ctx: TokenEvaluatorContext;
   readonly defaultValue: string;
-  valueValidator(value: string): Promise<null | string>;
+  valueValidator(this: void, value: string): Promise<null | string>;
 }
 
 class PreviewModal extends Modal {
@@ -75,17 +82,27 @@ class PreviewModal extends Modal {
 }
 
 class PromptWithPreviewModal extends Modal {
+  private readonly ctx: TokenEvaluatorContext;
+  private readonly defaultValue: string;
   private isOkClicked = false;
-  private value = '';
+  private readonly promiseResolve: PromiseResolve<null | string>;
 
-  public constructor(private readonly options: PromptWithPreviewParams, private readonly resolve: PromiseResolve<null | string>) {
-    super(options.ctx.app);
+  private value = '';
+  private readonly valueValidator: (value: string) => Promise<null | string>;
+
+  public constructor(params: PromptWithPreviewModalConstructorParams) {
+    super(params.ctx.app);
+    this.ctx = params.ctx;
+    this.defaultValue = params.defaultValue;
+    this.promiseResolve = params.promiseResolve;
+    this.valueValidator = params.valueValidator;
+
     addPluginCssClasses(this.containerEl, CssClass.PromptModal);
   }
 
   public override onClose(): void {
     super.onClose();
-    this.resolve(this.isOkClicked ? this.value : null);
+    this.promiseResolve(this.isOkClicked ? this.value : null);
   }
 
   public override onOpen(): void {
@@ -104,14 +121,14 @@ class PromptWithPreviewModal extends Modal {
   }
 
   private async onOpenAsync(): Promise<void> {
-    this.value = await this.options.ctx.fillTemplate(this.options.defaultValue);
+    this.value = await this.ctx.fillTemplate(this.defaultValue);
 
     const title = createFragment((f) => {
       f.appendText(t(($) => $.promptWithPreviewModal.title));
       f.createEl('br');
-      f.appendText(this.options.ctx.fullTemplate.slice(0, this.options.ctx.tokenStartOffset));
-      f.createSpan({ cls: 'highlighted-token', text: this.options.ctx.tokenWithFormat });
-      f.appendText(this.options.ctx.fullTemplate.slice(this.options.ctx.tokenEndOffset));
+      f.appendText(this.ctx.fullTemplate.slice(0, this.ctx.tokenStartOffset));
+      f.createSpan({ cls: 'highlighted-token', text: this.ctx.tokenWithFormat });
+      f.appendText(this.ctx.fullTemplate.slice(this.ctx.tokenEndOffset));
     });
 
     this.titleEl.setText(title);
@@ -119,7 +136,7 @@ class PromptWithPreviewModal extends Modal {
     const inputEl = textComponent.inputEl;
 
     const validate = async (): Promise<void> => {
-      const errorMessage = await this.options.valueValidator(inputEl.value) as string | undefined;
+      const errorMessage = await this.valueValidator(inputEl.value) as string | undefined;
       inputEl.setCustomValidity(errorMessage ?? '');
       inputEl.reportValidity();
     };
@@ -156,22 +173,29 @@ class PromptWithPreviewModal extends Modal {
     previewButton.setButtonText(t(($) => $.buttons.previewAttachmentFile));
     previewButton.onClick(this.preview.bind(this));
 
-    const embeddableCreator = this.app.embedRegistry.embedByExtension[this.options.ctx.originalAttachmentFileExtension];
+    const embeddableCreator = this.app.embedRegistry.embedByExtension[this.ctx.originalAttachmentFileExtension];
 
-    if (!this.options.ctx.attachmentFileContent || !embeddableCreator) {
+    if (!this.ctx.attachmentFileContent || !embeddableCreator) {
       previewButton.setDisabled(true);
     }
   }
 
   private preview(): void {
-    const previewModal = new PreviewModal(this.options);
+    const previewModal = new PreviewModal({
+      ctx: this.ctx,
+      defaultValue: this.defaultValue,
+      valueValidator: this.valueValidator
+    });
     previewModal.open();
   }
 }
 
 export function promptWithPreview(params: PromptWithPreviewParams): Promise<null | string> {
-  return new Promise((resolve) => {
-    const modal = new PromptWithPreviewModal(params, resolve);
+  return new Promise((promiseResolve) => {
+    const modal = new PromptWithPreviewModal({
+      ...params,
+      promiseResolve
+    });
     modal.open();
   });
 }
