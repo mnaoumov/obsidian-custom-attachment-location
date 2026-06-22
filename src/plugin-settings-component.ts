@@ -26,11 +26,11 @@ import {
   ConvertImagesToJpegMode,
   PluginSettings
 } from './plugin-settings.ts';
-import { parseCustomTokens } from './substitutions.ts';
 import {
   TokenValidationMode,
   TokenValidator
 } from './token-validator.ts';
+import { CustomToken } from './tokens/custom-token.ts';
 
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
 
@@ -344,7 +344,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   }
 
   private customTokensValidatorImpl(customTokensStr: string): void {
-    const customTokens = parseCustomTokens(customTokensStr);
+    const customTokens = CustomToken.parse(customTokensStr);
     this.lastCustomTokenValidatorResult = customTokens === null ? t(($) => $.pluginSettingsManager.validation.invalidCustomTokensCode) : undefined;
   }
 }

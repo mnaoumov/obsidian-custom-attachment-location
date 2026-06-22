@@ -2,11 +2,9 @@ import type {
   App,
   FileStats
 } from 'obsidian';
-import type { Promisable } from 'type-fest';
 
 // eslint-disable-next-line import-x/no-namespace -- Need to pass entire obsidian module.
 import * as obsidian from 'obsidian';
-import { printError } from 'obsidian-dev-utils/error';
 import {
   basename,
   dirname,
@@ -44,12 +42,6 @@ import { PromptToken } from './tokens/prompt-token.ts';
 import { RandomToken } from './tokens/random-token.ts';
 import { SequenceNumberToken } from './tokens/sequence-number-token.ts';
 import { UuidToken } from './tokens/uuid-token.ts';
-
-export type TokenEvaluator = (ctx: TokenEvaluatorContext) => Promisable<string>;
-
-type RegisterCustomTokenFn = (token: string, evaluator: TokenEvaluator) => void;
-
-type RegisterCustomTokensWrapperFn = (registerCustomToken: RegisterCustomTokenFn) => void;
 
 interface SubstitutionsConstructorParams {
   readonly actionContext: ActionContext;
@@ -165,7 +157,7 @@ export class Substitutions {
     this.registerToken(new SequenceNumberToken());
     this.registerToken(new UuidToken());
 
-    const customTokens = parseCustomTokens(customTokensStr) ?? [];
+    const customTokens = CustomToken.parse(customTokensStr) ?? [];
     for (const customToken of customTokens) {
       this.registerToken(customToken);
     }
@@ -240,24 +232,6 @@ export class Substitutions {
 
     out += template.slice(lastOffset);
     return out;
-  }
-}
-
-export function parseCustomTokens(customTokensStr: string): CustomToken[] | null {
-  const customTokens: CustomToken[] = [];
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func -- Need to create function from string.
-    const registerCustomTokensWrapperFn = new Function('registerCustomToken', customTokensStr) as RegisterCustomTokensWrapperFn;
-
-    registerCustomTokensWrapperFn(registerCustomToken);
-    return customTokens;
-  } catch (e) {
-    printError(new Error('Error registering custom tokens', { cause: e }));
-    return null;
-  }
-
-  function registerCustomToken(token: string, evaluator: TokenEvaluator): void {
-    customTokens.push(new CustomToken(token, evaluator));
   }
 }
 

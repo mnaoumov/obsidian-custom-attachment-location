@@ -6,8 +6,8 @@ import {
   vi
 } from 'vitest';
 
-import type { TokenEvaluator } from '../substitutions.ts';
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
+import type { TokenEvaluator } from './custom-token.ts';
 
 import { CustomToken } from './custom-token.ts';
 
