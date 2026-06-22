@@ -71,7 +71,7 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
-    const customAttachmentLocationComponent = this.addChild(
+    this.addChild(
       new CustomAttachmentLocationComponent({
         app: this.app,
         arrayBufferMap,
@@ -79,7 +79,6 @@ export class Plugin extends PluginBase {
         imageSizeMap,
         markdownUrlMap,
         pluginDir: this.manifest.dir ?? '',
-        pluginName: this.manifest.name,
         pluginSettingsComponent,
         pluginVersion: this.manifest.version
       })
@@ -141,7 +140,6 @@ export class Plugin extends PluginBase {
             abortSignalComponent: this.abortSignalComponent,
             app: this.app,
             attachmentPathManager,
-            customAttachmentLocationComponent,
             pluginSettingsComponent
           })
         ],

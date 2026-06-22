@@ -29,7 +29,6 @@ import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from '../attachment-path-manager.ts';
-import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
 import { selectMode } from '../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
@@ -40,7 +39,6 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -52,7 +50,6 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: MoveAttachmentToProperFolderCommandHandlerConstructorParams) {
@@ -64,7 +61,6 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.attachmentPathManager = params.attachmentPathManager;
   }
@@ -126,7 +122,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         }
         combinedAbortSignal.throwIfAborted();
       },
-      progressBarTitle: `${this.customAttachmentLocationComponent.pluginName}: ${t(($) => $.moveAttachmentToProperFolder.progressBar.title)}`,
+      progressBarTitle: `${this.pluginName}: ${t(($) => $.moveAttachmentToProperFolder.progressBar.title)}`,
       shouldContinueOnError: true,
       shouldShowProgressBar: true
     });

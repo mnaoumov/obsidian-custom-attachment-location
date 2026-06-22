@@ -44,15 +44,13 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
   readonly pluginDir: string;
-  readonly pluginName: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly pluginVersion: string;
 }
 
 export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
-  public readonly pluginDir: string;
-  public readonly pluginName: string;
-  public readonly pluginVersion: string;
+  private readonly pluginDir: string;
+  private readonly pluginVersion: string;
 
   public get currentAttachmentFolderPath(): null | string {
     return this._currentAttachmentFolderPath;
@@ -73,7 +71,6 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   public constructor(params: CustomAttachmentLocationComponentConstructorParams) {
     super(params.app);
     this.arrayBufferMap = params.arrayBufferMap;
-    this.pluginName = params.pluginName;
     this.pluginVersion = params.pluginVersion;
     this.pluginDir = params.pluginDir;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
