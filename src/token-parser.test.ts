@@ -12,37 +12,77 @@ import {
 
 describe('parseFormatObject', () => {
   it('should parse a JSON5 object', () => {
-    expect(parseFormatObject('{ a: 1, b: "x" }', 'token')).toStrictEqual({ a: 1, b: 'x' });
+    expect(parseFormatObject({
+      formatText: '{ a: 1, b: "x" }',
+      tokenName: 'token'
+    })).toStrictEqual({ a: 1, b: 'x' });
   });
 
   it('should throw on invalid JSON5', () => {
-    expect(() => parseFormatObject('{ a: }', 'token')).toThrow('Invalid JSON5');
+    expect(() =>
+      parseFormatObject({
+        formatText: '{ a: }',
+        tokenName: 'token'
+      })
+    ).toThrow('Invalid JSON5');
   });
 
   it('should throw when the parsed value is null', () => {
-    expect(() => parseFormatObject('null', 'token')).toThrow('Format for token \'token\' must be a JSON5 object');
+    expect(() =>
+      parseFormatObject({
+        formatText: 'null',
+        tokenName: 'token'
+      })
+    ).toThrow('Format for token \'token\' must be a JSON5 object');
   });
 
   it('should throw when the parsed value is not an object', () => {
-    expect(() => parseFormatObject('42', 'token')).toThrow('Format for token \'token\' must be a JSON5 object');
+    expect(() =>
+      parseFormatObject({
+        formatText: '42',
+        tokenName: 'token'
+      })
+    ).toThrow('Format for token \'token\' must be a JSON5 object');
   });
 
   it('should throw when the parsed value is an array', () => {
-    expect(() => parseFormatObject('[1, 2]', 'token')).toThrow('Format for token \'token\' must be a JSON5 object');
+    expect(() =>
+      parseFormatObject({
+        formatText: '[1, 2]',
+        tokenName: 'token'
+      })
+    ).toThrow('Format for token \'token\' must be a JSON5 object');
   });
 });
 
 describe('parseObjectExpressionEndExclusive', () => {
   it('should return the end offset of an object expression', () => {
-    expect(parseObjectExpressionEndExclusive('{ a: 1 }', 0, 'token', true)).toBe(8);
+    expect(parseObjectExpressionEndExclusive({
+      objectStart: 0,
+      str: '{ a: 1 }',
+      throwOnError: true,
+      tokenName: 'token'
+    })).toBe(8);
   });
 
   it('should throw when the expression is not an object literal and throwOnError is true', () => {
-    expect(() => parseObjectExpressionEndExclusive('123', 0, 'token', true)).toThrow('Invalid JSON5 object for token \'token\'');
+    expect(() =>
+      parseObjectExpressionEndExclusive({
+        objectStart: 0,
+        str: '123',
+        throwOnError: true,
+        tokenName: 'token'
+      })
+    ).toThrow('Invalid JSON5 object for token \'token\'');
   });
 
   it('should return null when the expression is not an object literal and throwOnError is false', () => {
-    expect(parseObjectExpressionEndExclusive('123', 0, 'token', false)).toBeNull();
+    expect(parseObjectExpressionEndExclusive({
+      objectStart: 0,
+      str: '123',
+      throwOnError: false,
+      tokenName: 'token'
+    })).toBeNull();
   });
 });
 

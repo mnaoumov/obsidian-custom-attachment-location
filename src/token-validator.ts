@@ -151,27 +151,30 @@ export class TokenValidator {
       tokenValidator: this
     });
 
-    const tokens = extractTokens(str);
+    const extractedTokens = extractTokens(str);
 
-    for (const t of tokens) {
-      if (!Substitutions.isRegisteredToken(t.token)) {
-        return `Unknown token '${t.token}'.`;
+    for (const extractedToken of extractedTokens) {
+      if (!Substitutions.isRegisteredToken(extractedToken.token)) {
+        return `Unknown token '${extractedToken.token}'.`;
       }
 
       // Validate the format object is parseable JSON5 (if present).
-      if (t.formatText !== null) {
+      if (extractedToken.formatText !== null) {
         try {
-          parseFormatObject(t.formatText, t.token);
+          parseFormatObject({
+            formatText: extractedToken.formatText,
+            tokenName: extractedToken.token
+          });
         } catch (e) {
-          return `Invalid format for token '${t.token}': ${(e as Error).message}`;
+          return `Invalid format for token '${extractedToken.token}': ${(e as Error).message}`;
         }
       }
 
       // Validate token-specific schema by evaluating in a safe context.
       try {
-        await FAKE_SUBSTITUTION.fillTemplate(t.raw);
+        await FAKE_SUBSTITUTION.fillTemplate(extractedToken.raw);
       } catch (e) {
-        return `Invalid token '${t.raw}': ${(e as Error).message}`;
+        return `Invalid token '${extractedToken.raw}': ${(e as Error).message}`;
       }
     }
 

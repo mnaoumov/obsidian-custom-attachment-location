@@ -171,23 +171,28 @@ export class Substitutions {
     const abortController = new AbortController();
     const abortSignal = abortController.signal;
 
-    const tokens = scanTokens(template);
+    const scannedTokens = scanTokens(template);
 
     let out = '';
     let lastOffset = 0;
 
-    for (const t of tokens) {
+    for (const scannedToken of scannedTokens) {
       abortSignal.throwIfAborted();
 
-      out += template.slice(lastOffset, t.start);
-      lastOffset = t.end;
+      out += template.slice(lastOffset, scannedToken.start);
+      lastOffset = scannedToken.end;
 
-      const token = Substitutions.registeredTokens.get(t.token.toLowerCase());
+      const token = Substitutions.registeredTokens.get(scannedToken.token.toLowerCase());
       if (!token) {
-        throw new Error(`Unknown token '${t.token}'.`);
+        throw new Error(`Unknown token '${scannedToken.token}'.`);
       }
 
-      const format = t.formatText === null ? null : parseFormatObject(t.formatText, t.token);
+      const format = scannedToken.formatText === null
+        ? null
+        : parseFormatObject({
+          formatText: scannedToken.formatText,
+          tokenName: scannedToken.token
+        });
 
       const ctx: TokenEvaluatorContext = {
         abortSignal,
@@ -214,11 +219,11 @@ export class Substitutions {
         originalAttachmentFileName: this.originalAttachmentFileName,
         pluginSettingsComponent: this.pluginSettingsComponent,
         sequenceNumber: this.sequenceNumber ?? 0,
-        token: t.token,
-        tokenEndOffset: t.end,
-        tokenStartOffset: t.start,
+        token: scannedToken.token,
+        tokenEndOffset: scannedToken.end,
+        tokenStartOffset: scannedToken.start,
         tokenValidator: this.tokenValidator,
-        tokenWithFormat: t.raw
+        tokenWithFormat: scannedToken.raw
       };
 
       const evaluated = await token.evaluate(ctx);
