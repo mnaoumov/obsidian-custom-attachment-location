@@ -25,6 +25,7 @@ import { translationsMap } from './i18n/locales/translations-map.ts';
 import { ImageManager } from './image-manager.ts';
 import { ImageSizeMap } from './image-size-map.ts';
 import { MarkdownUrlMap } from './markdown-url-map.ts';
+import { NetworkImageDownloader } from './network-image-downloader.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -127,11 +128,19 @@ export class Plugin extends PluginBase {
       })
     );
 
+    const networkImageDownloader = new NetworkImageDownloader({
+      abortSignalComponent: this.abortSignalComponent,
+      app: this.app,
+      attachmentPathManager,
+      pluginSettingsComponent
+    });
+
     const attachmentCollector = new AttachmentCollector({
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
       attachmentPathManager,
       consoleDebugComponent: this.consoleDebugComponent,
+      networkImageDownloader,
       pluginName: this.manifest.name,
       pluginSettingsComponent
     });

@@ -217,6 +217,14 @@ export const defaultTranslations = {
       },
       name: 'Collected attachment file name'
     },
+    downloadNetworkImages: {
+      description: 'When collecting attachments, automatically download network images referenced in markdown and save them locally.',
+      name: 'Download network images'
+    },
+    networkImageDownloadTimeoutInSeconds: {
+      description: 'The timeout in seconds for downloading each network image.',
+      name: 'Network image download timeout in seconds'
+    },
     convertImagesToJpegMode: {
       description: {
         part1: 'Which images to convert to JPEG:'
