@@ -382,6 +382,30 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       .setHeading(t(($) => $.pluginSettingsTab.groups.collectedAttachments))
       .addSettingEx((setting) => {
         setting
+          .setName(t(($) => $.pluginSettingsTab.downloadNetworkImages.name))
+          .setDesc(t(($) => $.pluginSettingsTab.downloadNetworkImages.description))
+          .addToggle((toggle) => {
+            this.bind(toggle, 'downloadNetworkImages', {
+              onChanged: () => {
+                // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
+                this.display();
+              }
+            });
+          });
+      })
+      .addSettingEx((setting) => {
+        if (this.pluginSettingsComponent.settings.downloadNetworkImages) {
+          setting
+            .setName(t(($) => $.pluginSettingsTab.networkImageDownloadTimeoutInSeconds.name))
+            .setDesc(t(($) => $.pluginSettingsTab.networkImageDownloadTimeoutInSeconds.description))
+            .addNumber((number) => {
+              number.setMin(1);
+              this.bind(number, 'networkImageDownloadTimeoutInSeconds');
+            });
+        }
+      })
+      .addSettingEx((setting) => {
+        setting
           .setName(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.name))
           .setDesc(createFragment((f) => {
             f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part1));
