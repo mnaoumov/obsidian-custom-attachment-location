@@ -15,7 +15,6 @@ import {
   moment as moment_,
   Vault
 } from 'obsidian';
-import { blobToJpegArrayBuffer } from 'obsidian-dev-utils/blob';
 import {
   extractDefaultExportInterop,
   normalizeOptionalProperties,
@@ -48,19 +47,13 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { ArrayBufferMap } from './array-buffer-map.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { ImageManager } from './image-manager.ts';
 import type { ImageSizeMap } from './image-size-map.ts';
 import type { MarkdownUrlMap } from './markdown-url-map.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
-import {
-  getImageSize,
-  getMimeType
-} from './image.ts';
 import { IMPORT_FILES_PREFIX } from './patches/share-receiver-import-files-patch-component.ts';
-import {
-  AttachmentRenameMode,
-  ConvertImagesToJpegMode
-} from './plugin-settings.ts';
+import { AttachmentRenameMode } from './plugin-settings.ts';
 import { Substitutions } from './substitutions.ts';
 import {
   ActionContext,
@@ -72,6 +65,7 @@ interface AttachmentSaverConstructorParams {
   readonly app: App;
   readonly arrayBufferMap: ArrayBufferMap;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly imageManager: ImageManager;
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -110,23 +104,13 @@ interface AttachmentSaverSaveAttachmentParams {
 
 type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
 
-interface PluginConvertImageToJpegParams {
-  readonly attachmentFileContent: ArrayBuffer;
-  readonly attachmentFileExtension: string;
-  readonly isPastedImage: boolean;
-}
-
-interface PluginConvertImageToJpegResult {
-  readonly attachmentFileContent: ArrayBuffer;
-  readonly attachmentFileExtension: string;
-}
-
 export class AttachmentSaver {
   private readonly app: App;
   private readonly arrayBufferMap: ArrayBufferMap;
   private readonly attachmentPathManager: AttachmentPathManager;
-
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn | null = null;
+
+  private readonly imageManager: ImageManager;
   private readonly imageSizeMap: ImageSizeMap;
   private readonly markdownUrlMap: MarkdownUrlMap;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -135,6 +119,7 @@ export class AttachmentSaver {
     this.app = params.app;
     this.arrayBufferMap = params.arrayBufferMap;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.imageManager = params.imageManager;
     this.imageSizeMap = params.imageSizeMap;
     this.markdownUrlMap = params.markdownUrlMap;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -259,7 +244,7 @@ export class AttachmentSaver {
       }
     }
 
-    const convertImageToJpegResult = await this.convertImageToJpeg({
+    const convertImageToJpegResult = await this.imageManager.convertToJpeg({
       attachmentFileContent,
       attachmentFileExtension,
       isPastedImage
@@ -320,48 +305,6 @@ export class AttachmentSaver {
     return attachmentFile;
   }
 
-  private async convertImageToJpeg(params: PluginConvertImageToJpegParams): Promise<PluginConvertImageToJpegResult> {
-    const mimeType = getMimeType(params.attachmentFileExtension);
-    let shouldConvertImageToJpeg = false;
-
-    if (mimeType) {
-      switch (this.pluginSettingsComponent.settings.convertImagesToJpegMode) {
-        case ConvertImagesToJpegMode.AllImages:
-          shouldConvertImageToJpeg = true;
-          break;
-        case ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles:
-          if (mimeType !== 'image/jpeg') {
-            shouldConvertImageToJpeg = true;
-          }
-          break;
-        case ConvertImagesToJpegMode.None:
-          break;
-        case ConvertImagesToJpegMode.OnlyPastedClipboardPngImages:
-          if (params.isPastedImage && mimeType === 'image/png') {
-            shouldConvertImageToJpeg = true;
-          }
-          break;
-        default:
-          throw new Error(`Invalid convert images to JPEG mode: ${this.pluginSettingsComponent.settings.convertImagesToJpegMode as string}`);
-      }
-    }
-
-    if (shouldConvertImageToJpeg && mimeType) {
-      return {
-        attachmentFileContent: await blobToJpegArrayBuffer(
-          new Blob([params.attachmentFileContent], { type: mimeType }),
-          this.pluginSettingsComponent.settings.jpegQuality
-        ),
-        attachmentFileExtension: 'jpg'
-      };
-    }
-
-    return {
-      attachmentFileContent: params.attachmentFileContent,
-      attachmentFileExtension: params.attachmentFileExtension
-    };
-  }
-
   private async getCursorLine(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
     const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
     if (!oldAttachmentFile) {
@@ -408,7 +351,10 @@ export class AttachmentSaver {
       shouldSkipMissingAttachmentFolderCreation: false
     });
 
-    const imageSize = await getImageSize(params.attachmentFileExtension, params.attachmentFileContent, this.pluginSettingsComponent);
+    const imageSize = await this.imageManager.getImageSize({
+      content: params.attachmentFileContent,
+      extension: params.attachmentFileExtension
+    });
     if (imageSize !== null) {
       this.imageSizeMap.set(attachmentPath, imageSize);
     }

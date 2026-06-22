@@ -21,6 +21,7 @@ import { CollectAttachmentsInFileCommandHandler } from './command-handlers/colle
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
+import { ImageManager } from './image-manager.ts';
 import { ImageSizeMap } from './image-size-map.ts';
 import { MarkdownUrlMap } from './markdown-url-map.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
@@ -53,11 +54,15 @@ export class Plugin extends PluginBase {
 
     const imageSizeMap = new ImageSizeMap();
     const markdownUrlMap = new MarkdownUrlMap();
+    const imageManager = new ImageManager({
+      pluginSettingsComponent
+    });
 
     const attachmentSaver = new AttachmentSaver({
       app: this.app,
       arrayBufferMap,
       attachmentPathManager,
+      imageManager,
       imageSizeMap,
       markdownUrlMap,
       pluginSettingsComponent
