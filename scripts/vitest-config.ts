@@ -4,6 +4,12 @@ const SHARED_EXCLUDE = ['node_modules', 'dist'];
 const BIG_TIMEOUT_IN_MILLISECONDS = 30_000;
 const ANDROID_TIMEOUT_IN_MILLISECONDS = 60_000;
 const HOOK_TIMEOUT_MULTIPLIER = 4;
+/*
+ * The performance vault is pre-populated with hundreds of notes embedding binary
+ * attachments before open, so its setup (populate + Obsidian startup index) and the
+ * timing tests both need far more time than the regular integration projects.
+ */
+const PERFORMANCE_TIMEOUT_IN_MILLISECONDS = 600_000;
 
 export const config = defineConfig({
   test: {
@@ -64,6 +70,17 @@ export const config = defineConfig({
           include: ['src/**/*.desktop.integration.test.ts'],
           name: 'integration-tests:desktop',
           testTimeout: BIG_TIMEOUT_IN_MILLISECONDS
+        }
+      },
+      {
+        test: {
+          environment: 'node',
+          fileParallelism: false,
+          globalSetup: ['./scripts/vitest-global-setup-performance.ts'],
+          hookTimeout: PERFORMANCE_TIMEOUT_IN_MILLISECONDS,
+          include: ['src/**/*.desktop-performance.integration.test.ts'],
+          name: 'integration-tests:desktop-performance',
+          testTimeout: PERFORMANCE_TIMEOUT_IN_MILLISECONDS
         }
       },
       {
