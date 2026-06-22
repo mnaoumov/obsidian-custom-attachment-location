@@ -84,7 +84,7 @@ interface SubstitutionsConstructorParams {
   readonly actionContext: ActionContext;
   readonly app: App;
   readonly attachmentFileContent?: ArrayBuffer | undefined;
-  readonly attachmentFileStat?: FileStats | undefined;
+  readonly attachmentFileStats?: FileStats | undefined;
   readonly cursorLine?: number | undefined;
   readonly generatedAttachmentFileName?: string;
   readonly generatedAttachmentFilePath?: string;
@@ -115,7 +115,7 @@ export class Substitutions {
   public readonly noteFolderPath: string;
   private readonly app: App;
   private readonly attachmentFileContent: ArrayBuffer | undefined;
-  private readonly attachmentFileStat: FileStats | undefined;
+  private readonly attachmentFileStats: FileStats | undefined;
   private readonly cursorLine: null | number;
   private readonly generatedAttachmentFileName: string;
   private readonly generatedAttachmentFilePath: string;
@@ -152,7 +152,7 @@ export class Substitutions {
     this.originalAttachmentFileExtension = originalAttachmentFileExtension.slice(1);
 
     this.attachmentFileContent = params.attachmentFileContent;
-    this.attachmentFileStat = params.attachmentFileStat;
+    this.attachmentFileStats = params.attachmentFileStats;
 
     this.generatedAttachmentFileName = params.generatedAttachmentFileName ?? '';
     this.generatedAttachmentFilePath = params.generatedAttachmentFilePath ?? '';
@@ -237,7 +237,7 @@ export class Substitutions {
         actionContext: this.actionContext,
         app: this.app,
         attachmentFileContent: this.attachmentFileContent,
-        attachmentFileStat: this.attachmentFileStat,
+        attachmentFileStats: this.attachmentFileStats,
         cursorLine: this.cursorLine,
         fillTemplate: this.fillTemplate.bind(this),
         format,

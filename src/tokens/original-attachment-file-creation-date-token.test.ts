@@ -16,11 +16,11 @@ import { OriginalAttachmentFileCreationDateToken } from './original-attachment-f
 const CTIME = Date.UTC(2019, 2, 4, 5, 6, 7);
 
 function createContext(
-  attachmentFileStat: FileStats | undefined,
+  attachmentFileStats: FileStats | undefined,
   format: TokenEvaluatorContext['format']
 ): TokenEvaluatorContext {
   return castTo<TokenEvaluatorContext>({
-    attachmentFileStat,
+    attachmentFileStats,
     format
   });
 }
@@ -33,8 +33,8 @@ describe('OriginalAttachmentFileCreationDateToken', () => {
 
   it('should format the attachment creation date when known', () => {
     const token = new OriginalAttachmentFileCreationDateToken();
-    const stat = strictProxy<FileStats>({ ctime: CTIME });
-    const result = token.evaluate(createContext(stat, { momentJsFormat: 'YYYY-MM-DD' }));
+    const stats = strictProxy<FileStats>({ ctime: CTIME });
+    const result = token.evaluate(createContext(stats, { momentJsFormat: 'YYYY-MM-DD' }));
     expect(result).toBe(moment(CTIME).format('YYYY-MM-DD'));
   });
 

@@ -91,7 +91,7 @@ export interface TokenEvaluatorContext {
    *
    * @remark It may be initialized only partially. Uninitialized {@link FileStats.ctime} and {@link FileStats.mtime} will be `0`.
    */
-  attachmentFileStat: FileStats | undefined;
+  attachmentFileStats: FileStats | undefined;
 
   /**
    * A cursor line.

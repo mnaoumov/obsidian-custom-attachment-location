@@ -5,23 +5,23 @@ import {
 } from 'obsidian';
 import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 
-import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
+import type { ArrayBufferMap } from '../array-buffer-map.ts';
 
 interface FileArrayBufferPatchComponentConstructorParams {
   readonly app: App;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
+  readonly arrayBufferMap: ArrayBufferMap;
   readonly file: File;
 }
 
 export class FileArrayBufferPatchComponent extends MonkeyAroundComponent {
   private readonly app: App;
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
+  private readonly arrayBufferMap: ArrayBufferMap;
   private readonly file: File;
 
   public constructor(params: FileArrayBufferPatchComponentConstructorParams) {
     super();
     this.app = params.app;
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
+    this.arrayBufferMap = params.arrayBufferMap;
     this.file = params.file;
   }
 
@@ -35,12 +35,12 @@ export class FileArrayBufferPatchComponent extends MonkeyAroundComponent {
         const arrayBuffer = await fallback();
         if (this.app.vault.adapter instanceof FileSystemAdapter) {
           const path = webUtils.getPathForFile(this.file);
-          if (await this.customAttachmentLocationComponent.setFileStat(arrayBuffer, path)) {
+          if (await this.arrayBufferMap.trySetByPath(arrayBuffer, path)) {
             return arrayBuffer;
           }
         }
 
-        this.customAttachmentLocationComponent.arrayBufferFileStatMap.set(arrayBuffer, {
+        this.arrayBufferMap.setFileStats(arrayBuffer, {
           ctime: 0,
           mtime: this.file.lastModified,
           size: this.file.size

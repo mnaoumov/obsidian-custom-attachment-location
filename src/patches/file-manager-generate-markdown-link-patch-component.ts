@@ -12,27 +12,31 @@ import {
   testWikilink
 } from 'obsidian-dev-utils/obsidian/link';
 
-import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
+import type { ImageSizeMap } from '../image-size-map.ts';
+import type { MarkdownUrlMap } from '../markdown-url-map.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
 interface FileManagerGenerateMarkdownLinkPatchComponentConstructorParams {
   readonly app: App;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   readonly fileManager: FileManager;
+  readonly imageSizeMap: ImageSizeMap;
+  readonly markdownUrlMap: MarkdownUrlMap;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundComponent {
   private readonly app: App;
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
   private readonly fileManager: FileManager;
+  private readonly imageSizeMap: ImageSizeMap;
+  private readonly markdownUrlMap: MarkdownUrlMap;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: FileManagerGenerateMarkdownLinkPatchComponentConstructorParams) {
     super();
     this.app = params.app;
     this.fileManager = params.fileManager;
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
+    this.imageSizeMap = params.imageSizeMap;
+    this.markdownUrlMap = params.markdownUrlMap;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -45,9 +49,8 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
         originalMethodBound
       }) => {
         if (alias === undefined) {
-          const imageSize = this.customAttachmentLocationComponent.imageAttachmentSizeMap.get(file.path);
+          const imageSize = this.imageSizeMap.getAndDelete(file.path);
           if (imageSize) {
-            this.customAttachmentLocationComponent.imageAttachmentSizeMap.delete(file.path);
             alias = imageSize;
           }
         }
@@ -57,7 +60,7 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
           return defaultLink;
         }
 
-        const markdownUrl = this.customAttachmentLocationComponent.pathMarkdownUrlMap.get(file.path);
+        const markdownUrl = this.markdownUrlMap.get(file.path);
 
         if (!markdownUrl) {
           return defaultLink;

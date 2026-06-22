@@ -11,14 +11,18 @@ import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
+import { ArrayBufferMap } from './array-buffer-map.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
 import { AttachmentPathManager } from './attachment-path-manager.ts';
+import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
+import { ImageSizeMap } from './image-size-map.ts';
+import { MarkdownUrlMap } from './markdown-url-map.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -43,10 +47,30 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
+    const arrayBufferMap = new ArrayBufferMap({
+      app: this.app
+    });
+
+    const imageSizeMap = new ImageSizeMap();
+    const markdownUrlMap = new MarkdownUrlMap();
+
+    const attachmentSaver = new AttachmentSaver({
+      app: this.app,
+      arrayBufferMap,
+      attachmentPathManager,
+      imageSizeMap,
+      markdownUrlMap,
+      pluginSettingsComponent
+    });
+
     const customAttachmentLocationComponent = this.addChild(
       new CustomAttachmentLocationComponent({
         app: this.app,
+        arrayBufferMap,
         attachmentPathManager,
+        attachmentSaver,
+        imageSizeMap,
+        markdownUrlMap,
         pluginDir: this.manifest.dir ?? '',
         pluginName: this.manifest.name,
         pluginSettingsComponent,
@@ -123,7 +147,7 @@ export class Plugin extends PluginBase {
     this.addChild(
       new AppSaveAttachmentPatchComponent({
         app: this.app,
-        customAttachmentLocationComponent
+        attachmentSaver
       })
     );
 

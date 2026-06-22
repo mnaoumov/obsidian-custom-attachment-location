@@ -3,21 +3,21 @@ import type { ClipboardManager } from '@obsidian-typings/obsidian-public-latest'
 import { getPrototypeOf } from 'obsidian-dev-utils/object-utils';
 import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 
-import type { CustomAttachmentLocationComponent } from '../custom-attachment-location-component.ts';
+import type { ArrayBufferMap } from '../array-buffer-map.ts';
 
 interface ClipboardManagerInsertFilesPatchComponentConstructorParams {
+  readonly arrayBufferMap: ArrayBufferMap;
   readonly clipboardManager: ClipboardManager;
-  readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
 }
 
 export class ClipboardManagerInsertFilesPatchComponent extends MonkeyAroundComponent {
+  private readonly arrayBufferMap: ArrayBufferMap;
   private readonly clipboardManager: ClipboardManager;
-  private readonly customAttachmentLocationComponent: CustomAttachmentLocationComponent;
 
   public constructor(params: ClipboardManagerInsertFilesPatchComponentConstructorParams) {
     super();
+    this.arrayBufferMap = params.arrayBufferMap;
     this.clipboardManager = params.clipboardManager;
-    this.customAttachmentLocationComponent = params.customAttachmentLocationComponent;
   }
 
   public override onload(): void {
@@ -30,7 +30,7 @@ export class ClipboardManagerInsertFilesPatchComponent extends MonkeyAroundCompo
       }) => {
         for (const importedAttachment of importedAttachments) {
           const arrayBuffer = await importedAttachment.data;
-          await this.customAttachmentLocationComponent.setFileStat(arrayBuffer, importedAttachment.filepath);
+          await this.arrayBufferMap.trySetByPath(arrayBuffer, importedAttachment.filepath);
         }
         return fallback();
       }

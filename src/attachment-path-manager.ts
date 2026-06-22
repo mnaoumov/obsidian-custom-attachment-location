@@ -52,7 +52,7 @@ interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
   readonly actionContext: ActionContext;
   readonly attachmentFileContent?: ArrayBuffer | undefined;
   readonly attachmentFileName: string;
-  readonly attachmentFileStat?: FileStats | undefined;
+  readonly attachmentFileStats?: FileStats | undefined;
   readonly notePath: string;
   readonly oldNoteFilePath?: string | undefined;
 }
@@ -72,7 +72,7 @@ export class AttachmentPathManager {
         actionContext: params.actionContext,
         app: this.app,
         attachmentFileContent: params.attachmentFileContent,
-        attachmentFileStat: params.attachmentFileStat,
+        attachmentFileStats: params.attachmentFileStats,
         noteFilePath: params.notePath,
         oldNoteFilePath: params.oldNoteFilePath,
         originalAttachmentFileName: params.attachmentFileName,
@@ -141,7 +141,7 @@ export class AttachmentPathManager {
             actionContext: params.actionContext,
             app: this.app,
             attachmentFileContent,
-            attachmentFileStat: params.attachmentFile.stat,
+            attachmentFileStats: params.attachmentFile.stat,
             cursorLine: isReferenceCache(params.reference) ? params.reference.position.start.line : 0,
             noteFilePath: params.noteFilePath,
             originalAttachmentFileName: params.attachmentFile.name,
@@ -157,7 +157,7 @@ export class AttachmentPathManager {
       actionContext: params.actionContext,
       attachmentFileContent,
       attachmentFileName: newAttachmentName,
-      attachmentFileStat: params.attachmentFile.stat,
+      attachmentFileStats: params.attachmentFile.stat,
       notePath: params.noteFilePath
     });
     const newAttachmentPath = join(newAttachmentFolderPath, newAttachmentName);
