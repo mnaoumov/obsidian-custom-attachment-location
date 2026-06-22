@@ -189,7 +189,7 @@ function extractTokens(str: string): Token[] {
 const MORE_THAN_TWO_DOTS_REG_EXP = /^\.{3,}$/;
 const TRAILING_DOTS_REG_EXP = /\.+$/;
 
-export function removeTokens(str: string): string {
+function removeTokens(str: string): string {
   const tokens = scanTokens(str);
   let out = '';
   let lastOffset = 0;
