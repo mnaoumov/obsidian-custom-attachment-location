@@ -19,19 +19,11 @@ import {
   TOKENIZED_STRING_LANGUAGE
 } from './prism-component.ts';
 
-interface PrismComponentPrivate {
-  initPrism(): Promise<void>;
-}
-
 interface PrismLike {
   languages: Record<string, unknown>;
 }
 
 const mockLoadPrism = vi.mocked(loadPrism);
-
-function asPrivate(component: PrismComponent): PrismComponentPrivate {
-  return castTo<PrismComponentPrivate>(component);
-}
 
 function createPrism(withJavascript: boolean): PrismLike {
   return {
@@ -71,18 +63,18 @@ describe('PrismComponent', () => {
     });
   });
 
-  describe('initPrism', () => {
+  describe('onloadAsync', () => {
     it('should return early when the javascript language is not available', async () => {
       const prism = createPrism(false);
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
-      await asPrivate(component).initPrism();
+      await component.onloadAsync();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeUndefined();
     });
 
     it('should register the tokenized string language', async () => {
       const prism = createPrism(true);
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
-      await asPrivate(component).initPrism();
+      await component.onloadAsync();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeDefined();
     });
 
@@ -90,7 +82,7 @@ describe('PrismComponent', () => {
       const prism = createPrism(true);
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
       component.load();
-      await asPrivate(component).initPrism();
+      await component.onloadAsync();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeDefined();
       component.unload();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeUndefined();
