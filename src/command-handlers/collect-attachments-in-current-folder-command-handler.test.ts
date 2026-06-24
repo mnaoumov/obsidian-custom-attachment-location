@@ -19,6 +19,9 @@ import { CollectAttachmentsInCurrentFolderCommandHandler } from './collect-attac
 
 interface TestableHandler {
   executeFolder(folder: TFolder): void;
+  icon: string;
+  id: string;
+  name: string;
 }
 
 const mockCollectAttachmentsInAbstractFiles = vi.fn<AttachmentCollector['collectAttachmentsInAbstractFiles']>();
@@ -49,9 +52,9 @@ describe('CollectAttachmentsInCurrentFolderCommandHandler', () => {
 
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(CollectAttachmentsInCurrentFolderCommandHandler);
-    expect(handler.id).toBe('collect-attachments-in-current-folder');
-    expect(handler.icon).toBe('download');
-    expect(handler.name).toBe('Collect attachments in current folder');
+    expect(toTestable(handler).id).toBe('collect-attachments-in-current-folder');
+    expect(toTestable(handler).icon).toBe('download');
+    expect(toTestable(handler).name).toBe('Collect attachments in current folder');
   });
 
   it('should delegate the folder wrapped in an array to the attachment collector on executeFolder', () => {

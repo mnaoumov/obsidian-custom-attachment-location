@@ -66,6 +66,9 @@ interface TestableHandler {
   canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean;
   executeAbstractFile(abstractFile: TAbstractFile): Promise<void>;
   executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void>;
+  icon: string;
+  id: string;
+  name: string;
   shouldAddToAbstractFileMenu(): boolean;
   shouldAddToAbstractFilesMenu(): boolean;
 }
@@ -211,9 +214,9 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(MoveAttachmentToProperFolderCommandHandler);
-    expect(handler.id).toBe('move-attachment-to-proper-folder');
-    expect(handler.icon).toBe('move');
-    expect(handler.name).toBe('Move attachment to proper folder');
+    expect(castTo<TestableHandler>(handler).id).toBe('move-attachment-to-proper-folder');
+    expect(castTo<TestableHandler>(handler).icon).toBe('move');
+    expect(castTo<TestableHandler>(handler).name).toBe('Move attachment to proper folder');
   });
 
   describe('canExecuteAbstractFiles', () => {

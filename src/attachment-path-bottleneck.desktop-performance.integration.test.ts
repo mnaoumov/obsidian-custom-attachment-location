@@ -190,12 +190,12 @@ describe('Attachment-path bottleneck', () => {
         function buildParams(noteFile: TFile, attachmentFile: TFile, content: ArrayBuffer | undefined): GetAvailablePathForAttachmentsExtendedFnParams {
           return {
             attachmentFileBaseName: attachmentFile.basename,
-            attachmentFileContent: content,
             attachmentFileExtension: attachmentFile.extension,
             attachmentFileStats: attachmentFile.stat,
             context,
             notePathOrFile: noteFile.path,
             oldAttachmentPathOrFile: attachmentFile.path,
+            readAttachmentFileContent: content ? (): Promise<ArrayBuffer> => Promise.resolve(content) : null,
             shouldSkipDuplicateCheck: true,
             shouldSkipMissingAttachmentFolderCreation: true
           };

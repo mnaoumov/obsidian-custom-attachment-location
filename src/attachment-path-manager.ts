@@ -57,27 +57,6 @@ import {
   TokenValidator
 } from './token-validator.ts';
 
-export interface AttachmentPathManagerGetAvailablePathForAttachmentsParams {
-  readonly attachmentFileBaseName: string;
-  readonly attachmentFileContent?: ArrayBuffer | undefined;
-  readonly attachmentFileExtension: string;
-  readonly attachmentFileStats?: FileStats | undefined;
-  readonly context: AttachmentPathContext;
-  readonly notePathOrFile: null | PathOrFile;
-  readonly oldAttachmentPathOrFile: PathOrFile;
-  readonly oldNotePathOrFile?: PathOrFile | undefined;
-  readonly shouldSkipDuplicateCheck?: boolean;
-  readonly shouldSkipGeneratedAttachmentFileName?: boolean;
-  readonly shouldSkipMissingAttachmentFolderCreation: boolean | undefined;
-}
-
-export interface AttachmentPathManagerGetProperAttachmentPathParams {
-  readonly actionContext: ActionContext;
-  readonly attachmentFile: TFile;
-  readonly noteFilePath: string;
-  readonly reference: Reference;
-}
-
 interface AttachmentPathManagerConstructorParams {
   readonly app: App;
   readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
@@ -92,6 +71,27 @@ interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
   readonly attachmentFileStats?: FileStats | undefined;
   readonly notePath: string;
   readonly oldNoteFilePath?: string | undefined;
+}
+
+interface AttachmentPathManagerGetAvailablePathForAttachmentsParams {
+  readonly attachmentFileBaseName: string;
+  readonly attachmentFileExtension: string;
+  readonly attachmentFileStats?: FileStats | undefined;
+  readonly context: AttachmentPathContext;
+  readonly notePathOrFile: null | PathOrFile;
+  readonly oldAttachmentPathOrFile: PathOrFile;
+  readonly oldNotePathOrFile?: PathOrFile | undefined;
+  readonly readAttachmentFileContent: (() => Promise<ArrayBuffer>) | null;
+  readonly shouldSkipDuplicateCheck?: boolean;
+  readonly shouldSkipGeneratedAttachmentFileName?: boolean;
+  readonly shouldSkipMissingAttachmentFolderCreation: boolean | undefined;
+}
+
+interface AttachmentPathManagerGetProperAttachmentPathParams {
+  readonly actionContext: ActionContext;
+  readonly attachmentFile: TFile;
+  readonly noteFilePath: string;
+  readonly reference: Reference;
 }
 
 type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
@@ -127,12 +127,11 @@ export class AttachmentPathManager {
 
   public async getAvailablePathForAttachments(params: AttachmentPathManagerGetAvailablePathForAttachmentsParams): Promise<string> {
     let attachmentFileBaseName = params.attachmentFileBaseName;
-    let attachmentFileContent = params.attachmentFileContent;
     let attachmentFileStats = params.attachmentFileStats;
     let shouldSkipGeneratedAttachmentFileName = params.shouldSkipGeneratedAttachmentFileName;
+    const isDummy = attachmentFileBaseName === DUMMY_PATH;
 
-    if (attachmentFileBaseName === DUMMY_PATH) {
-      attachmentFileContent ??= new ArrayBuffer(0);
+    if (isDummy) {
       const now = Math.trunc(Date.now());
       attachmentFileStats ??= {
         ctime: now,
@@ -154,7 +153,7 @@ export class AttachmentPathManager {
     }
 
     let attachmentPath: string;
-    if (!noteFilePath || !isNote(this.app, noteFilePath)) {
+    if (!noteFilePath || !isNote(noteFilePath)) {
       attachmentPath = await getAvailablePathForAttachments({
         app: this.app,
         attachmentFileBaseName,
@@ -164,6 +163,12 @@ export class AttachmentPathManager {
         shouldSkipMissingAttachmentFolderCreation: params.shouldSkipMissingAttachmentFolderCreation ?? true
       });
     } else {
+      let attachmentFileContent: ArrayBuffer | undefined;
+      if (params.readAttachmentFileContent) {
+        attachmentFileContent = await params.readAttachmentFileContent();
+      } else if (isDummy) {
+        attachmentFileContent = new ArrayBuffer(0);
+      }
       const attachmentFileName = makeFileName(attachmentFileBaseName, params.attachmentFileExtension);
       const attachmentFolderFullPath = await this.getAttachmentFolderFullPathForPath({
         actionContext: attachmentPathContextToActionContext(params.context),

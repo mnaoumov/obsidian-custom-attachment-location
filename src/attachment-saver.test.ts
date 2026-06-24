@@ -249,9 +249,10 @@ describe('AttachmentSaver', () => {
         attachmentFileExtension: 'png'
       });
       expect(ctx.getAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({
-        attachmentFileContent: convertedContent,
         attachmentFileExtension: 'jpg'
       }));
+      const params = ctx.getAvailablePathForAttachments.mock.calls[0]?.[0];
+      expect(await params?.readAttachmentFileContent?.()).toBe(convertedContent);
     });
 
     it('should set the markdown url when a markdown url format is configured', async () => {

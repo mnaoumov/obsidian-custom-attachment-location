@@ -88,7 +88,7 @@ class PromptWithPreviewModal extends Modal {
   private readonly promiseResolve: PromiseResolve<null | string>;
 
   private value = '';
-  private readonly valueValidator: (value: string) => Promise<null | string>;
+  private readonly valueValidator: (this: void, value: string) => Promise<null | string>;
 
   public constructor(params: PromptWithPreviewModalConstructorParams) {
     super(params.ctx.app);

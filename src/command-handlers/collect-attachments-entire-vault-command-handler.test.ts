@@ -17,6 +17,9 @@ import { CollectAttachmentsEntireVaultCommandHandler } from './collect-attachmen
 
 interface TestableHandler {
   execute(): Promise<void>;
+  icon: string;
+  id: string;
+  name: string;
 }
 
 const mockCollectAttachmentsEntireVault = vi.fn<AttachmentCollector['collectAttachmentsEntireVault']>();
@@ -47,9 +50,9 @@ describe('CollectAttachmentsEntireVaultCommandHandler', () => {
 
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(CollectAttachmentsEntireVaultCommandHandler);
-    expect(handler.id).toBe('collect-attachments-entire-vault');
-    expect(handler.icon).toBe('download');
-    expect(handler.name).toBe('Collect attachments in entire vault');
+    expect(toTestable(handler).id).toBe('collect-attachments-entire-vault');
+    expect(toTestable(handler).icon).toBe('download');
+    expect(toTestable(handler).name).toBe('Collect attachments in entire vault');
   });
 
   it('should delegate to the attachment collector on execute', async () => {

@@ -142,7 +142,6 @@ export class Plugin extends PluginBase {
         activeFileProvider: new AppActiveFileProvider(this.app),
         commandHandlers: [
           new CollectAttachmentsInFileCommandHandler({
-            app: this.app,
             attachmentCollector
           }),
           new CollectAttachmentsInCurrentFolderCommandHandler({

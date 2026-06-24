@@ -171,14 +171,15 @@ export class AttachmentSaver {
     const noteFile = this.app.workspace.getActiveFile();
     const attachmentFileStats = this.arrayBufferMap.getFileStats(params.attachmentFileContent);
 
+    const attachmentFileContent = params.attachmentFileContent;
     const attachmentPath = await this.attachmentPathManager.getAvailablePathForAttachments({
       attachmentFileBaseName: params.attachmentFileBaseName,
-      attachmentFileContent: params.attachmentFileContent,
       attachmentFileExtension: params.attachmentFileExtension,
       attachmentFileStats,
       context: actionContextToAttachmentPathContext(ActionContext.SaveAttachment),
       notePathOrFile: noteFile,
       oldAttachmentPathOrFile: makeFileName(params.attachmentFileBaseName, params.attachmentFileExtension),
+      readAttachmentFileContent: (): Promise<ArrayBuffer> => Promise.resolve(attachmentFileContent),
       shouldSkipDuplicateCheck: false,
       shouldSkipGeneratedAttachmentFileName: true,
       shouldSkipMissingAttachmentFolderCreation: false

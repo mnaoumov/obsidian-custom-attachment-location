@@ -1,7 +1,4 @@
-import type {
-  App,
-  TAbstractFile
-} from 'obsidian';
+import type { TAbstractFile } from 'obsidian';
 import type { Promisable } from 'type-fest';
 
 import { noopAsync } from 'obsidian-dev-utils/function';
@@ -15,12 +12,10 @@ import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import type { AttachmentCollector } from '../attachment-collector.ts';
 
 interface CollectAttachmentsInFileCommandHandlerConstructorParams {
-  readonly app: App;
   readonly attachmentCollector: AttachmentCollector;
 }
 
 export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandHandler {
-  private readonly app: App;
   private readonly attachmentCollector: AttachmentCollector;
 
   public constructor(params: CollectAttachmentsInFileCommandHandlerConstructorParams) {
@@ -32,7 +27,6 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
       name: t(($) => $.commands.collectAttachmentsCurrentNote)
     });
 
-    this.app = params.app;
     this.attachmentCollector = params.attachmentCollector;
   }
 
@@ -42,7 +36,7 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
     }
 
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && !isNote(this.app, abstractFile)) {
+      if (isFile(abstractFile) && !isNote(abstractFile)) {
         return false;
       }
     }

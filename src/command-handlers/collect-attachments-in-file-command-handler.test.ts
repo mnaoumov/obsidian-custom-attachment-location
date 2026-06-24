@@ -1,5 +1,4 @@
 import type {
-  App,
   TAbstractFile,
   TFile
 } from 'obsidian';
@@ -34,6 +33,9 @@ interface TestableHandler {
   canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean;
   executeAbstractFile(abstractFile: TAbstractFile): Promise<void>;
   executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void>;
+  icon: string;
+  id: string;
+  name: string;
   shouldAddToAbstractFileMenu(): boolean;
   shouldAddToAbstractFilesMenu(): boolean;
 }
@@ -77,22 +79,20 @@ beforeAll(async () => {
 });
 
 describe('CollectAttachmentsInFileCommandHandler', () => {
-  let app: App;
   let attachmentCollector: AttachmentCollector;
   let handler: CollectAttachmentsInFileCommandHandler;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    app = strictProxy<App>({});
     attachmentCollector = createAttachmentCollector();
-    handler = new CollectAttachmentsInFileCommandHandler({ app, attachmentCollector });
+    handler = new CollectAttachmentsInFileCommandHandler({ attachmentCollector });
   });
 
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(CollectAttachmentsInFileCommandHandler);
-    expect(handler.id).toBe('collect-attachments-in-file');
-    expect(handler.icon).toBe('download');
-    expect(handler.name).toBe('Collect attachments in current note');
+    expect(toTestable(handler).id).toBe('collect-attachments-in-file');
+    expect(toTestable(handler).icon).toBe('download');
+    expect(toTestable(handler).name).toBe('Collect attachments in current note');
   });
 
   describe('canExecuteAbstractFiles', () => {

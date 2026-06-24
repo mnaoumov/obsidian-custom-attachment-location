@@ -482,9 +482,51 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: null,
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipMissingAttachmentFolderCreation: true
       });
       expect(result).toBe('dev-utils-path');
+    });
+
+    it('should read the attachment content lazily through the provider for a note path', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockReturnValue(noteFile);
+      mockIsNote.mockReturnValue(true);
+      const content = new ArrayBuffer(8);
+      const readAttachmentFileContent = vi.fn<() => Promise<ArrayBuffer>>().mockResolvedValue(content);
+      const result = await ctx.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'img',
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipGeneratedAttachmentFileName: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      expect(result).toBe('assets/img.png');
+      expect(readAttachmentFileContent).toHaveBeenCalledOnce();
+    });
+
+    it('should seed empty content for a dummy attachment base name on a note path', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockReturnValue(noteFile);
+      mockIsNote.mockReturnValue(true);
+      const result = await ctx.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: DUMMY_PATH,
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipGeneratedAttachmentFileName: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      expect(result).toBe(`assets/${DUMMY_PATH}.png`);
     });
 
     it('should strip the import-files prefix and skip generated file name', async () => {
@@ -498,6 +540,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: true
       });
@@ -514,6 +557,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'ignored/note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipMissingAttachmentFolderCreation: true
       });
       expect(result).toBe('original-path');
@@ -529,6 +573,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.txt',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: false
       });
@@ -548,6 +593,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.txt',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipMissingAttachmentFolderCreation: undefined
       });
       expect(mockGetAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({
@@ -568,6 +614,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipMissingAttachmentFolderCreation: true
       });
       expect(result).toBe('assets/generated.png');
@@ -584,6 +631,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: false,
         shouldSkipMissingAttachmentFolderCreation: true
       });
@@ -602,6 +650,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: false,
         shouldSkipMissingAttachmentFolderCreation: true
       });
@@ -621,6 +670,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: false
       });
@@ -641,6 +691,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: false
       });
@@ -659,6 +710,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: false
       });
@@ -684,6 +736,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: true
       });
@@ -720,6 +773,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: true
       });
@@ -746,6 +800,7 @@ describe('AttachmentPathManager', () => {
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
         oldNotePathOrFile: 'old-note.md',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: true
       });
@@ -773,6 +828,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: true
       });
@@ -794,6 +850,7 @@ describe('AttachmentPathManager', () => {
         context: AttachmentPathContext.Unknown,
         notePathOrFile: 'note.md',
         oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: true
       });

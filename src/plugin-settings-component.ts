@@ -263,7 +263,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   }
 
   public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
-    if (!pathOrFile || !isNote(this.app, pathOrFile)) {
+    if (!pathOrFile || !isNote(pathOrFile)) {
       return false;
     }
 
