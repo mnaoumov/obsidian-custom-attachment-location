@@ -2,7 +2,7 @@ import { parseExpressionAt } from 'acorn';
 import { parse } from 'json5';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
-export interface ScannedToken {
+interface ScannedToken {
   end: number;
   formatText: null | string;
   raw: string;

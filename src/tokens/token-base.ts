@@ -15,7 +15,7 @@ export abstract class TokenBase<TFormat> {
 
   protected abstract evaluateImpl(ctx: TokenEvaluatorContext, format: TFormat): Promisable<string>;
 
-  protected getDefaultFormat(): TFormat {
+  private getDefaultFormat(): TFormat {
     const result = this.formatSchema.safeParse({});
     if (!result.success) {
       throw new Error(`Token ${this.name} does not support default format.`);
