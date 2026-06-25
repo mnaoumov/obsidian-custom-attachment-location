@@ -2,7 +2,7 @@ import { moment as moment_ } from 'obsidian';
 import { extractDefaultExportInterop } from 'obsidian-dev-utils/object-utils';
 import { z } from 'zod';
 
-export const moment = extractDefaultExportInterop(moment_);
+const moment = extractDefaultExportInterop(moment_);
 
 export const momentJsFormatSchema = z.strictObject({
   momentJsFormat: z.string()

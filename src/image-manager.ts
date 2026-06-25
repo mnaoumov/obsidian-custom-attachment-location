@@ -136,7 +136,7 @@ export class ImageManager {
     return `${String(width)}x${String(height)}`;
   }
 
-  public getMimeType(extension: string): null | string {
+  private getMimeType(extension: string): null | string {
     return IMAGE_MIME_TYPE_IMAGE_MAP[extension.toLowerCase()] ?? null;
   }
 }

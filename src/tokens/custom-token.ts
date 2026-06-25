@@ -8,7 +8,7 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 import { TokenBase } from './token-base.ts';
 
-export type TokenEvaluator = (ctx: TokenEvaluatorContext) => Promisable<string>;
+type TokenEvaluator = (ctx: TokenEvaluatorContext) => Promisable<string>;
 
 const formatSchema = z.looseObject({});
 type Format = z.infer<typeof formatSchema>;

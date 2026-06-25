@@ -309,31 +309,6 @@ export class AttachmentPathManager {
     return newAttachmentPath;
   }
 
-  public async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
-    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
-    if (!oldAttachmentFile) {
-      return 0;
-    }
-
-    const cache = await getCacheSafe(this.app, noteFilePath);
-    if (!cache) {
-      return 0;
-    }
-
-    let sequenceNumber = 1;
-    for (const link of getAllLinks(cache)) {
-      const linkFile = extractLinkFile(this.app, link, noteFilePath);
-
-      if (linkFile === oldAttachmentFile) {
-        return sequenceNumber;
-      }
-
-      sequenceNumber++;
-    }
-
-    return 0;
-  }
-
   private cleanFilePathPart(part: string): string {
     let cleanPart = part.trimEnd();
     if (cleanPart === '.' || cleanPart === '..') {
@@ -373,6 +348,31 @@ export class AttachmentPathManager {
       if (linkFile === oldAttachmentFile) {
         return link.position.start.line;
       }
+    }
+
+    return 0;
+  }
+
+  private async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
+    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
+    if (!oldAttachmentFile) {
+      return 0;
+    }
+
+    const cache = await getCacheSafe(this.app, noteFilePath);
+    if (!cache) {
+      return 0;
+    }
+
+    let sequenceNumber = 1;
+    for (const link of getAllLinks(cache)) {
+      const linkFile = extractLinkFile(this.app, link, noteFilePath);
+
+      if (linkFile === oldAttachmentFile) {
+        return sequenceNumber;
+      }
+
+      sequenceNumber++;
     }
 
     return 0;
