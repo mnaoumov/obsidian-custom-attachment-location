@@ -1,6 +1,10 @@
 import type { FileStats } from 'obsidian';
 
-import { castTo } from 'obsidian-dev-utils/object-utils';
+import { moment as moment_ } from 'obsidian';
+import {
+  castTo,
+  extractDefaultExportInterop
+} from 'obsidian-dev-utils/object-utils';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   describe,
@@ -10,8 +14,9 @@ import {
 
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
-import { moment } from './moment-js-token-base.ts';
 import { OriginalAttachmentFileModificationDateToken } from './original-attachment-file-modification-date-token.ts';
+
+const moment = extractDefaultExportInterop(moment_);
 
 const MTIME = Date.UTC(2018, 7, 9, 10, 11, 12);
 

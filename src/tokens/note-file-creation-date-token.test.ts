@@ -3,7 +3,11 @@ import type {
   TFile
 } from 'obsidian';
 
-import { castTo } from 'obsidian-dev-utils/object-utils';
+import { moment as moment_ } from 'obsidian';
+import {
+  castTo,
+  extractDefaultExportInterop
+} from 'obsidian-dev-utils/object-utils';
 import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/attachment-path';
 import { getFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
@@ -17,12 +21,13 @@ import {
 
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
-import { moment } from './moment-js-token-base.ts';
 import { NoteFileCreationDateToken } from './note-file-creation-date-token.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', () => ({
   getFile: vi.fn<(app: App, pathOrFile: string) => TFile>()
 }));
+
+const moment = extractDefaultExportInterop(moment_);
 
 const CTIME = Date.UTC(2020, 0, 2, 3, 4, 5);
 

@@ -48,6 +48,10 @@ import { Substitutions } from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 import { TokenValidationMode } from './token-validator.ts';
 
+interface Testable {
+  getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: string): Promise<number>;
+}
+
 const noticeInstances: unknown[] = [];
 
 vi.mock('obsidian', async (importOriginal) => {
@@ -358,14 +362,14 @@ describe('AttachmentPathManager', () => {
   describe('getSequenceNumber', () => {
     it('should return 0 when there is no old attachment file', async () => {
       mockGetFileOrNull.mockReturnValue(null);
-      const result = await ctx.manager.getSequenceNumber('note.md', 'old.png');
+      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
       expect(result).toBe(0);
     });
 
     it('should return 0 when there is no cache for the note', async () => {
       mockGetFileOrNull.mockReturnValue(createTFile({ path: 'old.png' }));
       mockGetCacheSafe.mockResolvedValue(null);
-      const result = await ctx.manager.getSequenceNumber('note.md', 'old.png');
+      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
       expect(result).toBe(0);
     });
 
@@ -378,7 +382,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
       mockGetAllLinks.mockReturnValue([link1, link2]);
       mockExtractLinkFile.mockImplementation((_app, link) => link === link2 ? oldFile : otherFile);
-      const result = await ctx.manager.getSequenceNumber('note.md', 'old.png');
+      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
       expect(result).toBe(2);
     });
 
@@ -388,7 +392,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
       mockGetAllLinks.mockReturnValue([strictProxy<Reference>({})]);
       mockExtractLinkFile.mockReturnValue(createTFile({ path: 'other.png' }));
-      const result = await ctx.manager.getSequenceNumber('note.md', 'old.png');
+      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
       expect(result).toBe(0);
     });
   });

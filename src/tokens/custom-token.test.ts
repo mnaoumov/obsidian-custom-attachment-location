@@ -9,9 +9,10 @@ import {
 } from 'vitest';
 
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
-import type { TokenEvaluator } from './custom-token.ts';
 
 import { CustomToken } from './custom-token.ts';
+
+type TokenEvaluator = ConstructorParameters<typeof CustomToken>[1];
 
 vi.mock('obsidian-dev-utils/error', async (importOriginal) => {
   const actual = await importOriginal<typeof import('obsidian-dev-utils/error')>();

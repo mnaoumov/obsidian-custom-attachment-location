@@ -1,3 +1,5 @@
+import { moment as moment_ } from 'obsidian';
+import { extractDefaultExportInterop } from 'obsidian-dev-utils/object-utils';
 import {
   describe,
   expect,
@@ -7,9 +9,10 @@ import {
 import {
   formatDate,
   formatNow,
-  moment,
   momentJsFormatSchema
 } from './moment-js-token-base.ts';
+
+const moment = extractDefaultExportInterop(moment_);
 
 const UNIX_TIMESTAMP_IN_MILLISECONDS = Date.UTC(2021, 4, 17, 12, 34, 56);
 
@@ -21,12 +24,6 @@ describe('momentJsFormatSchema', () => {
 
   it('should reject a missing momentJsFormat', () => {
     expect(() => momentJsFormatSchema.parse({})).toThrow();
-  });
-});
-
-describe('moment', () => {
-  it('should expose the interop-extracted moment function', () => {
-    expect(moment).toBeTypeOf('function');
   });
 });
 

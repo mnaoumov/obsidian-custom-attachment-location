@@ -22,6 +22,10 @@ import {
   DefaultImageSizeDimension
 } from './plugin-settings.ts';
 
+interface Testable {
+  getMimeType(extension: string): null | string;
+}
+
 vi.mock('obsidian-dev-utils/blob', () => ({
   blobToDataUrl: vi.fn<(blob: Blob) => Promise<string>>(),
   blobToJpegArrayBuffer: vi.fn<(blob: Blob, jpegQuality: number) => Promise<ArrayBuffer>>()
@@ -82,12 +86,12 @@ describe('ImageManager', () => {
   describe('getMimeType', () => {
     it('should return the mime type for a known extension (case-insensitive)', () => {
       const imageManager = createImageManager({});
-      expect(imageManager.getMimeType('PNG')).toBe('image/png');
+      expect(castTo<Testable>(imageManager).getMimeType('PNG')).toBe('image/png');
     });
 
     it('should return null for an unknown extension', () => {
       const imageManager = createImageManager({});
-      expect(imageManager.getMimeType('txt')).toBeNull();
+      expect(castTo<Testable>(imageManager).getMimeType('txt')).toBeNull();
     });
   });
 
