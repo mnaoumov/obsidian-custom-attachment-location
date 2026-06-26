@@ -4,6 +4,12 @@
 
 ### Wasted per-attachment `readBinary` in attachment-path resolution → bulk-deletion freeze
 
+**Status (2026-06-26): RESOLVED in code, pending a major release.** The lazy-content fix is
+implemented end-to-end (dev-utils core released as 80.1.0; this plugin's handler now threads the
+lazy provider instead of eager-reading — `perf!` commit). The breaking custom-token API change
+(`ctx.attachmentFileContent` → `await ctx.getAttachmentFileContent()`) still needs to ship as a
+major version bump (≥ 11.0.0). History and decomposition kept below for context.
+
 Originally measured 2026-06-22 by CPU-profiling the real vault `F:\Obsidian` (~90k files)
 while Advanced Exclude hid a large folder in `Full` mode (Obsidian runs a per-file
 `removeFile` cascade — ~943 files in the test). `consistent-attachments-and-links`'s
@@ -44,22 +50,29 @@ handler is flat (~0.2 ms) and content-independent. Absolute times here are modes
 the temp vault is warm SSD with 512 KB attachments — real vaults with multi-MB
 images/PDFs/videos and cold/cloud-synced reads explain the 22–35 s field measurement.
 
-**Fix directions (in order of impact):**
+**Resolution (what shipped, in order of impact):**
 
-- **dev-utils core (best — fixes every consumer) — DESIGNED, NOT DONE:** make attachment
-  content lazy in `getAttachmentFilePath` — pass a `readAttachmentFileContent: () => Promise<ArrayBuffer>`
-  provider in `GetAvailablePathForAttachmentsExtendedFnParams` instead of an eagerly-read
-  `attachmentFileContent`, so the read happens only if a token actually pulls the bytes
-  (zero reads with default settings). Deferred because it is a breaking change to a published
-  library that must be release-gated and coordinated with the plugin bump plus a
-  `consistent-attachments-and-links` rebuild against the new dev-utils. Exact spec lives in the
-  project memory `attachment-path-binary-read-bottleneck`.
-- **This plugin — `attachment-file-size-token` DONE** (`perf:` commit): now uses
-  `attachmentFileStats.size` instead of reading `content.byteLength`, so the size token is
-  read-free (prerequisite so the lazy-provider fix above actually avoids the read). Still
-  deferred: collapsing the duplicate `getCacheSafe` + `getAllLinks` walk that `getCursorLine`
-  and `getSequenceNumber` each do into a single pass — careful, it affects generated filenames
-  (line-0 cursor + reference-vs-any link matching edge cases), low payoff (~0.05 ms) vs risk.
-- **`consistent-attachments-and-links`:** its `dirname(newPath) === dirname(file.path)`
-  short-circuit only needs the attachment *folder*, not a per-file name — it could call a
-  folder-only API with a DUMMY attachment (no real file ⇒ no `readBinary`).
+- **dev-utils core — DONE (released 80.1.0):** `getAttachmentFilePath` now passes a
+  `readAttachmentFileContent: () => Promise<ArrayBuffer>` provider in
+  `GetAvailablePathForAttachmentsExtendedFnParams` instead of an eagerly-read `attachmentFileContent`.
+  This stopped the eager read in the *core*, but on its own only moved the read into this plugin's
+  patched handler (which then eagerly called the provider), so 80.1.0 alone did NOT remove the freeze.
+- **This plugin — DONE (`perf!` commit):**
+  - `attachment-file-size-token` uses `attachmentFileStats.size` instead of reading
+    `content.byteLength`, so the size token is read-free (prerequisite).
+  - `AttachmentPathManager.getAvailablePathForAttachments` no longer eagerly calls the provider; it
+    threads it through `Substitutions`, which exposes a **memoized** `ctx.getAttachmentFileContent()`
+    that reads the binary on demand only when a token actually pulls the bytes. With default settings
+    that is **zero reads** — the freeze is gone. `Substitutions` accepts either eager
+    `attachmentFileContent` (callers that already hold the bytes: saver / share-receiver /
+    getProperAttachmentPath) or the lazy `readAttachmentFileContent` provider (the hot delete/rename
+    path); `getProperAttachmentPath` deliberately kept its eager read (status quo, not the freeze path).
+  - BREAKING: `ctx.attachmentFileContent` (sync property) replaced by
+    `await ctx.getAttachmentFileContent()` (memoized async) — needs a major release; README migration
+    note added.
+  - Still deferred (low payoff/medium risk): collapsing the duplicate `getCacheSafe` + `getAllLinks`
+    walk that `getCursorLine` and `getSequenceNumber` each do into a single pass — affects generated
+    filenames (line-0 cursor + reference-vs-any link matching edge cases).
+- **`consistent-attachments-and-links` — no code change needed:** it only calls the dev-utils
+  `getAttachmentFilePath`, so it benefits automatically once it is on dev-utils 80.1.0 (it is, with a
+  fresh `dist/build` as of 2026-06-25) and the user installs this plugin's lazy-handler release.
