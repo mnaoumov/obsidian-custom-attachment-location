@@ -441,6 +441,13 @@ export const defaultTranslations = {
         part1: 'The format of tokens has been changed. Please update your tokens accordingly. See',
         part2: 'documentation',
         part3: 'for more information.'
+      },
+      '11.0.0': {
+        part1: 'Custom tokens that read the attachment content must be updated. The synchronous',
+        part2: 'property was replaced with the lazy',
+        part3: 'method. See',
+        part4: 'documentation',
+        part5: 'for migration details.'
       }
     }
   }

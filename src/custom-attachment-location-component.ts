@@ -315,6 +315,24 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         });
         f.appendText(' ');
         f.appendText(t(($) => $.releaseNotes.versions['10.0.0'].part3));
+      }),
+      '11.0.0': createFragment((f) => {
+        f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part1));
+        f.appendText(' ');
+        appendCodeBlock(f, 'ctx.attachmentFileContent');
+        f.appendText(' ');
+        f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part2));
+        f.appendText(' ');
+        appendCodeBlock(f, 'await ctx.getAttachmentFileContent()');
+        f.appendText(' ');
+        f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part3));
+        f.appendText(' ');
+        f.createEl('a', {
+          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens',
+          text: t(($) => $.releaseNotes.versions['11.0.0'].part4)
+        });
+        f.appendText(' ');
+        f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part5));
       })
       /* eslint-enable perfectionist/sort-objects -- Need to keep versions in order. */
     };
