@@ -242,7 +242,6 @@ describe('AttachmentPathManager', () => {
       const stat = strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 });
       const result = await ctx.manager.getAttachmentFolderFullPathForPath({
         actionContext: ActionContext.SaveAttachment,
-        attachmentFileContent: new ArrayBuffer(0),
         attachmentFileName: 'img.png',
         attachmentFileStats: stat,
         notePath: 'notes/note.md',
@@ -494,13 +493,12 @@ describe('AttachmentPathManager', () => {
       expect(result).toBe('dev-utils-path');
     });
 
-    it('should read the attachment content lazily through the provider for a note path', async () => {
+    it('should not read the attachment content when no token needs it', async () => {
       ctx.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValue(noteFile);
       mockIsNote.mockReturnValue(true);
-      const content = new ArrayBuffer(8);
-      const readAttachmentFileContent = vi.fn<() => Promise<ArrayBuffer>>().mockResolvedValue(content);
+      const readAttachmentFileContent = vi.fn<() => Promise<ArrayBuffer>>().mockResolvedValue(new ArrayBuffer(8));
       const result = await ctx.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
@@ -513,7 +511,7 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: true
       });
       expect(result).toBe('assets/img.png');
-      expect(readAttachmentFileContent).toHaveBeenCalledOnce();
+      expect(readAttachmentFileContent).not.toHaveBeenCalled();
     });
 
     it('should seed empty content for a dummy attachment base name on a note path', async () => {

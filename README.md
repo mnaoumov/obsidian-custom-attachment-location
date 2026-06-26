@@ -651,6 +651,19 @@ Then you can use the defined `${foo}`, `${bar:{formatKey:'baz'}}` tokens in the 
 
 See [spec](./src/token-evaluator-context.ts) of the `ctx` argument.
 
+**Breaking change:** the synchronous `ctx.attachmentFileContent` property was replaced with the lazy async method `ctx.getAttachmentFileContent()`. Reading an attachment's bytes is potentially expensive (it grows with the file size), so the bytes are now read on demand only when a token actually asks for them, and never for the built-in tokens. If your custom token needs the attachment content, migrate it like this:
+
+```javascript
+// Before
+registerCustomToken('size', (ctx) => String(ctx.attachmentFileContent?.byteLength ?? 0));
+
+// After
+registerCustomToken('size', async (ctx) => {
+  const content = await ctx.getAttachmentFileContent();
+  return String(content?.byteLength ?? 0);
+});
+```
+
 ## Changelog
 
 All notable changes to this project will be documented in the [CHANGELOG](./CHANGELOG.md).

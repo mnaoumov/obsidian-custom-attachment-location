@@ -77,10 +77,10 @@ function createApp(overrides: StrictProxyPartial<App>): App {
 function createCtx(overrides: StrictProxyPartial<TokenEvaluatorContext>): TokenEvaluatorContext {
   return strictProxy<TokenEvaluatorContext>({
     app: createApp({}),
-    attachmentFileContent: undefined,
     fillTemplate: vi.fn((template: string): Promise<string> => Promise.resolve(template)),
     // eslint-disable-next-line no-template-curly-in-string -- This is a literal token template string, not a JS template literal.
     fullTemplate: 'before${token}after',
+    getAttachmentFileContent: vi.fn((): Promise<ArrayBuffer | undefined> => Promise.resolve(undefined)),
     originalAttachmentFileExtension: 'png',
     originalAttachmentFileName: 'image',
     tokenEndOffset: 13,
@@ -266,7 +266,7 @@ describe('promptWithPreview', () => {
 
   it('should disable the Preview button when there is no attachment content', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({ attachmentFileContent: undefined }),
+      ctx: createCtx({ getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(undefined) }),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
@@ -283,7 +283,7 @@ describe('promptWithPreview', () => {
         app: createApp({
           embedRegistry: createEmbedRegistry({ png: embeddableCreator })
         }),
-        attachmentFileContent: new ArrayBuffer(8)
+        getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(new ArrayBuffer(8))
       }),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
@@ -303,7 +303,7 @@ describe('promptWithPreview', () => {
           embedRegistry: createEmbedRegistry({ png: embeddableCreator }),
           vault: castTo<App['vault']>({ createBinary })
         }),
-        attachmentFileContent: new ArrayBuffer(8)
+        getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(new ArrayBuffer(8))
       }),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
@@ -324,7 +324,7 @@ describe('promptWithPreview', () => {
         app: createApp({
           embedRegistry: createEmbedRegistry({})
         }),
-        attachmentFileContent: new ArrayBuffer(8)
+        getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(new ArrayBuffer(8))
       }),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
@@ -344,7 +344,7 @@ describe('promptWithPreview', () => {
         app: createApp({
           embedRegistry: createEmbedRegistry({ png: embeddableCreator })
         }),
-        attachmentFileContent: new ArrayBuffer(8)
+        getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(new ArrayBuffer(8))
       }),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))

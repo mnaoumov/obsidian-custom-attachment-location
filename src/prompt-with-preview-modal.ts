@@ -57,8 +57,9 @@ class PreviewModal extends Modal {
 
   private async onOpenAsync(): Promise<void> {
     const embeddableCreator = this.app.embedRegistry.embedByExtension[this.params.ctx.originalAttachmentFileExtension];
+    const attachmentFileContent = await this.params.ctx.getAttachmentFileContent();
 
-    if (!embeddableCreator || !this.params.ctx.attachmentFileContent) {
+    if (!embeddableCreator || !attachmentFileContent) {
       return;
     }
 
@@ -67,7 +68,7 @@ class PreviewModal extends Modal {
     this.titleEl.setText(t(($) => $.promptWithPreviewModal.previewModal.title, { fullFileName }));
 
     const tempPath = `__temp${String(Date.now())}__${fullFileName}`;
-    this.tempFile = await this.app.vault.createBinary(tempPath, this.params.ctx.attachmentFileContent);
+    this.tempFile = await this.app.vault.createBinary(tempPath, attachmentFileContent);
 
     const previewContainer = this.contentEl.createDiv('preview-container');
 
@@ -174,8 +175,9 @@ class PromptWithPreviewModal extends Modal {
     previewButton.onClick(this.preview.bind(this));
 
     const embeddableCreator = this.app.embedRegistry.embedByExtension[this.ctx.originalAttachmentFileExtension];
+    const attachmentFileContent = await this.ctx.getAttachmentFileContent();
 
-    if (!this.ctx.attachmentFileContent || !embeddableCreator) {
+    if (!attachmentFileContent || !embeddableCreator) {
       previewButton.setDisabled(true);
     }
   }

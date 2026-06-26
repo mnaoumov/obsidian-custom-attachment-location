@@ -70,6 +70,7 @@ interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
   readonly attachmentFileStats?: FileStats | undefined;
   readonly notePath: string;
   readonly oldNoteFilePath?: string | undefined;
+  readonly readAttachmentFileContent?: (() => Promise<ArrayBuffer>) | undefined;
 }
 
 interface AttachmentPathManagerGetAvailablePathForAttachmentsParams {
@@ -121,6 +122,7 @@ export class AttachmentPathManager {
         oldNoteFilePath: params.oldNoteFilePath,
         originalAttachmentFileName: params.attachmentFileName,
         pluginSettingsComponent: this.pluginSettingsComponent,
+        readAttachmentFileContent: params.readAttachmentFileContent,
         tokenValidator: this.tokenValidator
       })
     );
@@ -164,20 +166,15 @@ export class AttachmentPathManager {
         shouldSkipMissingAttachmentFolderCreation: params.shouldSkipMissingAttachmentFolderCreation ?? true
       });
     } else {
-      let attachmentFileContent: ArrayBuffer | undefined;
-      if (params.readAttachmentFileContent) {
-        attachmentFileContent = await params.readAttachmentFileContent();
-      } else if (isDummy) {
-        attachmentFileContent = new ArrayBuffer(0);
-      }
+      const readAttachmentFileContent = params.readAttachmentFileContent ?? undefined;
       const attachmentFileName = makeFileName(attachmentFileBaseName, params.attachmentFileExtension);
       const attachmentFolderFullPath = await this.getAttachmentFolderFullPathForPath({
         actionContext: attachmentPathContextToActionContext(params.context),
-        attachmentFileContent,
         attachmentFileName,
         attachmentFileStats,
         notePath: noteFilePath,
-        oldNoteFilePath
+        oldNoteFilePath,
+        readAttachmentFileContent
       });
       let generatedAttachmentFileName: string;
       if (shouldSkipGeneratedAttachmentFileName) {
@@ -189,13 +186,13 @@ export class AttachmentPathManager {
           new Substitutions({
             actionContext: attachmentPathContextToActionContext(params.context),
             app: this.app,
-            attachmentFileContent,
             attachmentFileStats,
             cursorLine,
             noteFilePath,
             oldNoteFilePath,
             originalAttachmentFileName: attachmentFileName,
             pluginSettingsComponent: this.pluginSettingsComponent,
+            readAttachmentFileContent,
             sequenceNumber,
             tokenValidator: this.tokenValidator
           })

@@ -34,8 +34,10 @@ interface ActiveEditorOverrides {
 
 interface SubstitutionsOverrides {
   activeEditorOverrides?: ActiveEditorOverrides;
+  attachmentFileContent?: ArrayBuffer;
   cursorLine?: number;
   noteFilePath?: string;
+  readAttachmentFileContent?(): Promise<ArrayBuffer>;
 }
 
 const mockPrintError = vi.mocked(printError);
@@ -65,9 +67,11 @@ function createSubstitutions(overrides?: SubstitutionsOverrides): Substitutions 
   return new Substitutions({
     actionContext: ActionContext.SaveAttachment,
     app: createApp(overrides?.activeEditorOverrides),
+    ...overrides?.attachmentFileContent === undefined ? {} : { attachmentFileContent: overrides.attachmentFileContent },
     ...overrides?.cursorLine === undefined ? {} : { cursorLine: overrides.cursorLine },
     noteFilePath: overrides?.noteFilePath ?? 'folder/my-note.md',
     pluginSettingsComponent: strictProxy<PluginSettingsComponent>({}),
+    ...overrides?.readAttachmentFileContent === undefined ? {} : { readAttachmentFileContent: overrides.readAttachmentFileContent },
     tokenValidator: strictProxy<TokenValidator>({})
   });
 }
@@ -184,6 +188,33 @@ describe('Substitutions', () => {
       Substitutions.registerCustomTokens('registerCustomToken("nonString", () => 42);');
       await expect(createSubstitutions().fillTemplate(tk('nonString'))).rejects.toThrow('Token returned non-string value');
       expect(errorSpy).toHaveBeenCalledWith('Token returned non-string value.', expect.anything());
+    });
+  });
+
+  describe('getAttachmentFileContent (via the attachmentFileSize token)', () => {
+    it('should report 0 bytes when no attachment content is available', async () => {
+      const result = await createSubstitutions().fillTemplate(tk('attachmentFileSize'));
+      expect(result).toBe('0');
+    });
+
+    it('should read eager attachment content', async () => {
+      const result = await createSubstitutions({ attachmentFileContent: new ArrayBuffer(2048) }).fillTemplate(tk('attachmentFileSize'));
+      expect(result).toBe('2048');
+    });
+
+    it('should read attachment content lazily through the provider', async () => {
+      const readAttachmentFileContent = vi.fn<() => Promise<ArrayBuffer>>().mockResolvedValue(new ArrayBuffer(1024));
+      const result = await createSubstitutions({ readAttachmentFileContent }).fillTemplate(tk('attachmentFileSize'));
+      expect(result).toBe('1024');
+      expect(readAttachmentFileContent).toHaveBeenCalledOnce();
+    });
+
+    it('should read the content only once across multiple tokens', async () => {
+      const readAttachmentFileContent = vi.fn<() => Promise<ArrayBuffer>>().mockResolvedValue(new ArrayBuffer(512));
+      const result = await createSubstitutions({ readAttachmentFileContent })
+        .fillTemplate(`${tk('attachmentFileSize')}-${tk('attachmentFileSize')}`);
+      expect(result).toBe('512-512');
+      expect(readAttachmentFileContent).toHaveBeenCalledOnce();
     });
   });
 });

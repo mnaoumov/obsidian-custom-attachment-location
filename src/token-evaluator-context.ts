@@ -78,13 +78,6 @@ export interface TokenEvaluatorContext {
   app: App;
 
   /**
-   * A content of the attachment file.
-   *
-   * `undefined` if the attachment file content is not known.
-   */
-  attachmentFileContent: ArrayBuffer | undefined;
-
-  /**
    * Stats of the attachment file.
    *
    * `undefined` if the attachment file stats is not known.
@@ -128,6 +121,18 @@ export interface TokenEvaluatorContext {
    * Empty string if the attachment file path is not fully generated yet.
    */
   generatedAttachmentFilePath: string;
+
+  /**
+   * Lazily reads the content of the attachment file, memoizing the result.
+   *
+   * The bytes are read on demand only the first time this is called; subsequent calls return the
+   * cached value without re-reading. For the default templates nothing pulls the bytes, so the
+   * potentially expensive (size-proportional) `readBinary` never runs.
+   *
+   * @returns A {@link Promise} that resolves to the content of the attachment file, or `undefined`
+   * when there is no attachment file to read.
+   */
+  getAttachmentFileContent(): Promise<ArrayBuffer | undefined>;
 
   /**
    * A name of the note file.

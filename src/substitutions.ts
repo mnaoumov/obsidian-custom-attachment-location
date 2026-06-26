@@ -55,6 +55,7 @@ interface SubstitutionsConstructorParams {
   readonly oldNoteFilePath?: string | undefined;
   readonly originalAttachmentFileName?: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly readAttachmentFileContent?: (() => Promise<ArrayBuffer>) | undefined;
   readonly sequenceNumber?: number | undefined;
   readonly tokenValidator: TokenValidator;
 }
@@ -70,6 +71,7 @@ export class Substitutions {
   public readonly noteFolderPath: string;
   private readonly app: App;
   private readonly attachmentFileContent: ArrayBuffer | undefined;
+  private attachmentFileContentPromise: Promise<ArrayBuffer | undefined> | undefined;
   private readonly attachmentFileStats: FileStats | undefined;
   private readonly cursorLine: null | number;
   private readonly generatedAttachmentFileName: string;
@@ -84,6 +86,7 @@ export class Substitutions {
   private readonly originalAttachmentFileExtension: string;
   private readonly originalAttachmentFileName: string;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly readAttachmentFileContent: (() => Promise<ArrayBuffer>) | undefined;
   private readonly sequenceNumber: number | undefined;
   private readonly tokenValidator: TokenValidator;
 
@@ -108,6 +111,7 @@ export class Substitutions {
     this.originalAttachmentFileExtension = originalAttachmentFileExtension.slice(1);
 
     this.attachmentFileContent = params.attachmentFileContent;
+    this.readAttachmentFileContent = params.readAttachmentFileContent;
     this.attachmentFileStats = params.attachmentFileStats;
 
     this.generatedAttachmentFileName = params.generatedAttachmentFileName ?? '';
@@ -198,7 +202,6 @@ export class Substitutions {
         abortSignal,
         actionContext: this.actionContext,
         app: this.app,
-        attachmentFileContent: this.attachmentFileContent,
         attachmentFileStats: this.attachmentFileStats,
         cursorLine: this.cursorLine,
         fillTemplate: this.fillTemplate.bind(this),
@@ -206,6 +209,7 @@ export class Substitutions {
         fullTemplate: template,
         generatedAttachmentFileName: this.generatedAttachmentFileName,
         generatedAttachmentFilePath: this.generatedAttachmentFilePath,
+        getAttachmentFileContent: () => this.getAttachmentFileContent(),
         noteFileName: this.noteFileName,
         noteFilePath: this.noteFilePath,
         noteFolderName: this.noteFolderName,
@@ -237,6 +241,13 @@ export class Substitutions {
 
     out += template.slice(lastOffset);
     return out;
+  }
+
+  private getAttachmentFileContent(): Promise<ArrayBuffer | undefined> {
+    this.attachmentFileContentPromise ??= this.attachmentFileContent === undefined
+      ? this.readAttachmentFileContent?.() ?? Promise.resolve(undefined)
+      : Promise.resolve(this.attachmentFileContent);
+    return this.attachmentFileContentPromise;
   }
 }
 
