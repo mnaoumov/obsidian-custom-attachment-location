@@ -4,11 +4,11 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
 import {
   App,
-  Notice,
   setIcon,
   TFile,
   Vault
@@ -61,6 +61,7 @@ interface AttachmentCollectorConstructorParams {
   readonly attachmentPathManager: AttachmentPathManager;
   readonly consoleDebugComponent: ConsoleDebugComponent;
   readonly pluginName: string;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -87,15 +88,17 @@ export class AttachmentCollector {
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
   private readonly pluginName: string;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: AttachmentCollectorConstructorParams) {
-    this.app = params.app;
-    this.pluginName = params.pluginName;
-    this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.abortSignalComponent = params.abortSignalComponent;
-    this.consoleDebugComponent = params.consoleDebugComponent;
+    this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.consoleDebugComponent = params.consoleDebugComponent;
+    this.pluginName = params.pluginName;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
+    this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
   public collectAttachmentsEntireVault(): void {
@@ -129,7 +132,9 @@ export class AttachmentCollector {
       return;
     }
 
-    const notice = new Notice(t(($) => $.notice.collectingAttachments, { noteFilePath: params.note.path }), 0);
+    const notice = this.pluginNoticeComponent.showNotice(t(($) => $.notice.collectingAttachments, { noteFilePath: params.note.path }), {
+      isPermanent: true
+    });
 
     try {
       const isCanvas = isCanvasFile(params.note);
@@ -294,7 +299,7 @@ export class AttachmentCollector {
     const singleFile: null | TFile = abstractFiles.length === 1 && isFile(abstractFiles[0]) ? abstractFiles[0] : null;
 
     if (singleFile && this.pluginSettingsComponent.settings.isPathIgnored(singleFile.path)) {
-      new Notice(t(($) => $.notice.notePathIsIgnored));
+      this.pluginNoticeComponent.showNotice(t(($) => $.notice.notePathIsIgnored));
       console.warn(`Cannot collect attachments in the note as note path is ignored: ${singleFile.path}.`);
       return;
     }

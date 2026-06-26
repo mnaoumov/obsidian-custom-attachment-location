@@ -12,6 +12,7 @@ import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/component
 import { Vault } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { castTo } from 'obsidian-dev-utils/object-utils';
+import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import {
   isFile,
   isFolder
@@ -207,6 +208,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       abortSignalComponent,
       app,
       attachmentPathManager,
+      pluginNoticeComponent: new PluginNoticeComponent('My Plugin'),
       pluginSettingsComponent
     });
     castTo<PluginNameHolder>(handler)._pluginName = 'My Plugin';

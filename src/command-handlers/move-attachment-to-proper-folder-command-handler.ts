@@ -4,12 +4,10 @@ import type {
   TFile
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import type { Promisable } from 'type-fest';
 
-import {
-  Notice,
-  Vault
-} from 'obsidian';
+import { Vault } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { toJson } from 'obsidian-dev-utils/object-utils';
 import { AbstractFileCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/abstract-file-command-handler';
@@ -39,6 +37,7 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -50,6 +49,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: MoveAttachmentToProperFolderCommandHandlerConstructorParams) {
@@ -61,8 +61,9 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
-    this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
+    this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
   protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
@@ -140,7 +141,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     const app = this.app;
     let backlinks = await getBacklinksForFileSafe(this.app, attachmentFile);
     if (backlinks.keys().length === 0) {
-      new Notice(t(($) => $.moveAttachmentToProperFolder.unusedAttachment, { attachmentPath: attachmentFile.path }));
+      this.pluginNoticeComponent.showNotice(t(($) => $.moveAttachmentToProperFolder.unusedAttachment, { attachmentPath: attachmentFile.path }));
       return true;
     }
 

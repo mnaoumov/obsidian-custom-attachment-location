@@ -60,6 +60,7 @@ export class Plugin extends PluginBase {
     const attachmentPathManager = new AttachmentPathManager({
       app: this.app,
       getAvailablePathForAttachmentsOriginal,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent,
       tokenValidator: validator
     });
@@ -133,6 +134,7 @@ export class Plugin extends PluginBase {
       attachmentPathManager,
       consoleDebugComponent: this.consoleDebugComponent,
       pluginName: this.manifest.name,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent
     });
 
@@ -154,6 +156,7 @@ export class Plugin extends PluginBase {
             abortSignalComponent: this.abortSignalComponent,
             app: this.app,
             attachmentPathManager,
+            pluginNoticeComponent: this.pluginNoticeComponent,
             pluginSettingsComponent
           })
         ],

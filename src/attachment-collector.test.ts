@@ -21,6 +21,7 @@ import {
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
+import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import {
   isCanvasFile,
   isFile,
@@ -243,6 +244,7 @@ describe('AttachmentCollector', () => {
       attachmentPathManager,
       consoleDebugComponent,
       pluginName: PLUGIN_NAME,
+      pluginNoticeComponent: new PluginNoticeComponent(PLUGIN_NAME),
       pluginSettingsComponent
     });
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);

@@ -14,6 +14,7 @@ import {
   DUMMY_PATH,
   getAvailablePathForAttachments
 } from 'obsidian-dev-utils/obsidian/attachment-path';
+import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
   getFileOrNull,
@@ -170,6 +171,7 @@ function createManager(): TestContext {
   const manager = new AttachmentPathManager({
     app,
     getAvailablePathForAttachmentsOriginal,
+    pluginNoticeComponent: new PluginNoticeComponent('Custom Attachment Location'),
     pluginSettingsComponent,
     tokenValidator
   });

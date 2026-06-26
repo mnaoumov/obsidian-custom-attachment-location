@@ -5,16 +5,14 @@ import type {
   TFile,
   Vault
 } from 'obsidian';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import type { PathOrFile } from 'obsidian-dev-utils/obsidian/file-system';
 
 import {
   isReferenceCache,
   parentFolderPath
 } from '@obsidian-typings/obsidian-public-latest/implementations';
-import {
-  normalizePath,
-  Notice
-} from 'obsidian';
+import { normalizePath } from 'obsidian';
 import { printError } from 'obsidian-dev-utils/error';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
@@ -60,6 +58,7 @@ import {
 interface AttachmentPathManagerConstructorParams {
   readonly app: App;
   readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly tokenValidator: TokenValidator;
 }
@@ -99,12 +98,14 @@ type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
 export class AttachmentPathManager {
   private readonly app: App;
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly tokenValidator: TokenValidator;
 
   public constructor(params: AttachmentPathManagerConstructorParams) {
     this.app = params.app;
     this.getAvailablePathForAttachmentsOriginal = params.getAvailablePathForAttachmentsOriginal;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.tokenValidator = params.tokenValidator;
   }
@@ -257,7 +258,7 @@ export class AttachmentPathManager {
       });
     }
     if (validationMessage) {
-      new Notice(createFragment((f) => {
+      this.pluginNoticeComponent.showNotice(createFragment((f) => {
         f.appendText(t(($) => $.notice.generatedAttachmentFileNameIsInvalid.part1, { path, validationMessage }));
         f.appendText(' ');
         appendCodeBlock(f, t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name));
@@ -410,7 +411,7 @@ export class AttachmentPathManager {
 
       return resolvedPath;
     } catch (error) {
-      new Notice(t(($) => $.notice.couldNotResolveTemplatePath, { template }));
+      this.pluginNoticeComponent.showNotice(t(($) => $.notice.couldNotResolveTemplatePath, { template }));
       console.error('Could not resolve template path', {
         substitutions,
         template
