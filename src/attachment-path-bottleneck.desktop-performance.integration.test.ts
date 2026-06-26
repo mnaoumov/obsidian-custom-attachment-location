@@ -105,6 +105,7 @@ describe('Attachment-path bottleneck', () => {
         smallPairs: smallNotes
       }) {
         const EMPTY_RESULT = {
+          defaultTemplateReadCount: -1,
           error: null as null | string,
           extendedNoContentMs: -1,
           extendedWithContentMs: -1,
@@ -152,6 +153,17 @@ describe('Attachment-path bottleneck', () => {
         const extendedWithContentMs = await timeExtended(handlerSample.noteFile, handlerSample.attachmentFile, handlerContent);
         const extendedNoContentMs = await timeExtended(handlerSample.noteFile, handlerSample.attachmentFile, undefined);
 
+        // THE FIX: with the default templates (no attachment-content token) the patched handler
+        // Must never pull the bytes, so the lazy read provider is called zero times.
+        let defaultTemplateReadCount = 0;
+        await invokeExtended({
+          ...buildParams(handlerSample.noteFile, handlerSample.attachmentFile, undefined),
+          readAttachmentFileContent: (): Promise<ArrayBuffer> => {
+            defaultTemplateReadCount++;
+            return Promise.resolve(handlerContent);
+          }
+        });
+
         // Link-count effect: the fat note (many embeds) vs a thin note (one embed).
         const fatNote = app.vault.getFileByPath(fatNotePath);
         const fatAttachment = app.vault.getFileByPath(fatAttachments[0] ?? '');
@@ -166,6 +178,7 @@ describe('Attachment-path bottleneck', () => {
         const thinNoteExtendedMs = await timeExtended(thinSample.noteFile, thinSample.attachmentFile, thinContent);
 
         return {
+          defaultTemplateReadCount,
           error: null,
           extendedNoContentMs,
           extendedWithContentMs,
@@ -244,6 +257,10 @@ describe('Attachment-path bottleneck', () => {
     expect(result.error).toBeNull();
     // The pre-populated vault really was fully indexed before timing.
     expect(result.fileCount).toBeGreaterThanOrEqual(PERFORMANCE_VAULT_TOTAL_FILE_COUNT);
+
+    // THE FIX, proven end-to-end: resolving a path with the default templates never pulls the
+    // Attachment bytes, so the per-attachment binary read that dominated the freeze is gone.
+    expect(result.defaultTemplateReadCount).toBe(0);
 
     // KEY FINDING: the consumer call cost grows with attachment file size although the produced path is identical, so the size-proportional binary read dominates, not the path computation.
     expect(result.largeAvgFullMs).toBeGreaterThan(result.smallAvgFullMs);
