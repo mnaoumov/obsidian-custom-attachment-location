@@ -382,7 +382,7 @@ describe('AttachmentPathManager', () => {
       mockGetFileOrNull.mockReturnValue(oldFile);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
       mockGetAllLinks.mockReturnValue([link1, link2]);
-      mockExtractLinkFile.mockImplementation((_app, link) => link === link2 ? oldFile : otherFile);
+      mockExtractLinkFile.mockImplementation(({ link }) => link === link2 ? oldFile : otherFile);
       const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
       expect(result).toBe(2);
     });

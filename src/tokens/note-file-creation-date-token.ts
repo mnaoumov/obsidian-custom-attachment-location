@@ -24,7 +24,10 @@ export class NoteFileCreationDateToken extends TokenBase<Format> {
     if (ctx.noteFilePath === DUMMY_PATH) {
       return formatDate(Date.now(), format);
     }
-    const noteFile = getFile(ctx.app, ctx.noteFilePath);
+    const noteFile = getFile({
+      app: ctx.app,
+      pathOrFile: ctx.noteFilePath
+    });
     return formatDate(noteFile.stat.ctime, format);
   }
 }

@@ -149,7 +149,11 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       })
     );
 
-    this.addChild(new AllWindowsEventComponent(this.app)).registerAllDocumentsDomEvent('change', this.handleInputFileChange.bind(this), { capture: true });
+    this.addChild(new AllWindowsEventComponent(this.app)).registerAllDocumentsDomEvent({
+      callback: this.handleInputFileChange.bind(this),
+      options: { capture: true },
+      type: 'change'
+    });
 
     await this.handleActiveLeafChange(this.app.workspace.getLeavesOfType(ViewType.Markdown)[0] ?? null);
 

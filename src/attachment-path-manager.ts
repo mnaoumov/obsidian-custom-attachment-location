@@ -143,12 +143,18 @@ export class AttachmentPathManager {
       };
     }
 
-    const noteFile = getFileOrNull(this.app, params.notePathOrFile);
+    const noteFile = getFileOrNull({
+      app: this.app,
+      pathOrFile: params.notePathOrFile
+    });
     const noteFilePath = params.notePathOrFile ? getPath(this.app, params.notePathOrFile) : undefined;
     const oldNoteFilePath = params.oldNotePathOrFile ? getPath(this.app, params.oldNotePathOrFile) : undefined;
 
     if (attachmentFileBaseName.startsWith(IMPORT_FILES_PREFIX)) {
-      attachmentFileBaseName = trimStart(attachmentFileBaseName, IMPORT_FILES_PREFIX);
+      attachmentFileBaseName = trimStart({
+        prefix: IMPORT_FILES_PREFIX,
+        str: attachmentFileBaseName
+      });
       shouldSkipGeneratedAttachmentFileName = true;
     }
     if (noteFile && this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
@@ -167,7 +173,10 @@ export class AttachmentPathManager {
       });
     } else {
       const readAttachmentFileContent = params.readAttachmentFileContent ?? undefined;
-      const attachmentFileName = makeFileName(attachmentFileBaseName, params.attachmentFileExtension);
+      const attachmentFileName = makeFileName({
+        fileBaseName: attachmentFileBaseName,
+        fileExtension: params.attachmentFileExtension
+      });
       const attachmentFolderFullPath = await this.getAttachmentFolderFullPathForPath({
         actionContext: attachmentPathContextToActionContext(params.context),
         attachmentFileName,
@@ -197,7 +206,10 @@ export class AttachmentPathManager {
             tokenValidator: this.tokenValidator
           })
         );
-        generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, params.attachmentFileExtension);
+        generatedAttachmentFileName = makeFileName({
+          fileBaseName: generatedAttachmentFileBaseName,
+          fileExtension: params.attachmentFileExtension
+        });
       }
       const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
       if (params.shouldSkipDuplicateCheck) {
@@ -272,8 +284,8 @@ export class AttachmentPathManager {
   public async getProperAttachmentPath(params: AttachmentPathManagerGetProperAttachmentPathParams): Promise<null | string> {
     const attachmentFileContent = await this.app.vault.readBinary(params.attachmentFile);
     const newAttachmentName = this.pluginSettingsComponent.settings.shouldRenameCollectedAttachments
-      ? makeFileName(
-        await this.getGeneratedAttachmentFileBaseName(
+      ? makeFileName({
+        fileBaseName: await this.getGeneratedAttachmentFileBaseName(
           new Substitutions({
             actionContext: params.actionContext,
             app: this.app,
@@ -287,8 +299,8 @@ export class AttachmentPathManager {
             tokenValidator: this.tokenValidator
           })
         ),
-        params.attachmentFile.extension
-      )
+        fileExtension: params.attachmentFile.extension
+      })
       : params.attachmentFile.name;
 
     const newAttachmentFolderPath = await this.getAttachmentFolderFullPathForPath({
@@ -323,7 +335,10 @@ export class AttachmentPathManager {
   }
 
   private async getCursorLine(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
-    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
+    const oldAttachmentFile = getFileOrNull({
+      app: this.app,
+      pathOrFile: oldAttachmentPathOrFile
+    });
     if (!oldAttachmentFile) {
       return 0;
     }
@@ -338,7 +353,11 @@ export class AttachmentPathManager {
         continue;
       }
 
-      const linkFile = extractLinkFile(this.app, link, noteFilePath);
+      const linkFile = extractLinkFile({
+        app: this.app,
+        link,
+        sourcePathOrFile: noteFilePath
+      });
       if (!linkFile) {
         continue;
       }
@@ -352,7 +371,10 @@ export class AttachmentPathManager {
   }
 
   private async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
-    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
+    const oldAttachmentFile = getFileOrNull({
+      app: this.app,
+      pathOrFile: oldAttachmentPathOrFile
+    });
     if (!oldAttachmentFile) {
       return 0;
     }
@@ -364,7 +386,11 @@ export class AttachmentPathManager {
 
     let sequenceNumber = 1;
     for (const link of getAllLinks(cache)) {
-      const linkFile = extractLinkFile(this.app, link, noteFilePath);
+      const linkFile = extractLinkFile({
+        app: this.app,
+        link,
+        sourcePathOrFile: noteFilePath
+      });
 
       if (linkFile === oldAttachmentFile) {
         return sequenceNumber;

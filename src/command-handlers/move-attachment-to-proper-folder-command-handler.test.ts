@@ -400,7 +400,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         .mockResolvedValueOnce(createBacklinks(new Map()));
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
       mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
-      mockEditLinks.mockImplementation(async (_app, _file, converter) => {
+      mockEditLinks.mockImplementation(async ({ linkConverter: converter }) => {
         await converter(reference);
         await converter(createReference('non-matching'));
       });
@@ -409,9 +409,16 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       await runProcessItem(attachment);
 
-      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith(app, attachment, 'new-folder/attachment.png');
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        newPath: 'new-folder/attachment.png',
+        oldPathOrFile: attachment
+      });
       expect(mockUpdateLink).toHaveBeenCalledOnce();
-      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith(app, attachment);
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({
+        app,
+        pathOrFile: attachment
+      });
     });
 
     it('should skip a backlink whose file cannot be resolved (CopyAll)', async () => {
@@ -554,7 +561,11 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
 
-      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith(app, attachment, 'new/attachment.png');
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        newPath: 'new/attachment.png',
+        oldPathOrFile: attachment
+      });
     });
 
     it('should use the prompt result backlinks when prompt resolves to Prompt mode', async () => {
@@ -589,7 +600,11 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
 
       expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith(app, 'attachment.png', ['note1.md', 'note2.md']);
-      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith(app, attachment, 'new/attachment.png');
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        newPath: 'new/attachment.png',
+        oldPathOrFile: attachment
+      });
     });
 
     it('should recurse into the resolved mode when prompt resolves to CopyAll', async () => {
@@ -623,7 +638,11 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
 
-      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith(app, attachment, 'new/attachment.png');
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        newPath: 'new/attachment.png',
+        oldPathOrFile: attachment
+      });
     });
 
     it('should copy nothing for Skip mode', async () => {

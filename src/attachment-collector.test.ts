@@ -367,7 +367,11 @@ describe('AttachmentCollector', () => {
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
       mockRenameSafe.mockResolvedValue('attachments/img.png');
       await runSingleFile(note);
-      expect(mockRenameSafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
+      expect(mockRenameSafe).toHaveBeenCalledWith({
+        app,
+        newPath: 'attachments/img.png',
+        oldPathOrAbstractFile: 'img.png'
+      });
     });
 
     it('should not rename when the new attachment path is null (single-ref)', async () => {
@@ -411,14 +415,18 @@ describe('AttachmentCollector', () => {
         mockCopySafe.mockResolvedValue('attachments/img.png');
         let matchingResult: unknown;
         let nonMatchingResult: unknown;
-        mockEditLinks.mockImplementation(async (_app, _note, linkConverter) => {
+        mockEditLinks.mockImplementation(async ({ linkConverter }) => {
           matchingResult = await linkConverter(createReference({ link: 'img.png' }));
           nonMatchingResult = await linkConverter(createReference({ link: 'other.png' }));
         });
-        mockExtractLinkFile.mockImplementation((_app, ref) => castTo<Reference>(ref).link === 'other.png' ? createFile('other.png') : createFile('img.png'));
+        mockExtractLinkFile.mockImplementation(({ link }) => link.link === 'other.png' ? createFile('other.png') : createFile('img.png'));
         mockUpdateLink.mockReturnValue('![](attachments/img.png)');
         await runSingleFile(note);
-        expect(mockCopySafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
+        expect(mockCopySafe).toHaveBeenCalledWith({
+          app,
+          newPath: 'attachments/img.png',
+          oldPathOrFile: 'img.png'
+        });
         expect(matchingResult).toBe('![](attachments/img.png)');
         expect(nonMatchingResult).toBeUndefined();
       });
@@ -435,7 +443,11 @@ describe('AttachmentCollector', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Move;
         mockRenameSafe.mockResolvedValue('attachments/img.png');
         await runSingleFile(note);
-        expect(mockRenameSafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
+        expect(mockRenameSafe).toHaveBeenCalledWith({
+          app,
+          newPath: 'attachments/img.png',
+          oldPathOrAbstractFile: 'img.png'
+        });
       });
 
       it('should skip Move mode when the new attachment path is null', async () => {
@@ -474,7 +486,7 @@ describe('AttachmentCollector', () => {
         await runSingleFile(note);
         // Second link in the same note must reuse the remembered Skip mode without re-prompting.
         mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation((_app, ref) => createFile(castTo<Reference>(ref).link));
+        mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
         mockSelectMode.mockClear();
         await runSingleFile(note);
@@ -494,7 +506,7 @@ describe('AttachmentCollector', () => {
           shouldUseSameActionForOtherProblematicAttachments: true
         });
         mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation((_app, ref) => createFile(castTo<Reference>(ref).link));
+        mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
         await runSingleFile(note);
         // Prompt chosen once, then ctx mode (Skip) reused for the second link.
         expect(mockSelectMode).toHaveBeenCalledTimes(1);
@@ -506,7 +518,7 @@ describe('AttachmentCollector', () => {
         // Iteration returns early before requesting its backlinks.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation((_app, ref) => createFile(castTo<Reference>(ref).link));
+        mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
         await runSingleFile(note);
         expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(1);
       });

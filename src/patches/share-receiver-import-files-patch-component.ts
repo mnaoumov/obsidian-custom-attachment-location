@@ -65,7 +65,10 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
           });
           const attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(substitutions);
           const attachmentFileExtension = extname(file.name).slice(1);
-          file.name = IMPORT_FILES_PREFIX + makeFileName(attachmentFileBaseName, attachmentFileExtension);
+          file.name = IMPORT_FILES_PREFIX + makeFileName({
+            fileBaseName: attachmentFileBaseName,
+            fileExtension: attachmentFileExtension
+          });
         }
 
         return fallback();

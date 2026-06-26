@@ -60,7 +60,10 @@ describe('NoteFileCreationDateToken', () => {
     const token = new NoteFileCreationDateToken();
     const result = token.evaluate(createContext({ momentJsFormat: 'YYYY-MM-DD' }));
     expect(result).toBe(moment(CTIME).format('YYYY-MM-DD'));
-    expect(getFile).toHaveBeenCalledWith(app, 'note.md');
+    expect(getFile).toHaveBeenCalledWith({
+      app,
+      pathOrFile: 'note.md'
+    });
   });
 
   it('should format the current date for the dummy path', () => {

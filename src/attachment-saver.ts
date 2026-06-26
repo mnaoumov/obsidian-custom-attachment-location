@@ -135,7 +135,10 @@ export class AttachmentSaver {
           attachmentFileContent,
           attachmentFileStats: this.arrayBufferMap.getFileStats(attachmentFileContent),
           noteFilePath: activeNoteFile.path,
-          originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
+          originalAttachmentFileName: makeFileName({
+            fileBaseName: attachmentFileBaseName,
+            fileExtension: attachmentFileExtension
+          }),
           pluginSettingsComponent: this.pluginSettingsComponent,
           tokenValidator: this.tokenValidator
         })
@@ -156,7 +159,10 @@ export class AttachmentSaver {
         generatedAttachmentFileName: attachmentFile.name,
         generatedAttachmentFilePath: attachmentFile.path,
         noteFilePath: activeNoteFile.path,
-        originalAttachmentFileName: makeFileName(attachmentFileBaseName, attachmentFileExtension),
+        originalAttachmentFileName: makeFileName({
+          fileBaseName: attachmentFileBaseName,
+          fileExtension: attachmentFileExtension
+        }),
         pluginSettingsComponent: this.pluginSettingsComponent,
         tokenValidator: this.tokenValidator
       }).fillTemplate(this.pluginSettingsComponent.settings.markdownUrlFormat);
@@ -178,7 +184,10 @@ export class AttachmentSaver {
       attachmentFileStats,
       context: actionContextToAttachmentPathContext(ActionContext.SaveAttachment),
       notePathOrFile: noteFile,
-      oldAttachmentPathOrFile: makeFileName(params.attachmentFileBaseName, params.attachmentFileExtension),
+      oldAttachmentPathOrFile: makeFileName({
+        fileBaseName: params.attachmentFileBaseName,
+        fileExtension: params.attachmentFileExtension
+      }),
       readAttachmentFileContent: (): Promise<ArrayBuffer> => Promise.resolve(attachmentFileContent),
       shouldSkipDuplicateCheck: false,
       shouldSkipGeneratedAttachmentFileName: true,

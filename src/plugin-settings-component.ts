@@ -228,13 +228,13 @@ ${commentOut(this.legacySettings.customTokensStr)}
       return '';
     }
 
-    return replaceAll(
-      str,
-      /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi,
-      ({ capturedGroupArgs: [token, momentJsFormat] }) => {
+    return replaceAll({
+      replacer: ({ capturedGroupArgs: [token, momentJsFormat] }) => {
         return `\${${ensureNonNullable(token)}:{momentJsFormat:'${ensureNonNullable(momentJsFormat)}'}}`;
-      }
-    );
+      },
+      searchValue: /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi,
+      str
+    });
   }
 }
 

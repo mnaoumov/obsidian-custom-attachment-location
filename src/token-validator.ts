@@ -117,8 +117,14 @@ export class TokenValidator {
       return 'Tokens are not allowed in path';
     }
 
-    let path = trimStart(params.path, '/');
-    path = trimEnd(path, '/');
+    let path = trimStart({
+      prefix: '/',
+      str: params.path
+    });
+    path = trimEnd({
+      str: path,
+      suffix: '/'
+    });
 
     if (path === '') {
       return '';
