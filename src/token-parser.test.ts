@@ -6,7 +6,6 @@ import {
 
 import {
   parseFormatObject,
-  parseObjectExpressionEndExclusive,
   scanTokens
 } from './token-parser.ts';
 
@@ -52,37 +51,6 @@ describe('parseFormatObject', () => {
         tokenName: 'token'
       })
     ).toThrow('Format for token \'token\' must be a JSON5 object');
-  });
-});
-
-describe('parseObjectExpressionEndExclusive', () => {
-  it('should return the end offset of an object expression', () => {
-    expect(parseObjectExpressionEndExclusive({
-      objectStart: 0,
-      str: '{ a: 1 }',
-      throwOnError: true,
-      tokenName: 'token'
-    })).toBe(8);
-  });
-
-  it('should throw when the expression is not an object literal and throwOnError is true', () => {
-    expect(() =>
-      parseObjectExpressionEndExclusive({
-        objectStart: 0,
-        str: '123',
-        throwOnError: true,
-        tokenName: 'token'
-      })
-    ).toThrow('Invalid JSON5 object for token \'token\'');
-  });
-
-  it('should return null when the expression is not an object literal and throwOnError is false', () => {
-    expect(parseObjectExpressionEndExclusive({
-      objectStart: 0,
-      str: '123',
-      throwOnError: false,
-      tokenName: 'token'
-    })).toBeNull();
   });
 });
 

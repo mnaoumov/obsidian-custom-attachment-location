@@ -1,6 +1,7 @@
-import { parseExpressionAt } from 'acorn';
 import { parse } from 'json5';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
+
+import { parseObjectExpressionEndExclusive } from './parse-object-expression-end-exclusive.ts';
 
 interface ScannedToken {
   end: number;
@@ -26,13 +27,6 @@ interface ParseHeadAtParams {
 interface ParseHeadAtResult {
   readonly hasColon: boolean;
   readonly indexAfterHead: number;
-  readonly tokenName: string;
-}
-
-interface ParseObjectExpressionEndExclusiveParams {
-  readonly objectStart: number;
-  readonly str: string;
-  readonly throwOnError: boolean;
   readonly tokenName: string;
 }
 
@@ -63,21 +57,6 @@ export function parseFormatObject(params: ParseFormatObjectParams): Record<strin
     throw new Error(`Format for token '${params.tokenName}' must be a JSON5 object`);
   }
   return parsed as Record<string, unknown>;
-}
-
-export function parseObjectExpressionEndExclusive(params: ParseObjectExpressionEndExclusiveParams): null | number {
-  try {
-    const node = parseExpressionAt(params.str, params.objectStart, { ecmaVersion: 'latest' });
-    if (node.type !== 'ObjectExpression') {
-      throw new Error(`Expected object literal, got ${node.type}`);
-    }
-    return node.end;
-  } catch (e) {
-    if (params.throwOnError) {
-      throw new Error(`Invalid JSON5 object for token '${params.tokenName}'`, { cause: e });
-    }
-    return null;
-  }
 }
 
 export function scanTokens(str: string, options?: ScanTokensOptions): ScannedToken[] {
