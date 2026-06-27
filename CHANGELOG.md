@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 11.0.0
+
+- perf!: read attachment content lazily during path resolution
+
 ## 10.3.8
 
 - refactor: new template
