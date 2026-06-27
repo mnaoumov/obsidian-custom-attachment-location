@@ -44,6 +44,10 @@ interface PluginSettingsComponentConstructorParams {
 class LegacySettings {
   public autoRenameFiles = false;
   public autoRenameFolder = true;
+  /**
+   * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
+   * recognizes the persisted key and strips it from saved settings during migration.
+   */
   public convertImagesOnDragAndDrop = false;
   public convertImagesToJpeg = false;
   public dateTimeFormat = '';
@@ -54,16 +58,36 @@ class LegacySettings {
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
   public pastedFileName = 'file-${date:YYYYMMDDHHmmssSSS}';
   public pastedImageFileName = '';
+  /**
+   * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
+   * recognizes the persisted key and strips it from saved settings during migration.
+   */
   public renameAttachmentsOnDragAndDrop = false;
   public renameCollectedFiles = false;
+  /**
+   * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
+   * recognizes the persisted key and strips it from saved settings during migration.
+   */
   public renameOnlyImages = false;
+  /**
+   * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
+   * recognizes the persisted key and strips it from saved settings during migration.
+   */
   public renamePastedFilesWithKnownNames = false;
   public replaceWhitespace = false;
   public shouldConvertPastedImagesToJpeg = false;
   public shouldDuplicateCollectedAttachments = false;
   public shouldKeepEmptyAttachmentFolders = false;
   public shouldRenameAttachments = true;
+  /**
+   * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
+   * recognizes the persisted key and strips it from saved settings during migration.
+   */
   public shouldRenameAttachmentsToLowerCase = false;
+  /**
+   * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
+   * recognizes the persisted key and strips it from saved settings during migration.
+   */
   public toLowerCase = false;
   public warningVersion = '';
   public whitespaceReplacement = '';
