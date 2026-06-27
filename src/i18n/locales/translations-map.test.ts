@@ -37,10 +37,7 @@ import { ru } from './ru.ts';
 import { sq } from './sq.ts';
 import { th } from './th.ts';
 import { tr } from './tr.ts';
-import {
-  DEFAULT_LANGUAGE,
-  translationsMap
-} from './translations-map.ts';
+import { translationsMap } from './translations-map.ts';
 import { uk } from './uk.ts';
 import { uz } from './uz.ts';
 import { vi } from './vi.ts';
@@ -93,10 +90,6 @@ describe('translationsMap', () => {
 
   it('should reference the same en object instance', () => {
     expect(translationsMap.en).toBe(en);
-  });
-
-  it('should default to the en language', () => {
-    expect(DEFAULT_LANGUAGE).toBe('en');
   });
 
   it('should expose a translations object for every supported locale', () => {

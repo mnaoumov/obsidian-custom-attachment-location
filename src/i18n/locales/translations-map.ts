@@ -37,8 +37,6 @@ import { vi } from './vi.ts';
 import { zhTW } from './zh-tw.ts';
 import { zh } from './zh.ts';
 
-export const DEFAULT_LANGUAGE: keyof typeof translationsMapImpl = 'en';
-
 const translationsMapImpl = {
   am,
   ar,
