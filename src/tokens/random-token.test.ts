@@ -11,10 +11,7 @@ import {
 
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
-import {
-  getRangeStr,
-  RandomToken
-} from './random-token.ts';
+import { RandomToken } from './random-token.ts';
 
 interface EvaluateImplFormat {
   digits: boolean;
@@ -91,19 +88,5 @@ describe('RandomToken', () => {
     const token = new TestableRandomToken();
     const format = castTo<EvaluateImplFormat>({ digits: false, length: 1, letterCase: 'invalid', letters: true });
     expect(() => token.callEvaluateImpl(createContext(null), format)).toThrow('Invalid letter case: invalid');
-  });
-});
-
-describe('getRangeStr', () => {
-  it('should build an inclusive character range', () => {
-    expect(getRangeStr('a', 'e')).toBe('abcde');
-  });
-
-  it('should throw when the from value is not a single character', () => {
-    expect(() => getRangeStr('ab', 'z')).toThrow('Range must be from-to a single character: ab to z');
-  });
-
-  it('should throw when the to value is not a single character', () => {
-    expect(() => getRangeStr('a', 'yz')).toThrow('Range must be from-to a single character: a to yz');
   });
 });

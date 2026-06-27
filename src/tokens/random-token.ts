@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
+import { getRangeStr } from './get-range-str.ts';
 import { TokenBase } from './token-base.ts';
 
 const formatSchema = z.strictObject({
@@ -47,21 +48,4 @@ export class RandomToken extends TokenBase<Format> {
 
     return ans;
   }
-}
-
-export function getRangeStr(from: string, to: string): string {
-  if (from.length !== 1) {
-    throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
-  }
-  if (to.length !== 1) {
-    throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
-  }
-
-  let str = '';
-
-  for (let i = from.charCodeAt(0); i <= to.charCodeAt(0); i++) {
-    str += String.fromCharCode(i);
-  }
-
-  return str;
 }
