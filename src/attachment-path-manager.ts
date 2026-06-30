@@ -14,7 +14,6 @@ import {
 } from '@obsidian-typings/obsidian-public-latest/implementations';
 import { normalizePath } from 'obsidian';
 import { printError } from 'obsidian-dev-utils/error';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   AttachmentPathContext,
   DUMMY_PATH,
@@ -26,6 +25,7 @@ import {
   getPath,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
 import {

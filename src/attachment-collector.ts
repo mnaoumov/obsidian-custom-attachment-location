@@ -5,6 +5,7 @@ import type {
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
 import {
@@ -14,13 +15,13 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   isCanvasFile,
   isFile,
   isFolder,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   editLinks,
@@ -60,6 +61,7 @@ interface AttachmentCollectorConstructorParams {
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
   readonly consoleDebugComponent: ConsoleDebugComponent;
+  readonly editorLockComponent: EditorLockComponent | null;
   readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -87,6 +89,7 @@ export class AttachmentCollector {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
+  private readonly editorLockComponent: EditorLockComponent | null;
   private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -96,6 +99,7 @@ export class AttachmentCollector {
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
     this.consoleDebugComponent = params.consoleDebugComponent;
+    this.editorLockComponent = params.editorLockComponent;
     this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -125,6 +129,7 @@ export class AttachmentCollector {
 
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
     const app = this.app;
+    const editorLockComponent = this.editorLockComponent;
     const pluginSettingsComponent = this.pluginSettingsComponent;
 
     params.abortSignal.throwIfAborted();
@@ -221,6 +226,7 @@ export class AttachmentCollector {
                 };
                 await editLinks({
                   app,
+                  editorLockComponent,
                   linkConverter: (link2): MaybeReturn<string> => {
                     const linkFile = extractLinkFile({
                       app,

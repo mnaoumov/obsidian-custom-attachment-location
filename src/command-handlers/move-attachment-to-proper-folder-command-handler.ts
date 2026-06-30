@@ -5,6 +5,7 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import type { Promisable } from 'type-fest';
 
 import { Vault } from 'obsidian';
@@ -37,6 +38,7 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly editorLockComponent: EditorLockComponent | null;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -49,6 +51,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly editorLockComponent: EditorLockComponent | null;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
@@ -62,6 +65,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.editorLockComponent = params.editorLockComponent;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
@@ -190,6 +194,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       });
       await editLinks({
         app: this.app,
+        editorLockComponent: this.editorLockComponent,
         linkConverter: (link2) => {
           const linkJson = toJson(link2);
           if (!linkJsons.has(linkJson)) {

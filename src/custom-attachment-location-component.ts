@@ -12,10 +12,10 @@ import {
   TFile
 } from 'obsidian';
 import { convertAsyncToSync } from 'obsidian-dev-utils/async';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/attachment-path';
 import { AllWindowsEventComponent } from 'obsidian-dev-utils/obsidian/components/all-windows-event-component';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { compare } from 'semver';

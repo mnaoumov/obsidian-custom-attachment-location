@@ -22,6 +22,7 @@ import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import {
   isCanvasFile,
   isFile,
@@ -243,6 +244,7 @@ describe('AttachmentCollector', () => {
       app,
       attachmentPathManager,
       consoleDebugComponent,
+      editorLockComponent: new EditorLockComponent(app, PLUGIN_NAME),
       pluginName: PLUGIN_NAME,
       pluginNoticeComponent: new PluginNoticeComponent(PLUGIN_NAME),
       pluginSettingsComponent

@@ -13,8 +13,8 @@ import {
   convertAsyncToSync,
   invokeAsyncSafely
 } from 'obsidian-dev-utils/async';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
