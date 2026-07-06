@@ -47,9 +47,10 @@ describe('CollectAttachmentsEntireVaultCommandHandler', () => {
 
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(CollectAttachmentsEntireVaultCommandHandler);
-    expect(handler.id).toBe('collect-attachments-entire-vault');
-    expect(handler.icon).toBe('download');
-    expect(handler.name).toBe('Collect attachments in entire vault');
+    const command = handler.buildCommand();
+    expect(command.id).toBe('collect-attachments-entire-vault');
+    expect(command.icon).toBe('download');
+    expect(command.name).toBe('Collect attachments in entire vault');
   });
 
   it('should delegate to the attachment collector on execute', async () => {

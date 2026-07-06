@@ -51,7 +51,8 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
       }) => {
         for (const file of files) {
           const fileUri = window.Capacitor.convertFileSrc(file.uri);
-          // eslint-disable-next-line no-restricted-globals, n/no-unsupported-features/node-builtins -- `requestUrl()` doesn't work for those Capacitor urls; fetch is a stable Web API in Obsidian's Electron renderer, the rule incorrectly flags it as a Node experimental builtin.
+          // eslint-disable-next-line n/no-unsupported-features/node-builtins -- this is executed on mobile only, not in Node.
+          const fetch = window.fetch;
           const response = await fetch(fileUri);
           const attachmentFileContent = await response.arrayBuffer();
           const substitutions = new Substitutions({
@@ -65,7 +66,10 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
           });
           const attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(substitutions);
           const attachmentFileExtension = extname(file.name).slice(1);
-          file.name = IMPORT_FILES_PREFIX + makeFileName(attachmentFileBaseName, attachmentFileExtension);
+          file.name = IMPORT_FILES_PREFIX + makeFileName({
+            fileBaseName: attachmentFileBaseName,
+            fileExtension: attachmentFileExtension
+          });
         }
 
         return fallback();

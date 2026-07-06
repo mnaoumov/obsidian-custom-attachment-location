@@ -12,10 +12,10 @@ import {
   TFile
 } from 'obsidian';
 import { convertAsyncToSync } from 'obsidian-dev-utils/async';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { DUMMY_PATH } from 'obsidian-dev-utils/obsidian/attachment-path';
 import { AllWindowsEventComponent } from 'obsidian-dev-utils/obsidian/components/all-windows-event-component';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { alert } from 'obsidian-dev-utils/obsidian/modals/alert';
 import { compare } from 'semver';
@@ -149,7 +149,11 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       })
     );
 
-    this.addChild(new AllWindowsEventComponent(this.app)).registerAllDocumentsDomEvent('change', this.handleInputFileChange.bind(this), { capture: true });
+    this.addChild(new AllWindowsEventComponent(this.app)).registerAllDocumentsDomEvent({
+      callback: this.handleInputFileChange.bind(this),
+      options: { capture: true },
+      type: 'change'
+    });
 
     await this.handleActiveLeafChange(this.app.workspace.getLeavesOfType(ViewType.Markdown)[0] ?? null);
 

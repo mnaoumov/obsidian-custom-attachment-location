@@ -18,7 +18,10 @@ export class FrontmatterToken extends TokenBase<Format> {
   }
 
   protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
-    const file = getFileOrNull(ctx.app, ctx.noteFilePath);
+    const file = getFileOrNull({
+      app: ctx.app,
+      pathOrFile: ctx.noteFilePath
+    });
     if (!file) {
       return '';
     }

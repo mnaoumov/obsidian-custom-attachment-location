@@ -13,8 +13,8 @@ import {
   convertAsyncToSync,
   invokeAsyncSafely
 } from 'obsidian-dev-utils/async';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
@@ -49,9 +49,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
     this.pluginSettingsComponent2 = params.pluginSettingsComponent;
   }
 
-  public override display(): void {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-    super.display();
+  public override displayLegacy(): void {
+    super.displayLegacy();
     this.containerEl.empty();
 
     const REGISTER_CUSTOM_TOKENS_DEBOUNCE_IN_MILLISECONDS = 2000;
@@ -107,7 +106,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addCodeHighlighter((codeHighlighter) => {
             codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
             codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind(codeHighlighter, 'attachmentFolderPath', bindOptionsWithTrim);
+            this.bind({
+              propertyName: 'attachmentFolderPath',
+              valueComponent: codeHighlighter,
+              ...bindOptionsWithTrim
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -125,7 +128,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addCodeHighlighter((codeHighlighter) => {
             codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
             codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind(codeHighlighter, 'generatedAttachmentFileName', bindOptionsWithTrim);
+            this.bind({
+              propertyName: 'generatedAttachmentFileName',
+              valueComponent: codeHighlighter,
+              ...bindOptionsWithTrim
+            });
           });
       });
 
@@ -148,9 +155,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.duplicateNameSeparator.description.part4));
           }))
           .addText((text) => {
-            this.bind(text, 'duplicateNameSeparator', {
+            this.bind({
               componentToPluginSettingsValueConverter: restoreSpaceCharacter,
-              pluginSettingsToComponentValueConverter: showSpaceCharacter
+              pluginSettingsToComponentValueConverter: showSpaceCharacter,
+              propertyName: 'duplicateNameSeparator',
+              valueComponent: text
             });
 
             handleWhitespace(text);
@@ -182,7 +191,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               [AttachmentRenameMode.All]: t(($) => $.pluginSettings.attachmentRenameMode.all.displayText)
               /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
             });
-            this.bind(dropdown, 'attachmentRenameMode');
+            this.bind({
+              propertyName: 'attachmentRenameMode',
+              valueComponent: dropdown
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -201,11 +213,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part3));
           }))
           .addToggle((toggle) => {
-            this.bind(toggle, 'shouldHandleRenames', {
+            this.bind({
               onChanged: () => {
-                // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-                this.display();
-              }
+                this.displayLegacy();
+              },
+              propertyName: 'shouldHandleRenames',
+              valueComponent: toggle
             });
           });
       })
@@ -215,7 +228,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .setDesc(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.description))
           .addToggle((toggle) => {
             if (this.pluginSettingsComponent.settings.shouldHandleRenames) {
-              this.bind(toggle, 'shouldRenameAttachmentFolder');
+              this.bind({
+                propertyName: 'shouldRenameAttachmentFolder',
+                valueComponent: toggle
+              });
             } else {
               toggle.setDisabled(true);
               toggle.setValue(false);
@@ -234,7 +250,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           }))
           .addToggle((toggle) => {
             if (this.pluginSettingsComponent.settings.shouldHandleRenames) {
-              this.bind(toggle, 'shouldRenameAttachmentFiles');
+              this.bind({
+                propertyName: 'shouldRenameAttachmentFiles',
+                valueComponent: toggle
+              });
             } else {
               toggle.setDisabled(true);
               toggle.setValue(false);
@@ -261,7 +280,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addCodeHighlighter((codeHighlighter) => {
             codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
             codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind(codeHighlighter, 'renamedAttachmentFileName', bindOptionsWithTrim);
+            this.bind({
+              propertyName: 'renamedAttachmentFileName',
+              valueComponent: codeHighlighter,
+              ...bindOptionsWithTrim
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -295,7 +318,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               [MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt]: t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.prompt.displayText)
               /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
             });
-            this.bind(dropdown, 'moveAttachmentToProperFolderUsedByMultipleNotesMode');
+            this.bind({
+              propertyName: 'moveAttachmentToProperFolderUsedByMultipleNotesMode',
+              valueComponent: dropdown
+            });
           });
       });
 
@@ -327,7 +353,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               [EmptyFolderBehavior.DeleteWithEmptyParents]: t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText)
               /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
             });
-            this.bind(dropdown, 'emptyFolderBehavior');
+            this.bind({
+              propertyName: 'emptyFolderBehavior',
+              valueComponent: dropdown
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -335,7 +364,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .setName(t(($) => $.pluginSettingsTab.shouldDeleteOrphanAttachments.name))
           .setDesc(t(($) => $.pluginSettingsTab.shouldDeleteOrphanAttachments.description))
           .addToggle((toggle) => {
-            this.bind(toggle, 'shouldDeleteOrphanAttachments');
+            this.bind({
+              propertyName: 'shouldDeleteOrphanAttachments',
+              valueComponent: toggle
+            });
           });
       });
 
@@ -350,11 +382,13 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.specialCharacters.description.part2));
           }))
           .addText((text) => {
-            this.bind(text, 'specialCharacters', {
+            this.bind({
               componentToPluginSettingsValueConverter: restoreSpaceCharacter,
               pluginSettingsToComponentValueConverter: showSpaceCharacter,
+              propertyName: 'specialCharacters',
               shouldResetSettingWhenComponentIsEmpty: false,
-              shouldShowPlaceholderForDefaultValues: false
+              shouldShowPlaceholderForDefaultValues: false,
+              valueComponent: text
             });
 
             handleWhitespace(text);
@@ -369,11 +403,13 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.specialCharactersReplacement.description.part2));
           }))
           .addText((text) => {
-            this.bind(text, 'specialCharactersReplacement', {
+            this.bind({
               componentToPluginSettingsValueConverter: restoreSpaceCharacter,
               pluginSettingsToComponentValueConverter: showSpaceCharacter,
+              propertyName: 'specialCharactersReplacement',
               shouldResetSettingWhenComponentIsEmpty: false,
-              shouldShowPlaceholderForDefaultValues: false
+              shouldShowPlaceholderForDefaultValues: false,
+              valueComponent: text
             });
           });
       });
@@ -385,11 +421,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .setName(t(($) => $.pluginSettingsTab.downloadNetworkImages.name))
           .setDesc(t(($) => $.pluginSettingsTab.downloadNetworkImages.description))
           .addToggle((toggle) => {
-            this.bind(toggle, 'downloadNetworkImages', {
+            this.bind({
               onChanged: () => {
-                // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-                this.display();
-              }
+                this.displayLegacy();
+              },
+              propertyName: 'downloadNetworkImages',
+              valueComponent: toggle
             });
           });
       })
@@ -400,7 +437,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             .setDesc(t(($) => $.pluginSettingsTab.networkImageDownloadTimeoutInSeconds.description))
             .addNumber((number) => {
               number.setMin(1);
-              this.bind(number, 'networkImageDownloadTimeoutInSeconds');
+              this.bind({
+                propertyName: 'networkImageDownloadTimeoutInSeconds',
+                valueComponent: number
+              });
             });
         }
       })
@@ -419,7 +459,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part4));
           }))
           .addToggle((toggle) => {
-            this.bind(toggle, 'shouldRenameCollectedAttachments');
+            this.bind({
+              propertyName: 'shouldRenameCollectedAttachments',
+              valueComponent: toggle
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -442,7 +485,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addCodeHighlighter((codeHighlighter) => {
             codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
             codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind(codeHighlighter, 'collectedAttachmentFileName', bindOptionsWithTrim);
+            this.bind({
+              propertyName: 'collectedAttachmentFileName',
+              valueComponent: codeHighlighter,
+              ...bindOptionsWithTrim
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -481,7 +528,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               [CollectAttachmentUsedByMultipleNotesMode.Prompt]: t(($) => $.pluginSettings.collectAttachmentUsedByMultipleNotesMode.prompt.displayText)
               /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
             });
-            this.bind(dropdown, 'collectAttachmentUsedByMultipleNotesMode');
+            this.bind({
+              propertyName: 'collectAttachmentUsedByMultipleNotesMode',
+              valueComponent: dropdown
+            });
           });
       });
 
@@ -505,7 +555,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.defaultImageSize.description.part4));
           }))
           .addText((text) => {
-            this.bind(text, 'defaultImageSize');
+            this.bind({
+              propertyName: 'defaultImageSize',
+              valueComponent: text
+            });
           })
           .addDropdown((dropdown) => {
             dropdown.selectEl.addClass('default-image-size-dimension-setting-control');
@@ -515,7 +568,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               [DefaultImageSizeDimension.Height]: t(($) => $.pluginSettings.defaultImageSizeDimension.height)
               /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
             });
-            this.bind(dropdown, 'defaultImageSizeDimension');
+            this.bind({
+              propertyName: 'defaultImageSizeDimension',
+              valueComponent: dropdown
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -549,7 +605,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               [ConvertImagesToJpegMode.AllImages]: t(($) => $.pluginSettings.convertImagesToJpegMode.allImages.displayText)
               /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
             });
-            this.bind(dropdown, 'convertImagesToJpegMode');
+            this.bind({
+              propertyName: 'convertImagesToJpegMode',
+              valueComponent: dropdown
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -558,9 +617,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .setDesc(t(($) => $.pluginSettingsTab.jpegQuality.description))
           .addDropdown((dropDown) => {
             dropDown.addOptions(generateJpegQualityOptions());
-            this.bind(dropDown, 'jpegQuality', {
+            this.bind({
               componentToPluginSettingsValueConverter: (value) => Number(value),
-              pluginSettingsToComponentValueConverter: (value) => value.toPrecision(JPEG_QUALITY_PRECISION)
+              pluginSettingsToComponentValueConverter: (value) => value.toPrecision(JPEG_QUALITY_PRECISION),
+              propertyName: 'jpegQuality',
+              valueComponent: dropDown
             });
           });
       });
@@ -583,7 +644,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part4));
           }))
           .addMultipleText((multipleText) => {
-            this.bind(multipleText, 'includePaths');
+            this.bind({
+              propertyName: 'includePaths',
+              valueComponent: multipleText
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -602,7 +666,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part4));
           }))
           .addMultipleText((multipleText) => {
-            this.bind(multipleText, 'excludePaths');
+            this.bind({
+              propertyName: 'excludePaths',
+              valueComponent: multipleText
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -625,7 +692,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part6));
           }))
           .addMultipleText((multipleText) => {
-            this.bind(multipleText, 'excludePathsFromAttachmentCollecting');
+            this.bind({
+              propertyName: 'excludePathsFromAttachmentCollecting',
+              valueComponent: multipleText
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -658,7 +728,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part7));
           }))
           .addMultipleText((multipleText) => {
-            this.bind(multipleText, 'treatAsAttachmentExtensions');
+            this.bind({
+              propertyName: 'treatAsAttachmentExtensions',
+              valueComponent: multipleText
+            });
           });
       });
 
@@ -684,10 +757,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addCodeHighlighter((codeHighlighter) => {
             codeHighlighter.setLanguage('javascript');
             codeHighlighter.inputEl.addClass('custom-tokens-setting-control');
-            this.bind(codeHighlighter, 'customTokensStr', {
+            this.bind({
               onChanged: (newValue) => {
                 registerCustomTokensDebounced(newValue);
-              }
+              },
+              propertyName: 'customTokensStr',
+              valueComponent: codeHighlighter
             });
           });
       })
@@ -716,8 +791,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               await this.pluginSettingsComponent.editAndSave((settings) => {
                 settings.customTokensStr = SAMPLE_CUSTOM_TOKENS;
               });
-              // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-              this.display();
+              this.displayLegacy();
             }));
           });
       });
@@ -743,7 +817,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addCodeHighlighter((codeHighlighter) => {
             codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
             codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind(codeHighlighter, 'markdownUrlFormat', bindOptionsWithTrim);
+            this.bind({
+              propertyName: 'markdownUrlFormat',
+              valueComponent: codeHighlighter,
+              ...bindOptionsWithTrim
+            });
           });
       })
       .addSettingEx((setting) => {
@@ -760,7 +838,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           }))
           .addNumber((number) => {
             number.setMin(0);
-            this.bind(number, 'timeoutInSeconds');
+            this.bind({
+              propertyName: 'timeoutInSeconds',
+              valueComponent: number
+            });
           });
       });
   }

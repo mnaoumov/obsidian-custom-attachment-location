@@ -4,6 +4,8 @@ import type {
   TFile
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import type { Promisable } from 'type-fest';
 
 import {
@@ -39,7 +41,9 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly resourceLockComponent: ResourceLockComponent;
 }
 
 interface MoveAttachmentToProperFolderContext {
@@ -50,7 +54,9 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly resourceLockComponent: ResourceLockComponent;
 
   public constructor(params: MoveAttachmentToProperFolderCommandHandlerConstructorParams) {
     super({
@@ -61,8 +67,10 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.resourceLockComponent = params.resourceLockComponent;
   }
 
   protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
@@ -111,6 +119,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       abortSignal: combinedAbortSignal,
       buildNoticeMessage: (attachmentFile, iterationStr) => t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: attachmentFile.path, iterationStr }),
       items: attachmentFiles,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (attachmentFile) => {
         combinedAbortSignal.throwIfAborted();
         if (this.pluginSettingsComponent.settings.isPathIgnored(attachmentFile.path)) {
@@ -138,7 +147,10 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
   private async moveAttachmentToProperFolder(attachmentFile: TFile, ctx: MoveAttachmentToProperFolderContext): Promise<boolean> {
     const app = this.app;
-    let backlinks = await getBacklinksForFileSafe(this.app, attachmentFile);
+    let backlinks = await getBacklinksForFileSafe({
+      app: this.app,
+      pathOrFile: attachmentFile
+    });
     if (backlinks.keys().length === 0) {
       new Notice(t(($) => $.moveAttachmentToProperFolder.unusedAttachment, { attachmentPath: attachmentFile.path }));
       return true;
@@ -178,28 +190,43 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
       const linkJsons = new Set(references.map((reference) => toJson(reference)));
 
-      await copySafe(this.app, attachmentFile, newAttachmentPath);
-      await editLinks(this.app, backlinkFile, (link2) => {
-        const linkJson = toJson(link2);
-        if (!linkJsons.has(linkJson)) {
-          return;
-        }
+      await copySafe({
+        app: this.app,
+        newPath: newAttachmentPath,
+        oldPathOrFile: attachmentFile
+      });
+      await editLinks({
+        app: this.app,
+        linkConverter: (link2) => {
+          const linkJson = toJson(link2);
+          if (!linkJsons.has(linkJson)) {
+            return;
+          }
 
-        return updateLink({
-          app: this.app,
-          link: link2,
-          newSourcePathOrFile: backlinkFile,
-          newTargetPathOrFile: newAttachmentPath,
-          oldTargetPathOrFile: attachmentFile
-        });
+          return updateLink({
+            app: this.app,
+            link: link2,
+            newSourcePathOrFile: backlinkFile,
+            newTargetPathOrFile: newAttachmentPath,
+            oldTargetPathOrFile: attachmentFile
+          });
+        },
+        pathOrFile: backlinkFile,
+        resourceLockComponent: this.resourceLockComponent
       });
     }
 
     // eslint-disable-next-line require-atomic-updates -- Don't have a better way to do this.
-    backlinks = await getBacklinksForFileSafe(this.app, attachmentFile);
+    backlinks = await getBacklinksForFileSafe({
+      app: this.app,
+      pathOrFile: attachmentFile
+    });
 
     if (backlinks.keys().length === 0) {
-      await deleteIfNotUsed(this.app, attachmentFile);
+      await deleteIfNotUsed({
+        app: this.app,
+        pathOrFile: attachmentFile
+      });
     }
 
     return true;

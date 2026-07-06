@@ -9,6 +9,7 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import type {
   Mock,
   MockInstance
@@ -41,6 +42,7 @@ import {
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
+import { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import {
   copySafe,
   renameSafe
@@ -205,6 +207,8 @@ describe('AttachmentCollector', () => {
   let readJson: Mock<(path: string) => Promise<null | object>>;
   let settings: SettingsLike;
   let warnSpy: MockInstance<typeof console.warn>;
+  let pluginNoticeComponent: PluginNoticeComponent;
+  let resourceLockComponent: ResourceLockComponent;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -242,6 +246,8 @@ describe('AttachmentCollector', () => {
     networkImageDownloader = strictProxy<NetworkImageDownloader>({
       downloadNetworkImagesForNote: vi.fn().mockResolvedValue(undefined)
     });
+    pluginNoticeComponent = strictProxy<PluginNoticeComponent>({});
+    resourceLockComponent = strictProxy<ResourceLockComponent>({});
     collector = new AttachmentCollector({
       abortSignalComponent,
       app,
@@ -249,7 +255,9 @@ describe('AttachmentCollector', () => {
       consoleDebugComponent,
       networkImageDownloader,
       pluginName: PLUGIN_NAME,
-      pluginSettingsComponent
+      pluginNoticeComponent,
+      pluginSettingsComponent,
+      resourceLockComponent
     });
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -415,11 +423,11 @@ describe('AttachmentCollector', () => {
         mockCopySafe.mockResolvedValue('attachments/img.png');
         let matchingResult: unknown;
         let nonMatchingResult: unknown;
-        mockEditLinks.mockImplementation(async (_app, _note, linkConverter) => {
-          matchingResult = await linkConverter(createReference({ link: 'img.png' }));
-          nonMatchingResult = await linkConverter(createReference({ link: 'other.png' }));
+        mockEditLinks.mockImplementation(async (params) => {
+          matchingResult = await params.linkConverter(createReference({ link: 'img.png' }));
+          nonMatchingResult = await params.linkConverter(createReference({ link: 'other.png' }));
         });
-        mockExtractLinkFile.mockImplementation((_app, ref) => castTo<Reference>(ref).link === 'other.png' ? createFile('other.png') : createFile('img.png'));
+        mockExtractLinkFile.mockImplementation((params) => castTo<Reference>(params.link).link === 'other.png' ? createFile('other.png') : createFile('img.png'));
         mockUpdateLink.mockReturnValue('![](attachments/img.png)');
         await runSingleFile(note);
         expect(mockCopySafe).toHaveBeenCalledWith(app, 'img.png', 'attachments/img.png');
@@ -478,7 +486,7 @@ describe('AttachmentCollector', () => {
         await runSingleFile(note);
         // Second link in the same note must reuse the remembered Skip mode without re-prompting.
         mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation((_app, ref) => createFile(castTo<Reference>(ref).link));
+        mockExtractLinkFile.mockImplementation((params) => createFile(castTo<Reference>(params.link).link));
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
         mockSelectMode.mockClear();
         await runSingleFile(note);
@@ -498,7 +506,7 @@ describe('AttachmentCollector', () => {
           shouldUseSameActionForOtherProblematicAttachments: true
         });
         mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation((_app, ref) => createFile(castTo<Reference>(ref).link));
+        mockExtractLinkFile.mockImplementation((params) => createFile(castTo<Reference>(params.link).link));
         await runSingleFile(note);
         // Prompt chosen once, then ctx mode (Skip) reused for the second link.
         expect(mockSelectMode).toHaveBeenCalledTimes(1);
@@ -510,7 +518,7 @@ describe('AttachmentCollector', () => {
         // Iteration returns early before requesting its backlinks.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation((_app, ref) => createFile(castTo<Reference>(ref).link));
+        mockExtractLinkFile.mockImplementation((params) => createFile(castTo<Reference>(params.link).link));
         await runSingleFile(note);
         expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(1);
       });

@@ -8,6 +8,8 @@ import type {
 } from 'obsidian';
 import type { ActiveFileProvider } from 'obsidian-dev-utils/obsidian/active-file-provider';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 
 import { Vault } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
@@ -171,6 +173,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   let handler: MoveAttachmentToProperFolderCommandHandler;
   let mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
   let pluginSettingsComponent: PluginSettingsComponent;
+  let pluginNoticeComponent: PluginNoticeComponent;
+  let resourceLockComponent: ResourceLockComponent;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -200,20 +204,25 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     attachmentPathManager = strictProxy<AttachmentPathManager>({
       getProperAttachmentPath: mockGetProperAttachmentPath
     });
+    pluginNoticeComponent = strictProxy<PluginNoticeComponent>({});
+    resourceLockComponent = strictProxy<ResourceLockComponent>({});
     handler = new MoveAttachmentToProperFolderCommandHandler({
       abortSignalComponent,
       app,
       attachmentPathManager,
-      pluginSettingsComponent
+      pluginNoticeComponent,
+      pluginSettingsComponent,
+      resourceLockComponent
     });
     castTo<PluginNameHolder>(handler)._pluginName = 'My Plugin';
   });
 
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(MoveAttachmentToProperFolderCommandHandler);
-    expect(handler.id).toBe('move-attachment-to-proper-folder');
-    expect(handler.icon).toBe('move');
-    expect(handler.name).toBe('Move attachment to proper folder');
+    const command = handler.buildCommand();
+    expect(command.id).toBe('move-attachment-to-proper-folder');
+    expect(command.icon).toBe('move');
+    expect(command.name).toBe('Move attachment to proper folder');
   });
 
   describe('canExecuteAbstractFiles', () => {
@@ -395,9 +404,9 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         .mockResolvedValueOnce(createBacklinks(new Map()));
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
       mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
-      mockEditLinks.mockImplementation(async (_app, _file, converter) => {
-        await converter(reference);
-        await converter(createReference('non-matching'));
+      mockEditLinks.mockImplementation(async (params) => {
+        await params.linkConverter(reference);
+        await params.linkConverter(createReference('non-matching'));
       });
       mockDeleteIfNotUsed.mockResolvedValue(true);
       mockCopySafe.mockResolvedValue('new-folder/attachment.png');

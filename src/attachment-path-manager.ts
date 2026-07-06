@@ -16,7 +16,6 @@ import {
   Notice
 } from 'obsidian';
 import { printError } from 'obsidian-dev-utils/error';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   AttachmentPathContext,
   DUMMY_PATH,
@@ -28,6 +27,7 @@ import {
   getPath,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
 import {
@@ -149,12 +149,18 @@ export class AttachmentPathManager {
       };
     }
 
-    const noteFile = getFileOrNull(this.app, params.notePathOrFile);
+    const noteFile = getFileOrNull({
+      app: this.app,
+      pathOrFile: params.notePathOrFile
+    });
     const noteFilePath = params.notePathOrFile ? getPath(this.app, params.notePathOrFile) : undefined;
     const oldNoteFilePath = params.oldNotePathOrFile ? getPath(this.app, params.oldNotePathOrFile) : undefined;
 
     if (attachmentFileBaseName.startsWith(IMPORT_FILES_PREFIX)) {
-      attachmentFileBaseName = trimStart(attachmentFileBaseName, IMPORT_FILES_PREFIX);
+      attachmentFileBaseName = trimStart({
+        prefix: IMPORT_FILES_PREFIX,
+        str: attachmentFileBaseName
+      });
       shouldSkipGeneratedAttachmentFileName = true;
     }
     if (noteFile && this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
@@ -162,7 +168,7 @@ export class AttachmentPathManager {
     }
 
     let attachmentPath: string;
-    if (!noteFilePath || !isNote(this.app, noteFilePath)) {
+    if (!noteFilePath || !isNote(noteFilePath)) {
       attachmentPath = await getAvailablePathForAttachments({
         app: this.app,
         attachmentFileBaseName,
@@ -172,7 +178,10 @@ export class AttachmentPathManager {
         shouldSkipMissingAttachmentFolderCreation: params.shouldSkipMissingAttachmentFolderCreation ?? true
       });
     } else {
-      const attachmentFileName = makeFileName(attachmentFileBaseName, params.attachmentFileExtension);
+      const attachmentFileName = makeFileName({
+        fileBaseName: attachmentFileBaseName,
+        fileExtension: params.attachmentFileExtension
+      });
       const attachmentFolderFullPath = await this.getAttachmentFolderFullPathForPath({
         actionContext: attachmentPathContextToActionContext(params.context),
         attachmentFileContent,
@@ -202,7 +211,10 @@ export class AttachmentPathManager {
             tokenValidator: this.tokenValidator
           })
         );
-        generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, params.attachmentFileExtension);
+        generatedAttachmentFileName = makeFileName({
+          fileBaseName: generatedAttachmentFileBaseName,
+          fileExtension: params.attachmentFileExtension
+        });
       }
       const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
       if (params.shouldSkipDuplicateCheck) {
@@ -222,6 +234,56 @@ export class AttachmentPathManager {
           await this.app.vault.create(join(folderPath, '.gitkeep'), '');
         }
       }
+    }
+
+    return attachmentPath;
+  }
+
+  public async getDownloadedImagePath(params: AttachmentPathManagerGetDownloadedImagePathParams): Promise<string> {
+    const attachmentFileName = makeFileName({
+      fileBaseName: params.fileName,
+      fileExtension: params.fileExtension
+    });
+    const now = Math.trunc(Date.now());
+    const attachmentFileStats: FileStats = {
+      ctime: now,
+      mtime: now,
+      size: params.downloadedContent.byteLength
+    };
+
+    const generatedAttachmentFileBaseName = await this.getGeneratedAttachmentFileBaseName(
+      new Substitutions({
+        actionContext: params.actionContext,
+        app: this.app,
+        attachmentFileContent: params.downloadedContent,
+        attachmentFileStats,
+        noteFilePath: params.noteFilePath,
+        originalAttachmentFileName: attachmentFileName,
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        tokenValidator: this.tokenValidator
+      })
+    );
+    const generatedAttachmentFileName = makeFileName({
+      fileBaseName: generatedAttachmentFileBaseName,
+      fileExtension: params.fileExtension
+    });
+
+    const attachmentFolderFullPath = await this.getAttachmentFolderFullPathForPath({
+      actionContext: params.actionContext,
+      attachmentFileContent: params.downloadedContent,
+      attachmentFileName: generatedAttachmentFileName,
+      attachmentFileStats,
+      notePath: params.noteFilePath
+    });
+
+    const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
+    const dir = dirname(generatedAttachmentFileNamePath);
+    const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.fileExtension ? `.${params.fileExtension}` : '');
+    const attachmentPath = this.app.vault.getAvailablePath(join(dir, generatedAttachmentFileNameBaseName), params.fileExtension);
+
+    const folderPath = parentFolderPath(attachmentPath);
+    if (!await this.app.vault.exists(folderPath)) {
+      await createFolderSafe(this.app, folderPath);
     }
 
     return attachmentPath;
@@ -274,55 +336,11 @@ export class AttachmentPathManager {
     return path;
   }
 
-  public async getDownloadedImagePath(params: AttachmentPathManagerGetDownloadedImagePathParams): Promise<string> {
-    const attachmentFileName = makeFileName(params.fileName, params.fileExtension);
-    const now = Math.trunc(Date.now());
-    const attachmentFileStats: FileStats = {
-      ctime: now,
-      mtime: now,
-      size: params.downloadedContent.byteLength
-    };
-
-    const generatedAttachmentFileBaseName = await this.getGeneratedAttachmentFileBaseName(
-      new Substitutions({
-        actionContext: params.actionContext,
-        app: this.app,
-        attachmentFileContent: params.downloadedContent,
-        attachmentFileStats,
-        noteFilePath: params.noteFilePath,
-        originalAttachmentFileName: attachmentFileName,
-        pluginSettingsComponent: this.pluginSettingsComponent,
-        tokenValidator: this.tokenValidator
-      })
-    );
-    const generatedAttachmentFileName = makeFileName(generatedAttachmentFileBaseName, params.fileExtension);
-
-    const attachmentFolderFullPath = await this.getAttachmentFolderFullPathForPath({
-      actionContext: params.actionContext,
-      attachmentFileContent: params.downloadedContent,
-      attachmentFileName: generatedAttachmentFileName,
-      attachmentFileStats,
-      notePath: params.noteFilePath
-    });
-
-    const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
-    const dir = dirname(generatedAttachmentFileNamePath);
-    const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.fileExtension ? `.${params.fileExtension}` : '');
-    const attachmentPath = this.app.vault.getAvailablePath(join(dir, generatedAttachmentFileNameBaseName), params.fileExtension);
-
-    const folderPath = parentFolderPath(attachmentPath);
-    if (!await this.app.vault.exists(folderPath)) {
-      await createFolderSafe(this.app, folderPath);
-    }
-
-    return attachmentPath;
-  }
-
   public async getProperAttachmentPath(params: AttachmentPathManagerGetProperAttachmentPathParams): Promise<null | string> {
     const attachmentFileContent = await this.app.vault.readBinary(params.attachmentFile);
     const newAttachmentName = this.pluginSettingsComponent.settings.shouldRenameCollectedAttachments
-      ? makeFileName(
-        await this.getGeneratedAttachmentFileBaseName(
+      ? makeFileName({
+        fileBaseName: await this.getGeneratedAttachmentFileBaseName(
           new Substitutions({
             actionContext: params.actionContext,
             app: this.app,
@@ -336,8 +354,8 @@ export class AttachmentPathManager {
             tokenValidator: this.tokenValidator
           })
         ),
-        params.attachmentFile.extension
-      )
+        fileExtension: params.attachmentFile.extension
+      })
       : params.attachmentFile.name;
 
     const newAttachmentFolderPath = await this.getAttachmentFolderFullPathForPath({
@@ -357,7 +375,10 @@ export class AttachmentPathManager {
   }
 
   public async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
-    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
+    const oldAttachmentFile = getFileOrNull({
+      app: this.app,
+      pathOrFile: oldAttachmentPathOrFile
+    });
     if (!oldAttachmentFile) {
       return 0;
     }
@@ -369,7 +390,11 @@ export class AttachmentPathManager {
 
     let sequenceNumber = 1;
     for (const link of getAllLinks(cache)) {
-      const linkFile = extractLinkFile(this.app, link, noteFilePath);
+      const linkFile = extractLinkFile({
+        app: this.app,
+        link,
+        sourcePathOrFile: noteFilePath
+      });
 
       if (linkFile === oldAttachmentFile) {
         return sequenceNumber;
@@ -397,7 +422,10 @@ export class AttachmentPathManager {
   }
 
   private async getCursorLine(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
-    const oldAttachmentFile = getFileOrNull(this.app, oldAttachmentPathOrFile);
+    const oldAttachmentFile = getFileOrNull({
+      app: this.app,
+      pathOrFile: oldAttachmentPathOrFile
+    });
     if (!oldAttachmentFile) {
       return 0;
     }
@@ -412,7 +440,11 @@ export class AttachmentPathManager {
         continue;
       }
 
-      const linkFile = extractLinkFile(this.app, link, noteFilePath);
+      const linkFile = extractLinkFile({
+        app: this.app,
+        link,
+        sourcePathOrFile: noteFilePath
+      });
       if (!linkFile) {
         continue;
       }

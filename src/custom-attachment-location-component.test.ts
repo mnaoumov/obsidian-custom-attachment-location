@@ -358,14 +358,14 @@ describe('CustomAttachmentLocationComponent', () => {
     it('should ignore non-input targets', async () => {
       const component = createComponent();
       await loadAndReachLayoutReady(component);
-      dispatchChange(activeDocument.createElement('div'));
+      dispatchChange(activeWindow.createDiv());
       expect(capturedChildTypes()).not.toContain('FileArrayBufferPatchComponent');
     });
 
     it('should ignore non-file inputs', async () => {
       const component = createComponent();
       await loadAndReachLayoutReady(component);
-      const input = activeDocument.createElement('input');
+      const input = activeWindow.createEl('input');
       input.type = 'text';
       dispatchChange(input);
       expect(capturedChildTypes()).not.toContain('FileArrayBufferPatchComponent');
@@ -374,7 +374,7 @@ describe('CustomAttachmentLocationComponent', () => {
     it('should add a file array buffer patch child for each selected file', async () => {
       const component = createComponent();
       await loadAndReachLayoutReady(component);
-      const input = activeDocument.createElement('input');
+      const input = activeWindow.createEl('input');
       input.type = 'file';
       const file = new File([new ArrayBuffer(4)], 'image.png');
       Object.defineProperty(input, 'files', { value: [file] });
@@ -387,7 +387,7 @@ describe('CustomAttachmentLocationComponent', () => {
     it('should handle an input with no selected files', async () => {
       const component = createComponent();
       await loadAndReachLayoutReady(component);
-      const input = activeDocument.createElement('input');
+      const input = activeWindow.createEl('input');
       input.type = 'file';
       Object.defineProperty(input, 'files', { value: null });
       dispatchChange(input);
@@ -556,9 +556,9 @@ function createMarkdownLeaf(viewType: string): WorkspaceLeaf {
 
 function createMenuItem(hasFileIcon: boolean): MenuItemLike {
   const menuItem = castTo<MenuItemLike>(Object.create(MenuItem.prototype));
-  menuItem.iconEl = activeDocument.createElement('div');
+  menuItem.iconEl = activeWindow.createDiv();
   if (hasFileIcon) {
-    menuItem.iconEl.appendChild(activeDocument.createElement('div')).addClass('lucide-file');
+    menuItem.iconEl.appendChild(activeWindow.createDiv()).addClass('lucide-file');
   }
   return menuItem;
 }

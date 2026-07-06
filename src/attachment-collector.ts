@@ -4,6 +4,8 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
+import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
 import {
@@ -14,13 +16,13 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
-import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import {
   isCanvasFile,
   isFile,
   isFolder,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
+import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
   editLinks,
@@ -63,7 +65,9 @@ interface AttachmentCollectorConstructorParams {
   readonly consoleDebugComponent: ConsoleDebugComponent;
   readonly networkImageDownloader: NetworkImageDownloader;
   readonly pluginName: string;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly resourceLockComponent: ResourceLockComponent;
 }
 
 interface AttachmentCollectorPrepareAttachmentToMoveParams {
@@ -90,7 +94,9 @@ export class AttachmentCollector {
   private readonly consoleDebugComponent: ConsoleDebugComponent;
   private readonly networkImageDownloader: NetworkImageDownloader;
   private readonly pluginName: string;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly resourceLockComponent: ResourceLockComponent;
 
   public constructor(params: AttachmentCollectorConstructorParams) {
     this.app = params.app;
@@ -100,6 +106,8 @@ export class AttachmentCollector {
     this.consoleDebugComponent = params.consoleDebugComponent;
     this.attachmentPathManager = params.attachmentPathManager;
     this.networkImageDownloader = params.networkImageDownloader;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
+    this.resourceLockComponent = params.resourceLockComponent;
   }
 
   public collectAttachmentsEntireVault(): void {
@@ -127,6 +135,7 @@ export class AttachmentCollector {
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
     const app = this.app;
     const pluginSettingsComponent = this.pluginSettingsComponent;
+    const resourceLockComponent = this.resourceLockComponent;
 
     params.abortSignal.throwIfAborted();
     if (params.ctx.isAborted) {
@@ -136,7 +145,7 @@ export class AttachmentCollector {
     const notice = new Notice(t(($) => $.notice.collectingAttachments, { noteFilePath: params.note.path }), 0);
 
     try {
-      const isCanvas = isCanvasFile(app, params.note);
+      const isCanvas = isCanvasFile(params.note);
 
       const oldAttachmentPaths = new Set<string>();
 
@@ -177,7 +186,9 @@ export class AttachmentCollector {
           continue;
         }
 
-        const backlinks = await getBacklinksForFileSafe(this.app, attachmentMoveResult.oldAttachmentPath, {
+        const backlinks = await getBacklinksForFileSafe({
+          app: this.app,
+          pathOrFile: attachmentMoveResult.oldAttachmentPath,
           timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
         });
         params.abortSignal.throwIfAborted();
@@ -210,21 +221,34 @@ export class AttachmentCollector {
                 // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
                 result = {
                   ...result,
-                  newAttachmentPath: await copySafe(app, result.oldAttachmentPath, result.newAttachmentPath)
-                };
-                await editLinks(app, params.note, (link2): MaybeReturn<string> => {
-                  const linkFile = extractLinkFile(app, link2, params.note);
-                  if (linkFile?.path !== result.oldAttachmentPath) {
-                    return;
-                  }
-                  return updateLink({
+                  newAttachmentPath: await copySafe({
                     app,
-                    link: link2,
-                    newSourcePathOrFile: params.note,
-                    newTargetPathOrFile: ensureNonNullable(result.newAttachmentPath),
-                    oldSourcePathOrFile: params.note,
-                    oldTargetPathOrFile: result.oldAttachmentPath
-                  });
+                    newPath: result.newAttachmentPath,
+                    oldPathOrFile: result.oldAttachmentPath
+                  })
+                };
+                await editLinks({
+                  app,
+                  linkConverter: (link2): MaybeReturn<string> => {
+                    const linkFile = extractLinkFile({
+                      app,
+                      link: link2,
+                      sourcePathOrFile: params.note
+                    });
+                    if (linkFile?.path !== result.oldAttachmentPath) {
+                      return;
+                    }
+                    return updateLink({
+                      app,
+                      link: link2,
+                      newSourcePathOrFile: params.note,
+                      newTargetPathOrFile: ensureNonNullable(result.newAttachmentPath),
+                      oldSourcePathOrFile: params.note,
+                      oldTargetPathOrFile: result.oldAttachmentPath
+                    });
+                  },
+                  pathOrFile: params.note,
+                  resourceLockComponent
                 });
                 break;
               case CollectAttachmentUsedByMultipleNotesMode.Move:
@@ -284,7 +308,11 @@ export class AttachmentCollector {
           // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
           attachmentMoveResult = {
             ...attachmentMoveResult,
-            newAttachmentPath: await renameSafe(app, attachmentMoveResult.oldAttachmentPath, attachmentMoveResult.newAttachmentPath)
+            newAttachmentPath: await renameSafe({
+              app,
+              newPath: attachmentMoveResult.newAttachmentPath,
+              oldPathOrAbstractFile: attachmentMoveResult.oldAttachmentPath
+            })
           };
         }
       }
@@ -337,13 +365,13 @@ export class AttachmentCollector {
     const noteFilesSet = new Set<TFile>();
 
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && isNote(this.app, abstractFile)) {
+      if (isFile(abstractFile) && isNote(abstractFile)) {
         noteFilesSet.add(abstractFile);
       }
 
       if (isFolder(abstractFile)) {
         Vault.recurseChildren(abstractFile, (child) => {
-          if (isFile(child) && isNote(this.app, child)) {
+          if (isFile(child) && isNote(child)) {
             noteFilesSet.add(child);
           }
         });
@@ -362,6 +390,7 @@ export class AttachmentCollector {
       abortSignal: combinedAbortSignal,
       buildNoticeMessage: (noteFile, iterationStr) => t(($) => $.attachmentCollector.progressBar.message, { iterationStr, noteFilePath: noteFile.path }),
       items: noteFiles,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (noteFile) => {
         combinedAbortSignal.throwIfAborted();
         if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
@@ -385,7 +414,12 @@ export class AttachmentCollector {
   }
 
   private async prepareAttachmentToMove(params: AttachmentCollectorPrepareAttachmentToMoveParams): Promise<AttachmentMoveResult | null> {
-    const oldAttachmentFile = extractLinkFile(this.app, params.reference, params.oldNotePath, true);
+    const oldAttachmentFile = extractLinkFile({
+      app: this.app,
+      link: params.reference,
+      shouldAllowNonExistingFile: true,
+      sourcePathOrFile: params.oldNotePath
+    });
 
     if (!oldAttachmentFile) {
       return null;

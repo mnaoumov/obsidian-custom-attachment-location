@@ -1,9 +1,15 @@
 /* eslint-disable no-magic-numbers -- Magic bytes constants are clearer as hex literals. */
-import type { App, TFile } from 'obsidian';
+import type {
+  App,
+  TFile
+} from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 
 import { requestUrl } from 'obsidian';
-import { basename, extname } from 'obsidian-dev-utils/path';
+import {
+  basename,
+  extname
+} from 'obsidian-dev-utils/path';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -46,10 +52,9 @@ const MAGIC_BYTES_TO_EXTENSION: readonly MagicBytesEntry[] = [
   { bytes: [0x42, 0x4D], ext: 'bmp' }
 ];
 
-interface NetworkImageLink {
-  readonly alt: string;
-  readonly fullMatch: string;
-  readonly url: string;
+interface DownloadImageResult {
+  readonly arrayBuffer: ArrayBuffer;
+  readonly contentType: null | string;
 }
 
 interface NetworkImageDownloaderConstructorParams {
@@ -59,9 +64,10 @@ interface NetworkImageDownloaderConstructorParams {
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
-interface DownloadImageResult {
-  readonly arrayBuffer: ArrayBuffer;
-  readonly contentType: null | string;
+interface NetworkImageLink {
+  readonly alt: string;
+  readonly fullMatch: string;
+  readonly url: string;
 }
 
 export class NetworkImageDownloader {

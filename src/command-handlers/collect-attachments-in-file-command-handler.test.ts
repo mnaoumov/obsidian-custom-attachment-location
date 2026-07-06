@@ -1,5 +1,4 @@
 import type {
-  App,
   TAbstractFile,
   TFile
 } from 'obsidian';
@@ -77,22 +76,21 @@ beforeAll(async () => {
 });
 
 describe('CollectAttachmentsInFileCommandHandler', () => {
-  let app: App;
   let attachmentCollector: AttachmentCollector;
   let handler: CollectAttachmentsInFileCommandHandler;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    app = strictProxy<App>({});
     attachmentCollector = createAttachmentCollector();
-    handler = new CollectAttachmentsInFileCommandHandler({ app, attachmentCollector });
+    handler = new CollectAttachmentsInFileCommandHandler({ attachmentCollector });
   });
 
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(CollectAttachmentsInFileCommandHandler);
-    expect(handler.id).toBe('collect-attachments-in-file');
-    expect(handler.icon).toBe('download');
-    expect(handler.name).toBe('Collect attachments in current note');
+    const command = handler.buildCommand();
+    expect(command.id).toBe('collect-attachments-in-file');
+    expect(command.icon).toBe('download');
+    expect(command.name).toBe('Collect attachments in current note');
   });
 
   describe('canExecuteAbstractFiles', () => {

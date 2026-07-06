@@ -228,13 +228,13 @@ ${commentOut(this.legacySettings.customTokensStr)}
       return '';
     }
 
-    return replaceAll(
-      str,
-      /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi,
-      ({ capturedGroupArgs: [token, momentJsFormat] }) => {
+    return replaceAll({
+      replacer: ({ capturedGroupArgs: [token, momentJsFormat] }) => {
         return `\${${ensureNonNullable(token)}:{momentJsFormat:'${ensureNonNullable(momentJsFormat)}'}}`;
-      }
-    );
+      },
+      searchValue: /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi,
+      str
+    });
   }
 }
 
@@ -263,7 +263,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   }
 
   public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
-    if (!pathOrFile || !isNote(this.app, pathOrFile)) {
+    if (!pathOrFile || !isNote(pathOrFile)) {
       return false;
     }
 

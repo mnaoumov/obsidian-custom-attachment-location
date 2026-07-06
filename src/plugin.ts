@@ -115,6 +115,8 @@ export class Plugin extends PluginBase {
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
         pluginId: this.manifest.id,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        resourceLockComponent: this.resourceLockComponent,
         settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => ({
           emptyFolderBehavior: pluginSettingsComponent.settings.emptyFolderBehavior,
           isNote: (path: string): boolean => pluginSettingsComponent.isNoteEx(path),
@@ -142,7 +144,9 @@ export class Plugin extends PluginBase {
       consoleDebugComponent: this.consoleDebugComponent,
       networkImageDownloader,
       pluginName: this.manifest.name,
-      pluginSettingsComponent
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      pluginSettingsComponent,
+      resourceLockComponent: this.resourceLockComponent
     });
 
     const menuEventRegistrar = this.addChild(new MenuEventRegistrarComponent(this.app));
@@ -151,7 +155,6 @@ export class Plugin extends PluginBase {
         activeFileProvider: new AppActiveFileProvider(this.app),
         commandHandlers: [
           new CollectAttachmentsInFileCommandHandler({
-            app: this.app,
             attachmentCollector
           }),
           new CollectAttachmentsInCurrentFolderCommandHandler({
@@ -164,7 +167,9 @@ export class Plugin extends PluginBase {
             abortSignalComponent: this.abortSignalComponent,
             app: this.app,
             attachmentPathManager,
-            pluginSettingsComponent
+            pluginNoticeComponent: this.pluginNoticeComponent,
+            pluginSettingsComponent,
+            resourceLockComponent: this.resourceLockComponent
           })
         ],
         commandRegistrar: new PluginCommandRegistrar(this),

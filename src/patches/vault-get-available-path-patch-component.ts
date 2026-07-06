@@ -38,12 +38,18 @@ export class VaultGetAvailablePathPatchComponent extends MonkeyAroundComponent {
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Easiest infinite loop.
         while (true) {
-          const path = makeFileName(
-            suffixNum === 0 ? attachmentFileName : `${attachmentFileName}${this.pluginSettingsComponent.settings.duplicateNameSeparator}${String(suffixNum)}`,
-            attachmentExtension
-          );
+          const path = makeFileName({
+            fileBaseName: suffixNum === 0 ? attachmentFileName : `${attachmentFileName}${this.pluginSettingsComponent.settings.duplicateNameSeparator}${String(suffixNum)}`,
+            fileExtension: attachmentExtension
+          });
 
-          if (!getAbstractFileOrNull(this.app, path, true)) {
+          if (
+            !getAbstractFileOrNull({
+              app: this.app,
+              isCaseInsensitive: true,
+              pathOrFile: path
+            })
+          ) {
             return path;
           }
 

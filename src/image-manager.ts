@@ -118,7 +118,10 @@ export class ImageManager {
     const PERCENTAGE = '%';
 
     if (this.pluginSettingsComponent.settings.defaultImageSize.endsWith(PX)) {
-      const dimensionInPixels = Number(trimEnd(this.pluginSettingsComponent.settings.defaultImageSize, PX));
+      const dimensionInPixels = Number(trimEnd({
+        str: this.pluginSettingsComponent.settings.defaultImageSize,
+        suffix: PX
+      }));
       if (this.pluginSettingsComponent.settings.defaultImageSizeDimension === DefaultImageSizeDimension.Width) {
         width = dimensionInPixels;
         height = Math.trunc(width / image.width * image.height);
@@ -127,7 +130,10 @@ export class ImageManager {
         width = Math.trunc(height / image.height * image.width);
       }
     } else {
-      const percentage = Number(trimEnd(this.pluginSettingsComponent.settings.defaultImageSize, PERCENTAGE));
+      const percentage = Number(trimEnd({
+        str: this.pluginSettingsComponent.settings.defaultImageSize,
+        suffix: PERCENTAGE
+      }));
       const FULL_IMAGE_PERCENTAGE = 100;
       width = Math.trunc(image.width / FULL_IMAGE_PERCENTAGE * percentage);
       height = Math.trunc(image.height / FULL_IMAGE_PERCENTAGE * percentage);

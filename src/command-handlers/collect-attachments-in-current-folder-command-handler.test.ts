@@ -49,9 +49,10 @@ describe('CollectAttachmentsInCurrentFolderCommandHandler', () => {
 
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(CollectAttachmentsInCurrentFolderCommandHandler);
-    expect(handler.id).toBe('collect-attachments-in-current-folder');
-    expect(handler.icon).toBe('download');
-    expect(handler.name).toBe('Collect attachments in current folder');
+    const command = handler.buildCommand();
+    expect(command.id).toBe('collect-attachments-in-current-folder');
+    expect(command.icon).toBe('download');
+    expect(command.name).toBe('Collect attachments in current folder');
   });
 
   it('should delegate the folder wrapped in an array to the attachment collector on executeFolder', () => {

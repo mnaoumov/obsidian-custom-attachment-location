@@ -196,8 +196,7 @@ async function createTab(): Promise<CreatedTab> {
     pluginSettingsComponent
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-  tab.display();
+  tab.displayLegacy();
   addButtonSpy.mockRestore();
   addToggleSpy.mockRestore();
   addTextSpy.mockRestore();
@@ -323,8 +322,7 @@ describe('PluginSettingsTab', () => {
       });
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-    tab.display();
+    tab.displayLegacy();
     addToggleSpy.mockRestore();
     const folderToggle = toggles.find((entry) => entry.name === 'Should rename attachment folders');
     const fileToggle = toggles.find((entry) => entry.name === 'Should rename attachment files');

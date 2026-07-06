@@ -217,14 +217,6 @@ export const defaultTranslations = {
       },
       name: 'Collected attachment file name'
     },
-    downloadNetworkImages: {
-      description: 'When collecting attachments, automatically download network images referenced in markdown and save them locally.',
-      name: 'Download network images'
-    },
-    networkImageDownloadTimeoutInSeconds: {
-      description: 'The timeout in seconds for downloading each network image.',
-      name: 'Network image download timeout in seconds'
-    },
     convertImagesToJpegMode: {
       description: {
         part1: 'Which images to convert to JPEG:'
@@ -249,6 +241,10 @@ export const defaultTranslations = {
         part4: 'Leave blank to use the original image size.'
       },
       name: 'Default image size'
+    },
+    downloadNetworkImages: {
+      description: 'When collecting attachments, automatically download network images referenced in markdown and save them locally.',
+      name: 'Download network images'
     },
     duplicateNameSeparator: {
       description: {
@@ -342,6 +338,10 @@ export const defaultTranslations = {
         part1: 'When the attachment is used by multiple notes:'
       },
       name: 'Move attachment to proper folder used by multiple notes mode'
+    },
+    networkImageDownloadTimeoutInSeconds: {
+      description: 'The timeout in seconds for downloading each network image.',
+      name: 'Network image download timeout in seconds'
     },
     renameAttachmentsToLowerCase: 'Rename attachments to lower case',
     renamedAttachmentFileName: {

@@ -11,7 +11,7 @@ import {
   convertAsyncToSync,
   invokeAsyncSafely
 } from 'obsidian-dev-utils/async';
-import { CssClass } from 'obsidian-dev-utils/css-class';
+import { CssClass } from 'obsidian-dev-utils/obsidian/css-class';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { addPluginCssClasses } from 'obsidian-dev-utils/obsidian/plugin/plugin-context';
 import { trashSafe } from 'obsidian-dev-utils/obsidian/vault';
