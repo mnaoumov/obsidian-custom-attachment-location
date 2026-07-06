@@ -54,7 +54,7 @@
     "@commitlint/cli": "^21.2.0",
     "@commitlint/config-conventional": "^21.2.0",
     "@commitlint/types": "^21.2.0",
-    "@obsidian-typings/obsidian-public-latest": "^6.20.0",
+    "@obsidian-typings/obsidian-public-latest": "^6.21.0",
     "@total-typescript/ts-reset": "^0.6.1",
     "@tsconfig/strictest": "^2.0.8",
     "@types/node": "^26.1.0",
