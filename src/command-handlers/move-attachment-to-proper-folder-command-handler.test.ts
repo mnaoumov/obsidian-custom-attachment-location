@@ -176,6 +176,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   let handler: MoveAttachmentToProperFolderCommandHandler;
   let mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
   let pluginSettingsComponent: PluginSettingsComponent;
+  let pluginNoticeComponent: PluginNoticeComponent;
+  let resourceLockComponent: ResourceLockComponent;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -205,13 +207,15 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     attachmentPathManager = strictProxy<AttachmentPathManager>({
       getProperAttachmentPath: mockGetProperAttachmentPath
     });
+    pluginNoticeComponent = strictProxy<PluginNoticeComponent>({});
+    resourceLockComponent = strictProxy<ResourceLockComponent>({});
     handler = new MoveAttachmentToProperFolderCommandHandler({
       abortSignalComponent,
       app,
       attachmentPathManager,
-      pluginNoticeComponent: new PluginNoticeComponent('My Plugin'),
+      pluginNoticeComponent,
       pluginSettingsComponent,
-      resourceLockComponent: new ResourceLockComponent(app, 'My Plugin')
+      resourceLockComponent
     });
     castTo<PluginNameHolder>(handler)._pluginName = 'My Plugin';
   });

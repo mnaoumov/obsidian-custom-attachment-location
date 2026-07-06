@@ -418,6 +418,34 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       .setHeading(t(($) => $.pluginSettingsTab.groups.collectedAttachments))
       .addSettingEx((setting) => {
         setting
+          .setName(t(($) => $.pluginSettingsTab.downloadNetworkImages.name))
+          .setDesc(t(($) => $.pluginSettingsTab.downloadNetworkImages.description))
+          .addToggle((toggle) => {
+            this.bind({
+              onChanged: () => {
+                this.displayLegacy();
+              },
+              propertyName: 'downloadNetworkImages',
+              valueComponent: toggle
+            });
+          });
+      })
+      .addSettingEx((setting) => {
+        if (this.pluginSettingsComponent.settings.downloadNetworkImages) {
+          setting
+            .setName(t(($) => $.pluginSettingsTab.networkImageDownloadTimeoutInSeconds.name))
+            .setDesc(t(($) => $.pluginSettingsTab.networkImageDownloadTimeoutInSeconds.description))
+            .addNumber((number) => {
+              number.setMin(1);
+              this.bind({
+                propertyName: 'networkImageDownloadTimeoutInSeconds',
+                valueComponent: number
+              });
+            });
+        }
+      })
+      .addSettingEx((setting) => {
+        setting
           .setName(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.name))
           .setDesc(createFragment((f) => {
             f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part1));

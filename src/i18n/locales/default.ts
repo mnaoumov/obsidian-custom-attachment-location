@@ -242,6 +242,10 @@ export const defaultTranslations = {
       },
       name: 'Default image size'
     },
+    downloadNetworkImages: {
+      description: 'When collecting attachments, automatically download network images referenced in markdown and save them locally.',
+      name: 'Download network images'
+    },
     duplicateNameSeparator: {
       description: {
         part1: 'When you are pasting/dragging a file with the same name as an existing file, this separator will be added to the file name.',
@@ -334,6 +338,10 @@ export const defaultTranslations = {
         part1: 'When the attachment is used by multiple notes:'
       },
       name: 'Move attachment to proper folder used by multiple notes mode'
+    },
+    networkImageDownloadTimeoutInSeconds: {
+      description: 'The timeout in seconds for downloading each network image.',
+      name: 'Network image download timeout in seconds'
     },
     renameAttachmentsToLowerCase: 'Rename attachments to lower case',
     renamedAttachmentFileName: {

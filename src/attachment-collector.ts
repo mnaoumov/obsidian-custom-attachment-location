@@ -43,6 +43,7 @@ import {
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { getCanvasLinks } from './canvas-links.ts';
@@ -61,6 +62,7 @@ interface AttachmentCollectorConstructorParams {
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
   readonly consoleDebugComponent: ConsoleDebugComponent;
+  readonly networkImageDownloader: NetworkImageDownloader;
   readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -89,6 +91,7 @@ export class AttachmentCollector {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
+  private readonly networkImageDownloader: NetworkImageDownloader;
   private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -99,6 +102,7 @@ export class AttachmentCollector {
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
     this.consoleDebugComponent = params.consoleDebugComponent;
+    this.networkImageDownloader = params.networkImageDownloader;
     this.resourceLockComponent = params.resourceLockComponent;
     this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
@@ -129,8 +133,8 @@ export class AttachmentCollector {
 
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
     const app = this.app;
-    const resourceLockComponent = this.resourceLockComponent;
     const pluginSettingsComponent = this.pluginSettingsComponent;
+    const resourceLockComponent = this.resourceLockComponent;
 
     params.abortSignal.throwIfAborted();
     if (params.ctx.isAborted) {
@@ -313,6 +317,8 @@ export class AttachmentCollector {
           };
         }
       }
+
+      await this.networkImageDownloader.downloadNetworkImagesForNote(params.note);
     } finally {
       notice.hide();
     }
