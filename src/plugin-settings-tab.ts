@@ -49,9 +49,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
     this.pluginSettingsComponent2 = params.pluginSettingsComponent;
   }
 
-  public override display(): void {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-    super.display();
+  public override displayLegacy(): void {
+    super.displayLegacy();
     this.containerEl.empty();
 
     const REGISTER_CUSTOM_TOKENS_DEBOUNCE_IN_MILLISECONDS = 2000;
@@ -216,8 +215,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           .addToggle((toggle) => {
             this.bind({
               onChanged: () => {
-                // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-                this.display();
+                this.displayLegacy();
               },
               propertyName: 'shouldHandleRenames',
               valueComponent: toggle
@@ -765,8 +763,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               await this.pluginSettingsComponent.editAndSave((settings) => {
                 settings.customTokensStr = SAMPLE_CUSTOM_TOKENS;
               });
-              // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-              this.display();
+              this.displayLegacy();
             }));
           });
       });

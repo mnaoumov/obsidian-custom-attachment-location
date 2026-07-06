@@ -22,7 +22,6 @@ import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import {
   isCanvasFile,
   isFile,
@@ -43,6 +42,7 @@ import {
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
+import { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import {
   copySafe,
   renameSafe
@@ -244,10 +244,10 @@ describe('AttachmentCollector', () => {
       app,
       attachmentPathManager,
       consoleDebugComponent,
-      editorLockComponent: new EditorLockComponent(app, PLUGIN_NAME),
       pluginName: PLUGIN_NAME,
       pluginNoticeComponent: new PluginNoticeComponent(PLUGIN_NAME),
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      resourceLockComponent: new ResourceLockComponent(app, PLUGIN_NAME)
     });
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
