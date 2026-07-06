@@ -1,4 +1,3 @@
-/* eslint-disable no-magic-numbers -- Magic bytes constants are clearer as hex literals. */
 import type {
   App,
   TFile
@@ -41,15 +40,19 @@ interface MagicBytesEntry {
   readonly ext: string;
 }
 
+const MAGIC_BYTES_LENGTH = 8;
+
 /**
  * Maps magic bytes to file extensions for binary content detection.
  */
 const MAGIC_BYTES_TO_EXTENSION: readonly MagicBytesEntry[] = [
+  /* eslint-disable no-magic-numbers -- Magic bytes constants are clearer as hex literals. */
   { bytes: [0x89, 0x50, 0x4E, 0x47], ext: 'png' },
   { bytes: [0xFF, 0xD8, 0xFF], ext: 'jpg' },
   { bytes: [0x47, 0x49, 0x46, 0x38], ext: 'gif' },
   { bytes: [0x52, 0x49, 0x46, 0x46], ext: 'webp' },
   { bytes: [0x42, 0x4D], ext: 'bmp' }
+  /* eslint-enable no-magic-numbers -- Magic bytes constants are clearer as hex literals. */
 ];
 
 interface DownloadImageResult {
@@ -126,7 +129,7 @@ export class NetworkImageDownloader {
       }
     }
 
-    const bytes = new Uint8Array(content.slice(0, 8));
+    const bytes = new Uint8Array(content.slice(0, MAGIC_BYTES_LENGTH));
     for (const { bytes: magic, ext } of MAGIC_BYTES_TO_EXTENSION) {
       if (magic.every((byte, index) => bytes[index] === byte)) {
         return ext;
@@ -200,4 +203,3 @@ export class NetworkImageDownloader {
     return sanitized || 'image';
   }
 }
-/* eslint-enable no-magic-numbers -- Re-enable at end of file. */
