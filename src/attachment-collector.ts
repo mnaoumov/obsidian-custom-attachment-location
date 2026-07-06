@@ -42,6 +42,7 @@ import {
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { getCanvasLinks } from './canvas-links.ts';
@@ -60,6 +61,7 @@ interface AttachmentCollectorConstructorParams {
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
   readonly consoleDebugComponent: ConsoleDebugComponent;
+  readonly networkImageDownloader: NetworkImageDownloader;
   readonly pluginName: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -86,6 +88,7 @@ export class AttachmentCollector {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
+  private readonly networkImageDownloader: NetworkImageDownloader;
   private readonly pluginName: string;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
@@ -96,6 +99,7 @@ export class AttachmentCollector {
     this.abortSignalComponent = params.abortSignalComponent;
     this.consoleDebugComponent = params.consoleDebugComponent;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.networkImageDownloader = params.networkImageDownloader;
   }
 
   public collectAttachmentsEntireVault(): void {
@@ -284,6 +288,8 @@ export class AttachmentCollector {
           };
         }
       }
+
+      await this.networkImageDownloader.downloadNetworkImagesForNote(params.note);
     } finally {
       notice.hide();
     }

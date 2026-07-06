@@ -168,6 +168,14 @@ export const zh = {
       },
       name: '收集的附件文件名'
     },
+    downloadNetworkImages: {
+      description: '收集附件时，自动下载 Markdown 中引用的网络图片并保存到本地。',
+      name: '下载网络图片'
+    },
+    networkImageDownloadTimeoutInSeconds: {
+      description: '下载每张网络图片的超时时间（秒）。',
+      name: '网络图片下载超时时间（秒）'
+    },
     customTokens: {
       description: {
         part1: '要使用的自定义令牌。',

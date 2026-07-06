@@ -57,6 +57,7 @@ import {
 } from 'vitest';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
@@ -199,6 +200,7 @@ describe('AttachmentCollector', () => {
   let errorSpy: MockInstance<typeof console.error>;
   let getProperAttachmentPath: Mock<AttachmentPathManager['getProperAttachmentPath']>;
   let getRoot: Mock<() => TFolder>;
+  let networkImageDownloader: NetworkImageDownloader;
   let pluginSettingsComponent: PluginSettingsComponent;
   let readJson: Mock<(path: string) => Promise<null | object>>;
   let settings: SettingsLike;
@@ -237,11 +239,15 @@ describe('AttachmentCollector', () => {
         consoleDebug(message, ...args);
       }
     });
+    networkImageDownloader = strictProxy<NetworkImageDownloader>({
+      downloadNetworkImagesForNote: vi.fn().mockResolvedValue(undefined)
+    });
     collector = new AttachmentCollector({
       abortSignalComponent,
       app,
       attachmentPathManager,
       consoleDebugComponent,
+      networkImageDownloader,
       pluginName: PLUGIN_NAME,
       pluginSettingsComponent
     });
