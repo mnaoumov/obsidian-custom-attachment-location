@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 11.1.0
+
+- feat: re #42
+- test: wire integration-testing vitest-setup into integration projects
+- chore: update libs
+- chore: sort tsconfig types
+
 ## 11.0.0
 
 - perf!: read attachment content lazily during path resolution
