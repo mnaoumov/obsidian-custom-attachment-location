@@ -124,13 +124,13 @@ export class PluginSettings {
   private readonly _pathSettings = new PathSettings();
 
   public getNetworkImageDownloadTimeoutInMilliseconds(): number {
-    const MILLISECONDS_PER_SECOND = 1000;
-    return this.networkImageDownloadTimeoutInSeconds * MILLISECONDS_PER_SECOND;
+    const MILLISECONDS_IN_SECOND = 1000;
+    return this.networkImageDownloadTimeoutInSeconds * MILLISECONDS_IN_SECOND;
   }
 
   public getTimeoutInMilliseconds(): number {
-    const MILLISECONDS_PER_SECOND = 1000;
-    return this.timeoutInSeconds === 0 ? INFINITE_TIMEOUT : this.timeoutInSeconds * MILLISECONDS_PER_SECOND;
+    const MILLISECONDS_IN_SECOND = 1000;
+    return this.timeoutInSeconds === 0 ? INFINITE_TIMEOUT : this.timeoutInSeconds * MILLISECONDS_IN_SECOND;
   }
 
   public isExcludedFromAttachmentCollecting(path: string): boolean {
