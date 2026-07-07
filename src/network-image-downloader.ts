@@ -5,6 +5,7 @@ import type {
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 
 import { requestUrl } from 'obsidian';
+import { runWithTimeout } from 'obsidian-dev-utils/async';
 import {
   basename,
   extname
@@ -160,13 +161,18 @@ export class NetworkImageDownloader {
 
   private async downloadImage(url: string): Promise<DownloadImageResult> {
     const HTTP_ERROR_THRESHOLD = 400;
-    const response = await requestUrl({
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Obsidian/1.0)'
-      },
-      method: 'GET',
-      throw: false,
-      url
+    const response = await runWithTimeout({
+      operationFn: () =>
+        requestUrl({
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; Obsidian/1.0)'
+          },
+          method: 'GET',
+          throw: false,
+          url
+        }),
+      operationName: `Download network image ${url}`,
+      timeoutInMilliseconds: this.pluginSettingsComponent.settings.getNetworkImageDownloadTimeoutInMilliseconds()
     });
 
     if (response.status >= HTTP_ERROR_THRESHOLD) {

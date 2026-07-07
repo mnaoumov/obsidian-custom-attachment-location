@@ -1,12 +1,14 @@
 import type {
   App,
   RequestUrlResponse,
+  RequestUrlResponsePromise,
   TFile,
   Vault
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 
 import { requestUrl } from 'obsidian';
+import { noop } from 'obsidian-dev-utils/function';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeEach,
@@ -83,6 +85,15 @@ function createContext(): TestContext {
     noteFile,
     settings
   };
+}
+
+// A never-resolving request that simulates a hung download.
+function createHangingRequest(): RequestUrlResponsePromise {
+  return Object.assign(new Promise<RequestUrlResponse>(noop), {
+    arrayBuffer: new Promise<ArrayBuffer>(noop),
+    json: new Promise<unknown>(noop),
+    text: new Promise<string>(noop)
+  });
 }
 
 function createResponse(overrides: Partial<RequestUrlResponse>): RequestUrlResponse {
@@ -223,6 +234,27 @@ describe('NetworkImageDownloader', () => {
       expect(ctx.createBinary).not.toHaveBeenCalled();
       expect(ctx.modify).not.toHaveBeenCalled();
       warnSpy.mockRestore();
+    });
+
+    it('should time out and skip the image when the download exceeds the configured timeout', async () => {
+      vi.useFakeTimers();
+      try {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        ctx.settings.networkImageDownloadTimeoutInSeconds = 5;
+        ctx.cachedRead.mockResolvedValue('![slow](https://example.com/slow.png)');
+        mockRequestUrl.mockReturnValue(createHangingRequest());
+
+        const promise = ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+        await vi.advanceTimersByTimeAsync(5000);
+        await promise;
+
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('https://example.com/slow.png'), expect.any(Error));
+        expect(ctx.createBinary).not.toHaveBeenCalled();
+        expect(ctx.modify).not.toHaveBeenCalled();
+        warnSpy.mockRestore();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('should throw when the shared signal is already aborted', async () => {
