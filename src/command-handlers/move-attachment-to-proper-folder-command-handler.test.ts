@@ -207,7 +207,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     attachmentPathManager = strictProxy<AttachmentPathManager>({
       getProperAttachmentPath: mockGetProperAttachmentPath
     });
-    pluginNoticeComponent = strictProxy<PluginNoticeComponent>({});
+    pluginNoticeComponent = new PluginNoticeComponent('My Plugin');
     resourceLockComponent = strictProxy<ResourceLockComponent>({});
     handler = new MoveAttachmentToProperFolderCommandHandler({
       abortSignalComponent,

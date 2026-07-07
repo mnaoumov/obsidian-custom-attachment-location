@@ -246,7 +246,7 @@ describe('AttachmentCollector', () => {
     networkImageDownloader = strictProxy<NetworkImageDownloader>({
       downloadNetworkImagesForNote: vi.fn().mockResolvedValue(undefined)
     });
-    pluginNoticeComponent = strictProxy<PluginNoticeComponent>({});
+    pluginNoticeComponent = new PluginNoticeComponent(PLUGIN_NAME);
     resourceLockComponent = strictProxy<ResourceLockComponent>({});
     collector = new AttachmentCollector({
       abortSignalComponent,
