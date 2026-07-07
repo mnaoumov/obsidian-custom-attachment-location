@@ -101,6 +101,14 @@ describe('PluginSettings', () => {
     });
   });
 
+  describe('getNetworkImageDownloadTimeoutInMilliseconds', () => {
+    it('should convert the network image download timeout from seconds to milliseconds', () => {
+      const settings = new PluginSettings();
+      settings.networkImageDownloadTimeoutInSeconds = 7;
+      expect(settings.getNetworkImageDownloadTimeoutInMilliseconds()).toBe(7000);
+    });
+  });
+
   describe('isPathIgnored', () => {
     it('should ignore paths matching the exclude paths', () => {
       const settings = new PluginSettings();
