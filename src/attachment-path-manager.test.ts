@@ -398,6 +398,51 @@ describe('AttachmentPathManager', () => {
     });
   });
 
+  describe('getDownloadedImagePath', () => {
+    it('should resolve the downloaded image path without creating an existing folder', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      ctx.settings.generatedAttachmentFileName = 'generated';
+      ctx.exists.mockResolvedValue(true);
+      const result = await ctx.manager.getDownloadedImagePath({
+        actionContext: ActionContext.CollectAttachments,
+        downloadedContent: new ArrayBuffer(4),
+        fileExtension: 'png',
+        fileName: 'my-image',
+        noteFilePath: 'notes/note.md'
+      });
+      expect(result).toBe('assets/generated.png');
+      expect(mockCreateFolderSafe).not.toHaveBeenCalled();
+    });
+
+    it('should create the target folder when it does not exist', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      ctx.settings.generatedAttachmentFileName = 'generated';
+      ctx.exists.mockResolvedValue(false);
+      const result = await ctx.manager.getDownloadedImagePath({
+        actionContext: ActionContext.CollectAttachments,
+        downloadedContent: new ArrayBuffer(4),
+        fileExtension: 'png',
+        fileName: 'my-image',
+        noteFilePath: 'notes/note.md'
+      });
+      expect(result).toBe('assets/generated.png');
+      expect(mockCreateFolderSafe).toHaveBeenCalledWith(expect.anything(), 'assets');
+    });
+
+    it('should resolve the downloaded image path when no file extension is provided', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      ctx.settings.generatedAttachmentFileName = 'generated';
+      const result = await ctx.manager.getDownloadedImagePath({
+        actionContext: ActionContext.CollectAttachments,
+        downloadedContent: new ArrayBuffer(4),
+        fileExtension: '',
+        fileName: 'my-image',
+        noteFilePath: 'notes/note.md'
+      });
+      expect(result).toBe('assets/generated');
+    });
+  });
+
   describe('getProperAttachmentPath', () => {
     it('should keep the original name when collected attachment renaming is disabled', async () => {
       ctx.settings.shouldRenameCollectedAttachments = false;

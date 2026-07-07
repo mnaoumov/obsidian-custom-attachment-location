@@ -187,6 +187,10 @@ export const zh = {
       },
       name: '默认图像大小'
     },
+    downloadNetworkImages: {
+      description: '收集附件时，自动下载 Markdown 中引用的网络图片并保存到本地。',
+      name: '下载网络图片'
+    },
     duplicateNameSeparator: {
       description: {
         part1: '当你粘贴/拖拽一个与现有文件同名的文件时，此分隔符会添加到文件名中。',
@@ -262,6 +266,10 @@ export const zh = {
         part4: '留空以使用默认格式。'
       },
       name: 'Markdown URL 格式'
+    },
+    networkImageDownloadTimeoutInSeconds: {
+      description: '下载每张网络图片的超时时间（秒）。',
+      name: '网络图片下载超时时间（秒）'
     },
     renameAttachmentsToLowerCase: '将附件重命名为小写',
     renamedAttachmentFileName: {

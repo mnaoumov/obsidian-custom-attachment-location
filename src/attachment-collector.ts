@@ -5,7 +5,7 @@ import type {
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import type { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
+import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
 import {
@@ -43,6 +43,7 @@ import {
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { getCanvasLinks } from './canvas-links.ts';
@@ -61,10 +62,11 @@ interface AttachmentCollectorConstructorParams {
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
   readonly consoleDebugComponent: ConsoleDebugComponent;
-  readonly editorLockComponent: EditorLockComponent | null;
+  readonly networkImageDownloader: NetworkImageDownloader;
   readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly resourceLockComponent: null | ResourceLockComponent;
 }
 
 interface AttachmentCollectorPrepareAttachmentToMoveParams {
@@ -89,17 +91,19 @@ export class AttachmentCollector {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
-  private readonly editorLockComponent: EditorLockComponent | null;
+  private readonly networkImageDownloader: NetworkImageDownloader;
   private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly resourceLockComponent: null | ResourceLockComponent;
 
   public constructor(params: AttachmentCollectorConstructorParams) {
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
     this.consoleDebugComponent = params.consoleDebugComponent;
-    this.editorLockComponent = params.editorLockComponent;
+    this.networkImageDownloader = params.networkImageDownloader;
+    this.resourceLockComponent = params.resourceLockComponent;
     this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -129,8 +133,8 @@ export class AttachmentCollector {
 
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
     const app = this.app;
-    const editorLockComponent = this.editorLockComponent;
     const pluginSettingsComponent = this.pluginSettingsComponent;
+    const resourceLockComponent = this.resourceLockComponent;
 
     params.abortSignal.throwIfAborted();
     if (params.ctx.isAborted) {
@@ -226,7 +230,6 @@ export class AttachmentCollector {
                 };
                 await editLinks({
                   app,
-                  editorLockComponent,
                   linkConverter: (link2): MaybeReturn<string> => {
                     const linkFile = extractLinkFile({
                       app,
@@ -245,7 +248,8 @@ export class AttachmentCollector {
                       oldTargetPathOrFile: result.oldAttachmentPath
                     });
                   },
-                  pathOrFile: params.note
+                  pathOrFile: params.note,
+                  resourceLockComponent
                 });
                 break;
               case CollectAttachmentUsedByMultipleNotesMode.Move:
@@ -313,6 +317,8 @@ export class AttachmentCollector {
           };
         }
       }
+
+      await this.networkImageDownloader.downloadNetworkImagesForNote(params.note);
     } finally {
       notice.hide();
     }

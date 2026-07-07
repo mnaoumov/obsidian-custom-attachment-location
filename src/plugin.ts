@@ -25,6 +25,7 @@ import { translationsMap } from './i18n/locales/translations-map.ts';
 import { ImageManager } from './image-manager.ts';
 import { ImageSizeMap } from './image-size-map.ts';
 import { MarkdownUrlMap } from './markdown-url-map.ts';
+import { NetworkImageDownloader } from './network-image-downloader.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -114,9 +115,9 @@ export class Plugin extends PluginBase {
       new RenameDeleteHandlerComponent({
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
-        editorLockComponent: this.editorLockComponent,
         pluginId: this.manifest.id,
         pluginNoticeComponent: this.pluginNoticeComponent,
+        resourceLockComponent: this.resourceLockComponent,
         settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => ({
           emptyFolderBehavior: pluginSettingsComponent.settings.emptyFolderBehavior,
           isNote: (path: string): boolean => pluginSettingsComponent.isNoteEx(path),
@@ -130,15 +131,23 @@ export class Plugin extends PluginBase {
       })
     );
 
+    const networkImageDownloader = new NetworkImageDownloader({
+      abortSignalComponent: this.abortSignalComponent,
+      app: this.app,
+      attachmentPathManager,
+      pluginSettingsComponent
+    });
+
     const attachmentCollector = new AttachmentCollector({
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
       attachmentPathManager,
       consoleDebugComponent: this.consoleDebugComponent,
-      editorLockComponent: this.editorLockComponent,
+      networkImageDownloader,
       pluginName: this.manifest.name,
       pluginNoticeComponent: this.pluginNoticeComponent,
-      pluginSettingsComponent
+      pluginSettingsComponent,
+      resourceLockComponent: this.resourceLockComponent
     });
 
     const menuEventRegistrar = this.addChild(new MenuEventRegistrarComponent(this.app));
@@ -159,9 +168,9 @@ export class Plugin extends PluginBase {
             abortSignalComponent: this.abortSignalComponent,
             app: this.app,
             attachmentPathManager,
-            editorLockComponent: this.editorLockComponent,
             pluginNoticeComponent: this.pluginNoticeComponent,
-            pluginSettingsComponent
+            pluginSettingsComponent,
+            resourceLockComponent: this.resourceLockComponent
           })
         ],
         commandRegistrar: new PluginCommandRegistrar(this),

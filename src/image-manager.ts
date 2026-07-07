@@ -104,7 +104,7 @@ export class ImageManager {
     const blob = new Blob([params.content], { type: mimeType });
     const dataUrl = await blobToDataUrl(blob);
     const image = new Image();
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       image.addEventListener('load', () => {
         resolve();
       });

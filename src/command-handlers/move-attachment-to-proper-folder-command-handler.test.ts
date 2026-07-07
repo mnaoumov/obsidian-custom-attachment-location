@@ -13,7 +13,6 @@ import { Vault } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import { EditorLockComponent } from 'obsidian-dev-utils/obsidian/editor-lock';
 import {
   isFile,
   isFolder
@@ -25,6 +24,7 @@ import {
 } from 'obsidian-dev-utils/obsidian/link';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import { copySafe } from 'obsidian-dev-utils/obsidian/vault';
 import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
@@ -176,6 +176,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   let handler: MoveAttachmentToProperFolderCommandHandler;
   let mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
   let pluginSettingsComponent: PluginSettingsComponent;
+  let pluginNoticeComponent: PluginNoticeComponent;
+  let resourceLockComponent: ResourceLockComponent;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -205,13 +207,15 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     attachmentPathManager = strictProxy<AttachmentPathManager>({
       getProperAttachmentPath: mockGetProperAttachmentPath
     });
+    pluginNoticeComponent = new PluginNoticeComponent('My Plugin');
+    resourceLockComponent = strictProxy<ResourceLockComponent>({});
     handler = new MoveAttachmentToProperFolderCommandHandler({
       abortSignalComponent,
       app,
       attachmentPathManager,
-      editorLockComponent: new EditorLockComponent(app, 'My Plugin'),
-      pluginNoticeComponent: new PluginNoticeComponent('My Plugin'),
-      pluginSettingsComponent
+      pluginNoticeComponent,
+      pluginSettingsComponent,
+      resourceLockComponent
     });
     castTo<PluginNameHolder>(handler)._pluginName = 'My Plugin';
   });

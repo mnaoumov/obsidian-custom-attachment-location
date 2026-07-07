@@ -34,6 +34,7 @@ import {
   vi
 } from 'vitest';
 
+import type { PluginSettings } from './plugin-settings.ts';
 import type { Plugin } from './plugin.ts';
 
 import { translationsMap } from './i18n/locales/translations-map.ts';
@@ -48,6 +49,10 @@ import { TokenValidator } from './token-validator.ts';
 vi.mock('obsidian-dev-utils/obsidian/modals/confirm', () => ({
   confirm: vi.fn((): Promise<boolean> => Promise.resolve(true))
 }));
+
+// This test renders the whole settings tab and drains the debounced revalidation under fake timers.
+// Under coverage instrumentation that work exceeds the default 5-second test timeout.
+const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 interface CapturedMultipleTextComponent {
   name: string;
@@ -95,7 +100,7 @@ const originalAddNumber = SettingEx.prototype.addNumber;
 const originalAddMultipleText = SettingEx.prototype.addMultipleText;
 const originalSetName = SettingEx.prototype.setName;
 
-async function createTab(): Promise<CreatedTab> {
+async function createTab(configure?: (settings: PluginSettings) => void): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const originalApp = app.asOriginalType__();
   const validatorWrapper = ValueWrapper.unset<TokenValidator>();
@@ -196,8 +201,11 @@ async function createTab(): Promise<CreatedTab> {
     pluginSettingsComponent
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-  tab.display();
+  if (configure) {
+    await pluginSettingsComponent.editAndSave(configure);
+  }
+
+  tab.displayLegacy();
   addButtonSpy.mockRestore();
   addToggleSpy.mockRestore();
   addTextSpy.mockRestore();
@@ -292,12 +300,35 @@ describe('PluginSettingsTab', () => {
   it('should re-render when the should-handle-renames toggle changes', async () => {
     const { tab, toggles } = await createTab();
 
-    const displaySpy = vi.spyOn(tab, 'display');
+    const displaySpy = vi.spyOn(tab, 'displayLegacy');
     const captured = toggles.find((entry) => entry.name === 'Should handle renames');
     expect(captured).toBeDefined();
     captured?.toggle.setValue(false);
     await waitForAllAsyncOperations();
     expect(displaySpy).toHaveBeenCalled();
+  });
+
+  it('should re-render when the download-network-images toggle changes', async () => {
+    const { tab, toggles } = await createTab();
+
+    const displaySpy = vi.spyOn(tab, 'displayLegacy');
+    const captured = toggles.find((entry) => entry.name === 'Download network images');
+    expect(captured).toBeDefined();
+    captured?.toggle.setValue(true);
+    await waitForAllAsyncOperations();
+    expect(displaySpy).toHaveBeenCalled();
+  });
+
+  it('should render the network image download timeout setting when downloading is enabled', async () => {
+    const { names } = await createTab((settings) => {
+      settings.downloadNetworkImages = true;
+    });
+    expect(names).toContain('Network image download timeout in seconds');
+  });
+
+  it('should not render the network image download timeout setting when downloading is disabled', async () => {
+    const { names } = await createTab();
+    expect(names).not.toContain('Network image download timeout in seconds');
   });
 
   it('should bind the dependent toggles when renames are handled', async () => {
@@ -323,8 +354,7 @@ describe('PluginSettingsTab', () => {
       });
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- PluginSettingsTabBase still relies on the deprecated SettingTab.display() lifecycle method.
-    tab.display();
+    tab.displayLegacy();
     addToggleSpy.mockRestore();
     const folderToggle = toggles.find((entry) => entry.name === 'Should rename attachment folders');
     const fileToggle = toggles.find((entry) => entry.name === 'Should rename attachment files');
@@ -487,7 +517,7 @@ describe('PluginSettingsTab', () => {
     } finally {
       vi.useRealTimers();
     }
-  });
+  }, DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS);
 
   it('should default the caret offsets to zero when the input reports no selection', async () => {
     const { textLikeComponents } = await createTab();

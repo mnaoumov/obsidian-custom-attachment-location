@@ -87,6 +87,14 @@ interface AttachmentPathManagerGetAvailablePathForAttachmentsParams {
   readonly shouldSkipMissingAttachmentFolderCreation: boolean | undefined;
 }
 
+interface AttachmentPathManagerGetDownloadedImagePathParams {
+  readonly actionContext: ActionContext;
+  readonly downloadedContent: ArrayBuffer;
+  readonly fileExtension: string;
+  readonly fileName: string;
+  readonly noteFilePath: string;
+}
+
 interface AttachmentPathManagerGetProperAttachmentPathParams {
   readonly actionContext: ActionContext;
   readonly attachmentFile: TFile;
@@ -229,6 +237,56 @@ export class AttachmentPathManager {
           await this.app.vault.create(join(folderPath, '.gitkeep'), '');
         }
       }
+    }
+
+    return attachmentPath;
+  }
+
+  public async getDownloadedImagePath(params: AttachmentPathManagerGetDownloadedImagePathParams): Promise<string> {
+    const attachmentFileName = makeFileName({
+      fileBaseName: params.fileName,
+      fileExtension: params.fileExtension
+    });
+    const now = Math.trunc(Date.now());
+    const attachmentFileStats: FileStats = {
+      ctime: now,
+      mtime: now,
+      size: params.downloadedContent.byteLength
+    };
+
+    const generatedAttachmentFileBaseName = await this.getGeneratedAttachmentFileBaseName(
+      new Substitutions({
+        actionContext: params.actionContext,
+        app: this.app,
+        attachmentFileContent: params.downloadedContent,
+        attachmentFileStats,
+        noteFilePath: params.noteFilePath,
+        originalAttachmentFileName: attachmentFileName,
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        tokenValidator: this.tokenValidator
+      })
+    );
+    const generatedAttachmentFileName = makeFileName({
+      fileBaseName: generatedAttachmentFileBaseName,
+      fileExtension: params.fileExtension
+    });
+
+    const attachmentFolderFullPath = await this.getAttachmentFolderFullPathForPath({
+      actionContext: params.actionContext,
+      attachmentFileContent: params.downloadedContent,
+      attachmentFileName: generatedAttachmentFileName,
+      attachmentFileStats,
+      notePath: params.noteFilePath
+    });
+
+    const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
+    const dir = dirname(generatedAttachmentFileNamePath);
+    const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.fileExtension ? `.${params.fileExtension}` : '');
+    const attachmentPath = this.app.vault.getAvailablePath(join(dir, generatedAttachmentFileNameBaseName), params.fileExtension);
+
+    const folderPath = parentFolderPath(attachmentPath);
+    if (!await this.app.vault.exists(folderPath)) {
+      await createFolderSafe(this.app, folderPath);
     }
 
     return attachmentPath;

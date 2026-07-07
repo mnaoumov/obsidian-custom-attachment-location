@@ -59,6 +59,7 @@ export class PluginSettings {
   public convertImagesToJpegMode: ConvertImagesToJpegMode = ConvertImagesToJpegMode.None;
   public defaultImageSize = '';
   public defaultImageSizeDimension: DefaultImageSizeDimension = DefaultImageSizeDimension.Width;
+  public downloadNetworkImages = false;
   public duplicateNameSeparator = ' ';
   public emptyFolderBehavior: EmptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
@@ -67,6 +68,8 @@ export class PluginSettings {
   public jpegQuality = 0.8;
   public markdownUrlFormat = '';
   public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+  // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
+  public networkImageDownloadTimeoutInSeconds = 30;
 
   public renamedAttachmentFileName = '';
   public shouldDeleteOrphanAttachments = false;
@@ -120,9 +123,14 @@ export class PluginSettings {
   private _customTokensStr = '';
   private readonly _pathSettings = new PathSettings();
 
+  public getNetworkImageDownloadTimeoutInMilliseconds(): number {
+    const MILLISECONDS_IN_SECOND = 1000;
+    return this.networkImageDownloadTimeoutInSeconds * MILLISECONDS_IN_SECOND;
+  }
+
   public getTimeoutInMilliseconds(): number {
-    const MILLISECONDS_PER_SECOND = 1000;
-    return this.timeoutInSeconds === 0 ? INFINITE_TIMEOUT : this.timeoutInSeconds * MILLISECONDS_PER_SECOND;
+    const MILLISECONDS_IN_SECOND = 1000;
+    return this.timeoutInSeconds === 0 ? INFINITE_TIMEOUT : this.timeoutInSeconds * MILLISECONDS_IN_SECOND;
   }
 
   public isExcludedFromAttachmentCollecting(path: string): boolean {
