@@ -9,6 +9,7 @@ import {
   basename,
   extname
 } from 'obsidian-dev-utils/path';
+import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -104,9 +105,7 @@ export class NetworkImageDownloader {
 
       try {
         const localPath = await this.downloadAndSaveImage(link, noteFile);
-        if (localPath) {
-          replacements.set(link.url, localPath);
-        }
+        replacements.set(link.url, localPath);
       } catch (error) {
         console.warn(`Failed to download network image: ${link.url}`, error);
       }
@@ -139,7 +138,7 @@ export class NetworkImageDownloader {
     return 'png';
   }
 
-  private async downloadAndSaveImage(link: NetworkImageLink, noteFile: TFile): Promise<null | string> {
+  private async downloadAndSaveImage(link: NetworkImageLink, noteFile: TFile): Promise<string> {
     const { arrayBuffer, contentType } = await this.downloadImage(link.url);
     const extension = this.detectExtension(arrayBuffer, contentType);
 
@@ -182,15 +181,12 @@ export class NetworkImageDownloader {
   private findNetworkImageLinks(content: string): NetworkImageLink[] {
     const links: NetworkImageLink[] = [];
     for (const match of content.matchAll(NETWORK_IMAGE_PATTERN)) {
-      const alt = match.groups?.['alt'] ?? '';
-      const url = match.groups?.['url'] ?? '';
-      if (url) {
-        links.push({
-          alt,
-          fullMatch: match[0],
-          url
-        });
-      }
+      const groups = ensureNonNullable(match.groups);
+      links.push({
+        alt: ensureNonNullable(groups['alt']),
+        fullMatch: match[0],
+        url: ensureNonNullable(groups['url'])
+      });
     }
     return links;
   }
