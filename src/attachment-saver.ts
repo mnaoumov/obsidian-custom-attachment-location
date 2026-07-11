@@ -166,7 +166,7 @@ export class AttachmentSaver {
         pluginSettingsComponent: this.pluginSettingsComponent,
         tokenValidator: this.tokenValidator
       }).fillTemplate(this.pluginSettingsComponent.settings.markdownUrlFormat);
-      this.markdownUrlMap.set(attachmentFile.path, markdownUrl);
+      this.markdownUrlMap.set({ path: attachmentFile.path, url: markdownUrl });
     } else {
       this.markdownUrlMap.delete(attachmentFile.path);
     }
@@ -199,7 +199,7 @@ export class AttachmentSaver {
       extension: params.attachmentFileExtension
     });
     if (imageSize !== null) {
-      this.imageSizeMap.set(attachmentPath, imageSize);
+      this.imageSizeMap.set({ path: attachmentPath, size: imageSize });
     }
 
     return await this.app.vault.createBinary(

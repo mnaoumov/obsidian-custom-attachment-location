@@ -1,3 +1,8 @@
+interface ImageSizeMapSetParams {
+  readonly path: string;
+  readonly size: string;
+}
+
 export class ImageSizeMap {
   private readonly map = new Map<string, string>();
 
@@ -9,7 +14,8 @@ export class ImageSizeMap {
     return size;
   }
 
-  public set(path: string, size: string): void {
+  public set(params: ImageSizeMapSetParams): void {
+    const { path, size } = params;
     this.map.set(path, size);
   }
 }

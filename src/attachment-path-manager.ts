@@ -102,6 +102,12 @@ interface AttachmentPathManagerGetProperAttachmentPathParams {
   readonly reference: Reference;
 }
 
+interface AttachmentPathManagerResolvePathTemplateParams {
+  readonly isFileNamePart: boolean;
+  readonly substitutions: Substitutions;
+  readonly template: string;
+}
+
 type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
 
 export class AttachmentPathManager {
@@ -308,7 +314,7 @@ export class AttachmentPathManager {
 
     baseTemplate ||= this.pluginSettingsComponent.settings.generatedAttachmentFileName;
 
-    const path = await this.resolvePathTemplate(baseTemplate, substitutions, true);
+    const path = await this.resolvePathTemplate({ isFileNamePart: true, substitutions, template: baseTemplate });
     let validationMessage = await this.tokenValidator.validatePath({
       areTokensAllowed: false,
       path
@@ -389,7 +395,7 @@ export class AttachmentPathManager {
   }
 
   private async getAttachmentFolderPath(substitutions: Substitutions): Promise<string> {
-    return await this.resolvePathTemplate(this.pluginSettingsComponent.settings.attachmentFolderPath, substitutions, false);
+    return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: this.pluginSettingsComponent.settings.attachmentFolderPath });
   }
 
   private async getCursorLine(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
@@ -460,7 +466,8 @@ export class AttachmentPathManager {
     return 0;
   }
 
-  private async resolvePathTemplate(template: string, substitutions: Substitutions, isFileNamePart: boolean): Promise<string> {
+  private async resolvePathTemplate(params: AttachmentPathManagerResolvePathTemplateParams): Promise<string> {
+    const { isFileNamePart, substitutions, template } = params;
     try {
       let resolvedPath = await substitutions.fillTemplate(template);
       const resolvedPathParts = resolvedPath.split('/').map((part) => this.cleanFilePathPart(part));

@@ -235,18 +235,18 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
             that.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode
               === MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel
           ) {
-            await selectMode(app, attachmentFile.path, Array.from(backlinks.keys()), true);
+            await selectMode({ app, attachmentPath: attachmentFile.path, backlinks: Array.from(backlinks.keys()), isCancelMode: true });
           }
           return false;
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll:
           backlinksToCopy = Array.from(backlinks.keys());
           return true;
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt: {
-          const { backlinksToCopy: backlinksToCopy2, mode: mode2, shouldUseSameActionForOtherProblematicAttachments } = await selectMode(
+          const { backlinksToCopy: backlinksToCopy2, mode: mode2, shouldUseSameActionForOtherProblematicAttachments } = await selectMode({
             app,
-            attachmentFile.path,
-            Array.from(backlinks.keys())
-          );
+            attachmentPath: attachmentFile.path,
+            backlinks: Array.from(backlinks.keys())
+          });
           if (shouldUseSameActionForOtherProblematicAttachments) {
             ctx.mode = mode2;
           }

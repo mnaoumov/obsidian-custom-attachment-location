@@ -1,4 +1,10 @@
-export function getRangeStr(from: string, to: string): string {
+interface GetRangeStrParams {
+  readonly from: string;
+  readonly to: string;
+}
+
+export function getRangeStr(params: GetRangeStrParams): string {
+  const { from, to } = params;
   if (from.length !== 1) {
     throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
   }

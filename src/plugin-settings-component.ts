@@ -34,6 +34,11 @@ import { CustomToken } from './tokens/custom-token.ts';
 
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
 
+interface AddDateTimeFormatParams {
+  readonly dateTimeFormat: string;
+  readonly str: string;
+}
+
 interface PluginSettingsComponentConstructorParams {
   readonly app: App;
   readonly dataHandler: DataHandler;
@@ -157,17 +162,17 @@ ${commentOut(this.legacySettings.customTokensStr)}
 
   private convertDateTimeFormat(): void {
     const dateTimeFormat = this.legacySettings.dateTimeFormat ?? 'YYYYMMDDHHmmssSSS';
-    this.legacySettings.attachmentFolderPath = addDateTimeFormat(this.legacySettings.attachmentFolderPath ?? '', dateTimeFormat);
+    this.legacySettings.attachmentFolderPath = addDateTimeFormat({ dateTimeFormat, str: this.legacySettings.attachmentFolderPath ?? '' });
 
-    this.legacySettings.generatedAttachmentFileName = addDateTimeFormat(
-      this.legacySettings.generatedAttachmentFileName
+    this.legacySettings.generatedAttachmentFileName = addDateTimeFormat({
+      dateTimeFormat,
+      str: this.legacySettings.generatedAttachmentFileName
         ?? this.legacySettings.generatedAttachmentFilename
         ?? this.legacySettings.pastedFileName
         ?? this.legacySettings.pastedImageFileName
         // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-        ?? 'file-${date}',
-      dateTimeFormat
-    );
+        ?? 'file-${date}'
+    });
   }
 
   private convertDeleteOrphanAttachments(): void {
@@ -373,7 +378,8 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   }
 }
 
-function addDateTimeFormat(str: string, dateTimeFormat: string): string {
+function addDateTimeFormat(params: AddDateTimeFormatParams): string {
+  const { dateTimeFormat, str } = params;
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
   return str.replaceAll('${date}', `\${date:{momentJsFormat:'${dateTimeFormat}'}}`);
 }

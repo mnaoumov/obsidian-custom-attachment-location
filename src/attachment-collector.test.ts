@@ -406,7 +406,7 @@ describe('AttachmentCollector', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         await runSingleFile(note);
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
-        expect(mockSelectMode).toHaveBeenCalledWith(app, 'img.png', ['note.md', 'other.md'], true);
+        expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'], isCancelMode: true });
       });
 
       it('should not re-invoke selectMode in Cancel mode when the setting is not Cancel', async () => {
@@ -485,7 +485,7 @@ describe('AttachmentCollector', () => {
         });
         mockRenameSafe.mockResolvedValue('attachments/img.png');
         await runSingleFile(note);
-        expect(mockSelectMode).toHaveBeenCalledWith(app, 'img.png', ['note.md', 'other.md']);
+        expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'] });
         expect(mockRenameSafe).toHaveBeenCalled();
       });
 

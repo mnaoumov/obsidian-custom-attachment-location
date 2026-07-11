@@ -21,18 +21,18 @@ export class RandomToken extends TokenBase<Format> {
   protected override evaluateImpl(_ctx: TokenEvaluatorContext, format: Format): string {
     let symbols = '';
     if (format.digits) {
-      symbols += getRangeStr('0', '9');
+      symbols += getRangeStr({ from: '0', to: '9' });
     }
     if (format.letters) {
       switch (format.letterCase) {
         case 'lower':
-          symbols += getRangeStr('a', 'z');
+          symbols += getRangeStr({ from: 'a', to: 'z' });
           break;
         case 'mixed':
-          symbols += getRangeStr('a', 'z') + getRangeStr('A', 'Z');
+          symbols += getRangeStr({ from: 'a', to: 'z' }) + getRangeStr({ from: 'A', to: 'Z' });
           break;
         case 'upper':
-          symbols += getRangeStr('A', 'Z');
+          symbols += getRangeStr({ from: 'A', to: 'Z' });
           break;
         default:
           throw new Error(`Invalid letter case: ${format.letterCase as string}`);

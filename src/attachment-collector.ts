@@ -209,7 +209,7 @@ export class AttachmentCollector {
                   `Cancelling collecting attachments, as attachment ${result.oldAttachmentPath} is referenced by multiple notes.\n${backlinksStr}`
                 );
                 if (pluginSettingsComponent.settings.collectAttachmentUsedByMultipleNotesMode === CollectAttachmentUsedByMultipleNotesMode.Cancel) {
-                  await selectMode(app, result.oldAttachmentPath, backlinksSorted, true);
+                  await selectMode({ app, attachmentPath: result.oldAttachmentPath, backlinks: backlinksSorted, isCancelMode: true });
                 }
                 // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
                 params.ctx.isAborted = true;
@@ -261,11 +261,11 @@ export class AttachmentCollector {
                 params.abortSignal.throwIfAborted();
                 break;
               case CollectAttachmentUsedByMultipleNotesMode.Prompt: {
-                const { mode, shouldUseSameActionForOtherProblematicAttachments } = await selectMode(
+                const { mode, shouldUseSameActionForOtherProblematicAttachments } = await selectMode({
                   app,
-                  result.oldAttachmentPath,
-                  backlinksSorted
-                );
+                  attachmentPath: result.oldAttachmentPath,
+                  backlinks: backlinksSorted
+                });
                 if (shouldUseSameActionForOtherProblematicAttachments) {
                   // eslint-disable-next-line require-atomic-updates -- Cannot avoid.
                   params.ctx.collectAttachmentUsedByMultipleNotesMode = mode;

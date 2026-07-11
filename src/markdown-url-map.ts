@@ -1,3 +1,8 @@
+interface MarkdownUrlMapSetParams {
+  readonly path: string;
+  readonly url: string;
+}
+
 export class MarkdownUrlMap {
   private readonly map = new Map<string, string>();
 
@@ -9,7 +14,8 @@ export class MarkdownUrlMap {
     return this.map.get(path) ?? null;
   }
 
-  public set(path: string, url: string): void {
+  public set(params: MarkdownUrlMapSetParams): void {
+    const { path, url } = params;
     this.map.set(path, url);
   }
 }

@@ -15,14 +15,14 @@ describe('ImageSizeMap', () => {
 
     it('should return the size and delete the entry when present', () => {
       const map = new ImageSizeMap();
-      map.set('image.png', '100x200');
+      map.set({ path: 'image.png', size: '100x200' });
       expect(map.getAndDelete('image.png')).toBe('100x200');
       expect(map.getAndDelete('image.png')).toBeNull();
     });
 
     it('should not delete the entry when the stored size is falsy', () => {
       const map = new ImageSizeMap();
-      map.set('image.png', '');
+      map.set({ path: 'image.png', size: '' });
       expect(map.getAndDelete('image.png')).toBe('');
       expect(map.getAndDelete('image.png')).toBe('');
     });
@@ -31,8 +31,8 @@ describe('ImageSizeMap', () => {
   describe('set', () => {
     it('should overwrite an existing size for the same path', () => {
       const map = new ImageSizeMap();
-      map.set('image.png', '10x10');
-      map.set('image.png', '20x20');
+      map.set({ path: 'image.png', size: '10x10' });
+      map.set({ path: 'image.png', size: '20x20' });
       expect(map.getAndDelete('image.png')).toBe('20x20');
     });
   });

@@ -262,7 +262,7 @@ describe('AttachmentSaver', () => {
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.markdownUrlMapSet).toHaveBeenCalledWith(result.path, 'plain-url');
+      expect(ctx.markdownUrlMapSet).toHaveBeenCalledWith({ path: result.path, url: 'plain-url' });
       expect(ctx.markdownUrlMapDelete).not.toHaveBeenCalled();
     });
 
@@ -274,7 +274,7 @@ describe('AttachmentSaver', () => {
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.markdownUrlMapSet).toHaveBeenCalledWith(result.path, 'plain-url');
+      expect(ctx.markdownUrlMapSet).toHaveBeenCalledWith({ path: result.path, url: 'plain-url' });
     });
 
     it('should delete the markdown url when no markdown url format is configured', async () => {
@@ -297,7 +297,7 @@ describe('AttachmentSaver', () => {
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.imageSizeMapSet).toHaveBeenCalledWith('assets/saved.png', '100x200');
+      expect(ctx.imageSizeMapSet).toHaveBeenCalledWith({ path: 'assets/saved.png', size: '100x200' });
     });
 
     it('should not record an image size when the image manager returns null', async () => {

@@ -15,7 +15,7 @@ describe('MarkdownUrlMap', () => {
 
     it('should return the stored url when present', () => {
       const map = new MarkdownUrlMap();
-      map.set('note.md', 'https://example.com');
+      map.set({ path: 'note.md', url: 'https://example.com' });
       expect(map.get('note.md')).toBe('https://example.com');
     });
   });
@@ -23,8 +23,8 @@ describe('MarkdownUrlMap', () => {
   describe('set', () => {
     it('should overwrite an existing url for the same path', () => {
       const map = new MarkdownUrlMap();
-      map.set('note.md', 'https://example.com/a');
-      map.set('note.md', 'https://example.com/b');
+      map.set({ path: 'note.md', url: 'https://example.com/a' });
+      map.set({ path: 'note.md', url: 'https://example.com/b' });
       expect(map.get('note.md')).toBe('https://example.com/b');
     });
   });
@@ -32,7 +32,7 @@ describe('MarkdownUrlMap', () => {
   describe('delete', () => {
     it('should remove the stored url for the path', () => {
       const map = new MarkdownUrlMap();
-      map.set('note.md', 'https://example.com');
+      map.set({ path: 'note.md', url: 'https://example.com' });
       map.delete('note.md');
       expect(map.get('note.md')).toBeNull();
     });
