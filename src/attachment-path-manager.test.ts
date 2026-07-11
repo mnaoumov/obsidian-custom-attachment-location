@@ -1,12 +1,12 @@
 import type {
   App,
-  CachedMetadata,
   FileStats,
   Reference,
   ReferenceCache,
   TFile,
   Vault
 } from 'obsidian';
+import type { CachedMetadataEx } from 'obsidian-dev-utils/obsidian/metadata-cache';
 
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import {
@@ -24,8 +24,8 @@ import {
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
 import {
-  getAllLinks,
-  getCacheSafe
+  getCacheSafe,
+  getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
@@ -89,8 +89,8 @@ vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
 
 vi.mock('obsidian-dev-utils/obsidian/metadata-cache', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/metadata-cache')>(),
-  getAllLinks: vi.fn<typeof getAllLinks>(),
-  getCacheSafe: vi.fn<typeof getCacheSafe>()
+  getCacheSafe: vi.fn<typeof getCacheSafe>(),
+  getLinks: vi.fn<typeof getLinks>()
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/vault', async (importOriginal) => ({
@@ -103,7 +103,7 @@ const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const mockGetPath = vi.mocked(getPath);
 const mockIsNote = vi.mocked(isNote);
 const mockExtractLinkFile = vi.mocked(extractLinkFile);
-const mockGetAllLinks = vi.mocked(getAllLinks);
+const mockGetLinks = vi.mocked(getLinks);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockCreateFolderSafe = vi.mocked(createFolderSafe);
 
@@ -218,7 +218,7 @@ beforeEach(() => {
   mockGetPath.mockImplementation((_app, pathOrFile) => typeof pathOrFile === 'string' ? pathOrFile : castTo<TFile>(pathOrFile).path);
   mockIsNote.mockReturnValue(true);
   mockGetAvailablePathForAttachments.mockResolvedValue('dev-utils-path');
-  mockGetAllLinks.mockReturnValue([]);
+  mockGetLinks.mockReturnValue([]);
   mockGetCacheSafe.mockResolvedValue(null);
   mockExtractLinkFile.mockReturnValue(null);
   mockCreateFolderSafe.mockResolvedValue(true);
@@ -380,8 +380,8 @@ describe('AttachmentPathManager', () => {
       const link1 = strictProxy<Reference>({});
       const link2 = strictProxy<Reference>({});
       mockGetFileOrNull.mockReturnValue(oldFile);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
-      mockGetAllLinks.mockReturnValue([link1, link2]);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([link1, link2]);
       mockExtractLinkFile.mockImplementation(({ link }) => link === link2 ? oldFile : otherFile);
       const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
       expect(result).toBe(2);
@@ -390,8 +390,8 @@ describe('AttachmentPathManager', () => {
     it('should return 0 when no link matches the old attachment file', async () => {
       const oldFile = createTFile({ path: 'old.png' });
       mockGetFileOrNull.mockReturnValue(oldFile);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
-      mockGetAllLinks.mockReturnValue([strictProxy<Reference>({})]);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([strictProxy<Reference>({})]);
       mockExtractLinkFile.mockReturnValue(createTFile({ path: 'other.png' }));
       const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
       expect(result).toBe(0);
@@ -776,8 +776,8 @@ describe('AttachmentPathManager', () => {
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
       mockIsNote.mockReturnValue(true);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
-      mockGetAllLinks.mockReturnValue([link]);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([link]);
       mockExtractLinkFile.mockReturnValue(oldFile);
       const result = await ctx.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
@@ -790,7 +790,7 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: true
       });
       expect(result).toBe('assets/generated.png');
-      expect(mockGetAllLinks).toHaveBeenCalled();
+      expect(mockGetLinks).toHaveBeenCalled();
     });
   });
 
@@ -813,8 +813,8 @@ describe('AttachmentPathManager', () => {
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
       mockIsNote.mockReturnValue(true);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
-      mockGetAllLinks.mockReturnValue([nonReferenceCacheLink, unresolvedReferenceCacheLink, nonMatchingReferenceCacheLink, matchingReferenceCacheLink]);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([nonReferenceCacheLink, unresolvedReferenceCacheLink, nonMatchingReferenceCacheLink, matchingReferenceCacheLink]);
       mockExtractLinkFile.mockReturnValueOnce(null).mockReturnValueOnce(otherFile).mockReturnValue(oldFile);
       const result = await ctx.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
@@ -839,8 +839,8 @@ describe('AttachmentPathManager', () => {
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
       mockIsNote.mockReturnValue(true);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
-      mockGetAllLinks.mockReturnValue([referenceCacheLink]);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([referenceCacheLink]);
       mockExtractLinkFile.mockReturnValue(oldFile);
       const result = await ctx.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
@@ -868,8 +868,8 @@ describe('AttachmentPathManager', () => {
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
       mockIsNote.mockReturnValue(true);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
-      mockGetAllLinks.mockReturnValue([referenceCacheLink]);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([referenceCacheLink]);
       mockExtractLinkFile.mockReturnValue(otherFile);
       const result = await ctx.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',

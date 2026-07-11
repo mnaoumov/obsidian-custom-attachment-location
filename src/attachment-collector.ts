@@ -30,9 +30,9 @@ import {
 } from 'obsidian-dev-utils/obsidian/link';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import {
-  getAllLinks,
   getBacklinksForFileSafe,
-  getCacheSafe
+  getCacheSafe,
+  getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
@@ -162,7 +162,7 @@ export class AttachmentCollector {
         return;
       }
 
-      const links = isCanvas ? await getCanvasLinks(app, params.note) : getAllLinks(cache);
+      const links = isCanvas ? await getCanvasLinks(app, params.note) : getLinks({ cache });
       params.abortSignal.throwIfAborted();
 
       for (const link of links) {
@@ -389,7 +389,7 @@ export class AttachmentCollector {
 
     await loop({
       abortSignal: combinedAbortSignal,
-      buildNoticeMessage: (noteFile, iterationStr) => t(($) => $.attachmentCollector.progressBar.message, { iterationStr, noteFilePath: noteFile.path }),
+      buildNoticeMessage: ({ item, iterationStr }) => t(($) => $.attachmentCollector.progressBar.message, { iterationStr, noteFilePath: item.path }),
       items: noteFiles,
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (noteFile) => {

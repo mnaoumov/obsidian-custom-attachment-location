@@ -29,8 +29,8 @@ import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
 import {
-  getAllLinks,
-  getCacheSafe
+  getCacheSafe,
+  getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 import {
@@ -412,7 +412,7 @@ export class AttachmentPathManager {
       return 0;
     }
 
-    for (const link of getAllLinks(cache)) {
+    for (const link of getLinks({ cache })) {
       if (!isReferenceCache(link)) {
         continue;
       }
@@ -449,7 +449,7 @@ export class AttachmentPathManager {
     }
 
     let sequenceNumber = 1;
-    for (const link of getAllLinks(cache)) {
+    for (const link of getLinks({ cache })) {
       const linkFile = extractLinkFile({
         app: this.app,
         link,

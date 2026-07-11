@@ -1,7 +1,6 @@
 import type { CustomArrayDict } from '@obsidian-typings/obsidian-public-latest';
 import type {
   App,
-  CachedMetadata,
   Reference,
   TAbstractFile,
   TFile,
@@ -9,6 +8,7 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
+import type { CachedMetadataEx } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import type {
   Mock,
   MockInstance
@@ -36,9 +36,9 @@ import {
 } from 'obsidian-dev-utils/obsidian/link';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import {
-  getAllLinks,
   getBacklinksForFileSafe,
-  getCacheSafe
+  getCacheSafe,
+  getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
@@ -69,8 +69,13 @@ import { translationsMap } from './i18n/locales/translations-map.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 
+interface LoopBuildNoticeMessageParamsLike {
+  item: TFile;
+  iterationStr: string;
+}
+
 interface LoopOptionsLike {
-  buildNoticeMessage(item: TFile, iterationStr: string): string;
+  buildNoticeMessage(params: LoopBuildNoticeMessageParamsLike): string;
   items: TFile[];
   processItem(item: TFile): Promise<void>;
 }
@@ -114,9 +119,9 @@ vi.mock('obsidian-dev-utils/obsidian/loop', async (importOriginal) => ({
 
 vi.mock('obsidian-dev-utils/obsidian/metadata-cache', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/metadata-cache')>(),
-  getAllLinks: vi.fn(),
   getBacklinksForFileSafe: vi.fn(),
-  getCacheSafe: vi.fn()
+  getCacheSafe: vi.fn(),
+  getLinks: vi.fn()
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/modals/confirm', async (importOriginal) => ({
@@ -152,7 +157,7 @@ const mockEditLinks = vi.mocked(editLinks);
 const mockExtractLinkFile = vi.mocked(extractLinkFile);
 const mockUpdateLink = vi.mocked(updateLink);
 const mockLoop = vi.mocked(loop);
-const mockGetAllLinks = vi.mocked(getAllLinks);
+const mockGetLinks = vi.mocked(getLinks);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockConfirm = vi.mocked(confirm);
@@ -315,15 +320,15 @@ describe('AttachmentCollector', () => {
     beforeEach(() => {
       note = createFile('note.md');
       mockIsCanvasFile.mockReturnValue(false);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
-      mockGetAllLinks.mockReturnValue([]);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([]);
       getProperAttachmentPath.mockResolvedValue('attachments/img.png');
     });
 
     it('should return when there is no cache', async () => {
       mockGetCacheSafe.mockResolvedValue(null);
       await runSingleFile(note);
-      expect(mockGetAllLinks).not.toHaveBeenCalled();
+      expect(mockGetLinks).not.toHaveBeenCalled();
     });
 
     it('should read links from a canvas file', async () => {
@@ -331,18 +336,18 @@ describe('AttachmentCollector', () => {
       mockGetCanvasLinks.mockResolvedValue([]);
       await runSingleFile(note);
       expect(mockGetCanvasLinks).toHaveBeenCalledWith(app, note);
-      expect(mockGetAllLinks).not.toHaveBeenCalled();
+      expect(mockGetLinks).not.toHaveBeenCalled();
     });
 
     it('should skip when the attachment cannot be prepared (no link file)', async () => {
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(null);
       await runSingleFile(note);
       expect(mockGetBacklinksForFileSafe).not.toHaveBeenCalled();
     });
 
     it('should skip when the link file is a note', async () => {
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('other.md'));
       vi.mocked(pluginSettingsComponent.isNoteEx).mockReturnValue(true);
       await runSingleFile(note);
@@ -350,7 +355,7 @@ describe('AttachmentCollector', () => {
     });
 
     it('should skip when the attachment was already seen', async () => {
-      mockGetAllLinks.mockReturnValue([createReference(), createReference()]);
+      mockGetLinks.mockReturnValue([createReference(), createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
       mockRenameSafe.mockResolvedValue('attachments/img.png');
@@ -359,14 +364,14 @@ describe('AttachmentCollector', () => {
     });
 
     it('should skip when the attachment could not be resolved (deleted)', async () => {
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png', true));
       await runSingleFile(note);
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('could not be resolved'));
     });
 
     it('should skip when the attachment is excluded from collecting', async () => {
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       vi.mocked(settings.isExcludedFromAttachmentCollecting).mockReturnValue(true);
       await runSingleFile(note);
@@ -374,7 +379,7 @@ describe('AttachmentCollector', () => {
     });
 
     it('should move a single-referenced attachment', async () => {
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
       mockRenameSafe.mockResolvedValue('attachments/img.png');
@@ -387,7 +392,7 @@ describe('AttachmentCollector', () => {
     });
 
     it('should not rename when the new attachment path is null (single-ref)', async () => {
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       getProperAttachmentPath.mockResolvedValue(null);
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
@@ -397,7 +402,7 @@ describe('AttachmentCollector', () => {
 
     describe('multiple backlinks', () => {
       beforeEach(() => {
-        mockGetAllLinks.mockReturnValue([createReference()]);
+        mockGetLinks.mockReturnValue([createReference()]);
         mockExtractLinkFile.mockReturnValue(createFile('img.png'));
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
       });
@@ -497,7 +502,7 @@ describe('AttachmentCollector', () => {
         });
         await runSingleFile(note);
         // Second link in the same note must reuse the remembered Skip mode without re-prompting.
-        mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
+        mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
         mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
         mockSelectMode.mockClear();
@@ -517,7 +522,7 @@ describe('AttachmentCollector', () => {
           mode: CollectAttachmentUsedByMultipleNotesMode.Skip,
           shouldUseSameActionForOtherProblematicAttachments: true
         });
-        mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
+        mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
         mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
         await runSingleFile(note);
         // Prompt chosen once, then ctx mode (Skip) reused for the second link.
@@ -529,7 +534,7 @@ describe('AttachmentCollector', () => {
         // Two links: the first triggers Cancel (aborting ctx), so the second link
         // Iteration returns early before requesting its backlinks.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
-        mockGetAllLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
+        mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
         mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
         await runSingleFile(note);
         expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(1);
@@ -538,7 +543,7 @@ describe('AttachmentCollector', () => {
 
     it('should show the notice while running and hide it in the finally block', async () => {
       const hideSpy = vi.spyOn(Notice.prototype, 'hide');
-      mockGetAllLinks.mockReturnValue([]);
+      mockGetLinks.mockReturnValue([]);
       await runSingleFile(note);
       expect(hideSpy).toHaveBeenCalled();
       hideSpy.mockRestore();
@@ -649,9 +654,9 @@ describe('AttachmentCollector', () => {
       const noteFile = createFile('a.md');
       mockIsFile.mockReturnValue(true);
       mockIsCanvasFile.mockReturnValue(false);
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadata>({}));
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       getProperAttachmentPath.mockResolvedValue('attachments/img.png');
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
       settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
@@ -671,7 +676,7 @@ describe('AttachmentCollector', () => {
       mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
       mockIsCanvasFile.mockReturnValue(false);
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
       getProperAttachmentPath.mockResolvedValue('attachments/img.png');
@@ -695,7 +700,7 @@ describe('AttachmentCollector', () => {
       mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
       mockIsCanvasFile.mockReturnValue(false);
-      mockGetAllLinks.mockReturnValue([createReference()]);
+      mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
       getProperAttachmentPath.mockResolvedValue('attachments/img.png');
@@ -709,7 +714,7 @@ describe('AttachmentCollector', () => {
         if (fileOrPath === noteFile2) {
           await note2CacheGate;
         }
-        return strictProxy<CachedMetadata>({});
+        return strictProxy<CachedMetadataEx>({});
       });
 
       mockLoop.mockImplementation(async (options) => {
@@ -732,7 +737,7 @@ describe('AttachmentCollector', () => {
       mockConfirm.mockResolvedValue(true);
       let noticeMessage: string | undefined;
       mockLoop.mockImplementation(async (options) => {
-        noticeMessage = castTo<LoopOptionsLike>(options).buildNoticeMessage(noteFile, '1/1');
+        noticeMessage = castTo<LoopOptionsLike>(options).buildNoticeMessage({ item: noteFile, iterationStr: '1/1' });
         await noopAsync();
       });
       await runOperation([noteFile]);

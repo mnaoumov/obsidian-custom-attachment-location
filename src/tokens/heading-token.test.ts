@@ -1,8 +1,8 @@
 import type {
   App,
-  CachedMetadata,
   HeadingCache
 } from 'obsidian';
+import type { CachedMetadataEx } from 'obsidian-dev-utils/obsidian/metadata-cache';
 
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { getCacheSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
@@ -21,7 +21,7 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 import { HeadingToken } from './heading-token.ts';
 
 vi.mock('obsidian-dev-utils/obsidian/metadata-cache', () => ({
-  getCacheSafe: vi.fn<(app: App, fileOrPath: string) => Promise<CachedMetadata | null>>()
+  getCacheSafe: vi.fn<(app: App, fileOrPath: string) => Promise<CachedMetadataEx | null>>()
 }));
 
 const app = castTo<App>({});
@@ -66,14 +66,14 @@ describe('HeadingToken', () => {
   });
 
   it('should return an empty (cleaned) heading when there are no headings in the cache', async () => {
-    vi.mocked(getCacheSafe).mockResolvedValue(castTo<CachedMetadata>({}));
+    vi.mocked(getCacheSafe).mockResolvedValue(castTo<CachedMetadataEx>({}));
     const token = new HeadingToken();
     const result = await token.evaluate(createContext(10, null));
     expect(result).toBe('clean:');
   });
 
   it('should return the latest heading of any level before the cursor by default', async () => {
-    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadata>({
+    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadataEx>({
       headings: [
         createHeading(1, 0, 'Top'),
         createHeading(2, 5, 'Section'),
@@ -86,7 +86,7 @@ describe('HeadingToken', () => {
   });
 
   it('should return the latest heading of the requested level', async () => {
-    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadata>({
+    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadataEx>({
       headings: [
         createHeading(1, 0, 'First H1'),
         createHeading(1, 3, 'Second H1'),
@@ -99,7 +99,7 @@ describe('HeadingToken', () => {
   });
 
   it('should not update a heading level for an earlier line than already recorded', async () => {
-    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadata>({
+    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadataEx>({
       headings: [
         createHeading(1, 5, 'Later'),
         createHeading(1, 2, 'Earlier')
@@ -111,7 +111,7 @@ describe('HeadingToken', () => {
   });
 
   it('should keep the latest any-level heading when a later-processed heading is on an earlier line', async () => {
-    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadata>({
+    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadataEx>({
       headings: [
         createHeading(2, 5, 'Deep section'),
         createHeading(1, 2, 'Early top')
@@ -123,7 +123,7 @@ describe('HeadingToken', () => {
   });
 
   it('should return an empty heading when no heading matches the requested level', async () => {
-    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadata>({
+    vi.mocked(getCacheSafe).mockResolvedValue(strictProxy<CachedMetadataEx>({
       headings: [
         createHeading(1, 0, 'Top')
       ]

@@ -5,12 +5,12 @@ import type {
 
 import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 import {
-  encodeUrl,
   generateMarkdownLink,
   LinkStyle,
   testAngleBrackets,
   testWikilink
 } from 'obsidian-dev-utils/obsidian/link';
+import { encodeUrl } from 'obsidian-dev-utils/obsidian/parse-link';
 
 import type { ImageSizeMap } from '../image-size-map.ts';
 import type { MarkdownUrlMap } from '../markdown-url-map.ts';

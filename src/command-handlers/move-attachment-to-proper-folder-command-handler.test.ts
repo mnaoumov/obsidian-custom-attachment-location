@@ -50,9 +50,14 @@ interface ActiveFileProviderHolder {
   _activeFileProvider: ActiveFileProvider;
 }
 
+interface LoopBuildNoticeMessageParamsLike {
+  item: TFile;
+  iterationStr: string;
+}
+
 interface LoopParams {
   readonly abortSignal: AbortSignal;
-  buildNoticeMessage(item: TFile, iterationStr: string): string;
+  buildNoticeMessage(params: LoopBuildNoticeMessageParamsLike): string;
   readonly items: TFile[];
   processItem(item: TFile): Promise<void>;
   readonly progressBarTitle: string;
@@ -300,7 +305,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       const params = getLoopParams();
       expect(params.items.map((file) => file.path)).toEqual(['a-b.png', 'folder/child.png', 'z-a.png']);
-      expect(params.buildNoticeMessage(attachmentA, '1/3')).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
+      expect(params.buildNoticeMessage({ item: attachmentA, iterationStr: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
       expect(params.progressBarTitle).toBe('My Plugin: Moving attachment to proper folder...');
     });
 
