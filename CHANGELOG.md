@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 11.1.1
+
+- chore: update libs
+- chore: update obsidian-dev-utils to 85.0.0
+- refactor: pass params objects to attachment path, maps and modal helpers
+- build: lock typescript to 6.0.3
+
 ## 11.1.0
 
 - feat: re #42
