@@ -100,6 +100,7 @@ interface AttachmentPathManagerGetProperAttachmentPathParams {
   readonly attachmentFile: TFile;
   readonly noteFilePath: string;
   readonly reference: Reference;
+  readonly sequenceNumber: number;
 }
 
 interface AttachmentPathManagerResolvePathTemplateParams {
@@ -359,7 +360,7 @@ export class AttachmentPathManager {
             noteFilePath: params.noteFilePath,
             originalAttachmentFileName: params.attachmentFile.name,
             pluginSettingsComponent: this.pluginSettingsComponent,
-            sequenceNumber: await this.getSequenceNumber(params.noteFilePath, params.attachmentFile.path),
+            sequenceNumber: params.sequenceNumber,
             tokenValidator: this.tokenValidator
           })
         ),
@@ -381,6 +382,45 @@ export class AttachmentPathManager {
     }
 
     return newAttachmentPath;
+  }
+
+  /**
+   * Builds a map from attachment file path to its 1-based sequence number within the note.
+   *
+   * The `Collect attachments` command must compute this **before** it moves any attachment: a move
+   * rewrites the note's links, which would shift the numbering of the attachments processed later in
+   * the same pass. Snapshotting the numbering up front keeps each attachment's `${sequenceNumber}`
+   * stable regardless of move order.
+   */
+  public async getSequenceNumberMap(noteFilePath: string): Promise<Map<string, number>> {
+    const sequenceNumberByAttachmentPath = new Map<string, number>();
+    const cache = await getCacheSafe(this.app, noteFilePath);
+    if (!cache) {
+      return sequenceNumberByAttachmentPath;
+    }
+
+    let sequenceNumber = 1;
+    for (const link of getLinks({ cache })) {
+      const linkFile = extractLinkFile({
+        app: this.app,
+        link,
+        sourcePathOrFile: noteFilePath
+      });
+
+      // Skip note links (e.g. `![[Note#Section]]` section embeds); they are not attachments.
+      // Note embeds must not advance the sequence number; the collector applies the same filter.
+      if (this.pluginSettingsComponent.isNoteEx(linkFile)) {
+        continue;
+      }
+
+      if (linkFile && !sequenceNumberByAttachmentPath.has(linkFile.path)) {
+        sequenceNumberByAttachmentPath.set(linkFile.path, sequenceNumber);
+      }
+
+      sequenceNumber++;
+    }
+
+    return sequenceNumberByAttachmentPath;
   }
 
   private cleanFilePathPart(part: string): string {
@@ -443,27 +483,8 @@ export class AttachmentPathManager {
       return 0;
     }
 
-    const cache = await getCacheSafe(this.app, noteFilePath);
-    if (!cache) {
-      return 0;
-    }
-
-    let sequenceNumber = 1;
-    for (const link of getLinks({ cache })) {
-      const linkFile = extractLinkFile({
-        app: this.app,
-        link,
-        sourcePathOrFile: noteFilePath
-      });
-
-      if (linkFile === oldAttachmentFile) {
-        return sequenceNumber;
-      }
-
-      sequenceNumber++;
-    }
-
-    return 0;
+    const sequenceNumberByAttachmentPath = await this.getSequenceNumberMap(noteFilePath);
+    return sequenceNumberByAttachmentPath.get(oldAttachmentFile.path) ?? 0;
   }
 
   private async resolvePathTemplate(params: AttachmentPathManagerResolvePathTemplateParams): Promise<string> {

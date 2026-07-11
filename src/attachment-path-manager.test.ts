@@ -112,6 +112,7 @@ interface TestContext {
   exists: ReturnType<typeof vi.fn<Vault['exists']>>;
   getAvailablePath: ReturnType<typeof vi.fn<Vault['getAvailablePath']>>;
   getAvailablePathForAttachmentsOriginal: ReturnType<typeof vi.fn<Vault['getAvailablePathForAttachments']>>;
+  isNoteEx: ReturnType<typeof vi.fn<PluginSettingsComponent['isNoteEx']>>;
   isPathIgnored: ReturnType<typeof vi.fn<PluginSettings['isPathIgnored']>>;
   manager: AttachmentPathManager;
   pluginSettingsComponent: PluginSettingsComponent;
@@ -156,7 +157,9 @@ function createManager(): TestContext {
     workspace: strictProxy<App['workspace']>({ activeEditor: null })
   });
 
+  const isNoteEx = vi.fn<PluginSettingsComponent['isNoteEx']>().mockReturnValue(false);
   const pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
+    isNoteEx,
     replaceSpecialCharacters: (str: string) => settings.specialCharacters ? str.replaceAll(settings.specialCharacters, settings.specialCharactersReplacement) : str,
     settings
   });
@@ -181,6 +184,7 @@ function createManager(): TestContext {
     exists,
     getAvailablePath,
     getAvailablePathForAttachmentsOriginal,
+    isNoteEx,
     isPathIgnored,
     manager,
     pluginSettingsComponent,
@@ -396,6 +400,57 @@ describe('AttachmentPathManager', () => {
       const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
       expect(result).toBe(0);
     });
+
+    it('should not count links resolving to notes (e.g. section embeds)', async () => {
+      const oldFile = createTFile({ path: 'old.png' });
+      const noteFile = createTFile({ path: 'other-note.md' });
+      const sectionEmbedLink = strictProxy<Reference>({});
+      const attachmentLink = strictProxy<Reference>({});
+      mockGetFileOrNull.mockReturnValue(oldFile);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([sectionEmbedLink, attachmentLink]);
+      mockExtractLinkFile.mockImplementation(({ link }) => link === sectionEmbedLink ? noteFile : oldFile);
+      ctx.isNoteEx.mockImplementation((pathOrFile) => pathOrFile === noteFile);
+      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
+      expect(result).toBe(1);
+    });
+
+    it('should still count unresolvable links as attachment slots', async () => {
+      // A broken attachment link (e.g. `![[missing.png]]`) still occupies a slot.
+      // Following attachments then stay numbered by document position rather than jumping backwards.
+      const oldFile = createTFile({ path: 'old.png' });
+      const unresolvableLink = strictProxy<Reference>({});
+      const attachmentLink = strictProxy<Reference>({});
+      mockGetFileOrNull.mockReturnValue(oldFile);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([unresolvableLink, attachmentLink]);
+      mockExtractLinkFile.mockImplementation(({ link }) => link === attachmentLink ? oldFile : null);
+      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
+      expect(result).toBe(2);
+    });
+  });
+
+  describe('getSequenceNumberMap', () => {
+    it('should return an empty map when there is no cache for the note', async () => {
+      mockGetCacheSafe.mockResolvedValue(null);
+      const result = await ctx.manager.getSequenceNumberMap('note.md');
+      expect(result.size).toBe(0);
+    });
+
+    it('should number distinct attachments and keep the first occurrence of a duplicate', async () => {
+      const fileA = createTFile({ path: 'a.png' });
+      const fileB = createTFile({ path: 'b.png' });
+      const linkA1 = strictProxy<Reference>({});
+      const linkA2 = strictProxy<Reference>({});
+      const linkB = strictProxy<Reference>({});
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([linkA1, linkA2, linkB]);
+      mockExtractLinkFile.mockImplementation(({ link }) => link === linkB ? fileB : fileA);
+      const result = await ctx.manager.getSequenceNumberMap('note.md');
+      // `a.png` keeps its first-occurrence number (1); its repeat still advances the slot, so `b.png` is 3.
+      expect(result.get('a.png')).toBe(1);
+      expect(result.get('b.png')).toBe(3);
+    });
   });
 
   describe('getDownloadedImagePath', () => {
@@ -457,7 +512,8 @@ describe('AttachmentPathManager', () => {
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
-        reference: strictProxy<Reference>({})
+        reference: strictProxy<Reference>({}),
+        sequenceNumber: 0
       });
       expect(result).toBe('assets/img.png');
     });
@@ -479,9 +535,31 @@ describe('AttachmentPathManager', () => {
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
-        reference: referenceCache
+        reference: referenceCache,
+        sequenceNumber: 0
       });
       expect(result).toBe('assets/collected.png');
+    });
+
+    it('should use the injected sequence number in the generated name', async () => {
+      ctx.settings.shouldRenameCollectedAttachments = true;
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      ctx.settings.collectedAttachmentFileName = 'collected-${sequenceNumber:{length:2}}';
+      ctx.settings.attachmentFolderPath = 'assets';
+      const attachmentFile = createTFile({
+        extension: 'png',
+        name: 'img.png',
+        path: 'old/img.png',
+        stat: strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 })
+      });
+      const result = await ctx.manager.getProperAttachmentPath({
+        actionContext: ActionContext.CollectAttachments,
+        attachmentFile,
+        noteFilePath: 'note.md',
+        reference: castTo<Reference>({ link: 'x', original: 'x' }),
+        sequenceNumber: 7
+      });
+      expect(result).toBe('assets/collected-07.png');
     });
 
     it('should use cursor line 0 for a non-reference-cache reference', async () => {
@@ -498,7 +576,8 @@ describe('AttachmentPathManager', () => {
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
-        reference: castTo<Reference>({ link: 'x', original: 'x' })
+        reference: castTo<Reference>({ link: 'x', original: 'x' }),
+        sequenceNumber: 0
       });
       expect(result).toBe('assets/collected.png');
     });
@@ -516,7 +595,8 @@ describe('AttachmentPathManager', () => {
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
-        reference: strictProxy<Reference>({})
+        reference: strictProxy<Reference>({}),
+        sequenceNumber: 0
       });
       expect(result).toBeNull();
     });

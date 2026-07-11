@@ -132,6 +132,7 @@ const mockSelectMode = vi.mocked(selectMode);
 const mockUpdateLink = vi.mocked(updateLink);
 
 const mockGetProperAttachmentPath = vi.fn<AttachmentPathManager['getProperAttachmentPath']>();
+const mockGetSequenceNumberMap = vi.fn<AttachmentPathManager['getSequenceNumberMap']>();
 const mockIsNoteEx = vi.fn<PluginSettingsComponent['isNoteEx']>();
 const mockIsPathIgnored = vi.fn<PluginSettings['isPathIgnored']>();
 
@@ -186,6 +187,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetSequenceNumberMap.mockResolvedValue(new Map());
     mockIsPathIgnored.mockReturnValue(false);
     mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
     combinedAbortSignal = new AbortController().signal;
@@ -210,7 +212,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       abortSignal: new AbortController().signal
     });
     attachmentPathManager = strictProxy<AttachmentPathManager>({
-      getProperAttachmentPath: mockGetProperAttachmentPath
+      getProperAttachmentPath: mockGetProperAttachmentPath,
+      getSequenceNumberMap: mockGetSequenceNumberMap
     });
     pluginNoticeComponent = new PluginNoticeComponent('My Plugin');
     resourceLockComponent = strictProxy<ResourceLockComponent>({});

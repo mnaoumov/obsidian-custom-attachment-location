@@ -206,6 +206,7 @@ describe('AttachmentCollector', () => {
   let consoleDebugComponent: ConsoleDebugComponent;
   let errorSpy: MockInstance<typeof console.error>;
   let getProperAttachmentPath: Mock<AttachmentPathManager['getProperAttachmentPath']>;
+  let getSequenceNumberMap: Mock<AttachmentPathManager['getSequenceNumberMap']>;
   let getRoot: Mock<() => TFolder>;
   let networkImageDownloader: NetworkImageDownloader;
   let pluginSettingsComponent: PluginSettingsComponent;
@@ -236,8 +237,10 @@ describe('AttachmentCollector', () => {
       settings: castTo<PluginSettings>(settings)
     });
     getProperAttachmentPath = vi.fn<AttachmentPathManager['getProperAttachmentPath']>().mockResolvedValue('attachments/img.png');
+    getSequenceNumberMap = vi.fn<AttachmentPathManager['getSequenceNumberMap']>().mockResolvedValue(new Map());
     attachmentPathManager = strictProxy<AttachmentPathManager>({
-      getProperAttachmentPath: (params) => getProperAttachmentPath(params)
+      getProperAttachmentPath: (params) => getProperAttachmentPath(params),
+      getSequenceNumberMap: (noteFilePath) => getSequenceNumberMap(noteFilePath)
     });
     abortSignalComponent = strictProxy<AbortSignalComponent>({
       abortSignal: new AbortController().signal
