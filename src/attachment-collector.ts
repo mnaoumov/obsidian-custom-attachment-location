@@ -74,6 +74,7 @@ interface AttachmentCollectorPrepareAttachmentToMoveParams {
   readonly oldAttachmentPaths: Set<string>;
   readonly oldNotePath: string;
   readonly reference: Reference;
+  readonly sequenceNumberByAttachmentPath: ReadonlyMap<string, number>;
 }
 
 interface AttachmentMoveResult {
@@ -165,6 +166,10 @@ export class AttachmentCollector {
       const links = isCanvas ? await getCanvasLinks(app, params.note) : getLinks({ cache });
       params.abortSignal.throwIfAborted();
 
+      // Snapshot the attachment numbering from the pristine note, before any move rewrites its links.
+      const sequenceNumberByAttachmentPath = await this.attachmentPathManager.getSequenceNumberMap(params.note.path);
+      params.abortSignal.throwIfAborted();
+
       for (const link of links) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Could be changed in await call.
         if (params.ctx.isAborted) {
@@ -175,7 +180,8 @@ export class AttachmentCollector {
           newNotePath: params.note.path,
           oldAttachmentPaths,
           oldNotePath: params.note.path,
-          reference: link
+          reference: link,
+          sequenceNumberByAttachmentPath
         });
         params.abortSignal.throwIfAborted();
         if (!attachmentMoveResult) {
@@ -445,7 +451,8 @@ export class AttachmentCollector {
       actionContext: ActionContext.CollectAttachments,
       attachmentFile: oldAttachmentFile,
       noteFilePath: params.newNotePath,
-      reference: params.reference
+      reference: params.reference,
+      sequenceNumber: params.sequenceNumberByAttachmentPath.get(oldAttachmentFile.path) ?? 0
     });
 
     return {

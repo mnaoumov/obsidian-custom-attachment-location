@@ -174,11 +174,13 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         continue;
       }
 
+      const sequenceNumberByAttachmentPath = await this.attachmentPathManager.getSequenceNumberMap(backlink);
       const newAttachmentPath = await this.attachmentPathManager.getProperAttachmentPath({
         actionContext: ActionContext.MoveAttachmentToProperFolder,
         attachmentFile,
         noteFilePath: backlink,
-        reference: link
+        reference: link,
+        sequenceNumber: sequenceNumberByAttachmentPath.get(attachmentFile.path) ?? 0
       });
       if (!newAttachmentPath) {
         console.warn(`Skipping moving attachment ${attachmentFile.path} to proper folder as it is already in the destination folder.`);
