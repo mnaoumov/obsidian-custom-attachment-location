@@ -76,6 +76,17 @@ export const config = defineConfig({
       {
         test: {
           environment: 'node',
+          environmentOptions: {
+            /*
+             * The bottleneck closure holds a single `Runtime.evaluate` open for the whole
+             * index-wait + settle + benchmark run, which far exceeds the transport's default
+             * 30s per-command timeout, so raise it to the performance test budget.
+             */
+            obsidianTransport: {
+              commandTimeoutInMilliseconds: PERFORMANCE_TIMEOUT_IN_MILLISECONDS,
+              type: 'obsidian-cdp'
+            }
+          },
           fileParallelism: false,
           globalSetup: ['./scripts/vitest-global-setup-performance.ts'],
           hookTimeout: PERFORMANCE_TIMEOUT_IN_MILLISECONDS,

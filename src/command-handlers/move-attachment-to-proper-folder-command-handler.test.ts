@@ -215,7 +215,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       getProperAttachmentPath: mockGetProperAttachmentPath,
       getSequenceNumberMap: mockGetSequenceNumberMap
     });
-    pluginNoticeComponent = new PluginNoticeComponent('My Plugin');
+    pluginNoticeComponent = new PluginNoticeComponent({ app, pluginName: 'My Plugin' });
     resourceLockComponent = strictProxy<ResourceLockComponent>({});
     handler = new MoveAttachmentToProperFolderCommandHandler({
       abortSignalComponent,

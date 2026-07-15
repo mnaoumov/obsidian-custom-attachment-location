@@ -1,3 +1,4 @@
+import type { PrismModule } from '@obsidian-typings/obsidian-public-latest/implementations';
 import type {
   ButtonComponent,
   DropdownComponent,
@@ -49,6 +50,15 @@ import { TokenValidator } from './token-validator.ts';
 vi.mock('obsidian-dev-utils/obsidian/modals/confirm', () => ({
   confirm: vi.fn((): Promise<boolean> => Promise.resolve(true))
 }));
+
+// The obsidian-test-mocks package does not model Obsidian's loadPrism, so return a stub prism; otherwise the real CodeHighlighterComponent's highlight-on-setValue (new in dev-utils 86.0.0) rejects.
+vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@obsidian-typings/obsidian-public-latest/implementations')>();
+  return {
+    ...original,
+    loadPrism: vi.fn((): Promise<PrismModule> => Promise.resolve(strictProxy<PrismModule>({ highlightElement: vi.fn() })))
+  };
+});
 
 // This test renders the whole settings tab and drains the debounced revalidation under fake timers.
 // Under coverage instrumentation that work exceeds the default 5-second test timeout.

@@ -6,7 +6,6 @@ import type {
 import { Component } from 'obsidian';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { CommandHandlerComponent } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler-component';
-import { MenuEventRegistrarComponent } from 'obsidian-dev-utils/obsidian/components/menu-event-registrar-component';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
 import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { App } from 'obsidian-test-mocks/obsidian';
@@ -53,20 +52,6 @@ const hoisted = vi.hoisted(() => ({
 
 // --- Collaborator dev-utils components added as children: stub as constructor spies returning a real Component so the real addChild lifecycle can load them while capturing constructor args. ---
 
-vi.mock('obsidian-dev-utils/obsidian/command-handlers/command-handler-component', () => ({
-  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
-  CommandHandlerComponent: vi.fn(function commandHandlerComponentStub() {
-    return new Component();
-  })
-}));
-
-vi.mock('obsidian-dev-utils/obsidian/components/menu-event-registrar-component', () => ({
-  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
-  MenuEventRegistrarComponent: vi.fn(function menuEventRegistrarComponentStub() {
-    return new Component();
-  })
-}));
-
 vi.mock('obsidian-dev-utils/obsidian/components/plugin-settings-tab-component', () => ({
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
   PluginSettingsTabComponent: vi.fn(function pluginSettingsTabComponentStub() {
@@ -86,14 +71,6 @@ vi.mock('obsidian-dev-utils/obsidian/components/rename-delete-handler-component'
 });
 
 // --- Collaborator dev-utils components NOT added as children: bare constructor spies. ---
-
-vi.mock('obsidian-dev-utils/obsidian/active-file-provider', () => ({
-  AppActiveFileProvider: vi.fn()
-}));
-
-vi.mock('obsidian-dev-utils/obsidian/command-registrar', () => ({
-  PluginCommandRegistrar: vi.fn()
-}));
 
 vi.mock('obsidian-dev-utils/obsidian/data-handler', () => ({
   PluginDataHandler: vi.fn()
@@ -193,6 +170,9 @@ vi.mock('./token-validator.ts', () => ({
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede the import of the module under test.
 import { Plugin } from './plugin.ts';
 
+// The base pre-wires `commandHandlerComponent`; stub its `registerCommandHandlers` so the plugin's registration is asserted without exercising the mocked command handlers.
+vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers').mockReturnValue(castTo<Disposable>({}));
+
 interface AppGlobal {
   app: AppOriginal;
 }
@@ -280,8 +260,13 @@ describe('Plugin', () => {
     expect(PluginSettingsTab).toHaveBeenCalledOnce();
     expect(RenameDeleteHandlerComponent).toHaveBeenCalledOnce();
     expect(AttachmentCollector).toHaveBeenCalledOnce();
-    expect(MenuEventRegistrarComponent).toHaveBeenCalledOnce();
-    expect(CommandHandlerComponent).toHaveBeenCalledOnce();
+    // The base separately auto-registers its own handler (e.g. UnlockActiveNoteCommandHandler), so assert the plugin's own registration by its four handlers rather than the total call count.
+    expect(CommandHandlerComponent.prototype.registerCommandHandlers).toHaveBeenCalledWith([
+      expect.any(CollectAttachmentsInFileCommandHandler),
+      expect.any(CollectAttachmentsInCurrentFolderCommandHandler),
+      expect.any(CollectAttachmentsEntireVaultCommandHandler),
+      expect.any(MoveAttachmentToProperFolderCommandHandler)
+    ]);
     expect(AppSaveAttachmentPatchComponent).toHaveBeenCalledOnce();
     expect(PrismComponent).toHaveBeenCalledOnce();
   });
