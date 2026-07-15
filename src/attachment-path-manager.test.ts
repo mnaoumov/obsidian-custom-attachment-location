@@ -174,7 +174,7 @@ function createManager(): TestContext {
   const manager = new AttachmentPathManager({
     app,
     getAvailablePathForAttachmentsOriginal,
-    pluginNoticeComponent: new PluginNoticeComponent('Custom Attachment Location'),
+    pluginNoticeComponent: new PluginNoticeComponent({ app, pluginName: 'Custom Attachment Location' }),
     pluginSettingsComponent,
     tokenValidator
   });
