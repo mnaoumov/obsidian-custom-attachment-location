@@ -109,7 +109,17 @@ interface AttachmentPathManagerResolvePathTemplateParams {
   readonly template: string;
 }
 
+interface CursorLineAndSequenceNumber {
+  readonly cursorLine: number;
+  readonly sequenceNumber: number;
+}
+
 type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
+
+interface NoteLinkWalkResult {
+  readonly cursorLine: number;
+  readonly sequenceNumberByAttachmentPath: Map<string, number>;
+}
 
 export class AttachmentPathManager {
   private readonly app: App;
@@ -204,8 +214,7 @@ export class AttachmentPathManager {
       if (shouldSkipGeneratedAttachmentFileName) {
         generatedAttachmentFileName = attachmentFileName;
       } else {
-        const cursorLine = await this.getCursorLine(noteFilePath, params.oldAttachmentPathOrFile);
-        const sequenceNumber = await this.getSequenceNumber(noteFilePath, params.oldAttachmentPathOrFile);
+        const { cursorLine, sequenceNumber } = await this.getCursorLineAndSequenceNumber(noteFilePath, params.oldAttachmentPathOrFile);
         const generatedAttachmentFileBaseName = await this.getGeneratedAttachmentFileBaseName(
           new Substitutions({
             actionContext: attachmentPathContextToActionContext(params.context),
@@ -393,33 +402,7 @@ export class AttachmentPathManager {
    * stable regardless of move order.
    */
   public async getSequenceNumberMap(noteFilePath: string): Promise<Map<string, number>> {
-    const sequenceNumberByAttachmentPath = new Map<string, number>();
-    const cache = await getCacheSafe(this.app, noteFilePath);
-    if (!cache) {
-      return sequenceNumberByAttachmentPath;
-    }
-
-    let sequenceNumber = 1;
-    for (const link of getLinks({ cache })) {
-      const linkFile = extractLinkFile({
-        app: this.app,
-        link,
-        sourcePathOrFile: noteFilePath
-      });
-
-      // Skip note links (e.g. `![[Note#Section]]` section embeds); they are not attachments.
-      // Note embeds must not advance the sequence number; the collector applies the same filter.
-      if (this.pluginSettingsComponent.isNoteEx(linkFile)) {
-        continue;
-      }
-
-      if (linkFile && !sequenceNumberByAttachmentPath.has(linkFile.path)) {
-        sequenceNumberByAttachmentPath.set(linkFile.path, sequenceNumber);
-      }
-
-      sequenceNumber++;
-    }
-
+    const { sequenceNumberByAttachmentPath } = await this.walkNoteLinks(noteFilePath, null);
     return sequenceNumberByAttachmentPath;
   }
 
@@ -438,53 +421,20 @@ export class AttachmentPathManager {
     return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: this.pluginSettingsComponent.settings.attachmentFolderPath });
   }
 
-  private async getCursorLine(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
+  private async getCursorLineAndSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<CursorLineAndSequenceNumber> {
     const oldAttachmentFile = getFileOrNull({
       app: this.app,
       pathOrFile: oldAttachmentPathOrFile
     });
     if (!oldAttachmentFile) {
-      return 0;
+      return { cursorLine: 0, sequenceNumber: 0 };
     }
 
-    const cache = await getCacheSafe(this.app, noteFilePath);
-    if (!cache) {
-      return 0;
-    }
-
-    for (const link of getLinks({ cache })) {
-      if (!isReferenceCache(link)) {
-        continue;
-      }
-
-      const linkFile = extractLinkFile({
-        app: this.app,
-        link,
-        sourcePathOrFile: noteFilePath
-      });
-      if (!linkFile) {
-        continue;
-      }
-
-      if (linkFile === oldAttachmentFile) {
-        return link.position.start.line;
-      }
-    }
-
-    return 0;
-  }
-
-  private async getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<number> {
-    const oldAttachmentFile = getFileOrNull({
-      app: this.app,
-      pathOrFile: oldAttachmentPathOrFile
-    });
-    if (!oldAttachmentFile) {
-      return 0;
-    }
-
-    const sequenceNumberByAttachmentPath = await this.getSequenceNumberMap(noteFilePath);
-    return sequenceNumberByAttachmentPath.get(oldAttachmentFile.path) ?? 0;
+    const { cursorLine, sequenceNumberByAttachmentPath } = await this.walkNoteLinks(noteFilePath, oldAttachmentFile);
+    return {
+      cursorLine,
+      sequenceNumber: sequenceNumberByAttachmentPath.get(oldAttachmentFile.path) ?? 0
+    };
   }
 
   private async resolvePathTemplate(params: AttachmentPathManagerResolvePathTemplateParams): Promise<string> {
@@ -528,6 +478,57 @@ export class AttachmentPathManager {
       printError(error);
       throw error;
     }
+  }
+
+  /**
+   * Walks a note's links once, computing in a single pass both:
+   *
+   * - `cursorLine` — the start line of the first reference-cache link resolving to `oldAttachmentFile`
+   *   (identity match, including a match whose line is `0`); `0` when there is none.
+   * - `sequenceNumberByAttachmentPath` — the 1-based numbering of the note's distinct attachments by path.
+   *
+   * Both `${cursorLine}` and `${sequenceNumber}` are derived from the same `getCacheSafe`/`getLinks`
+   * traversal instead of walking the metadata cache twice on the rename/delete hot path.
+   */
+  private async walkNoteLinks(noteFilePath: string, oldAttachmentFile: null | TFile): Promise<NoteLinkWalkResult> {
+    const sequenceNumberByAttachmentPath = new Map<string, number>();
+    let cursorLine = 0;
+    let isCursorLineFound = false;
+
+    const cache = await getCacheSafe(this.app, noteFilePath);
+    if (!cache) {
+      return { cursorLine, sequenceNumberByAttachmentPath };
+    }
+
+    let sequenceNumber = 1;
+    for (const link of getLinks({ cache })) {
+      const linkFile = extractLinkFile({
+        app: this.app,
+        link,
+        sourcePathOrFile: noteFilePath
+      });
+
+      // Cursor line: the first reference-cache link resolving to the target attachment. Checked before the
+      // Note-link filter below, matching the former getCursorLine which never applied that filter.
+      if (oldAttachmentFile && !isCursorLineFound && isReferenceCache(link) && linkFile === oldAttachmentFile) {
+        cursorLine = link.position.start.line;
+        isCursorLineFound = true;
+      }
+
+      // Skip note links (e.g. `![[Note#Section]]` section embeds); they are not attachments.
+      // Note embeds must not advance the sequence number; the collector applies the same filter.
+      if (this.pluginSettingsComponent.isNoteEx(linkFile)) {
+        continue;
+      }
+
+      if (linkFile && !sequenceNumberByAttachmentPath.has(linkFile.path)) {
+        sequenceNumberByAttachmentPath.set(linkFile.path, sequenceNumber);
+      }
+
+      sequenceNumber++;
+    }
+
+    return { cursorLine, sequenceNumberByAttachmentPath };
   }
 }
 

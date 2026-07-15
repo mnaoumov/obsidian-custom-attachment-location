@@ -1,6 +1,7 @@
 import type {
   App,
   FileStats,
+  HeadingCache,
   Reference,
   ReferenceCache,
   TFile,
@@ -48,10 +49,6 @@ import { IMPORT_FILES_PREFIX } from './patches/share-receiver-import-files-patch
 import { Substitutions } from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 import { TokenValidationMode } from './token-validator.ts';
-
-interface Testable {
-  getSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: string): Promise<number>;
-}
 
 const noticeInstances: unknown[] = [];
 
@@ -364,72 +361,6 @@ describe('AttachmentPathManager', () => {
     });
   });
 
-  describe('getSequenceNumber', () => {
-    it('should return 0 when there is no old attachment file', async () => {
-      mockGetFileOrNull.mockReturnValue(null);
-      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
-      expect(result).toBe(0);
-    });
-
-    it('should return 0 when there is no cache for the note', async () => {
-      mockGetFileOrNull.mockReturnValue(createTFile({ path: 'old.png' }));
-      mockGetCacheSafe.mockResolvedValue(null);
-      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
-      expect(result).toBe(0);
-    });
-
-    it('should return the 1-based index of the matching link', async () => {
-      const oldFile = createTFile({ path: 'old.png' });
-      const otherFile = createTFile({ path: 'other.png' });
-      const link1 = strictProxy<Reference>({});
-      const link2 = strictProxy<Reference>({});
-      mockGetFileOrNull.mockReturnValue(oldFile);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
-      mockGetLinks.mockReturnValue([link1, link2]);
-      mockExtractLinkFile.mockImplementation(({ link }) => link === link2 ? oldFile : otherFile);
-      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
-      expect(result).toBe(2);
-    });
-
-    it('should return 0 when no link matches the old attachment file', async () => {
-      const oldFile = createTFile({ path: 'old.png' });
-      mockGetFileOrNull.mockReturnValue(oldFile);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
-      mockGetLinks.mockReturnValue([strictProxy<Reference>({})]);
-      mockExtractLinkFile.mockReturnValue(createTFile({ path: 'other.png' }));
-      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
-      expect(result).toBe(0);
-    });
-
-    it('should not count links resolving to notes (e.g. section embeds)', async () => {
-      const oldFile = createTFile({ path: 'old.png' });
-      const noteFile = createTFile({ path: 'other-note.md' });
-      const sectionEmbedLink = strictProxy<Reference>({});
-      const attachmentLink = strictProxy<Reference>({});
-      mockGetFileOrNull.mockReturnValue(oldFile);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
-      mockGetLinks.mockReturnValue([sectionEmbedLink, attachmentLink]);
-      mockExtractLinkFile.mockImplementation(({ link }) => link === sectionEmbedLink ? noteFile : oldFile);
-      ctx.isNoteEx.mockImplementation((pathOrFile) => pathOrFile === noteFile);
-      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
-      expect(result).toBe(1);
-    });
-
-    it('should still count unresolvable links as attachment slots', async () => {
-      // A broken attachment link (e.g. `![[missing.png]]`) still occupies a slot.
-      // Following attachments then stay numbered by document position rather than jumping backwards.
-      const oldFile = createTFile({ path: 'old.png' });
-      const unresolvableLink = strictProxy<Reference>({});
-      const attachmentLink = strictProxy<Reference>({});
-      mockGetFileOrNull.mockReturnValue(oldFile);
-      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
-      mockGetLinks.mockReturnValue([unresolvableLink, attachmentLink]);
-      mockExtractLinkFile.mockImplementation(({ link }) => link === attachmentLink ? oldFile : null);
-      const result = await castTo<Testable>(ctx.manager).getSequenceNumber('note.md', 'old.png');
-      expect(result).toBe(2);
-    });
-  });
-
   describe('getSequenceNumberMap', () => {
     it('should return an empty map when there is no cache for the note', async () => {
       mockGetCacheSafe.mockResolvedValue(null);
@@ -450,6 +381,34 @@ describe('AttachmentPathManager', () => {
       // `a.png` keeps its first-occurrence number (1); its repeat still advances the slot, so `b.png` is 3.
       expect(result.get('a.png')).toBe(1);
       expect(result.get('b.png')).toBe(3);
+    });
+
+    it('should not advance the sequence number for note links (e.g. section embeds)', async () => {
+      const attachmentFile = createTFile({ path: 'old.png' });
+      const noteFile = createTFile({ path: 'other-note.md' });
+      const sectionEmbedLink = strictProxy<Reference>({});
+      const attachmentLink = strictProxy<Reference>({});
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([sectionEmbedLink, attachmentLink]);
+      mockExtractLinkFile.mockImplementation(({ link }) => link === sectionEmbedLink ? noteFile : attachmentFile);
+      ctx.isNoteEx.mockImplementation((pathOrFile) => pathOrFile === noteFile);
+      const result = await ctx.manager.getSequenceNumberMap('note.md');
+      // The section embed is skipped and must not advance the slot, so the attachment stays at 1.
+      expect(result.get('old.png')).toBe(1);
+    });
+
+    it('should still count unresolvable links as attachment slots', async () => {
+      // A broken attachment link (e.g. `![[missing.png]]`) still occupies a slot.
+      // Following attachments then stay numbered by document position rather than jumping backwards.
+      const attachmentFile = createTFile({ path: 'old.png' });
+      const unresolvableLink = strictProxy<Reference>({});
+      const attachmentLink = strictProxy<Reference>({});
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([unresolvableLink, attachmentLink]);
+      mockExtractLinkFile.mockImplementation(({ link }) => link === attachmentLink ? attachmentFile : null);
+      const result = await ctx.manager.getSequenceNumberMap('note.md');
+      // The broken link still occupies slot 1, so the resolved attachment is numbered 2.
+      expect(result.get('old.png')).toBe(2);
     });
   });
 
@@ -984,6 +943,112 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: true
       });
       expect(result).toBe('assets/generated.png');
+    });
+  });
+
+  describe('single-pass link walk (via getAvailablePathForAttachments)', () => {
+    it('should derive the sequence number and resolve the note cache in a single walk', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      ctx.settings.generatedAttachmentFileName = '${sequenceNumber}';
+      const noteFile = createTFile({ path: 'note.md' });
+      const oldFile = createTFile({ path: 'old.png' });
+      const otherFile = createTFile({ path: 'other.png' });
+      const otherLink = strictProxy<ReferenceCache>({
+        position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 1, offset: 0 } }
+      });
+      const oldLink = strictProxy<ReferenceCache>({
+        position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 2, offset: 0 } }
+      });
+      mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
+      mockIsNote.mockReturnValue(true);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([otherLink, oldLink]);
+      mockExtractLinkFile.mockImplementation(({ link }) => link === oldLink ? oldFile : otherFile);
+      const result = await ctx.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'img',
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      // `old.png` is the 2nd distinct attachment, and the number now comes from exactly ONE `getCacheSafe`
+      // Walk (previously two — one per the collapsed getCursorLine/getSequenceNumber).
+      expect(result).toBe('assets/2.png');
+      expect(mockGetCacheSafe).toHaveBeenCalledTimes(1);
+    });
+
+    it('should derive the cursor line from the matching reference and feed it to the heading token', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      ctx.settings.generatedAttachmentFileName = '${heading}';
+      const noteFile = createTFile({ path: 'note.md' });
+      const oldFile = createTFile({ path: 'old.png' });
+      const matchAtLine4 = strictProxy<ReferenceCache>({
+        position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 4, offset: 0 } }
+      });
+      mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
+      mockIsNote.mockReturnValue(true);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({
+        headings: [
+          strictProxy<HeadingCache>({ heading: 'Early', level: 1, position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 2, offset: 0 } } }),
+          strictProxy<HeadingCache>({ heading: 'Late', level: 1, position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 6, offset: 0 } } })
+        ]
+      }));
+      mockGetLinks.mockReturnValue([matchAtLine4]);
+      mockExtractLinkFile.mockReturnValue(oldFile);
+      const result = await ctx.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'img',
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      // CursorLine 4 flows into the heading token, whose cutoff (line <= 4) selects "Early" (line 2),
+      // Not "Late" (line 6).
+      expect(result).toBe('assets/Early.png');
+    });
+
+    it('should keep the first matching reference when a later one also matches (line-0 first match wins)', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      ctx.settings.generatedAttachmentFileName = '${heading}';
+      const noteFile = createTFile({ path: 'note.md' });
+      const oldFile = createTFile({ path: 'old.png' });
+      const firstMatchAtLine0 = strictProxy<ReferenceCache>({
+        position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 0, offset: 0 } }
+      });
+      const secondMatchAtLine5 = strictProxy<ReferenceCache>({
+        position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 5, offset: 0 } }
+      });
+      mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
+      mockIsNote.mockReturnValue(true);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({
+        headings: [
+          strictProxy<HeadingCache>({ heading: 'Later', level: 1, position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 3, offset: 0 } } })
+        ]
+      }));
+      mockGetLinks.mockReturnValue([firstMatchAtLine0, secondMatchAtLine5]);
+      mockExtractLinkFile.mockReturnValue(oldFile);
+      const result = await ctx.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'img',
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      // The first match (line 0) wins, so cursorLine is 0 → the heading token treats it as "no cursor" and
+      // Emits nothing. A last-match regression would pick line 5 → cutoff line <= 5 → "Later" (line 3).
+      expect(result).toBe('assets/.png');
     });
   });
 });
