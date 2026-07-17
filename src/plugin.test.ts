@@ -2,6 +2,7 @@ import type {
   App as AppOriginal,
   PluginManifest
 } from 'obsidian';
+import type { DisposableEx } from 'obsidian-dev-utils/disposable';
 
 import { Component } from 'obsidian';
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -171,7 +172,7 @@ vi.mock('./token-validator.ts', () => ({
 import { Plugin } from './plugin.ts';
 
 // The base pre-wires `commandHandlerComponent`; stub its `registerCommandHandlers` so the plugin's registration is asserted without exercising the mocked command handlers.
-vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers').mockReturnValue(castTo<Disposable>({}));
+vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers').mockReturnValue(castTo<DisposableEx>({}));
 
 interface AppGlobal {
   app: AppOriginal;
