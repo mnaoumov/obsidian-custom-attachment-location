@@ -112,7 +112,6 @@ export class ImageManager {
     });
 
     let width: number;
-    let height: number;
 
     const PX = 'px';
     const PERCENTAGE = '%';
@@ -124,10 +123,8 @@ export class ImageManager {
       }));
       if (this.pluginSettingsComponent.settings.defaultImageSizeDimension === DefaultImageSizeDimension.Width) {
         width = dimensionInPixels;
-        height = Math.trunc(width / image.width * image.height);
       } else {
-        height = dimensionInPixels;
-        width = Math.trunc(height / image.height * image.width);
+        width = Math.trunc(dimensionInPixels / image.height * image.width);
       }
     } else {
       const percentage = Number(trimEnd({
@@ -136,10 +133,11 @@ export class ImageManager {
       }));
       const FULL_IMAGE_PERCENTAGE = 100;
       width = Math.trunc(image.width / FULL_IMAGE_PERCENTAGE * percentage);
-      height = Math.trunc(image.height / FULL_IMAGE_PERCENTAGE * percentage);
     }
 
-    return `${String(width)}x${String(height)}`;
+    // Emit width only so Obsidian preserves the image's aspect ratio.
+    // A fixed `WIDTHxHEIGHT` distorts images in constrained containers (table cells, Canvas).
+    return String(width);
   }
 
   private getMimeType(extension: string): null | string {

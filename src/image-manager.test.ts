@@ -114,31 +114,31 @@ describe('ImageManager', () => {
       expect(result).toBeNull();
     });
 
-    it('should compute height from a pixel width', async () => {
+    it('should return the width only for a pixel width', async () => {
       const imageManager = createImageManager({
         defaultImageSize: '100px',
         defaultImageSizeDimension: DefaultImageSizeDimension.Width
       });
       const result = await imageManager.getImageSize({ content: new ArrayBuffer(0), extension: 'png' });
-      expect(result).toBe('100x50');
+      expect(result).toBe('100');
     });
 
-    it('should compute width from a pixel height', async () => {
+    it('should return the width computed from a pixel height', async () => {
       const imageManager = createImageManager({
         defaultImageSize: '50px',
         defaultImageSizeDimension: DefaultImageSizeDimension.Height
       });
       const result = await imageManager.getImageSize({ content: new ArrayBuffer(0), extension: 'png' });
-      expect(result).toBe('100x50');
+      expect(result).toBe('100');
     });
 
-    it('should compute both dimensions from a percentage', async () => {
+    it('should return the width only computed from a percentage', async () => {
       const imageManager = createImageManager({
         defaultImageSize: '50%',
         defaultImageSizeDimension: DefaultImageSizeDimension.Width
       });
       const result = await imageManager.getImageSize({ content: new ArrayBuffer(0), extension: 'jpg' });
-      expect(result).toBe('100x50');
+      expect(result).toBe('100');
     });
   });
 
