@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 11.2.0
+
+- feat: re #28
+- perf: single-pass cursor-line + sequence-number resolution
+- fix: re #38
+
 ## 11.1.1
 
 - chore: update libs
