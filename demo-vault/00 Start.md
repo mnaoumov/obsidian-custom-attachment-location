@@ -2,10 +2,6 @@ Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian
 
 **How to try it:** open [[01 Attachment folder location]] and paste an image into it. With this vault's default settings, the file lands in a per-note folder such as `assets/01 Attachment folder location/` instead of one global pile. You supply the pasted or dragged file - the plugin decides where it goes and what it is called.
 
-> [!TIP] Interactive buttons
->
-> The two setup notes have **Run** buttons, powered by [`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault installs for you automatically on first open (see [[CodeScript Toolkit prerequisite]]). The feature itself is driven by pasting/dragging files and by the plugin's own commands, so the feature notes have no buttons.
-
 ## Feature
 
 - [[01 Attachment folder location]]
@@ -14,8 +10,3 @@ Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian
 - [[04 Custom tokens]]
 - [[05 Collect attachments]]
 - [[06 Settings]]
-
-## Setup
-
-- [[Code buttons check]]
-- [[CodeScript Toolkit prerequisite]]

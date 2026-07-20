@@ -6,4 +6,4 @@ Open [00 Start](<./00 Start.md>) and work through the numbered notes. Paste or d
 
 ## First open
 
-The first time you open this vault, Obsidian treats it as **untrusted**, so the bundled plugins are listed but not loaded until you **Trust author and enable plugins** and reload. After that, the Demo Vault Helper installs [CodeScript Toolkit](https://github.com/mnaoumov/obsidian-codescript-toolkit) (which powers the optional **Run** buttons in the setup notes) and opens the start note for you.
+The first time you open this vault, Obsidian treats it as **untrusted**, so the bundled plugins are listed but not loaded until you **Trust author and enable plugins** and reload. After that, the Demo Vault Helper installs [CodeScript Toolkit](https://github.com/mnaoumov/obsidian-codescript-toolkit) and opens the start note for you.
