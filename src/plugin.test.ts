@@ -7,6 +7,7 @@ import type { DisposableEx } from 'obsidian-dev-utils/disposable';
 import { Component } from 'obsidian';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { CommandHandlerComponent } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler-component';
+import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
 import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { App } from 'obsidian-test-mocks/obsidian';
@@ -261,12 +262,13 @@ describe('Plugin', () => {
     expect(PluginSettingsTab).toHaveBeenCalledOnce();
     expect(RenameDeleteHandlerComponent).toHaveBeenCalledOnce();
     expect(AttachmentCollector).toHaveBeenCalledOnce();
-    // The base separately auto-registers its own handler (e.g. UnlockActiveNoteCommandHandler), so assert the plugin's own registration by its four handlers rather than the total call count.
+    // The base separately auto-registers its own handler (e.g. UnlockActiveNoteCommandHandler), so assert the plugin's own registration by its handlers rather than the total call count.
     expect(CommandHandlerComponent.prototype.registerCommandHandlers).toHaveBeenCalledWith([
       expect.any(CollectAttachmentsInFileCommandHandler),
       expect.any(CollectAttachmentsInCurrentFolderCommandHandler),
       expect.any(CollectAttachmentsEntireVaultCommandHandler),
-      expect.any(MoveAttachmentToProperFolderCommandHandler)
+      expect.any(MoveAttachmentToProperFolderCommandHandler),
+      expect.any(OpenDemoVaultCommandHandler)
     ]);
     expect(AppSaveAttachmentPatchComponent).toHaveBeenCalledOnce();
     expect(PrismComponent).toHaveBeenCalledOnce();
