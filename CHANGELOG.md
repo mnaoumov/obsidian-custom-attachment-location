@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 11.2.1
+
+- docs: standardize demo-vault README
+- docs: drop per-plugin demo-vault setup notes (bootstrap covered by ODU harness)
+- docs: unnumber demo-vault setup notes
+- Merge branch 'T93': create the Custom Attachment Location demo vault (S2)
+
 ## 11.2.0
 
 - feat: re #28
