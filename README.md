@@ -13,6 +13,14 @@ This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize a
 - Modify file name for **Pasted Files**.
 - **Collect attachments** - take all attachments from the notes and puts them into the corresponding configured folders.
 
+## Demo vault
+
+A demo vault with usage examples ships with every release. You can access it via any of the following:
+
+1. Running the **Custom Attachment Location: Open demo vault** command.
+2. Downloading `custom-attachment-location.demo-vault.zip` from the [Releases](https://github.com/mnaoumov/obsidian-custom-attachment-location/releases).
+3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
+
 ## Settings
 
 ### Location for new attachments
