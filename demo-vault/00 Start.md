@@ -4,7 +4,7 @@ Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian
 
 > [!TIP] Interactive buttons
 >
-> The two setup notes have **Run** buttons, powered by [`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault installs for you automatically on first open (see [[08 CodeScript Toolkit prerequisite]]). The feature itself is driven by pasting/dragging files and by the plugin's own commands, so the feature notes have no buttons.
+> The two setup notes have **Run** buttons, powered by [`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault installs for you automatically on first open (see [[CodeScript Toolkit prerequisite]]). The feature itself is driven by pasting/dragging files and by the plugin's own commands, so the feature notes have no buttons.
 
 ## Feature
 
@@ -17,5 +17,5 @@ Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian
 
 ## Setup
 
-- [[07 Code buttons check]]
-- [[08 CodeScript Toolkit prerequisite]]
+- [[Code buttons check]]
+- [[CodeScript Toolkit prerequisite]]
