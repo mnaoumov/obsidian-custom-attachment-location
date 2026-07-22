@@ -52,7 +52,7 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
         for (const file of files) {
           const fileUri = window.Capacitor.convertFileSrc(file.uri);
           // eslint-disable-next-line n/no-unsupported-features/node-builtins -- this is executed on mobile only, not in Node.
-          const fetch = window.fetch;
+          const fetch = window.fetch.bind(window);
           const response = await fetch(fileUri);
           const attachmentFileContent = await response.arrayBuffer();
           const substitutions = new Substitutions({
