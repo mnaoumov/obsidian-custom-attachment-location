@@ -22,6 +22,7 @@ import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
   isCanvasFile,
   isFile,
@@ -44,6 +45,7 @@ import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import {
+  cleanupEmptyFolders,
   copySafe,
   renameSafe
 } from 'obsidian-dev-utils/obsidian/vault';
@@ -87,6 +89,7 @@ interface QueueParamsLike {
 
 interface SettingsLike {
   collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode;
+  emptyFolderBehavior: EmptyFolderBehavior;
   getTimeoutInMilliseconds(): number;
   isExcludedFromAttachmentCollecting(path: string): boolean;
   isPathIgnored(path: string): boolean;
@@ -136,6 +139,7 @@ vi.mock('obsidian-dev-utils/obsidian/queue', async (importOriginal) => ({
 
 vi.mock('obsidian-dev-utils/obsidian/vault', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/vault')>(),
+  cleanupEmptyFolders: vi.fn(),
   copySafe: vi.fn(),
   renameSafe: vi.fn()
 }));
@@ -162,6 +166,7 @@ const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockConfirm = vi.mocked(confirm);
 const mockAddToQueue = vi.mocked(addToQueue);
+const mockCleanupEmptyFolders = vi.mocked(cleanupEmptyFolders);
 const mockCopySafe = vi.mocked(copySafe);
 const mockRenameSafe = vi.mocked(renameSafe);
 const mockGetCanvasLinks = vi.mocked(getCanvasLinks);
@@ -220,6 +225,7 @@ describe('AttachmentCollector', () => {
     vi.clearAllMocks();
     settings = {
       collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode.Move,
+      emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
       getTimeoutInMilliseconds: vi.fn<() => number>().mockReturnValue(1000),
       isExcludedFromAttachmentCollecting: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false)
@@ -394,6 +400,19 @@ describe('AttachmentCollector', () => {
       });
     });
 
+    it('should clean up the vacated source folder after moving an attachment', async () => {
+      mockGetLinks.mockReturnValue([createReference()]);
+      mockExtractLinkFile.mockReturnValue(createFile('old-folder/img.png'));
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
+      mockRenameSafe.mockResolvedValue('attachments/img.png');
+      await runSingleFile(note);
+      expect(mockCleanupEmptyFolders).toHaveBeenCalledWith({
+        app,
+        emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
+        folderPaths: ['old-folder']
+      });
+    });
+
     it('should not rename when the new attachment path is null (single-ref)', async () => {
       mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
@@ -449,6 +468,17 @@ describe('AttachmentCollector', () => {
         });
         expect(matchingResult).toBe('![](attachments/img.png)');
         expect(nonMatchingResult).toBeUndefined();
+      });
+
+      it('should not record any vacated folder in Copy mode', async () => {
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
+        mockCopySafe.mockResolvedValue('attachments/img.png');
+        await runSingleFile(note);
+        expect(mockCleanupEmptyFolders).toHaveBeenCalledWith({
+          app,
+          emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
+          folderPaths: []
+        });
       });
 
       it('should skip Copy mode when the new attachment path is null', async () => {

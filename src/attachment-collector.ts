@@ -37,9 +37,11 @@ import {
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import {
+  cleanupEmptyFolders,
   copySafe,
   renameSafe
 } from 'obsidian-dev-utils/obsidian/vault';
+import { dirname } from 'obsidian-dev-utils/path';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
@@ -134,6 +136,7 @@ export class AttachmentCollector {
 
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
     const app = this.app;
+    const pluginNoticeComponent = this.pluginNoticeComponent;
     const pluginSettingsComponent = this.pluginSettingsComponent;
     const resourceLockComponent = this.resourceLockComponent;
 
@@ -169,6 +172,9 @@ export class AttachmentCollector {
       // Snapshot the attachment numbering from the pristine note, before any move rewrites its links.
       const sequenceNumberByAttachmentPath = await this.attachmentPathManager.getSequenceNumberMap(params.note.path);
       params.abortSignal.throwIfAborted();
+
+      // Folders vacated by moving attachments out of them; cleaned up after the loop honoring emptyFolderBehavior.
+      const oldParentFolderPaths = new Set<string>();
 
       for (const link of links) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Could be changed in await call.
@@ -255,6 +261,7 @@ export class AttachmentCollector {
                     });
                   },
                   pathOrFile: params.note,
+                  pluginNoticeComponent,
                   resourceLockComponent
                 });
                 break;
@@ -312,6 +319,8 @@ export class AttachmentCollector {
             return;
           }
 
+          oldParentFolderPaths.add(dirname(attachmentMoveResult.oldAttachmentPath));
+
           // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
           attachmentMoveResult = {
             ...attachmentMoveResult,
@@ -323,6 +332,12 @@ export class AttachmentCollector {
           };
         }
       }
+
+      await cleanupEmptyFolders({
+        app,
+        emptyFolderBehavior: pluginSettingsComponent.settings.emptyFolderBehavior,
+        folderPaths: Array.from(oldParentFolderPaths)
+      });
 
       await this.networkImageDownloader.downloadNetworkImagesForNote(params.note);
     } finally {

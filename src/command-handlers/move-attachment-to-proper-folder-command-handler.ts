@@ -211,6 +211,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
           });
         },
         pathOrFile: backlinkFile,
+        pluginNoticeComponent: this.pluginNoticeComponent,
         resourceLockComponent: this.resourceLockComponent
       });
     }
