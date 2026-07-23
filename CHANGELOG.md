@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 11.2.5
+
+- fix: re #35
+
 ## 11.2.4
 
 - chore: update libs
