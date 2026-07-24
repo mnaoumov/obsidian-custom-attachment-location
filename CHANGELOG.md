@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 11.3.0
+
+- test: add desktop integration test for issue #33 collect exclusion
+- feat: re #33
+
 ## 11.2.6
 
 - fix: re #34
