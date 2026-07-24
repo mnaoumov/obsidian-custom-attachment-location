@@ -10,6 +10,10 @@ import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/component
 import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
 import type { CachedMetadataEx } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import type {
+  CanvasReference,
+  CanvasTextNodeReference
+} from 'obsidian-dev-utils/obsidian/reference';
+import type {
   Mock,
   MockInstance
 } from 'vitest';
@@ -21,8 +25,10 @@ import {
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
+import { getCanvasReferences } from 'obsidian-dev-utils/obsidian/canvas';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
   isCanvasFile,
   isFile,
@@ -66,10 +72,19 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
 import { AttachmentCollector } from './attachment-collector.ts';
-import { getCanvasLinks } from './canvas-links.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
+
+interface ApplyFileChangesParamsLike {
+  changesProvider: FileChangeLike[];
+  pathOrFile: TFile;
+}
+
+interface FileChangeLike {
+  newContent: string;
+  reference: Reference;
+}
 
 interface LoopBuildNoticeMessageParamsLike {
   item: TFile;
@@ -98,6 +113,16 @@ interface SettingsLike {
 vi.mock('obsidian-dev-utils/abort-controller', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/abort-controller')>(),
   abortSignalAny: vi.fn()
+}));
+
+vi.mock('obsidian-dev-utils/obsidian/canvas', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/canvas')>(),
+  getCanvasReferences: vi.fn()
+}));
+
+vi.mock('obsidian-dev-utils/obsidian/file-change', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-change')>(),
+  applyFileChanges: vi.fn()
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
@@ -144,10 +169,6 @@ vi.mock('obsidian-dev-utils/obsidian/vault', async (importOriginal) => ({
   renameSafe: vi.fn()
 }));
 
-vi.mock('./canvas-links.ts', () => ({
-  getCanvasLinks: vi.fn()
-}));
-
 vi.mock('./modals/collect-attachment-used-by-multiple-notes-modal.ts', () => ({
   selectMode: vi.fn()
 }));
@@ -169,7 +190,8 @@ const mockAddToQueue = vi.mocked(addToQueue);
 const mockCleanupEmptyFolders = vi.mocked(cleanupEmptyFolders);
 const mockCopySafe = vi.mocked(copySafe);
 const mockRenameSafe = vi.mocked(renameSafe);
-const mockGetCanvasLinks = vi.mocked(getCanvasLinks);
+const mockGetCanvasReferences = vi.mocked(getCanvasReferences);
+const mockApplyFileChanges = vi.mocked(applyFileChanges);
 const mockSelectMode = vi.mocked(selectMode);
 
 const PLUGIN_NAME = 'Custom Attachment Location';
@@ -178,6 +200,34 @@ function createBacklinks(keys: string[]): CustomArrayDict<Reference> {
   return strictProxy<CustomArrayDict<Reference>>({
     keys: () => keys
   });
+}
+
+// Canvas references are plain objects (not strict proxies).
+// The real `isCanvas*` guards and `referenceToFileChange` can then probe arbitrary properties without throwing.
+function createCanvasFileNodeReference(overrides: Partial<CanvasReference> = {}): CanvasReference {
+  return {
+    isCanvas: true,
+    key: 'nodes.0.file',
+    link: 'img.png',
+    nodeIndex: 0,
+    original: 'img.png',
+    type: 'file',
+    ...overrides
+  };
+}
+
+function createCanvasTextNodeReference(overrides: Partial<CanvasTextNodeReference> = {}): CanvasTextNodeReference {
+  return {
+    isCanvas: true,
+    key: 'nodes.1.text.0',
+    link: 'img.png',
+    nodeIndex: 1,
+    original: '![[img.png]]',
+    // A plain object (not a strict proxy) so equality matchers can probe it without throwing.
+    originalReference: castTo<Reference>({ link: 'img.png', original: '![[img.png]]' }),
+    type: 'text',
+    ...overrides
+  };
 }
 
 function createFile(path: string, deleted = false): TFile {
@@ -342,9 +392,9 @@ describe('AttachmentCollector', () => {
 
     it('should read links from a canvas file', async () => {
       mockIsCanvasFile.mockReturnValue(true);
-      mockGetCanvasLinks.mockResolvedValue([]);
+      mockGetCanvasReferences.mockResolvedValue([]);
       await runSingleFile(note);
-      expect(mockGetCanvasLinks).toHaveBeenCalledWith(app, note);
+      expect(mockGetCanvasReferences).toHaveBeenCalledWith(app, note);
       expect(mockGetLinks).not.toHaveBeenCalled();
     });
 
@@ -580,6 +630,102 @@ describe('AttachmentCollector', () => {
       await runSingleFile(note);
       expect(hideSpy).toHaveBeenCalled();
       hideSpy.mockRestore();
+    });
+
+    describe('canvas references', () => {
+      beforeEach(() => {
+        mockIsCanvasFile.mockReturnValue(true);
+        mockExtractLinkFile.mockReturnValue(createFile('img.png'));
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
+        mockRenameSafe.mockResolvedValue('attachments/img.png');
+        mockCopySafe.mockResolvedValue('attachments/img.png');
+        mockUpdateLink.mockReturnValue('![[attachments/img.png]]');
+      });
+
+      it('should rewrite a canvas text-node embed after moving the attachment', async () => {
+        const textRef = createCanvasTextNodeReference();
+        mockGetCanvasReferences.mockResolvedValue([textRef]);
+        await runSingleFile(note);
+        expect(mockRenameSafe).toHaveBeenCalledWith({
+          app,
+          newPath: 'attachments/img.png',
+          oldPathOrAbstractFile: 'img.png'
+        });
+        expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({
+          link: textRef.originalReference,
+          newTargetPathOrFile: 'attachments/img.png',
+          oldTargetPathOrFile: 'img.png'
+        }));
+        expect(mockApplyFileChanges).toHaveBeenCalledTimes(1);
+        const applyParams = castTo<ApplyFileChangesParamsLike>(mockApplyFileChanges.mock.calls[0]?.[0]);
+        expect(applyParams.pathOrFile).toBe(note);
+        expect(applyParams.changesProvider).toHaveLength(1);
+        expect(applyParams.changesProvider[0]?.newContent).toBe('![[attachments/img.png]]');
+        expect(applyParams.changesProvider[0]?.reference).toBe(textRef);
+      });
+
+      it('should not rewrite a canvas file-node link on move (Obsidian core handles it)', async () => {
+        mockGetCanvasReferences.mockResolvedValue([createCanvasFileNodeReference()]);
+        await runSingleFile(note);
+        expect(mockRenameSafe).toHaveBeenCalled();
+        expect(mockApplyFileChanges).not.toHaveBeenCalled();
+      });
+
+      it('should rewrite a canvas file-node link when the attachment is copied', async () => {
+        const fileRef = createCanvasFileNodeReference();
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
+        mockGetCanvasReferences.mockResolvedValue([fileRef]);
+        await runSingleFile(note);
+        expect(mockCopySafe).toHaveBeenCalled();
+        expect(mockApplyFileChanges).toHaveBeenCalledTimes(1);
+        const applyParams = castTo<ApplyFileChangesParamsLike>(mockApplyFileChanges.mock.calls[0]?.[0]);
+        expect(applyParams.changesProvider).toHaveLength(1);
+        // A file-node prop is a raw path, not a formatted embed.
+        expect(applyParams.changesProvider[0]?.newContent).toBe('attachments/img.png');
+        expect(applyParams.changesProvider[0]?.reference).toBe(fileRef);
+      });
+
+      it('should rewrite a canvas text-node embed when the attachment is copied', async () => {
+        const textRef = createCanvasTextNodeReference();
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
+        mockGetCanvasReferences.mockResolvedValue([textRef]);
+        await runSingleFile(note);
+        expect(mockCopySafe).toHaveBeenCalled();
+        const applyParams = castTo<ApplyFileChangesParamsLike>(mockApplyFileChanges.mock.calls[0]?.[0]);
+        expect(applyParams.changesProvider).toHaveLength(1);
+        expect(applyParams.changesProvider[0]?.newContent).toBe('![[attachments/img.png]]');
+        expect(applyParams.changesProvider[0]?.reference).toBe(textRef);
+      });
+
+      it('should rewrite the text embed even when the same attachment is also a file node', async () => {
+        const fileRef = createCanvasFileNodeReference();
+        const textRef = createCanvasTextNodeReference();
+        mockGetCanvasReferences.mockResolvedValue([fileRef, textRef]);
+        await runSingleFile(note);
+        // The attachment is moved only once (deduplicated), yet both references are handled.
+        // The file node is rewritten by Obsidian core; the text embed by our rewrite.
+        expect(mockRenameSafe).toHaveBeenCalledTimes(1);
+        const applyParams = castTo<ApplyFileChangesParamsLike>(mockApplyFileChanges.mock.calls[0]?.[0]);
+        expect(applyParams.changesProvider).toHaveLength(1);
+        expect(applyParams.changesProvider[0]?.reference).toBe(textRef);
+      });
+
+      it('should not rewrite canvas references when no attachment is moved', async () => {
+        mockGetCanvasReferences.mockResolvedValue([createCanvasTextNodeReference()]);
+        getProperAttachmentPath.mockResolvedValue(null);
+        await runSingleFile(note);
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(mockApplyFileChanges).not.toHaveBeenCalled();
+      });
+
+      it('should skip a canvas reference that cannot be resolved to a file', async () => {
+        mockGetCanvasReferences.mockResolvedValue([createCanvasTextNodeReference()]);
+        mockExtractLinkFile.mockReturnValue(null);
+        await runSingleFile(note);
+        expect(mockApplyFileChanges).not.toHaveBeenCalled();
+      });
     });
   });
 

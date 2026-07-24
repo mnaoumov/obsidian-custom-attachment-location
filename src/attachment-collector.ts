@@ -5,6 +5,8 @@ import type {
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { ConsoleDebugComponent } from 'obsidian-dev-utils/obsidian/components/console-debug-component';
 import type { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
+import type { FileChange } from 'obsidian-dev-utils/obsidian/file-change';
+import type { CanvasReference } from 'obsidian-dev-utils/obsidian/reference';
 import type { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
 
@@ -15,6 +17,8 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
+import { getCanvasReferences } from 'obsidian-dev-utils/obsidian/canvas';
+import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
   isCanvasFile,
   isFile,
@@ -37,6 +41,10 @@ import {
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import {
+  isCanvasTextNodeReference,
+  referenceToFileChange
+} from 'obsidian-dev-utils/obsidian/reference';
+import {
   cleanupEmptyFolders,
   copySafe,
   renameSafe
@@ -48,7 +56,6 @@ import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
-import { getCanvasLinks } from './canvas-links.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 import { ActionContext } from './token-evaluator-context.ts';
@@ -87,6 +94,11 @@ interface AttachmentMoveResult {
 interface CollectAttachmentContext {
   collectAttachmentUsedByMultipleNotesMode?: CollectAttachmentUsedByMultipleNotesMode;
   isAborted?: boolean;
+}
+
+interface MovedAttachment {
+  readonly newAttachmentPath: string;
+  readonly wasCopied: boolean;
 }
 
 export class AttachmentCollector {
@@ -166,7 +178,7 @@ export class AttachmentCollector {
         return;
       }
 
-      const links = isCanvas ? await getCanvasLinks(app, params.note) : getLinks({ cache });
+      const links = isCanvas ? await getCanvasReferences(app, params.note) : getLinks({ cache });
       params.abortSignal.throwIfAborted();
 
       // Snapshot the attachment numbering from the pristine note, before any move rewrites its links.
@@ -175,6 +187,26 @@ export class AttachmentCollector {
 
       // Folders vacated by moving attachments out of them; cleaned up after the loop honoring emptyFolderBehavior.
       const oldParentFolderPaths = new Set<string>();
+
+      // Canvas references resolved to their pre-move target paths.
+      // Obsidian does not index canvas into the metadata cache, so canvas embeds cannot be rewritten via `editLinks`.
+      // After the loop we rewrite every canvas reference pointing to a moved attachment.
+      // File-node moves are additionally rewritten by Obsidian core on rename (see below).
+      const canvasReferenceTargets = isCanvas
+        ? (links as CanvasReference[]).map((reference) => ({
+          oldTargetPath: extractLinkFile({
+            app,
+            link: reference,
+            shouldAllowNonExistingFile: true,
+            sourcePathOrFile: params.note
+          })?.path,
+          reference
+        }))
+        : [];
+
+      // Attachments relocated during this note's collection: old path -> new path + whether it was copied.
+      // Obsidian core rewrites a canvas file-node prop when the attachment is moved (renamed) but not when copied.
+      const movedAttachments = new Map<string, MovedAttachment>();
 
       for (const link of links) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Could be changed in await call.
@@ -240,6 +272,10 @@ export class AttachmentCollector {
                     oldPathOrFile: result.oldAttachmentPath
                   })
                 };
+                movedAttachments.set(result.oldAttachmentPath, {
+                  newAttachmentPath: ensureNonNullable(result.newAttachmentPath),
+                  wasCopied: true
+                });
                 await editLinks({
                   app,
                   linkConverter: (link2): MaybeReturn<string> => {
@@ -330,6 +366,53 @@ export class AttachmentCollector {
               oldPathOrAbstractFile: attachmentMoveResult.oldAttachmentPath
             })
           };
+          movedAttachments.set(attachmentMoveResult.oldAttachmentPath, {
+            newAttachmentPath: ensureNonNullable(attachmentMoveResult.newAttachmentPath),
+            wasCopied: false
+          });
+        }
+      }
+
+      if (isCanvas) {
+        // Rewrite every canvas reference pointing to a moved attachment.
+        // Text-node embeds always need rewriting (Obsidian core never touches them).
+        // File-node props need it only for copies (moves are rewritten by Obsidian core).
+        const changes: FileChange[] = [];
+        for (const { oldTargetPath, reference } of canvasReferenceTargets) {
+          if (oldTargetPath === undefined) {
+            continue;
+          }
+
+          const moved = movedAttachments.get(oldTargetPath);
+          if (!moved) {
+            continue;
+          }
+
+          if (isCanvasTextNodeReference(reference)) {
+            const newContent = updateLink({
+              app,
+              link: reference.originalReference,
+              newSourcePathOrFile: params.note,
+              newTargetPathOrFile: moved.newAttachmentPath,
+              oldSourcePathOrFile: params.note,
+              oldTargetPathOrFile: oldTargetPath
+            });
+            changes.push(referenceToFileChange(reference, newContent));
+          } else if (moved.wasCopied) {
+            // Canvas file-node prop: Obsidian core rewrites it on rename (move) but not on copy.
+            changes.push(referenceToFileChange(reference, moved.newAttachmentPath));
+          }
+        }
+
+        if (changes.length > 0) {
+          await applyFileChanges({
+            app,
+            changesProvider: changes,
+            pathOrFile: params.note,
+            pluginNoticeComponent,
+            resourceLockComponent
+          });
+          params.abortSignal.throwIfAborted();
         }
       }
 

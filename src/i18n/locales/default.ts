@@ -368,8 +368,8 @@ export const defaultTranslations = {
     shouldHandleRenames: {
       description: {
         part1: 'Whether to handle renames.',
-        part2: 'To handle links to/from canvas files, you need to additionally install',
-        part3: 'plugin.'
+        part2: 'To handle embeds inside canvas text nodes on rename, additionally install the',
+        part3: 'plugin. Canvas file node links are handled without it.'
       },
       name: 'Should handle renames'
     },
