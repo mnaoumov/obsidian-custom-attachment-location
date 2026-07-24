@@ -133,6 +133,7 @@ const mockUpdateLink = vi.mocked(updateLink);
 
 const mockGetProperAttachmentPath = vi.fn<AttachmentPathManager['getProperAttachmentPath']>();
 const mockGetSequenceNumberMap = vi.fn<AttachmentPathManager['getSequenceNumberMap']>();
+const mockIsExcludedFromMultipleNotesCheck = vi.fn<PluginSettings['isExcludedFromMultipleNotesCheck']>();
 const mockIsNoteEx = vi.fn<PluginSettingsComponent['isNoteEx']>();
 const mockIsPathIgnored = vi.fn<PluginSettings['isPathIgnored']>();
 
@@ -189,6 +190,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     vi.clearAllMocks();
     mockGetSequenceNumberMap.mockResolvedValue(new Map());
     mockIsPathIgnored.mockReturnValue(false);
+    mockIsExcludedFromMultipleNotesCheck.mockReturnValue(false);
     mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
     combinedAbortSignal = new AbortController().signal;
     mockAbortSignalAny.mockReturnValue(combinedAbortSignal);
@@ -202,6 +204,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
       isNoteEx: mockIsNoteEx,
       settings: strictProxy<PluginSettings>({
+        isExcludedFromMultipleNotesCheck: mockIsExcludedFromMultipleNotesCheck,
         isPathIgnored: mockIsPathIgnored,
         get moveAttachmentToProperFolderUsedByMultipleNotesMode(): MoveAttachmentToProperFolderUsedByMultipleNotesMode {
           return mode;
@@ -519,6 +522,54 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
     it('should select cancel mode when settings default is Cancel', async () => {
       await runWithMode(MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel);
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'], isCancelMode: true });
+    });
+
+    it('should not trip the multiple-notes handling when only one non-excluded backlink remains', async () => {
+      // One real note + one excluded note: the effective count is one, so the Cancel handling never runs.
+      const attachment = createFile('attachment.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
+      mockIsExcludedFromMultipleNotesCheck.mockImplementation((path) => path === 'drawing.excalidraw.md');
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['drawing.excalidraw.md', [createReference('[[a]]')]],
+          ['note1.md', [createReference('[[a]]')]]
+        ])
+      ));
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockSelectMode).not.toHaveBeenCalled();
+      expect(mockCopySafe).not.toHaveBeenCalled();
+    });
+
+    it('should still handle multiple notes when only one of several backlinks is excluded', async () => {
+      // Two real notes + one excluded note: the two real notes still trip Cancel, and only they are listed.
+      const attachment = createFile('attachment.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
+      mockIsExcludedFromMultipleNotesCheck.mockImplementation((path) => path === 'drawing.excalidraw.md');
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['drawing.excalidraw.md', [createReference('[[a]]')]],
+          ['note1.md', [createReference('[[a]]')]],
+          ['note2.md', [createReference('[[a]]')]]
+        ])
+      ));
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
       expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'], isCancelMode: true });
     });
 

@@ -281,6 +281,19 @@ export const defaultTranslations = {
       },
       name: 'Exclude paths from attachment collecting'
     },
+    excludePathsFromMultipleNotesCheck: {
+      description: {
+        part1: 'Ignore notes from the following paths when checking whether an attachment is used by multiple notes during the',
+        part2: 'Collect attachments',
+        part3: 'and',
+        part4: 'Move attachment to proper folder',
+        part5: 'commands.',
+        part6: 'Insert each path on a new line.',
+        part7: 'You can use path string or',
+        part8: 'If the setting is empty, no notes are ignored.'
+      },
+      name: 'Exclude paths from multiple notes check'
+    },
     generatedAttachmentFileName: {
       description: {
         part1: 'See available',

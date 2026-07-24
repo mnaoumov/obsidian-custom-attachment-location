@@ -357,6 +357,10 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       return pathsValidator(value);
     });
 
+    this.registerValidator('excludePathsFromMultipleNotesCheck', (value): MaybeReturn<string> => {
+      return pathsValidator(value);
+    });
+
     this.registerValidator('customTokensStr', (value): MaybeReturn<string> => {
       return this.customTokensValidator(value);
     });

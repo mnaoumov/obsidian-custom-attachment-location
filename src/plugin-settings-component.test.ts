@@ -234,9 +234,11 @@ describe('PluginSettingsComponent', () => {
       const settings = createSettings();
       settings.includePaths = ['/valid.*/'];
       settings.excludePaths = ['plain/path'];
+      settings.excludePathsFromMultipleNotesCheck = ['/\\.excalidraw\\.md$/'];
       const result = await component.validate(settings);
       expect(result.includePaths).toBeUndefined();
       expect(result.excludePaths).toBeUndefined();
+      expect(result.excludePathsFromMultipleNotesCheck).toBeUndefined();
     });
 
     it('should reject an invalid regular expression in includePaths', async () => {
@@ -261,6 +263,17 @@ describe('PluginSettingsComponent', () => {
       });
       const result = await component.validate(settings);
       expect(result.excludePaths).toBe('Invalid regular expression /(/');
+    });
+
+    it('should reject an invalid regular expression in excludePathsFromMultipleNotesCheck', async () => {
+      const component = await createComponent();
+      const settings = createSettings();
+      Object.defineProperty(settings, 'excludePathsFromMultipleNotesCheck', {
+        configurable: true,
+        get: (): string[] => ['/)/']
+      });
+      const result = await component.validate(settings);
+      expect(result.excludePathsFromMultipleNotesCheck).toBe('Invalid regular expression /)/');
     });
   });
 

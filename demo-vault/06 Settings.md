@@ -36,6 +36,7 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
 - `collectAttachmentUsedByMultipleNotesMode` - what to do when a collected attachment is referenced by several notes: cancel, copy, move, prompt, or skip.
 - `moveAttachmentToProperFolderUsedByMultipleNotesMode` - the same choice for the **Move attachment to proper folder** command.
 - `excludePathsFromAttachmentCollecting` - paths ignored by the collecting commands.
+- `excludePathsFromMultipleNotesCheck` - notes on these paths are ignored when deciding whether a collected attachment is used by multiple notes, so a shared embed (e.g. an `.excalidraw` drawing) does not block collecting.
 
 ## Renames and deletions
 

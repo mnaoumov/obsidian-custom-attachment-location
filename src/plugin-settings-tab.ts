@@ -700,6 +700,36 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       })
       .addSettingEx((setting) => {
         setting
+          .setName(t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.name))
+          .setDesc(createFragment((f) => {
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.description.part1));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.description.part2));
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.description.part3));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.description.part4));
+            f.appendText(' ');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.description.part5));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.description.part6));
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.description.part7));
+            f.appendText(' ');
+            appendCodeBlock(f, t(($) => $.regularExpression));
+            f.appendText('.');
+            f.createEl('br');
+            f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromMultipleNotesCheck.description.part8));
+          }))
+          .addMultipleText((multipleText) => {
+            this.bind({
+              propertyName: 'excludePathsFromMultipleNotesCheck',
+              valueComponent: multipleText
+            });
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
           .setName(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.name))
           .setDesc(createFragment((f) => {
             f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part1));
