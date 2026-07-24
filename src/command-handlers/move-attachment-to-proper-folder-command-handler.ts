@@ -156,8 +156,11 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     let backlinksToCopy: string[] = [];
     const that = this;
 
+    // Notes matching the configured patterns are ignored when deciding whether the attachment is used by multiple notes.
+    const relevantBacklinkKeys = Array.from(backlinks.keys()).filter((backlink) => !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
+
     if (
-      backlinks.keys().length > 1 && !await handleMode(ctx.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)
+      relevantBacklinkKeys.length > 1 && !await handleMode(ctx.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)
     ) {
       return false;
     }
@@ -216,7 +219,6 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       });
     }
 
-    // eslint-disable-next-line require-atomic-updates -- Don't have a better way to do this.
     backlinks = await getBacklinksForFileSafe({
       app: this.app,
       pathOrFile: attachmentFile
@@ -238,17 +240,17 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
             that.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode
               === MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel
           ) {
-            await selectMode({ app, attachmentPath: attachmentFile.path, backlinks: Array.from(backlinks.keys()), isCancelMode: true });
+            await selectMode({ app, attachmentPath: attachmentFile.path, backlinks: relevantBacklinkKeys, isCancelMode: true });
           }
           return false;
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll:
-          backlinksToCopy = Array.from(backlinks.keys());
+          backlinksToCopy = relevantBacklinkKeys;
           return true;
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt: {
           const { backlinksToCopy: backlinksToCopy2, mode: mode2, shouldUseSameActionForOtherProblematicAttachments } = await selectMode({
             app,
             attachmentPath: attachmentFile.path,
-            backlinks: Array.from(backlinks.keys())
+            backlinks: relevantBacklinkKeys
           });
           if (shouldUseSameActionForOtherProblematicAttachments) {
             ctx.mode = mode2;

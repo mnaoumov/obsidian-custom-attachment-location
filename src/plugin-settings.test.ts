@@ -38,6 +38,7 @@ describe('PluginSettings', () => {
       expect(settings.includePaths).toStrictEqual([]);
       expect(settings.excludePaths).toStrictEqual([]);
       expect(settings.excludePathsFromAttachmentCollecting).toStrictEqual([]);
+      expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual([]);
     });
   });
 
@@ -74,6 +75,15 @@ describe('PluginSettings', () => {
       expect(settings.excludePathsFromAttachmentCollecting).toStrictEqual([]);
       settings.excludePathsFromAttachmentCollecting = ['attachments'];
       expect(settings.excludePathsFromAttachmentCollecting).toStrictEqual(['attachments']);
+    });
+  });
+
+  describe('excludePathsFromMultipleNotesCheck', () => {
+    it('should get and set the exclude paths from multiple notes check', () => {
+      const settings = new PluginSettings();
+      expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual([]);
+      settings.excludePathsFromMultipleNotesCheck = ['/\\.excalidraw\\.md$/'];
+      expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual(['/\\.excalidraw\\.md$/']);
     });
   });
 
@@ -124,6 +134,15 @@ describe('PluginSettings', () => {
       settings.excludePathsFromAttachmentCollecting = ['skip'];
       expect(settings.isExcludedFromAttachmentCollecting('skip/file.png')).toBe(true);
       expect(settings.isExcludedFromAttachmentCollecting('other/file.png')).toBe(false);
+    });
+  });
+
+  describe('isExcludedFromMultipleNotesCheck', () => {
+    it('should exclude notes matching the multiple-notes-check exclude paths', () => {
+      const settings = new PluginSettings();
+      settings.excludePathsFromMultipleNotesCheck = ['/\\.excalidraw\\.md$/'];
+      expect(settings.isExcludedFromMultipleNotesCheck('drawings/diagram.excalidraw.md')).toBe(true);
+      expect(settings.isExcludedFromMultipleNotesCheck('notes/note.md')).toBe(false);
     });
   });
 });

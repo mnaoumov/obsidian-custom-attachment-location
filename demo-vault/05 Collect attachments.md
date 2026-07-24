@@ -20,4 +20,4 @@ There is also **Move attachment to proper folder**, which relocates a single att
 2. Change **Location for new attachments** in the settings to something new.
 3. Run **Collect attachments in entire vault** and watch the existing attachments move to match the new pattern.
 
-Relevant settings: `shouldRenameCollectedAttachments`, `collectedAttachmentFileName`, `collectAttachmentUsedByMultipleNotesMode`, and `moveAttachmentToProperFolderUsedByMultipleNotesMode` control how collecting handles renaming and attachments shared by several notes. All keys are explained in [[06 Settings]].
+Relevant settings: `shouldRenameCollectedAttachments`, `collectedAttachmentFileName`, `collectAttachmentUsedByMultipleNotesMode`, and `moveAttachmentToProperFolderUsedByMultipleNotesMode` control how collecting handles renaming and attachments shared by several notes; `excludePathsFromMultipleNotesCheck` lets you ignore certain notes (e.g. `.excalidraw` drawings) from that shared-attachment check. All keys are explained in [[06 Settings]].

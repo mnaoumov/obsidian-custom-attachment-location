@@ -107,6 +107,7 @@ interface SettingsLike {
   emptyFolderBehavior: EmptyFolderBehavior;
   getTimeoutInMilliseconds(): number;
   isExcludedFromAttachmentCollecting(path: string): boolean;
+  isExcludedFromMultipleNotesCheck(path: string): boolean;
   isPathIgnored(path: string): boolean;
 }
 
@@ -278,6 +279,7 @@ describe('AttachmentCollector', () => {
       emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
       getTimeoutInMilliseconds: vi.fn<() => number>().mockReturnValue(1000),
       isExcludedFromAttachmentCollecting: vi.fn<(path: string) => boolean>().mockReturnValue(false),
+      isExcludedFromMultipleNotesCheck: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false)
     };
     getRoot = vi.fn<() => TFolder>().mockReturnValue(strictProxy<TFolder>({ path: '/' }));
@@ -621,6 +623,32 @@ describe('AttachmentCollector', () => {
         mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
         await runSingleFile(note);
         expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(1);
+      });
+
+      it('should collect normally when the only extra backlink is an excluded note', async () => {
+        // Configured Cancel, but the second backlink matches the multiple-notes-check exclusion,
+        // So the effective count drops to one and the attachment is moved normally.
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
+        vi.mocked(settings.isExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'other.md');
+        mockRenameSafe.mockResolvedValue('attachments/img.png');
+        await runSingleFile(note);
+        expect(mockSelectMode).not.toHaveBeenCalled();
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(mockRenameSafe).toHaveBeenCalledWith({
+          app,
+          newPath: 'attachments/img.png',
+          oldPathOrAbstractFile: 'img.png'
+        });
+      });
+
+      it('should still handle multiple notes when only one of several backlinks is excluded', async () => {
+        // Three backlinks, one is an excluded note; the two real notes still trigger the Cancel handling,
+        // And the modal lists only the two real notes.
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md', 'drawing.excalidraw.md']));
+        vi.mocked(settings.isExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'drawing.excalidraw.md');
+        await runSingleFile(note);
+        expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'], isCancelMode: true });
       });
     });
 

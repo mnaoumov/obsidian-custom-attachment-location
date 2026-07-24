@@ -237,8 +237,9 @@ export class AttachmentCollector {
           timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
         });
         params.abortSignal.throwIfAborted();
-        if (backlinks.keys().length > 1) {
-          const backlinksSorted = backlinks.keys().sort((a, b) => a.localeCompare(b));
+        const relevantBacklinks = backlinks.keys().filter((backlink) => !pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
+        if (relevantBacklinks.length > 1) {
+          const backlinksSorted = relevantBacklinks.sort((a, b) => a.localeCompare(b));
           const backlinksStr = backlinksSorted.map((backlink) => `- ${backlink}`).join('\n');
 
           async function applyCollectAttachmentUsedByMultipleNotesMode(

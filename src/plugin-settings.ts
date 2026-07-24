@@ -107,6 +107,14 @@ export class PluginSettings {
     this._attachmentCollectingPaths.excludePaths = value;
   }
 
+  public get excludePathsFromMultipleNotesCheck(): string[] {
+    return this._multipleNotesCheckPaths.excludePaths;
+  }
+
+  public set excludePathsFromMultipleNotesCheck(value: string[]) {
+    this._multipleNotesCheckPaths.excludePaths = value;
+  }
+
   public get includePaths(): string[] {
     return this._pathSettings.includePaths;
   }
@@ -121,6 +129,7 @@ export class PluginSettings {
 
   private readonly _attachmentCollectingPaths = new PathSettings();
   private _customTokensStr = '';
+  private readonly _multipleNotesCheckPaths = new PathSettings();
   private readonly _pathSettings = new PathSettings();
 
   public getNetworkImageDownloadTimeoutInMilliseconds(): number {
@@ -135,6 +144,10 @@ export class PluginSettings {
 
   public isExcludedFromAttachmentCollecting(path: string): boolean {
     return this._attachmentCollectingPaths.isPathIgnored(path);
+  }
+
+  public isExcludedFromMultipleNotesCheck(path: string): boolean {
+    return this._multipleNotesCheckPaths.isPathIgnored(path);
   }
 
   public isPathIgnored(path: string): boolean {
