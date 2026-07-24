@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 11.2.6
+
+- fix: re #34
+
 ## 11.2.5
 
 - fix: re #35
