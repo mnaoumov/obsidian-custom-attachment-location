@@ -406,6 +406,10 @@ export const defaultTranslations = {
       },
       name: 'Should rename collected attachments'
     },
+    shouldSetLinkDisplayTextToAttachmentFileName: {
+      description: 'If enabled, when a link to an attachment is inserted, its display text is set to the attachment file name (without extension). Does not affect links between notes.',
+      name: 'Set link display text to attachment file name'
+    },
     specialCharacters: {
       description: {
         part1: 'Special characters in attachment folder and file name to be replaced or removed.',

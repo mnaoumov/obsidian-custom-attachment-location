@@ -856,6 +856,17 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       })
       .addSettingEx((setting) => {
         setting
+          .setName(t(($) => $.pluginSettingsTab.shouldSetLinkDisplayTextToAttachmentFileName.name))
+          .setDesc(t(($) => $.pluginSettingsTab.shouldSetLinkDisplayTextToAttachmentFileName.description))
+          .addToggle((toggle) => {
+            this.bind({
+              propertyName: 'shouldSetLinkDisplayTextToAttachmentFileName',
+              valueComponent: toggle
+            });
+          });
+      })
+      .addSettingEx((setting) => {
+        setting
           .setName(t(($) => $.pluginSettingsTab.timeoutInSeconds.name))
           .setDesc(createFragment((f) => {
             f.appendText(t(($) => $.pluginSettingsTab.timeoutInSeconds.description.part1));
