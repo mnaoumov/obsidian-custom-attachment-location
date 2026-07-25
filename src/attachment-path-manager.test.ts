@@ -786,6 +786,31 @@ describe('AttachmentPathManager', () => {
       expect(ctx.create).toHaveBeenCalledWith('assets/.gitkeep', '');
     });
 
+    it('should not re-create the gitkeep file when a peer device already synced it (re #16)', async () => {
+      ctx.settings.attachmentFolderPath = 'assets';
+      ctx.settings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
+      mockIsNote.mockReturnValue(true);
+      /*
+       * The attachment folder does not exist yet, but its `.gitkeep` placeholder
+       * was already synced onto disk from another device.
+       */
+      ctx.exists.mockImplementation((path) => Promise.resolve(path === 'assets/.gitkeep'));
+      await ctx.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: false
+      });
+      expect(mockCreateFolderSafe).toHaveBeenCalledWith(expect.anything(), 'assets');
+      expect(ctx.create).not.toHaveBeenCalled();
+    });
+
     it('should not create the folder when it already exists', async () => {
       ctx.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });

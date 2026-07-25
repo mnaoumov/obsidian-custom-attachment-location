@@ -250,7 +250,19 @@ export class AttachmentPathManager {
       if (!await this.app.vault.exists(folderPath)) {
         await createFolderSafe(this.app, folderPath);
         if (this.pluginSettingsComponent.settings.emptyFolderBehavior === EmptyFolderBehavior.Keep) {
-          await this.app.vault.create(join(folderPath, '.gitkeep'), '');
+          /*
+           * Materialize the Keep placeholder idempotently. On a multi-device sync
+           * (iCloud/Git), a peer may have already synced the same `.gitkeep` onto
+           * disk in the window between the folder-existence check above and this
+           * write. An unconditional `create` would then throw (file already exists)
+           * and, worse, overwrite it, re-emitting a change event that feeds a
+           * cross-device sync loop (issue #16). Skip the write when the placeholder
+           * is already present.
+           */
+          const gitKeepPath = join(folderPath, '.gitkeep');
+          if (!await this.app.vault.exists(gitKeepPath)) {
+            await this.app.vault.create(gitKeepPath, '');
+          }
         }
       }
     }
