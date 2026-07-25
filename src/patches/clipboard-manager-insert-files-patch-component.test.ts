@@ -30,6 +30,7 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
 
   beforeEach(() => {
     arrayBufferMap = strictProxy<ArrayBufferMap>({
+      markAsPastedImage: vi.fn(),
       trySetByPath: vi.fn().mockResolvedValue(true)
     });
     insertFilesMock = vi.fn<InsertFilesFn>().mockResolvedValue(undefined);
@@ -46,12 +47,12 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
     });
   }
 
-  function createAttachment(filepath: string, buffer: ArrayBuffer): ImportedAttachment {
+  function createAttachment(filepath: string, buffer: ArrayBuffer, extension = 'png'): ImportedAttachment {
     return {
       data: Promise.resolve(buffer),
-      extension: 'png',
+      extension,
       filepath,
-      name: 'attachment.png'
+      name: `attachment.${extension}`
     };
   }
 
@@ -80,6 +81,26 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
     expect(vi.mocked(arrayBufferMap.trySetByPath)).toHaveBeenCalledWith(buffer1, 'folder/a.png');
     expect(vi.mocked(arrayBufferMap.trySetByPath)).toHaveBeenCalledWith(buffer2, 'folder/b.png');
     expect(insertFilesMock).toHaveBeenCalledWith(attachments);
+  });
+
+  it('should flag image attachments as pasted images but not non-image attachments (issue #31)', async () => {
+    const component = createComponent();
+    component.load();
+
+    const imageBuffer = new ArrayBuffer(4);
+    const pdfBuffer = new ArrayBuffer(8);
+    const attachments = [
+      createAttachment('folder/screenshot.png', imageBuffer, 'png'),
+      createAttachment('folder/doc.pdf', pdfBuffer, 'pdf')
+    ];
+
+    await strictProxy<ClipboardManagerProto>(clipboardManager).insertFiles(attachments);
+
+    // Assert by reference identity (`.mock.calls`) rather than structural `toHaveBeenCalledWith`,
+    // Because all-zero ArrayBuffers compare loosely so identity is the only reliable check.
+    const markCalls = vi.mocked(arrayBufferMap.markAsPastedImage).mock.calls;
+    expect(markCalls).toHaveLength(1);
+    expect(markCalls[0]?.[0]).toBe(imageBuffer);
   });
 
   it('should still delegate to the original method when there are no attachments', async () => {

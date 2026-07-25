@@ -92,13 +92,17 @@ export class AttachmentSaver {
       });
     }
 
-    let isPastedImage = false;
-    const match = PASTED_IMAGE_NAME_REG_EXP.exec(attachmentFileBaseName);
-    if (match) {
-      const timestampString = ensureNonNullable(match.groups?.['Timestamp']);
-      const parsedDate = moment(timestampString, PASTED_IMAGE_DATE_FORMAT);
-      if (parsedDate.isValid()) {
-        if (moment().diff(parsedDate, 'seconds') < THRESHOLD_IN_SECONDS) {
+    // Prefer the explicit clipboard signal recorded by the `insertFiles` interception (issue #31).
+    // Genuine clipboard image pastes are flagged even when Obsidian does not use its
+    // `Pasted image <timestamp>` naming, as with a Windows 11 Win+Shift+S screenshot from a
+    // Snipping Tool temp file. The legacy filename heuristic below remains a fallback.
+    let isPastedImage = this.arrayBufferMap.isPastedImage(attachmentFileContent);
+    if (!isPastedImage) {
+      const match = PASTED_IMAGE_NAME_REG_EXP.exec(attachmentFileBaseName);
+      if (match) {
+        const timestampString = ensureNonNullable(match.groups?.['Timestamp']);
+        const parsedDate = moment(timestampString, PASTED_IMAGE_DATE_FORMAT);
+        if (parsedDate.isValid() && moment().diff(parsedDate, 'seconds') < THRESHOLD_IN_SECONDS) {
           isPastedImage = true;
         }
       }
