@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 11.4.0
+
+- docs: demo link-display-text setting (re #24)
+- test: behavioral integration tests for ODU 88.2.0 canvas/alias fixes + clipboard/link-display
+- chore: update libs
+- fix: re #16
+- fix: re #26
+- feat: re #24
+- fix: re #31
+- fix: re #29
+
 ## 11.3.0
 
 - test: add desktop integration test for issue #33 collect exclusion
