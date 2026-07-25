@@ -29,6 +29,7 @@ import { ClipboardManagerInsertFilesPatchComponent } from './patches/clipboard-m
 import { FileArrayBufferPatchComponent } from './patches/file-array-buffer-patch-component.ts';
 import { FileManagerGenerateMarkdownLinkPatchComponent } from './patches/file-manager-generate-markdown-link-patch-component.ts';
 import { ShareReceiverImportFilesPatchComponent } from './patches/share-receiver-import-files-patch-component.ts';
+import { VaultCreateBinaryEnsureFolderPatchComponent } from './patches/vault-create-binary-ensure-folder-patch-component.ts';
 import { VaultGetAvailablePathForAttachmentsPatchComponent } from './patches/vault-get-available-path-for-attachments-patch-component.ts';
 import { VaultGetAvailablePathPatchComponent } from './patches/vault-get-available-path-patch-component.ts';
 import { VaultGetConfigPatchComponent } from './patches/vault-get-config-patch-component.ts';
@@ -101,6 +102,13 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.addChild(
       new VaultGetAvailablePathForAttachmentsPatchComponent({
         attachmentPathManager: this.attachmentPathManager,
+        vault: this.app.vault
+      })
+    );
+
+    this.addChild(
+      new VaultCreateBinaryEnsureFolderPatchComponent({
+        app: this.app,
         vault: this.app.vault
       })
     );
