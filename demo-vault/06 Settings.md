@@ -25,6 +25,10 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
 
 - `markdownUrlFormat` - a pattern for the link text inserted into the note. Leave blank for the default; setting it forces Markdown links even when Obsidian is configured for wikilinks.
 
+## Link display text
+
+- `shouldSetLinkDisplayTextToAttachmentFileName` - when inserting a link to an **attachment**, use the attachment's base name (without extension) as the link's display text. Notes are left alone, and an explicit alias or a cached image size still wins. See [[07 Link display text]].
+
 ## Custom tokens
 
 - `customTokensStr` - JavaScript that registers your own tokens (see [[04 Custom tokens]]).

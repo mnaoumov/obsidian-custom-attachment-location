@@ -10,3 +10,4 @@ Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian
 - [[04 Custom tokens]]
 - [[05 Collect attachments]]
 - [[06 Settings]]
+- [[07 Link display text]]
