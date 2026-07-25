@@ -30,12 +30,14 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
   let markdownUrlMap: MarkdownUrlMap;
   let pluginSettingsComponent: PluginSettingsComponent;
   let targetFile: TFile;
+  let attachmentFile: TFile;
   let defaultLinkResult: string;
-  let generateMarkdownLinkSpy: ReturnType<typeof vi.fn<() => string>>;
+  let generateMarkdownLinkSpy: ReturnType<typeof vi.fn<(file: TFile, sourcePath: string, subpath?: string, alias?: string) => string>>;
 
   beforeEach(() => {
     const appMock = App.createConfigured__({
       files: {
+        'folder/image.png': '',
         'folder/target.md': ''
       }
     });
@@ -46,6 +48,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     });
     app = appMock.asOriginalType__();
     targetFile = ensureNonNullable(app.vault.getFileByPath('folder/target.md'));
+    attachmentFile = ensureNonNullable(app.vault.getFileByPath('folder/image.png'));
 
     settings = new PluginSettings();
     settings.markdownUrlFormat = '';
@@ -61,9 +64,9 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     });
 
     defaultLinkResult = '[link](path.md)';
-    generateMarkdownLinkSpy = vi.fn((): string => defaultLinkResult);
+    generateMarkdownLinkSpy = vi.fn((_file: TFile, _sourcePath: string, _subpath?: string, _alias?: string): string => defaultLinkResult);
     fileManager = strictProxy<FileManagerOriginal>({
-      generateMarkdownLink: (_file: TFile, _sourcePath: string, _subpath?: string, _alias?: string): string => generateMarkdownLinkSpy()
+      generateMarkdownLink: (file: TFile, sourcePath: string, subpath?: string, alias?: string): string => generateMarkdownLinkSpy(file, sourcePath, subpath, alias)
     });
   });
 
@@ -107,6 +110,47 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     invoke(undefined, 'My Alias');
 
     expect(vi.mocked(imageSizeMap.getAndDelete)).not.toHaveBeenCalled();
+  });
+
+  it('should set the attachment base name as the alias when the setting is enabled (issue #24)', () => {
+    settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
+    const component = createComponent();
+    component.load();
+
+    fileManager.generateMarkdownLink(attachmentFile, 'note.md');
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(attachmentFile, 'note.md', undefined, 'image');
+  });
+
+  it('should not set a base-name alias for a note when the setting is enabled', () => {
+    settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
+    const component = createComponent();
+    component.load();
+
+    invoke();
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(targetFile, 'note.md', undefined, undefined);
+  });
+
+  it('should not set a base-name alias when the setting is disabled', () => {
+    settings.shouldSetLinkDisplayTextToAttachmentFileName = false;
+    const component = createComponent();
+    component.load();
+
+    fileManager.generateMarkdownLink(attachmentFile, 'note.md');
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(attachmentFile, 'note.md', undefined, undefined);
+  });
+
+  it('should prefer the cached image size over the base-name alias', () => {
+    settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
+    vi.mocked(imageSizeMap.getAndDelete).mockReturnValue('100x200');
+    const component = createComponent();
+    component.load();
+
+    fileManager.generateMarkdownLink(attachmentFile, 'note.md');
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(attachmentFile, 'note.md', undefined, '100x200');
   });
 
   it('should return the default link when no markdown url format is configured', () => {

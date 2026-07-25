@@ -30,6 +30,7 @@ describe('PluginSettings', () => {
       expect(settings.shouldHandleRenames).toBe(true);
       expect(settings.shouldRenameAttachmentFolder).toBe(true);
       expect(settings.shouldRenameAttachmentFiles).toBe(false);
+      expect(settings.shouldSetLinkDisplayTextToAttachmentFileName).toBe(false);
       expect(settings.specialCharacters).toBe('#^[]|*\\<>:?/');
       expect(settings.specialCharactersReplacement).toBe('-');
       expect(settings.timeoutInSeconds).toBe(5);

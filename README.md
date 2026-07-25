@@ -58,6 +58,10 @@ Format for the URL that will be inserted into Markdown.
 > - If set to `${generatedAttachmentFilePath}`, it is almost the same as leaving it blank, considering the previous bullet point. Leave this setting blank instead, unless you want to enforce markdown links, regardless of native Obsidian settings.
 > - If set to `${noteFilePath}`, will insert a link to the note itself, instead of the attachment files, which is not what you want. Some users reported they have this incorrect value set automatically during the invalid update. To fix the issue, leave this setting blank (or set to something meaningful).
 
+### Set link display text to attachment file name
+
+When enabled, inserting a link to an attachment sets its display text to the attachment file name (without extension). This is handy when combined with plugins that render the display text as an image title/caption. Links between notes are not affected.
+
 ### Should rename attachment folder
 
 Automatically update attachment folder name if [Location for New Attachments](#location-for-new-attachments) contains `${noteFileName}`.
