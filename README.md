@@ -143,8 +143,17 @@ The `<format>` part must be a JSON5 **object** (single line), i.e. it must start
 
 If you need quotes inside a JSON5 string, either escape them or switch quote types:
 
-- `${date:{momentJsFormat:'YYYY-MM-DD \'at\' HH:mm'}}`
-- `${date:{momentJsFormat:"YYYY-MM-DD 'at' HH:mm"}}`
+- `${date:{momentJsFormat:'It\'s ${date}'}}`
+- `${date:{momentJsFormat:"It's ${date}"}}`
+
+#### Escaping literal text inside a Moment.js format
+
+The `momentJsFormat` value is a [Moment.js format string](https://momentjs.com/docs/#/displaying/format/). Letters that are Moment.js format tokens (such as `a`, `A`, `h`, `H`, `D`, `M`, `Y`) are **always** interpreted as tokens, even inside JSON5 quotes. Wrapping literal text in quotes does **not** escape it — e.g. `'YYYY-MM-DD 'at' HH:mm'` outputs `2026-04-02 pmt 18-15` because Moment.js reads `a` as the am/pm marker and `t` as a literal.
+
+To include literal text, escape it with **square brackets** `[...]` (the Moment.js escape syntax), not quotes:
+
+- `${date:{momentJsFormat:'YYYY-MM-DD [at] HH:mm'}}` → `2026-04-02 at 18:15`
+- `${date:{momentJsFormat:'[Backup] YYYY [taken at] HH[h]mm'}}` → `Backup 2026 taken at 18h15`
 
 ### Validation (strict)
 
@@ -195,6 +204,7 @@ Current date/time.
 #### Examples
 
 - `${date:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
+- `${date:{momentJsFormat:'YYYY-MM-DD [at] HH-mm'}}`: `2025-12-31 at 18-15` (literal text escaped with `[...]`; see [Escaping literal text inside a Moment.js format](#escaping-literal-text-inside-a-momentjs-format)).
 
 ### `${frontmatter}`
 
