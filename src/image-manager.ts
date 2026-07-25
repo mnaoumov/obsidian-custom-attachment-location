@@ -6,21 +6,11 @@ import { trimEnd } from 'obsidian-dev-utils/string';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { getImageMimeType } from './image-mime-types.ts';
 import {
   ConvertImagesToJpegMode,
   DefaultImageSizeDimension
 } from './plugin-settings.ts';
-
-const IMAGE_MIME_TYPE_IMAGE_MAP: Record<string, string> = {
-  avif: 'image/avif',
-  bmp: 'image/bmp',
-  gif: 'image/gif',
-  jpeg: 'image/jpeg',
-  jpg: 'image/jpeg',
-  png: 'image/png',
-  svg: 'image/svg+xml',
-  webp: 'image/webp'
-};
 
 interface ImageManagerConstructorParams {
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -50,7 +40,7 @@ export class ImageManager {
   }
 
   public async convertToJpeg(params: ImageManagerConvertToJpegParams): Promise<ImageManagerConvertToJpegResult> {
-    const mimeType = this.getMimeType(params.attachmentFileExtension);
+    const mimeType = getImageMimeType(params.attachmentFileExtension);
     let shouldConvertImageToJpeg = false;
 
     if (mimeType) {
@@ -92,7 +82,7 @@ export class ImageManager {
   }
 
   public async getImageSize(params: ImageManagerGetImageSizeParams): Promise<null | string> {
-    const mimeType = IMAGE_MIME_TYPE_IMAGE_MAP[params.extension.toLowerCase()];
+    const mimeType = getImageMimeType(params.extension);
     if (!mimeType) {
       return null;
     }
@@ -138,9 +128,5 @@ export class ImageManager {
     // Emit width only so Obsidian preserves the image's aspect ratio.
     // A fixed `WIDTHxHEIGHT` distorts images in constrained containers (table cells, Canvas).
     return String(width);
-  }
-
-  private getMimeType(extension: string): null | string {
-    return IMAGE_MIME_TYPE_IMAGE_MAP[extension.toLowerCase()] ?? null;
   }
 }

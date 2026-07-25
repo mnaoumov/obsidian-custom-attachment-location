@@ -41,6 +41,7 @@ interface TestContext {
   getGeneratedAttachmentFileBaseName: ReturnType<typeof vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>>;
   getImageSize: ReturnType<typeof vi.fn<ImageManager['getImageSize']>>;
   imageSizeMapSet: ReturnType<typeof vi.fn<ImageSizeMap['set']>>;
+  isPastedImageBuffer: ReturnType<typeof vi.fn<ArrayBufferMap['isPastedImage']>>;
   isPathIgnored: ReturnType<typeof vi.fn<PluginSettings['isPathIgnored']>>;
   markdownUrlMapDelete: ReturnType<typeof vi.fn<MarkdownUrlMap['delete']>>;
   markdownUrlMapSet: ReturnType<typeof vi.fn<MarkdownUrlMap['set']>>;
@@ -69,7 +70,8 @@ function createSaver(): TestContext {
   });
 
   const getFileStats = vi.fn<ArrayBufferMap['getFileStats']>().mockReturnValue(undefined);
-  const arrayBufferMap = strictProxy<ArrayBufferMap>({ getFileStats });
+  const isPastedImageBuffer = vi.fn<ArrayBufferMap['isPastedImage']>().mockReturnValue(false);
+  const arrayBufferMap = strictProxy<ArrayBufferMap>({ getFileStats, isPastedImage: isPastedImageBuffer });
 
   const getAvailablePathForAttachments = vi.fn<AttachmentPathManager['getAvailablePathForAttachments']>().mockResolvedValue('assets/saved.png');
   const getGeneratedAttachmentFileBaseName = vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>().mockResolvedValue('generated');
@@ -117,6 +119,7 @@ function createSaver(): TestContext {
     getGeneratedAttachmentFileBaseName,
     getImageSize,
     imageSizeMapSet,
+    isPastedImageBuffer,
     isPathIgnored,
     markdownUrlMapDelete,
     markdownUrlMapSet,
@@ -204,6 +207,21 @@ describe('AttachmentSaver', () => {
       });
       expect(ctx.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
       expect(ctx.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: false }));
+    });
+
+    // Regression for issue #31: a clipboard image whose ArrayBuffer was flagged by the `insertFiles`
+    // Interception is renamed in OnlyPastedImages mode even when its base name is not a
+    // `Pasted image <timestamp>` name (e.g. a Windows 11 Win+Shift+S screenshot from a temp file).
+    it('should rename a clipboard-flagged image in OnlyPastedImages mode despite a non-pasted base name', async () => {
+      ctx.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
+      ctx.isPastedImageBuffer.mockReturnValue(true);
+      await ctx.saver.saveAttachment({
+        attachmentFileBaseName: 'image',
+        attachmentFileContent: new ArrayBuffer(0),
+        attachmentFileExtension: 'png'
+      });
+      expect(ctx.getGeneratedAttachmentFileBaseName).toHaveBeenCalled();
+      expect(ctx.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: true }));
     });
 
     it('should not treat an invalid pasted-image timestamp as a pasted image', async () => {

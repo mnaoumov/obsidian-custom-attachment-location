@@ -15,6 +15,7 @@ interface ArrayBufferMapConstructorParams {
 export class ArrayBufferMap {
   private readonly app: App;
   private readonly fileStatsMap = new WeakMap<ArrayBuffer, FileStats>();
+  private readonly pastedImageArrayBuffers = new WeakSet<ArrayBuffer>();
 
   public constructor(params: ArrayBufferMapConstructorParams) {
     this.app = params.app;
@@ -22,6 +23,31 @@ export class ArrayBufferMap {
 
   public getFileStats(arrayBuffer: ArrayBuffer): FileStats | undefined {
     return this.fileStatsMap.get(arrayBuffer);
+  }
+
+  /**
+   * Reports whether the given attachment content was pasted/inserted as an image via the clipboard
+   * or the editor insert-files flow.
+   *
+   * This is an explicit, filename-independent signal: the clipboard `insertFiles` interception marks
+   * the exact `ArrayBuffer` that later reaches {@link AttachmentSaver}, so genuine clipboard image
+   * pastes are detected even when Obsidian does not name them `Pasted image <timestamp>` (e.g. a
+   * Windows 11 Win+Shift+S screenshot that is backed by a real temp file).
+   *
+   * @param arrayBuffer - The attachment content.
+   * @returns `true` when the content was recorded as a pasted image.
+   */
+  public isPastedImage(arrayBuffer: ArrayBuffer): boolean {
+    return this.pastedImageArrayBuffers.has(arrayBuffer);
+  }
+
+  /**
+   * Records that the given attachment content was pasted/inserted as an image.
+   *
+   * @param arrayBuffer - The attachment content.
+   */
+  public markAsPastedImage(arrayBuffer: ArrayBuffer): void {
+    this.pastedImageArrayBuffers.add(arrayBuffer);
   }
 
   public setFileStats(arrayBuffer: ArrayBuffer, fileStats: FileStats): void {

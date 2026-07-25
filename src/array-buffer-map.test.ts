@@ -61,6 +61,29 @@ describe('ArrayBufferMap', () => {
     });
   });
 
+  describe('markAsPastedImage/isPastedImage', () => {
+    it('should return false for an unmarked array buffer', () => {
+      const map = new ArrayBufferMap({ app: strictProxy<App>({}) });
+      expect(map.isPastedImage(new ArrayBuffer(0))).toBe(false);
+    });
+
+    it('should report a marked array buffer as a pasted image', () => {
+      const map = new ArrayBufferMap({ app: strictProxy<App>({}) });
+      const arrayBuffer = new ArrayBuffer(8);
+      map.markAsPastedImage(arrayBuffer);
+      expect(map.isPastedImage(arrayBuffer)).toBe(true);
+    });
+
+    it('should track array buffers by identity, not by contents', () => {
+      const map = new ArrayBufferMap({ app: strictProxy<App>({}) });
+      const marked = new ArrayBuffer(8);
+      const other = new ArrayBuffer(8);
+      map.markAsPastedImage(marked);
+      expect(map.isPastedImage(marked)).toBe(true);
+      expect(map.isPastedImage(other)).toBe(false);
+    });
+  });
+
   describe('trySetByPath', () => {
     it('should return false for an empty path', async () => {
       const map = new ArrayBufferMap({ app: strictProxy<App>({}) });
