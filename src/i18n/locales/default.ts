@@ -66,6 +66,7 @@ export const defaultTranslations = {
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Should use the same action for other problematic attachments'
   },
   notice: {
+    attachmentReferencedByRawPath: 'Skipping collecting attachment \'{{attachmentPath}}\' because it is referenced by a raw path in \'{{noteFilePath}}\'.',
     collectingAttachments: 'Collecting attachments for \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Collecting attachments cancelled. See console for details.',
     couldNotResolveTemplatePath: 'Could not resolve template path \'{{template}}\'. See console for details.',
@@ -419,6 +420,10 @@ export const defaultTranslations = {
     shouldSetLinkDisplayTextToAttachmentFileName: {
       description: 'If enabled, when a link to an attachment is inserted, its display text is set to the attachment file name (without extension). Does not affect links between notes.',
       name: 'Set link display text to attachment file name'
+    },
+    shouldSkipCollectingAttachmentsReferencedByRawPath: {
+      description: 'When collecting an attachment, also scan every note\'s raw text for the attachment\'s path or file name. If another note references it in a format Obsidian does not index (e.g. via other plugins\' custom syntaxes or raw HTML), the attachment is treated as still used and is left in place. This prevents losing attachments referenced by non-standard syntaxes, at the cost of a slower collect.',
+      name: 'Skip collecting attachments referenced by a raw path'
     },
     specialCharacters: {
       description: {

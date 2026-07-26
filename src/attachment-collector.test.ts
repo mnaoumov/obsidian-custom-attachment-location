@@ -109,6 +109,7 @@ interface SettingsLike {
   isExcludedFromAttachmentCollecting(path: string): boolean;
   isExcludedFromMultipleNotesCheck(path: string): boolean;
   isPathIgnored(path: string): boolean;
+  shouldSkipCollectingAttachmentsReferencedByRawPath: boolean;
 }
 
 vi.mock('obsidian-dev-utils/abort-controller', async (importOriginal) => ({
@@ -264,6 +265,8 @@ describe('AttachmentCollector', () => {
   let getProperAttachmentPath: Mock<AttachmentPathManager['getProperAttachmentPath']>;
   let getSequenceNumberMap: Mock<AttachmentPathManager['getSequenceNumberMap']>;
   let getRoot: Mock<() => TFolder>;
+  let getMarkdownFiles: Mock<() => TFile[]>;
+  let cachedRead: Mock<(file: TFile) => Promise<string>>;
   let networkImageDownloader: NetworkImageDownloader;
   let pluginSettingsComponent: PluginSettingsComponent;
   let readJson: Mock<(path: string) => Promise<null | object>>;
@@ -280,12 +283,17 @@ describe('AttachmentCollector', () => {
       getTimeoutInMilliseconds: vi.fn<() => number>().mockReturnValue(1000),
       isExcludedFromAttachmentCollecting: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isExcludedFromMultipleNotesCheck: vi.fn<(path: string) => boolean>().mockReturnValue(false),
-      isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false)
+      isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false),
+      shouldSkipCollectingAttachmentsReferencedByRawPath: false
     };
     getRoot = vi.fn<() => TFolder>().mockReturnValue(strictProxy<TFolder>({ path: '/' }));
     readJson = vi.fn<(path: string) => Promise<null | object>>();
+    getMarkdownFiles = vi.fn<() => TFile[]>().mockReturnValue([]);
+    cachedRead = vi.fn<(file: TFile) => Promise<string>>().mockResolvedValue('');
     app = strictProxy<App>({
       vault: strictProxy<App['vault']>({
+        cachedRead: (file: TFile) => cachedRead(file),
+        getMarkdownFiles: () => getMarkdownFiles(),
         getRoot: () => getRoot(),
         readJson: (path: string) => readJson(path)
       })
@@ -658,6 +666,56 @@ describe('AttachmentCollector', () => {
       await runSingleFile(note);
       expect(hideSpy).toHaveBeenCalled();
       hideSpy.mockRestore();
+    });
+
+    describe('raw path safety scan', () => {
+      beforeEach(() => {
+        mockGetLinks.mockReturnValue([createReference()]);
+        mockExtractLinkFile.mockReturnValue(createFile('img.png'));
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
+        mockRenameSafe.mockResolvedValue('attachments/img.png');
+        settings.shouldSkipCollectingAttachmentsReferencedByRawPath = true;
+      });
+
+      it('should not scan when the setting is off', async () => {
+        settings.shouldSkipCollectingAttachmentsReferencedByRawPath = false;
+        await runSingleFile(note);
+        expect(getMarkdownFiles).not.toHaveBeenCalled();
+        expect(mockRenameSafe).toHaveBeenCalled();
+      });
+
+      it('should skip and report an attachment referenced by a raw path in a non-indexed note', async () => {
+        getMarkdownFiles.mockReturnValue([createFile('other.md')]);
+        cachedRead.mockResolvedValue('<img src="img.png">');
+        const showNoticeSpy = vi.spyOn(pluginNoticeComponent, 'showNotice');
+        await runSingleFile(note);
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by a raw path'));
+        expect(showNoticeSpy.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('raw path'))).toBe(true);
+        showNoticeSpy.mockRestore();
+      });
+
+      it('should collect normally when no non-indexed note references the attachment', async () => {
+        getMarkdownFiles.mockReturnValue([createFile('unrelated.md')]);
+        cachedRead.mockResolvedValue('no references here');
+        await runSingleFile(note);
+        expect(cachedRead).toHaveBeenCalled();
+        expect(mockRenameSafe).toHaveBeenCalledWith({
+          app,
+          newPath: 'attachments/img.png',
+          oldPathOrAbstractFile: 'img.png'
+        });
+      });
+
+      it('should ignore notes that reference the attachment via an indexed link', async () => {
+        // The note holding the indexed backlink is skipped by the scan, so its own embed does not
+        // Count as a raw-path reference and the attachment is still collected.
+        getMarkdownFiles.mockReturnValue([createFile('note.md')]);
+        cachedRead.mockResolvedValue('![[img.png]]');
+        await runSingleFile(note);
+        expect(cachedRead).not.toHaveBeenCalled();
+        expect(mockRenameSafe).toHaveBeenCalled();
+      });
     });
 
     describe('canvas references', () => {

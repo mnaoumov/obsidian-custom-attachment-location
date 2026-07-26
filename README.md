@@ -127,6 +127,12 @@ If enabled, empty attachment folders will be preserved, useful for source contro
 
 If enabled, when the note is deleted, its orphan attachments are deleted as well.
 
+### Skip collecting attachments referenced by a raw path
+
+The `Collect attachments` commands only see attachment references that Obsidian indexes (traditional `[[wikilink]]` / `![](markdown)` embeds). Attachments referenced through other plugins' non-standard syntaxes (a raw `<img src="...">`, a custom code block, an image-slider list, etc.) are invisible, so such an attachment could be relocated as if it were unused and later lost.
+
+If enabled, before moving an attachment the plugin also scans every note's raw text for the attachment's path or file name. When a note references it in a format Obsidian does not index, the attachment is treated as still used and is left in place (it is not moved or renamed). This trades a slower collect for protection against losing attachments referenced by non-standard syntaxes. It only protects them; it does not rewrite those references. Disabled by default.
+
 ## Tokens
 
 The following tokens can be used in the [Location for New Attachments](#location-for-new-attachments), [Generated attachment file name](#generated-attachment-file-name) and [Markdown URL format](#markdown-url-format) settings.

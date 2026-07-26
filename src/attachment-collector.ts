@@ -58,6 +58,7 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
+import { isReferencedByRawPath } from './raw-path-reference.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 
 interface AttachmentCollectorCollectAttachmentsParams {
@@ -86,9 +87,27 @@ interface AttachmentCollectorPrepareAttachmentToMoveParams {
   readonly sequenceNumberByAttachmentPath: ReadonlyMap<string, number>;
 }
 
+interface AttachmentCollectorRewriteMovedCanvasReferencesParams {
+  readonly abortSignal: AbortSignal;
+  readonly canvasReferenceTargets: readonly CanvasReferenceTarget[];
+  readonly movedAttachments: ReadonlyMap<string, MovedAttachment>;
+  readonly note: TFile;
+}
+
+interface AttachmentCollectorSkipAttachmentReferencedByRawPathParams {
+  readonly abortSignal: AbortSignal;
+  readonly attachmentPath: string;
+  readonly indexedBacklinkPaths: ReadonlySet<string>;
+}
+
 interface AttachmentMoveResult {
   readonly newAttachmentPath: null | string;
   readonly oldAttachmentPath: string;
+}
+
+interface CanvasReferenceTarget {
+  readonly oldTargetPath: string | undefined;
+  readonly reference: CanvasReference;
 }
 
 interface CollectAttachmentContext {
@@ -237,6 +256,18 @@ export class AttachmentCollector {
           timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
         });
         params.abortSignal.throwIfAborted();
+        if (
+          await this.skipAttachmentReferencedByRawPath({
+            abortSignal: params.abortSignal,
+            attachmentPath: attachmentMoveResult.oldAttachmentPath,
+            indexedBacklinkPaths: new Set(backlinks.keys())
+          })
+        ) {
+          params.abortSignal.throwIfAborted();
+          continue;
+        }
+        params.abortSignal.throwIfAborted();
+
         const relevantBacklinks = backlinks.keys().filter((backlink) => !pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
         if (relevantBacklinks.length > 1) {
           const backlinksSorted = relevantBacklinks.sort((a, b) => a.localeCompare(b));
@@ -375,46 +406,12 @@ export class AttachmentCollector {
       }
 
       if (isCanvas) {
-        // Rewrite every canvas reference pointing to a moved attachment.
-        // Text-node embeds always need rewriting (Obsidian core never touches them).
-        // File-node props need it only for copies (moves are rewritten by Obsidian core).
-        const changes: FileChange[] = [];
-        for (const { oldTargetPath, reference } of canvasReferenceTargets) {
-          if (oldTargetPath === undefined) {
-            continue;
-          }
-
-          const moved = movedAttachments.get(oldTargetPath);
-          if (!moved) {
-            continue;
-          }
-
-          if (isCanvasTextNodeReference(reference)) {
-            const newContent = updateLink({
-              app,
-              link: reference.originalReference,
-              newSourcePathOrFile: params.note,
-              newTargetPathOrFile: moved.newAttachmentPath,
-              oldSourcePathOrFile: params.note,
-              oldTargetPathOrFile: oldTargetPath
-            });
-            changes.push(referenceToFileChange(reference, newContent));
-          } else if (moved.wasCopied) {
-            // Canvas file-node prop: Obsidian core rewrites it on rename (move) but not on copy.
-            changes.push(referenceToFileChange(reference, moved.newAttachmentPath));
-          }
-        }
-
-        if (changes.length > 0) {
-          await applyFileChanges({
-            app,
-            changesProvider: changes,
-            pathOrFile: params.note,
-            pluginNoticeComponent,
-            resourceLockComponent
-          });
-          params.abortSignal.throwIfAborted();
-        }
+        await this.rewriteMovedCanvasReferences({
+          abortSignal: params.abortSignal,
+          canvasReferenceTargets,
+          movedAttachments,
+          note: params.note
+        });
       }
 
       await cleanupEmptyFolders({
@@ -558,5 +555,85 @@ export class AttachmentCollector {
       newAttachmentPath,
       oldAttachmentPath: oldAttachmentFile.path
     };
+  }
+
+  private async rewriteMovedCanvasReferences(params: AttachmentCollectorRewriteMovedCanvasReferencesParams): Promise<void> {
+    // Rewrite every canvas reference pointing to a moved attachment.
+    // Text-node embeds always need rewriting (Obsidian core never touches them).
+    // File-node props need it only for copies (moves are rewritten by Obsidian core).
+    const changes: FileChange[] = [];
+    for (const { oldTargetPath, reference } of params.canvasReferenceTargets) {
+      if (oldTargetPath === undefined) {
+        continue;
+      }
+
+      const moved = params.movedAttachments.get(oldTargetPath);
+      if (!moved) {
+        continue;
+      }
+
+      if (isCanvasTextNodeReference(reference)) {
+        const newContent = updateLink({
+          app: this.app,
+          link: reference.originalReference,
+          newSourcePathOrFile: params.note,
+          newTargetPathOrFile: moved.newAttachmentPath,
+          oldSourcePathOrFile: params.note,
+          oldTargetPathOrFile: oldTargetPath
+        });
+        changes.push(referenceToFileChange(reference, newContent));
+      } else if (moved.wasCopied) {
+        // Canvas file-node prop: Obsidian core rewrites it on rename (move) but not on copy.
+        changes.push(referenceToFileChange(reference, moved.newAttachmentPath));
+      }
+    }
+
+    if (changes.length > 0) {
+      await applyFileChanges({
+        app: this.app,
+        changesProvider: changes,
+        pathOrFile: params.note,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        resourceLockComponent: this.resourceLockComponent
+      });
+      params.abortSignal.throwIfAborted();
+    }
+  }
+
+  /**
+   * Opt-in safety net for issue #46: when enabled, scans every note's raw text for a non-indexed
+   * reference to the attachment (e.g. another plugin's custom syntax or raw HTML). If one is found,
+   * warns, shows a notice, and returns `true` so the caller skips relocating the attachment - erring
+   * toward NOT moving, since a false positive merely leaves it un-collected while a false negative
+   * could relocate a still-used attachment and lose it. Does NOT rewrite the non-standard reference.
+   */
+  private async skipAttachmentReferencedByRawPath(params: AttachmentCollectorSkipAttachmentReferencedByRawPathParams): Promise<boolean> {
+    if (!this.pluginSettingsComponent.settings.shouldSkipCollectingAttachmentsReferencedByRawPath) {
+      return false;
+    }
+
+    for (const noteFile of this.app.vault.getMarkdownFiles()) {
+      params.abortSignal.throwIfAborted();
+      // Notes with an indexed link to the attachment are already accounted for by the backlink-based checks.
+      if (params.indexedBacklinkPaths.has(noteFile.path)) {
+        continue;
+      }
+
+      const content = await this.app.vault.cachedRead(noteFile);
+      if (!isReferencedByRawPath({ attachmentPath: params.attachmentPath, content })) {
+        continue;
+      }
+
+      console.warn(
+        `Skipping collecting attachment ${params.attachmentPath} as it is referenced by a raw path (not an indexed link) in ${noteFile.path}.`
+      );
+      this.pluginNoticeComponent.showNotice(t(($) => $.notice.attachmentReferencedByRawPath, {
+        attachmentPath: params.attachmentPath,
+        noteFilePath: noteFile.path
+      }));
+      return true;
+    }
+
+    return false;
   }
 }

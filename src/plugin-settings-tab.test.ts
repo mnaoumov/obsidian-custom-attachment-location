@@ -284,6 +284,7 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Should rename collected attachments');
     expect(names).toContain('Collected attachment file name');
     expect(names).toContain('Collect attachment used by multiple notes mode');
+    expect(names).toContain('Skip collecting attachments referenced by a raw path');
     expect(names).toContain('Default image size');
     expect(names).toContain('Convert images to JPEG mode');
     expect(names).toContain('JPEG Quality');

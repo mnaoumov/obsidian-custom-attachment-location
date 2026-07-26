@@ -41,6 +41,7 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
 - `moveAttachmentToProperFolderUsedByMultipleNotesMode` - the same choice for the **Move attachment to proper folder** command.
 - `excludePathsFromAttachmentCollecting` - paths ignored by the collecting commands.
 - `excludePathsFromMultipleNotesCheck` - notes on these paths are ignored when deciding whether a collected attachment is used by multiple notes, so a shared embed (e.g. an `.excalidraw` drawing) does not block collecting.
+- `shouldSkipCollectingAttachmentsReferencedByRawPath` - a safety net for attachments referenced by other plugins' non-standard syntaxes. When on, before collecting an attachment the plugin also scans every note's raw text for the attachment's path or file name; if a note references it in a format Obsidian does not index, the attachment is treated as still used and left in place (it is not moved or renamed). Default off. See [[05 Collect attachments]].
 
 ## Renames and deletions
 

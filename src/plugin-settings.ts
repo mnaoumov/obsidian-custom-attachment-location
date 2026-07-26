@@ -78,6 +78,7 @@ export class PluginSettings {
   public shouldRenameAttachmentFolder = true;
   public shouldRenameCollectedAttachments = false;
   public shouldSetLinkDisplayTextToAttachmentFileName = false;
+  public shouldSkipCollectingAttachmentsReferencedByRawPath = false;
   public specialCharacters = '#^[]|*\\<>:?/';
   public specialCharactersReplacement = '-';
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.

@@ -533,6 +533,17 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               valueComponent: dropdown
             });
           });
+      })
+      .addSettingEx((setting) => {
+        setting
+          .setName(t(($) => $.pluginSettingsTab.shouldSkipCollectingAttachmentsReferencedByRawPath.name))
+          .setDesc(t(($) => $.pluginSettingsTab.shouldSkipCollectingAttachmentsReferencedByRawPath.description))
+          .addToggle((toggle) => {
+            this.bind({
+              propertyName: 'shouldSkipCollectingAttachmentsReferencedByRawPath',
+              valueComponent: toggle
+            });
+          });
       });
 
     new SettingGroupEx(this.containerEl)
