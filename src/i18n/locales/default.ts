@@ -34,11 +34,20 @@ export const defaultTranslations = {
     collectAttachmentsCurrentFolder: 'Collect attachments in current folder',
     collectAttachmentsCurrentNote: 'Collect attachments in current note',
     collectAttachmentsEntireVault: 'Collect attachments in entire vault',
+    deleteUnusedAttachmentsCurrentNote: 'Delete unused attachments in current note',
     moveAttachmentToProperFolder: 'Move attachment to proper folder'
+  },
+  deleteUnusedAttachments: {
+    confirm: {
+      part1: 'The following unused attachments will be moved to the trash:',
+      part2: 'This operation cannot be undone.'
+    }
   },
   menuItems: {
     collectAttachmentsInFile: 'Collect attachments in file',
-    collectAttachmentsInFiles: 'Collect attachments in files'
+    collectAttachmentsInFiles: 'Collect attachments in files',
+    deleteUnusedAttachmentsInFile: 'Delete unused attachments in file',
+    deleteUnusedAttachmentsInFiles: 'Delete unused attachments in files'
   },
   moveAttachmentToProperFolder: {
     progressBar: {
@@ -64,7 +73,8 @@ export const defaultTranslations = {
       part1: 'Generated attachment file name \'{{path}}\' is invalid.\n{{validationMessage}}\nCheck your',
       part2: 'setting.'
     },
-    notePathIsIgnored: 'Note path is ignored'
+    notePathIsIgnored: 'Note path is ignored',
+    noUnusedAttachments: 'No unused attachments found.'
   },
   pluginSettings: {
     attachmentRenameMode: {

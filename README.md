@@ -12,6 +12,7 @@ This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize a
 - Modify location for attachment folder.
 - Modify file name for **Pasted Files**.
 - **Collect attachments** - take all attachments from the notes and puts them into the corresponding configured folders.
+- **Delete unused attachments** - move attachments that a note no longer references (and that no other note references) from the note's attachment folder to the trash, after a confirmation dialog.
 
 ## Demo vault
 

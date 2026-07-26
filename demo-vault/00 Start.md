@@ -11,3 +11,4 @@ Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian
 - [[05 Collect attachments]]
 - [[06 Settings]]
 - [[07 Link display text]]
+- [[08 Delete unused attachments]]

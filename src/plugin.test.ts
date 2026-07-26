@@ -26,6 +26,7 @@ import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
+import { DeleteUnusedAttachmentsInFileCommandHandler } from './command-handlers/delete-unused-attachments-in-file-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import { ImageManager } from './image-manager.ts';
@@ -36,6 +37,7 @@ import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PrismComponent } from './prism-component.ts';
 import { TokenValidator } from './token-validator.ts';
+import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 // --- Hoisted shared state ---
 
@@ -112,6 +114,10 @@ vi.mock('./command-handlers/collect-attachments-in-file-command-handler.ts', () 
   CollectAttachmentsInFileCommandHandler: vi.fn()
 }));
 
+vi.mock('./command-handlers/delete-unused-attachments-in-file-command-handler.ts', () => ({
+  DeleteUnusedAttachmentsInFileCommandHandler: vi.fn()
+}));
+
 vi.mock('./command-handlers/move-attachment-to-proper-folder-command-handler.ts', () => ({
   MoveAttachmentToProperFolderCommandHandler: vi.fn()
 }));
@@ -167,6 +173,10 @@ vi.mock('./prism-component.ts', () => ({
 
 vi.mock('./token-validator.ts', () => ({
   TokenValidator: vi.fn()
+}));
+
+vi.mock('./unused-attachments-remover.ts', () => ({
+  UnusedAttachmentsRemover: vi.fn()
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede the import of the module under test.
@@ -262,9 +272,11 @@ describe('Plugin', () => {
     expect(PluginSettingsTab).toHaveBeenCalledOnce();
     expect(RenameDeleteHandlerComponent).toHaveBeenCalledOnce();
     expect(AttachmentCollector).toHaveBeenCalledOnce();
+    expect(UnusedAttachmentsRemover).toHaveBeenCalledOnce();
     // The base separately auto-registers its own handler (e.g. UnlockActiveNoteCommandHandler), so assert the plugin's own registration by its handlers rather than the total call count.
     expect(CommandHandlerComponent.prototype.registerCommandHandlers).toHaveBeenCalledWith([
       expect.any(CollectAttachmentsInFileCommandHandler),
+      expect.any(DeleteUnusedAttachmentsInFileCommandHandler),
       expect.any(CollectAttachmentsInCurrentFolderCommandHandler),
       expect.any(CollectAttachmentsEntireVaultCommandHandler),
       expect.any(MoveAttachmentToProperFolderCommandHandler),
@@ -274,11 +286,12 @@ describe('Plugin', () => {
     expect(PrismComponent).toHaveBeenCalledOnce();
   });
 
-  it('should register all four collect/move command handlers', async () => {
+  it('should register all collect/delete/move command handlers', async () => {
     const plugin = new Plugin(app, manifest);
     await plugin.onload();
 
     expect(CollectAttachmentsInFileCommandHandler).toHaveBeenCalledOnce();
+    expect(DeleteUnusedAttachmentsInFileCommandHandler).toHaveBeenCalledOnce();
     expect(CollectAttachmentsInCurrentFolderCommandHandler).toHaveBeenCalledOnce();
     expect(CollectAttachmentsEntireVaultCommandHandler).toHaveBeenCalledOnce();
     expect(MoveAttachmentToProperFolderCommandHandler).toHaveBeenCalledOnce();

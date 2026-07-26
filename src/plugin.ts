@@ -16,6 +16,7 @@ import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
+import { DeleteUnusedAttachmentsInFileCommandHandler } from './command-handlers/delete-unused-attachments-in-file-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
@@ -28,6 +29,7 @@ import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PrismComponent } from './prism-component.ts';
 import { TokenValidator } from './token-validator.ts';
+import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 export class Plugin extends PluginBase {
   protected override createTranslationsMap(): TranslationsMap {
@@ -147,9 +149,20 @@ export class Plugin extends PluginBase {
       resourceLockComponent: this.resourceLockComponent
     });
 
+    const unusedAttachmentsRemover = new UnusedAttachmentsRemover({
+      abortSignalComponent: this.abortSignalComponent,
+      app: this.app,
+      attachmentPathManager,
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      pluginSettingsComponent
+    });
+
     this.commandHandlerComponent.registerCommandHandlers([
       new CollectAttachmentsInFileCommandHandler({
         attachmentCollector
+      }),
+      new DeleteUnusedAttachmentsInFileCommandHandler({
+        unusedAttachmentsRemover
       }),
       new CollectAttachmentsInCurrentFolderCommandHandler({
         attachmentCollector
