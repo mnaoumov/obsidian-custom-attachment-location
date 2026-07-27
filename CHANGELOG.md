@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 11.5.0
+
+- feat: show a progress notice while a rename updates backlinks (re #25)
+- chore: update libs
+- feat: add opt-in raw-path safety scan for collecting attachments (re #46)
+- feat: add Delete unused attachments" command and menu item (re #23)
+
 ## 11.4.0
 
 - docs: demo link-display-text setting (re #24)
