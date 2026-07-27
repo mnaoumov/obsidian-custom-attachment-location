@@ -22,6 +22,7 @@ import { CustomAttachmentLocationComponent } from './custom-attachment-location-
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { ImageManager } from './image-manager.ts';
 import { ImageSizeMap } from './image-size-map.ts';
+import { createLinkUpdateProgressReporter } from './link-update-progress-reporter.ts';
 import { MarkdownUrlMap } from './markdown-url-map.ts';
 import { NetworkImageDownloader } from './network-image-downloader.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
@@ -114,6 +115,9 @@ export class Plugin extends PluginBase {
       new RenameDeleteHandlerComponent({
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
+        linkUpdateProgressReporter: createLinkUpdateProgressReporter({
+          pluginNoticeComponent: this.pluginNoticeComponent
+        }),
         pluginId: this.manifest.id,
         pluginNoticeComponent: this.pluginNoticeComponent,
         resourceLockComponent: this.resourceLockComponent,

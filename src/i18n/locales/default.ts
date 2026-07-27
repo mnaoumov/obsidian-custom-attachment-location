@@ -75,7 +75,8 @@ export const defaultTranslations = {
       part2: 'setting.'
     },
     notePathIsIgnored: 'Note path is ignored',
-    noUnusedAttachments: 'No unused attachments found.'
+    noUnusedAttachments: 'No unused attachments found.',
+    updatingLinks: 'Updating links: {{processed}}/{{total}} - \'{{currentPath}}\''
   },
   pluginSettings: {
     attachmentRenameMode: {
