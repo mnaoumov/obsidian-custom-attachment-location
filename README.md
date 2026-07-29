@@ -19,7 +19,7 @@ This is a plugin for [Obsidian](https://obsidian.md/) that allows to customize a
 A demo vault with usage examples ships with every release. You can access it via any of the following:
 
 1. Running the **Custom Attachment Location: Open demo vault** command.
-2. Downloading `custom-attachment-location.demo-vault.zip` from the [Releases](https://github.com/mnaoumov/obsidian-custom-attachment-location/releases).
+2. Downloading `obsidian-custom-attachment-location-demo-vault-<version>.zip` (`<version>` is the release version) from the [Releases](https://github.com/mnaoumov/obsidian-custom-attachment-location/releases).
 3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
 
 ## Settings
