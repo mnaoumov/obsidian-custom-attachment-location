@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 11.6.0
+
+- test(settings): exercise the custom-tokens row teardown
+- refactor: replace the deprecated setWarning with setDestructive
+- refactor(settings): move the settings tab onto the declarative settings API
+- chore: update libs and clear the npm audit
+- docs: fix the demo vault download instructions
+
 ## 11.5.0
 
 - feat: show a progress notice while a rename updates backlinks (re #25)
