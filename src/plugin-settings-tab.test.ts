@@ -2,6 +2,8 @@ import type { PrismModule } from '@obsidian-typings/obsidian-public-latest/imple
 import type {
   ButtonComponent,
   DropdownComponent,
+  SettingDefinition,
+  SettingGroup,
   ToggleComponent
 } from 'obsidian';
 import type { AsyncEventRef } from 'obsidian-dev-utils/async-events';
@@ -13,6 +15,7 @@ import type { NumberComponent } from 'obsidian-dev-utils/obsidian/setting-compon
 
 import { waitForAllAsyncOperations } from 'obsidian-dev-utils/async';
 import { noopAsync } from 'obsidian-dev-utils/function';
+import { castTo } from 'obsidian-dev-utils/object-utils';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
@@ -88,6 +91,11 @@ interface CreatedTab {
   tab: PluginSettingsTab;
   textLikeComponents: CapturedValueComponent[];
   toggles: CapturedToggle[];
+}
+
+interface DeclaredRow {
+  disabled?: (() => boolean) | boolean;
+  visible?: (() => boolean) | boolean;
 }
 
 class MockDataHandler implements DataHandler {
@@ -215,7 +223,7 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
     await pluginSettingsComponent.editAndSave(configure);
   }
 
-  tab.displayLegacy();
+  renderRows(tab);
   addButtonSpy.mockRestore();
   addToggleSpy.mockRestore();
   addTextSpy.mockRestore();
@@ -233,6 +241,72 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
     textLikeComponents,
     toggles
   };
+}
+
+/**
+ * Resolves a declarative predicate that may be a boolean, a function, or absent.
+ *
+ * @param predicate - The predicate.
+ * @param defaultValue - The value to use when the predicate is absent.
+ * @returns The resolved value.
+ */
+function evaluatePredicate(predicate: (() => boolean) | boolean | undefined, defaultValue: boolean): boolean {
+  if (typeof predicate === 'function') {
+    return predicate();
+  }
+
+  return predicate ?? defaultValue;
+}
+
+/**
+ * Evaluates a declared row's `disabled` predicate.
+ *
+ * @param tab - The settings tab.
+ * @param name - The row name.
+ * @returns Whether the row is disabled.
+ */
+function isRowDisabled(tab: PluginSettingsTab, name: string): boolean {
+  for (const item of tab.getSettingDefinitions()) {
+    const rows = 'items' in item ? castTo<SettingDefinition[]>(item.items ?? []) : [castTo<SettingDefinition>(item)];
+    const row = rows.find((candidate) => 'name' in candidate && candidate.name === name);
+    if (row) {
+      return evaluatePredicate(castTo<DeclaredRow>(row).disabled, false);
+    }
+  }
+
+  throw new Error(`Row not found: ${name}`);
+}
+
+/**
+ * Renders the declared rows the way Obsidian does when the tab is opened: it skips the rows whose `visible`
+ * predicate is false, applies the name and description, runs the row's `render` callback, and finally applies
+ * the `disabled` predicate (which `Setting.setDisabled` propagates to every component on the row).
+ *
+ * @param tab - The settings tab.
+ */
+function renderRows(tab: PluginSettingsTab): void {
+  for (const item of tab.getSettingDefinitions()) {
+    const rows = 'items' in item ? castTo<SettingDefinition[]>(item.items ?? []) : [castTo<SettingDefinition>(item)];
+    for (const row of rows) {
+      if (!('render' in row)) {
+        continue;
+      }
+
+      const rowExt = castTo<DeclaredRow>(row);
+      if (!evaluatePredicate(rowExt.visible, true)) {
+        continue;
+      }
+
+      const setting = new SettingEx(tab.containerEl);
+      setting.setName(row.name);
+      if (row.desc) {
+        setting.setDesc(row.desc);
+      }
+
+      row.render(setting, castTo<SettingGroup>(null));
+      setting.setDisabled(evaluatePredicate(rowExt.disabled, false));
+    }
+  }
 }
 
 beforeAll(async () => {
@@ -308,26 +382,28 @@ describe('PluginSettingsTab', () => {
     expect(pluginSettingsComponent.shouldDebounceCustomTokensValidation).toBe(false);
   });
 
-  it('should re-render when the should-handle-renames toggle changes', async () => {
+  it('should re-evaluate the predicates when the should-handle-renames toggle changes', async () => {
     const { tab, toggles } = await createTab();
 
-    const displaySpy = vi.spyOn(tab, 'displayLegacy');
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
     const captured = toggles.find((entry) => entry.name === 'Should handle renames');
     expect(captured).toBeDefined();
     captured?.toggle.setValue(false);
     await waitForAllAsyncOperations();
-    expect(displaySpy).toHaveBeenCalled();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
   });
 
-  it('should re-render when the download-network-images toggle changes', async () => {
+  it('should re-evaluate the predicates when the download-network-images toggle changes', async () => {
     const { tab, toggles } = await createTab();
 
-    const displaySpy = vi.spyOn(tab, 'displayLegacy');
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
     const captured = toggles.find((entry) => entry.name === 'Download network images');
     expect(captured).toBeDefined();
     captured?.toggle.setValue(true);
     await waitForAllAsyncOperations();
-    expect(displaySpy).toHaveBeenCalled();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
   });
 
   it('should render the network image download timeout setting when downloading is enabled', async () => {
@@ -342,35 +418,22 @@ describe('PluginSettingsTab', () => {
     expect(names).not.toContain('Network image download timeout in seconds');
   });
 
-  it('should bind the dependent toggles when renames are handled', async () => {
-    const { toggles } = await createTab();
-    const folderToggle = toggles.find((entry) => entry.name === 'Should rename attachment folders');
-    const fileToggle = toggles.find((entry) => entry.name === 'Should rename attachment files');
-    expect(folderToggle?.toggle.disabled).toBe(false);
-    expect(fileToggle?.toggle.disabled).toBe(false);
+  it('should enable the dependent rows when renames are handled', async () => {
+    const { tab } = await createTab();
+    expect(isRowDisabled(tab, 'Should rename attachment folders')).toBe(false);
+    expect(isRowDisabled(tab, 'Should rename attachment files')).toBe(false);
   });
 
-  it('should disable the dependent toggles when renames are not handled', async () => {
-    const { pluginSettingsComponent, tab, toggles } = await createTab();
+  it('should disable the dependent rows when renames are not handled', async () => {
+    const { pluginSettingsComponent, tab } = await createTab();
     await pluginSettingsComponent.editAndSave((settings) => {
       settings.shouldHandleRenames = false;
     });
-    toggles.length = 0;
-    const addToggleSpy = vi.spyOn(SettingEx.prototype, 'addToggle');
-    addToggleSpy.mockImplementation(function capturingAddToggle(this: SettingEx, cb: (toggle: ToggleComponent) => unknown): SettingEx {
-      const name = this.nameEl.textContent;
-      return originalAddToggle.call(this, (toggle: ToggleComponent) => {
-        toggles.push({ name, toggle });
-        cb(toggle);
-      });
-    });
 
-    tab.displayLegacy();
-    addToggleSpy.mockRestore();
-    const folderToggle = toggles.find((entry) => entry.name === 'Should rename attachment folders');
-    const fileToggle = toggles.find((entry) => entry.name === 'Should rename attachment files');
-    expect(folderToggle?.toggle.disabled).toBe(true);
-    expect(fileToggle?.toggle.disabled).toBe(true);
+    // The predicate is what the tab owns; Obsidian applies it (and propagates it to the row's components)
+    // On every render and on every `refreshDomState()`.
+    expect(isRowDisabled(tab, 'Should rename attachment folders')).toBe(true);
+    expect(isRowDisabled(tab, 'Should rename attachment files')).toBe(true);
   });
 
   it('should do nothing when resetting custom tokens that already match the sample', async () => {
