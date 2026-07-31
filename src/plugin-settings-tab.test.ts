@@ -3,6 +3,7 @@ import type {
   ButtonComponent,
   DropdownComponent,
   SettingDefinition,
+  SettingDefinitionRender,
   SettingGroup,
   ToggleComponent
 } from 'obsidian';
@@ -259,6 +260,25 @@ function evaluatePredicate(predicate: (() => boolean) | boolean | undefined, def
 }
 
 /**
+ * Finds a declared row by name.
+ *
+ * @param tab - The settings tab.
+ * @param name - The row name.
+ * @returns The row.
+ */
+function findRow(tab: PluginSettingsTab, name: string): SettingDefinitionRender {
+  for (const item of tab.getSettingDefinitions()) {
+    const rows = 'items' in item ? castTo<SettingDefinition[]>(item.items ?? []) : [castTo<SettingDefinition>(item)];
+    const row = rows.find((candidate) => 'name' in candidate && candidate.name === name);
+    if (row) {
+      return castTo<SettingDefinitionRender>(row);
+    }
+  }
+
+  throw new Error(`Row not found: ${name}`);
+}
+
+/**
  * Evaluates a declared row's `disabled` predicate.
  *
  * @param tab - The settings tab.
@@ -380,6 +400,21 @@ describe('PluginSettingsTab', () => {
     const { pluginSettingsComponent, tab } = await createTab();
     tab.hide();
     expect(pluginSettingsComponent.shouldDebounceCustomTokensValidation).toBe(false);
+  });
+
+  it('should cancel the debounced custom-token registration when the row is torn down', async () => {
+    const { tab } = await createTab();
+
+    // Obsidian calls the cleanup a row's `render` returns before the row is re-rendered or removed.
+    const row = findRow(tab, 'Custom tokens');
+    const setting = new SettingEx(tab.containerEl);
+    setting.setName(row.name);
+    const cleanup = row.render(setting, castTo<SettingGroup>(null));
+
+    expect(cleanup).toBeTypeOf('function');
+    expect(() => {
+      castTo<() => void>(cleanup)();
+    }).not.toThrow();
   });
 
   it('should re-evaluate the predicates when the should-handle-renames toggle changes', async () => {
