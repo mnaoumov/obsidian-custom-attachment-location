@@ -859,7 +859,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             render: (setting) => {
               setting.addButton((button) => {
                 button.setButtonText(t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title));
-                button.setWarning();
+                button.setDestructive();
                 button.onClick(convertAsyncToSync(async () => {
                   if (this.pluginSettingsComponent.settings.customTokensStr === SAMPLE_CUSTOM_TOKENS) {
                     return;
