@@ -33,8 +33,8 @@ import {
   MoveAttachmentToProperFolderUsedByMultipleNotesMode,
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
-import { TOKENIZED_STRING_LANGUAGE } from './prism-component.ts';
 import { Substitutions } from './substitutions.ts';
+import { TOKENIZED_STRING_LANGUAGE } from './tokenized-string-language-component.ts';
 
 const VISIBLE_SPACE_CHARACTER = '␣';
 const JPEG_QUALITY_PRECISION = 2;
