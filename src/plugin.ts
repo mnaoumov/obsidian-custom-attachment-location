@@ -28,8 +28,8 @@ import { NetworkImageDownloader } from './network-image-downloader.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
-import { PrismComponent } from './prism-component.ts';
 import { TokenValidator } from './token-validator.ts';
+import { TokenizedStringLanguageComponent } from './tokenized-string-language-component.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 export class Plugin extends PluginBase {
@@ -197,6 +197,6 @@ export class Plugin extends PluginBase {
       })
     );
 
-    this.addChild(new PrismComponent());
+    this.addChild(new TokenizedStringLanguageComponent());
   }
 }

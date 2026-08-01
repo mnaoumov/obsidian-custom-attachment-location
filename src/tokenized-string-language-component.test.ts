@@ -15,28 +15,46 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', () => ({
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import {
-  PrismComponent,
-  TOKENIZED_STRING_LANGUAGE
-} from './prism-component.ts';
+  TOKENIZED_STRING_LANGUAGE,
+  TokenizedStringLanguageComponent
+} from './tokenized-string-language-component.ts';
 
 interface PrismLike {
   languages: Record<string, unknown>;
 }
 
+interface PrismTokenWithInside {
+  inside: unknown;
+}
+
+interface PrismTokenWithNestedInside {
+  inside: Record<string, PrismTokenWithInside | undefined>;
+}
+
 const mockLoadPrism = vi.mocked(loadPrism);
 
+/**
+ * Creates the Prism module the mocked `loadPrism` resolves with.
+ *
+ * Deliberately a plain object rather than a `strictProxy`: `SyntaxHighlightingComponent` READS
+ * `prism.languages[language]` before writing it (it restores the previous grammar on unload), and a strict
+ * proxy throws on an absent key — so proxying it would fail the registration it is meant to observe.
+ *
+ * @param withJavascript - Whether the built-in `javascript` grammar the factory nests is registered.
+ * @returns The Prism-like module.
+ */
 function createPrism(withJavascript: boolean): PrismLike {
   return {
     languages: withJavascript ? { javascript: { keyword: /\bif\b/ } } : {}
   };
 }
 
-describe('PrismComponent', () => {
-  let component: PrismComponent;
+describe('TokenizedStringLanguageComponent', () => {
+  let component: TokenizedStringLanguageComponent;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    component = new PrismComponent();
+    component = new TokenizedStringLanguageComponent();
   });
 
   it('should export the tokenized string language id', () => {
@@ -44,38 +62,44 @@ describe('PrismComponent', () => {
   });
 
   describe('onload', () => {
-    it('should schedule initPrism when loaded through the real lifecycle', async () => {
-      mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(createPrism(true)));
-      component.load();
-      // The real onload schedules initPrism via the real invokeAsyncSafely (fire-and-forget).
-      // Drain the tracked operation, then assert it ran.
-      await waitForAllAsyncOperations();
-      expect(mockLoadPrism).toHaveBeenCalledOnce();
-    });
-
-    it('should run initPrism when the scheduled callback is invoked', async () => {
+    it('should register the language when loaded through the real lifecycle', async () => {
       const prism = createPrism(true);
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
       component.load();
-      // Drain the fire-and-forget initPrism scheduled by the real lifecycle, then assert its effect.
+      // The real onload schedules onloadAsync via the real invokeAsyncSafely (fire-and-forget).
+      // Drain the tracked operation, then assert its effect.
       await waitForAllAsyncOperations();
+      expect(mockLoadPrism).toHaveBeenCalledOnce();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeDefined();
     });
   });
 
   describe('onloadAsync', () => {
-    it('should return early when the javascript language is not available', async () => {
+    it('should throw when the javascript language is not available', async () => {
       const prism = createPrism(false);
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
-      await component.onloadAsync();
+      component.load();
+      await expect(component.onloadAsync()).rejects.toThrow('Prism language "javascript" is not registered.');
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeUndefined();
     });
 
     it('should register the tokenized string language', async () => {
       const prism = createPrism(true);
       mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
+      component.load();
       await component.onloadAsync();
       expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeDefined();
+    });
+
+    it('should nest the javascript grammar into the format block', async () => {
+      const prism = createPrism(true);
+      mockLoadPrism.mockResolvedValue(castTo<Awaited<ReturnType<typeof loadPrism>>>(prism));
+      component.load();
+      await component.onloadAsync();
+      const language = castTo<Record<string, PrismTokenWithNestedInside | undefined>>(
+        prism.languages[TOKENIZED_STRING_LANGUAGE]
+      );
+      expect(language['expressionWithFormat']?.inside['format']?.inside).toBe(prism.languages['javascript']);
     });
 
     it('should delete the tokenized string language when the component is unloaded', async () => {

@@ -35,8 +35,8 @@ import { MarkdownUrlMap } from './markdown-url-map.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
-import { PrismComponent } from './prism-component.ts';
 import { TokenValidator } from './token-validator.ts';
+import { TokenizedStringLanguageComponent } from './tokenized-string-language-component.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 // --- Hoisted shared state ---
@@ -164,9 +164,9 @@ vi.mock('./plugin-settings-tab.ts', () => ({
   PluginSettingsTab: vi.fn()
 }));
 
-vi.mock('./prism-component.ts', () => ({
+vi.mock('./tokenized-string-language-component.ts', () => ({
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
-  PrismComponent: vi.fn(function prismComponentStub() {
+  TokenizedStringLanguageComponent: vi.fn(function tokenizedStringLanguageComponentStub() {
     return new Component();
   })
 }));
@@ -283,7 +283,7 @@ describe('Plugin', () => {
       expect.any(OpenDemoVaultCommandHandler)
     ]);
     expect(AppSaveAttachmentPatchComponent).toHaveBeenCalledOnce();
-    expect(PrismComponent).toHaveBeenCalledOnce();
+    expect(TokenizedStringLanguageComponent).toHaveBeenCalledOnce();
   });
 
   it('should register all collect/delete/move command handlers', async () => {
