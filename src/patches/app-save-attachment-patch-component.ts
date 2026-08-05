@@ -21,10 +21,10 @@ export class AppSaveAttachmentPatchComponent extends MonkeyAroundComponent {
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: this.app,
       methodName: 'saveAttachment',
-      obj: this.app,
       patchHandler: ({
-        originalArgs: [name, extension, data]
+        originalArguments: [name, extension, data]
       }) => {
         return this.attachmentSaver.saveAttachment({
           attachmentFileBaseName: name,

@@ -5,7 +5,7 @@ export const tr = {
       part2: 'Bu işlem geri alınamaz.'
     },
     progressBar: {
-      message: 'Ekler toplanıyor {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Ekler toplanıyor {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Ekler toplanıyor...'
     }
   },

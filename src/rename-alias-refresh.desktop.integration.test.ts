@@ -44,7 +44,9 @@ describe('Rename refreshes a file-name alias (issue #20)', () => {
   // Skipped in the aggregate (shared-instance renameFile/onCleanCache stall); passes in isolation.
   it.skip('rewrites [[folder/2|2]] to [[folder/222|222]] when the target is renamed', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app, lib: { waitUntil } }): Promise<RenameAliasResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
@@ -78,11 +80,11 @@ describe('Rename refreshes a file-name alias (issue #20)', () => {
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -111,7 +113,7 @@ describe('Rename refreshes a file-name alias (issue #20)', () => {
         // Wait for the metadata cache to resolve the backlink so the rename handler can update it.
         await waitUntil({
           message: 'backlink to the target resolves',
-          predicate: () => app.metadataCache.getBacklinksForFile(target).keys().length >= 1,
+          predicate: () => app.metadataCache.getBacklinksForFile(target).keys().length > 0,
           timeoutInMilliseconds: 40_000
         });
 
@@ -126,7 +128,7 @@ describe('Rename refreshes a file-name alias (issue #20)', () => {
           renamePromise.catch(() => {
             // Lingering `onCleanCache`; the effect is polled below.
           }),
-          sleep(6_000)
+          sleep(6000)
         ]);
 
         // The rename handler rewrites backlinks on its internal queue; wait until the source settles.
@@ -136,9 +138,9 @@ describe('Rename refreshes a file-name alias (issue #20)', () => {
           timeoutInMilliseconds: 40_000
         });
 
-        const targetRenamed = Boolean(app.vault.getFileByPath(`${folder}/222.md`));
+        const isTargetRenamed = Boolean(app.vault.getFileByPath(`${folder}/222.md`));
         const after = await app.vault.read(src);
-        return { after, before, settingsFound: true, targetRenamed };
+        return { after, before, settingsFound: true, targetRenamed: isTargetRenamed };
       },
       vaultPath: getTempVault().path
     });

@@ -18,11 +18,11 @@ export class WebUtilsGetPathForFilePatchComponent extends MonkeyAroundComponent 
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: this.webUtils,
       methodName: 'getPathForFile',
-      obj: this.webUtils,
       patchHandler: ({
         fallback,
-        originalArgs: [file]
+        originalArguments: [file]
       }) => {
         const fileEx = file as Partial<FileEx>;
         if (fileEx.path) {

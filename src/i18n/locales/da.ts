@@ -5,7 +5,7 @@ export const da = {
       part2: 'Denne handling kan ikke fortrydes.'
     },
     progressBar: {
-      message: 'Samler vedhæftninger {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Samler vedhæftninger {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Samler vedhæftninger...'
     }
   },

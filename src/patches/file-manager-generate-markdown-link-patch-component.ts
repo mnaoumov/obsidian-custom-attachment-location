@@ -7,9 +7,9 @@ import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/mo
 import { isNote } from 'obsidian-dev-utils/obsidian/file-system';
 import {
   generateMarkdownLink,
-  LinkStyle,
-  testAngleBrackets,
-  testWikilink
+  hasAngleBrackets,
+  hasWikilinkSyntax,
+  LinkStyle
 } from 'obsidian-dev-utils/obsidian/link';
 import { encodeUrl } from 'obsidian-dev-utils/obsidian/parse-link';
 
@@ -43,10 +43,10 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: this.fileManager,
       methodName: 'generateMarkdownLink',
-      obj: this.fileManager,
       patchHandler: ({
-        originalArgs: [file, sourcePath, subpath, alias],
+        originalArguments: [file, sourcePath, subpath, alias],
         originalMethodBound
       }) => {
         if (alias === undefined) {
@@ -71,7 +71,7 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
           return defaultLink;
         }
 
-        if (testWikilink(defaultLink)) {
+        if (hasWikilinkSyntax(defaultLink)) {
           defaultLink = generateMarkdownLink({
             app: this.app,
             linkStyle: LinkStyle.Markdown,
@@ -81,11 +81,11 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
           });
         }
 
-        if (testAngleBrackets(defaultLink)) {
-          return defaultLink.replace(/\]\(<.+?>\)/, `](<${markdownUrl}>)`);
+        if (hasAngleBrackets(defaultLink)) {
+          return defaultLink.replace(/\]\(<.+?>\)/, () => `](<${markdownUrl}>)`);
         }
 
-        return defaultLink.replace(/\]\(.+?\)/, `](${encodeUrl(markdownUrl)})`);
+        return defaultLink.replace(/\]\(.+?\)/, () => `](${encodeUrl(markdownUrl)})`);
       }
     });
   }

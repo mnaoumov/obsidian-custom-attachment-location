@@ -3,6 +3,7 @@ import type {
   PluginManifest
 } from 'obsidian';
 import type { DisposableEx } from 'obsidian-dev-utils/disposable';
+import type { CommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler';
 
 import { Component } from 'obsidian';
 import { castTo } from 'obsidian-dev-utils/object-utils';
@@ -190,7 +191,7 @@ interface AppGlobal {
 }
 
 interface CustomAttachmentLocationParamsProbe {
-  pluginDir: string;
+  pluginDirectory: string;
 }
 
 interface RenameDeleteHandlerParamsProbe {
@@ -209,6 +210,7 @@ const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 const manifest = castTo<PluginManifest>({
   author: 'test',
   description: 'test',
+  // eslint-disable-next-line unicorn/name-replacements -- `dir` is an Obsidian `PluginManifest` member name.
   dir: 'plugins/custom-attachment-location',
   id: 'custom-attachment-location',
   minAppVersion: '1.0.0',
@@ -223,8 +225,8 @@ beforeEach(() => {
   hoisted.isNoteEx.mockReturnValue(true);
   hoisted.isPathIgnored.mockReturnValue(false);
   const appMock = App.createConfigured__();
-  appMock.workspace.onLayoutReady = vi.fn((cb: () => void) => {
-    cb();
+  appMock.workspace.onLayoutReady = vi.fn((callback: () => void) => {
+    callback();
   });
   app = appMock.asOriginalType__();
 
@@ -274,7 +276,7 @@ describe('Plugin', () => {
     expect(AttachmentCollector).toHaveBeenCalledOnce();
     expect(UnusedAttachmentsRemover).toHaveBeenCalledOnce();
     // The base separately auto-registers its own handler (e.g. UnlockActiveNoteCommandHandler), so assert the plugin's own registration by its handlers rather than the total call count.
-    expect(CommandHandlerComponent.prototype.registerCommandHandlers).toHaveBeenCalledWith([
+    expect(buildPluginCommandHandlers()).toStrictEqual([
       expect.any(CollectAttachmentsInFileCommandHandler),
       expect.any(DeleteUnusedAttachmentsInFileCommandHandler),
       expect.any(CollectAttachmentsInCurrentFolderCommandHandler),
@@ -289,6 +291,7 @@ describe('Plugin', () => {
   it('should register all collect/delete/move command handlers', async () => {
     const plugin = new Plugin(app, manifest);
     await plugin.onload();
+    buildPluginCommandHandlers();
 
     expect(CollectAttachmentsInFileCommandHandler).toHaveBeenCalledOnce();
     expect(DeleteUnusedAttachmentsInFileCommandHandler).toHaveBeenCalledOnce();
@@ -327,8 +330,9 @@ describe('Plugin', () => {
   });
 
   it('should fall back to an empty plugin directory when the manifest has none', async () => {
-    const manifestWithoutDir = castTo<PluginManifest>({ ...manifest, dir: undefined });
-    const plugin = new Plugin(app, manifestWithoutDir);
+    // eslint-disable-next-line unicorn/name-replacements -- `dir` is an Obsidian `PluginManifest` member name.
+    const manifestWithoutDirectory = castTo<PluginManifest>({ ...manifest, dir: undefined });
+    const plugin = new Plugin(app, manifestWithoutDirectory);
     await plugin.onload();
 
     const call = vi.mocked(CustomAttachmentLocationComponent).mock.calls[0];
@@ -336,6 +340,18 @@ describe('Plugin', () => {
       throw new Error('CustomAttachmentLocationComponent was not constructed.');
     }
     const params = castTo<CustomAttachmentLocationParamsProbe>(call[0]);
-    expect(params.pluginDir).toBe('');
+    expect(params.pluginDirectory).toBe('');
   });
 });
+
+// `registerCommandHandlers` takes a factory since obsidian-dev-utils 89.0.0, and the base
+// Registers its own handlers through the same spy — so pick the plugin's own factory by what it builds.
+function buildPluginCommandHandlers(): CommandHandler[] {
+  const commandHandlerBatches = vi.mocked(CommandHandlerComponent.prototype.registerCommandHandlers).mock.calls
+    .map(([commandHandlerFactory]) => commandHandlerFactory());
+  const pluginCommandHandlers = commandHandlerBatches.find((commandHandlers) => commandHandlers.some((commandHandler) => commandHandler instanceof CollectAttachmentsInFileCommandHandler));
+  if (!pluginCommandHandlers) {
+    throw new Error('The plugin did not register its own command handlers.');
+  }
+  return pluginCommandHandlers;
+}

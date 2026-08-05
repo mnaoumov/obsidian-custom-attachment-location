@@ -5,7 +5,7 @@ export const no = {
       part2: 'Denne operasjonen kan ikke angres.'
     },
     progressBar: {
-      message: 'Samler vedlegg {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Samler vedlegg {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Samler vedlegg...'
     }
   },

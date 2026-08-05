@@ -88,7 +88,7 @@ interface FileChangeLike {
 
 interface LoopBuildNoticeMessageParamsLike {
   item: TFile;
-  iterationStr: string;
+  iterationString: string;
 }
 
 interface LoopOptionsLike {
@@ -98,7 +98,7 @@ interface LoopOptionsLike {
 }
 
 interface QueueParamsLike {
-  operationFn(abortSignal: AbortSignal): Promise<void>;
+  operationFunction(abortSignal: AbortSignal): Promise<void>;
   operationName: string;
 }
 
@@ -232,9 +232,9 @@ function createCanvasTextNodeReference(overrides: Partial<CanvasTextNodeReferenc
   };
 }
 
-function createFile(path: string, deleted = false): TFile {
+function createFile(path: string, isDeleted = false): TFile {
   return strictProxy<TFile>({
-    deleted,
+    deleted: isDeleted,
     extension: path.split('.').at(-1) ?? '',
     name: path.split('/').at(-1) ?? '',
     path,
@@ -259,7 +259,7 @@ describe('AttachmentCollector', () => {
   let app: App;
   let attachmentPathManager: AttachmentPathManager;
   let collector: AttachmentCollector;
-  let consoleDebug: Mock<(message: string, ...args: unknown[]) => void>;
+  let consoleDebug: Mock<(message: string, ...$arguments: unknown[]) => void>;
   let consoleDebugComponent: ConsoleDebugComponent;
   let errorSpy: MockInstance<typeof console.error>;
   let getProperAttachmentPath: Mock<AttachmentPathManager['getProperAttachmentPath']>;
@@ -311,10 +311,10 @@ describe('AttachmentCollector', () => {
     abortSignalComponent = strictProxy<AbortSignalComponent>({
       abortSignal: new AbortController().signal
     });
-    consoleDebug = vi.fn<(message: string, ...args: unknown[]) => void>();
+    consoleDebug = vi.fn<(message: string, ...$arguments: unknown[]) => void>();
     consoleDebugComponent = strictProxy<ConsoleDebugComponent>({
-      consoleDebug: (message: string, ...args: unknown[]) => {
-        consoleDebug(message, ...args);
+      consoleDebug: (message: string, ...$arguments: unknown[]) => {
+        consoleDebug(message, ...$arguments);
       }
     });
     networkImageDownloader = strictProxy<NetworkImageDownloader>({
@@ -357,7 +357,7 @@ describe('AttachmentCollector', () => {
       mockIsFolder.mockReturnValue(false);
       collector.collectAttachmentsEntireVault();
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
-      await params.operationFn(new AbortController().signal);
+      await params.operationFunction(new AbortController().signal);
       expect(getRoot).toHaveBeenCalled();
       expect(mockLoop).toHaveBeenCalled();
     });
@@ -372,7 +372,7 @@ describe('AttachmentCollector', () => {
     });
   });
 
-  describe('collectAttachments (via queue operationFn)', () => {
+  describe('collectAttachments (via queue operationFunction)', () => {
     let note: TFile;
 
     async function runSingleFile(noteFile: TFile): Promise<void> {
@@ -383,7 +383,7 @@ describe('AttachmentCollector', () => {
       });
       collector.collectAttachmentsInAbstractFiles([noteFile]);
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
-      await params.operationFn(new AbortController().signal);
+      await params.operationFunction(new AbortController().signal);
     }
 
     beforeEach(() => {
@@ -518,7 +518,7 @@ describe('AttachmentCollector', () => {
           matchingResult = await linkConverter(createReference({ link: 'img.png' }));
           nonMatchingResult = await linkConverter(createReference({ link: 'other.png' }));
         });
-        mockExtractLinkFile.mockImplementation(({ link }) => link.link === 'other.png' ? createFile('other.png') : createFile('img.png'));
+        mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link === 'other.png' ? 'other.png' : 'img.png'));
         mockUpdateLink.mockReturnValue('![](attachments/img.png)');
         await runSingleFile(note);
         expect(mockCopySafe).toHaveBeenCalledWith({
@@ -609,7 +609,7 @@ describe('AttachmentCollector', () => {
         expect(mockRenameSafe).not.toHaveBeenCalled();
       });
 
-      it('should use the ctx mode when present', async () => {
+      it('should use the context mode when present', async () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Prompt;
         mockSelectMode.mockResolvedValue({
           mode: CollectAttachmentUsedByMultipleNotesMode.Skip,
@@ -618,13 +618,13 @@ describe('AttachmentCollector', () => {
         mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
         mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
         await runSingleFile(note);
-        // Prompt chosen once, then ctx mode (Skip) reused for the second link.
+        // Prompt chosen once, then context mode (Skip) reused for the second link.
         expect(mockSelectMode).toHaveBeenCalledTimes(1);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
       });
 
-      it('should return early on a subsequent link iteration once ctx becomes aborted', async () => {
-        // Two links: the first triggers Cancel (aborting ctx), so the second link
+      it('should return early on a subsequent link iteration once context becomes aborted', async () => {
+        // Two links: the first triggers Cancel (aborting context), so the second link
         // Iteration returns early before requesting its backlinks.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
@@ -815,11 +815,11 @@ describe('AttachmentCollector', () => {
     });
   });
 
-  describe('collectAttachmentsInAbstractFilesImpl (via queue operationFn)', () => {
+  describe('collectAttachmentsInAbstractFilesImpl (via queue operationFunction)', () => {
     async function runOperation(abstractFiles: TAbstractFile[]): Promise<void> {
       collector.collectAttachmentsInAbstractFiles(abstractFiles);
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
-      await params.operationFn(new AbortController().signal);
+      await params.operationFunction(new AbortController().signal);
     }
 
     beforeEach(() => {
@@ -832,7 +832,7 @@ describe('AttachmentCollector', () => {
       const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
       const controller = new AbortController();
       controller.abort();
-      await expect(params.operationFn(controller.signal)).rejects.toThrow();
+      await expect(params.operationFunction(controller.signal)).rejects.toThrow();
     });
 
     it('should notice and return when the single file path is ignored', async () => {
@@ -858,8 +858,8 @@ describe('AttachmentCollector', () => {
       mockIsFolder.mockImplementation((f) => f === folder);
       mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(childNote);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(childNote);
       });
       try {
         await runOperation([noteFile, folder]);
@@ -878,8 +878,8 @@ describe('AttachmentCollector', () => {
       mockIsFolder.mockImplementation((f) => f === folder);
       mockIsNote.mockReturnValue(false);
       mockConfirm.mockResolvedValue(true);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(childNonNote);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(childNonNote);
       });
       try {
         await runOperation([folder]);
@@ -932,9 +932,9 @@ describe('AttachmentCollector', () => {
       expect(errorSpy).toHaveBeenCalled();
     });
 
-    it('should return early for a later note once the shared ctx is aborted', async () => {
-      // The first note triggers Cancel (aborting the shared ctx); the second note then
-      // Enters collectAttachments with ctx already aborted and returns before reading its cache.
+    it('should return early for a later note once the shared context is aborted', async () => {
+      // The first note triggers Cancel (aborting the shared context); the second note then
+      // Enters collectAttachments with context already aborted and returns before reading its cache.
       const noteFile1 = createFile('a.md');
       const noteFile2 = createFile('b.md');
       mockIsFile.mockReturnValue(true);
@@ -952,12 +952,12 @@ describe('AttachmentCollector', () => {
         await typed.processItem(noteFile2);
       });
       await runOperation([noteFile1, noteFile2]);
-      // GetCacheSafe runs only for the first note; the second returns early on the aborted ctx.
+      // GetCacheSafe runs only for the first note; the second returns early on the aborted context.
       expect(mockGetCacheSafe).toHaveBeenCalledTimes(1);
     });
 
-    it('should return when the shared ctx becomes aborted during the cache read', async () => {
-      // The second note is awaiting its cache read when the first note aborts the shared ctx,
+    it('should return when the shared context becomes aborted during the cache read', async () => {
+      // The second note is awaiting its cache read when the first note aborts the shared context,
       // So it returns right after the cache read without requesting any backlinks.
       const noteFile1 = createFile('a.md');
       const noteFile2 = createFile('b.md');
@@ -986,7 +986,7 @@ describe('AttachmentCollector', () => {
         const typed = castTo<LoopOptionsLike>(options);
         const note2Promise = typed.processItem(noteFile2);
         await typed.processItem(noteFile1);
-        // The first note has now aborted the shared ctx; release the second note's cache read.
+        // The first note has now aborted the shared context; release the second note's cache read.
         resolveNote2Cache?.();
         await note2Promise;
       });
@@ -1002,7 +1002,7 @@ describe('AttachmentCollector', () => {
       mockConfirm.mockResolvedValue(true);
       let noticeMessage: string | undefined;
       mockLoop.mockImplementation(async (options) => {
-        noticeMessage = castTo<LoopOptionsLike>(options).buildNoticeMessage({ item: noteFile, iterationStr: '1/1' });
+        noticeMessage = castTo<LoopOptionsLike>(options).buildNoticeMessage({ item: noteFile, iterationString: '1/1' });
         await noopAsync();
       });
       await runOperation([noteFile]);

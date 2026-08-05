@@ -5,7 +5,7 @@ export const be = {
       part2: 'Гэтую аперацыю нельга адмяніць.'
     },
     progressBar: {
-      message: 'Збор далучэнняў {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Збор далучэнняў {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Збор далучэнняў...'
     }
   },

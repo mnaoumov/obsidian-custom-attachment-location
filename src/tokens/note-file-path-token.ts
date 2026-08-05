@@ -12,7 +12,7 @@ export class NoteFilePathToken extends TokenBase<Format> {
     super('noteFilePath', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext): string {
-    return ctx.noteFilePath;
+  protected override evaluateImpl(context: TokenEvaluatorContext): string {
+    return context.noteFilePath;
   }
 }

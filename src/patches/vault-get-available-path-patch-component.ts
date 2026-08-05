@@ -29,17 +29,17 @@ export class VaultGetAvailablePathPatchComponent extends MonkeyAroundComponent {
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: this.vault,
       methodName: 'getAvailablePath',
-      obj: this.vault,
       patchHandler: ({
-        originalArgs: [attachmentFileName, attachmentExtension]
+        originalArguments: [attachmentFileName, attachmentExtension]
       }) => {
-        let suffixNum = 0;
+        let suffixNumber = 0;
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Easiest infinite loop.
         while (true) {
           const path = makeFileName({
-            fileBaseName: suffixNum === 0 ? attachmentFileName : `${attachmentFileName}${this.pluginSettingsComponent.settings.duplicateNameSeparator}${String(suffixNum)}`,
+            fileBaseName: suffixNumber === 0 ? attachmentFileName : `${attachmentFileName}${this.pluginSettingsComponent.settings.duplicateNameSeparator}${String(suffixNumber)}`,
             fileExtension: attachmentExtension
           });
 
@@ -53,7 +53,7 @@ export class VaultGetAvailablePathPatchComponent extends MonkeyAroundComponent {
             return path;
           }
 
-          suffixNum++;
+          suffixNumber++;
         }
       }
     });

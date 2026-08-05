@@ -19,24 +19,24 @@ import { trashSafe } from 'obsidian-dev-utils/obsidian/vault';
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 
 interface PromptWithPreviewModalConstructorParams {
-  readonly ctx: TokenEvaluatorContext;
+  readonly context: TokenEvaluatorContext;
   readonly defaultValue: string;
   readonly promiseResolve: PromiseResolve<null | string>;
   valueValidator(this: void, value: string): Promise<null | string>;
 }
 
 interface PromptWithPreviewParams {
-  readonly ctx: TokenEvaluatorContext;
+  readonly context: TokenEvaluatorContext;
   readonly defaultValue: string;
   valueValidator(this: void, value: string): Promise<null | string>;
 }
 
 class PreviewModal extends Modal {
   private embedComponent?: EmbedComponent;
-  private tempFile?: TFile;
+  private temporaryFile?: TFile;
 
   public constructor(private readonly params: PromptWithPreviewParams) {
-    super(params.ctx.app);
+    super(params.context.app);
     addPluginCssClasses(this.containerEl, 'preview-modal');
   }
 
@@ -44,8 +44,8 @@ class PreviewModal extends Modal {
     super.onClose();
     this.embedComponent?.unload();
     invokeAsyncSafely(async () => {
-      if (this.tempFile) {
-        await trashSafe(this.app, this.tempFile);
+      if (this.temporaryFile) {
+        await trashSafe(this.app, this.temporaryFile);
       }
     });
   }
@@ -56,26 +56,26 @@ class PreviewModal extends Modal {
   }
 
   private async onOpenAsync(): Promise<void> {
-    const embeddableCreator = this.app.embedRegistry.embedByExtension[this.params.ctx.originalAttachmentFileExtension];
-    const attachmentFileContent = await this.params.ctx.getAttachmentFileContent();
+    const embeddableCreator = this.app.embedRegistry.embedByExtension[this.params.context.originalAttachmentFileExtension];
+    const attachmentFileContent = await this.params.context.getAttachmentFileContent();
 
     if (!embeddableCreator || !attachmentFileContent) {
       return;
     }
 
-    const fullFileName = `${this.params.ctx.originalAttachmentFileName}.${this.params.ctx.originalAttachmentFileExtension}`;
+    const fullFileName = `${this.params.context.originalAttachmentFileName}.${this.params.context.originalAttachmentFileExtension}`;
 
     this.titleEl.setText(t(($) => $.promptWithPreviewModal.previewModal.title, { fullFileName }));
 
-    const tempPath = `__temp${String(Date.now())}__${fullFileName}`;
-    this.tempFile = await this.app.vault.createBinary(tempPath, attachmentFileContent);
+    const temporaryPath = `__temp${String(Date.now())}__${fullFileName}`;
+    this.temporaryFile = await this.app.vault.createBinary(temporaryPath, attachmentFileContent);
 
     const previewContainer = this.contentEl.createDiv('preview-container');
 
     this.embedComponent = embeddableCreator({
       app: this.app,
       containerEl: previewContainer
-    }, this.tempFile);
+    }, this.temporaryFile);
 
     this.embedComponent.load();
     this.embedComponent.loadFile();
@@ -83,7 +83,7 @@ class PreviewModal extends Modal {
 }
 
 class PromptWithPreviewModal extends Modal {
-  private readonly ctx: TokenEvaluatorContext;
+  private readonly context: TokenEvaluatorContext;
   private readonly defaultValue: string;
   private isOkClicked = false;
   private readonly promiseResolve: PromiseResolve<null | string>;
@@ -92,8 +92,8 @@ class PromptWithPreviewModal extends Modal {
   private readonly valueValidator: (this: void, value: string) => Promise<null | string>;
 
   public constructor(params: PromptWithPreviewModalConstructorParams) {
-    super(params.ctx.app);
-    this.ctx = params.ctx;
+    super(params.context.app);
+    this.context = params.context;
     this.defaultValue = params.defaultValue;
     this.promiseResolve = params.promiseResolve;
     this.valueValidator = params.valueValidator;
@@ -122,14 +122,14 @@ class PromptWithPreviewModal extends Modal {
   }
 
   private async onOpenAsync(): Promise<void> {
-    this.value = await this.ctx.fillTemplate(this.defaultValue);
+    this.value = await this.context.fillTemplate(this.defaultValue);
 
     const title = createFragment((f) => {
       f.appendText(t(($) => $.promptWithPreviewModal.title));
       f.createEl('br');
-      f.appendText(this.ctx.fullTemplate.slice(0, this.ctx.tokenStartOffset));
-      f.createSpan({ cls: 'highlighted-token', text: this.ctx.tokenWithFormat });
-      f.appendText(this.ctx.fullTemplate.slice(this.ctx.tokenEndOffset));
+      f.appendText(this.context.fullTemplate.slice(0, this.context.tokenStartOffset));
+      f.createSpan({ cls: 'highlighted-token', text: this.context.tokenWithFormat });
+      f.appendText(this.context.fullTemplate.slice(this.context.tokenEndOffset));
     });
 
     this.titleEl.setText(title);
@@ -174,8 +174,8 @@ class PromptWithPreviewModal extends Modal {
     previewButton.setButtonText(t(($) => $.buttons.previewAttachmentFile));
     previewButton.onClick(this.preview.bind(this));
 
-    const embeddableCreator = this.app.embedRegistry.embedByExtension[this.ctx.originalAttachmentFileExtension];
-    const attachmentFileContent = await this.ctx.getAttachmentFileContent();
+    const embeddableCreator = this.app.embedRegistry.embedByExtension[this.context.originalAttachmentFileExtension];
+    const attachmentFileContent = await this.context.getAttachmentFileContent();
 
     if (!attachmentFileContent || !embeddableCreator) {
       previewButton.setDisabled(true);
@@ -184,7 +184,7 @@ class PromptWithPreviewModal extends Modal {
 
   private preview(): void {
     const previewModal = new PreviewModal({
-      ctx: this.ctx,
+      context: this.context,
       defaultValue: this.defaultValue,
       valueValidator: this.valueValidator
     });

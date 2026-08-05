@@ -5,7 +5,7 @@ export const ja = {
       part2: 'この操作は元に戻せません。'
     },
     progressBar: {
-      message: '添付ファイルを収集中 {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: '添付ファイルを収集中 {{iterationString}} - \'{{noteFilePath}}\'.',
       title: '添付ファイルを収集中...'
     }
   },

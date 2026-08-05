@@ -5,7 +5,7 @@ export const ga = {
       part2: 'Ní féidir an oibríocht seo a chealú.'
     },
     progressBar: {
-      message: 'Ag bailiú ceangaltán {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Ag bailiú ceangaltán {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Ag bailiú ceangaltán...'
     }
   },

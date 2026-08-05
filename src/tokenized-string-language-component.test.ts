@@ -40,12 +40,12 @@ const mockLoadPrism = vi.mocked(loadPrism);
  * `prism.languages[language]` before writing it (it restores the previous grammar on unload), and a strict
  * proxy throws on an absent key — so proxying it would fail the registration it is meant to observe.
  *
- * @param withJavascript - Whether the built-in `javascript` grammar the factory nests is registered.
+ * @param isJavascriptRegistered - Whether the built-in `javascript` grammar the factory nests is registered.
  * @returns The Prism-like module.
  */
-function createPrism(withJavascript: boolean): PrismLike {
+function createPrism(isJavascriptRegistered: boolean): PrismLike {
   return {
-    languages: withJavascript ? { javascript: { keyword: /\bif\b/ } } : {}
+    languages: isJavascriptRegistered ? { javascript: { keyword: /\bif\b/ } } : {}
   };
 }
 

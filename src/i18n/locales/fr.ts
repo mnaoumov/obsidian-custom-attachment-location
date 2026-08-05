@@ -5,7 +5,7 @@ export const fr = {
       part2: 'Cette opération ne peut pas être annulée.'
     },
     progressBar: {
-      message: 'Collecte des pièces jointes {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Collecte des pièces jointes {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Collecte des pièces jointes...'
     }
   },
@@ -66,7 +66,7 @@ export const fr = {
         displayText: 'Aucun'
       },
       onlyPastedImages: {
-        description: 'seules les images collées sont renommées. S\'applique uniquement lorsque le contenu d\'image PNG est collé directement depuis le presse-papiers. Typiquement, pour coller des captures d\'\u00e9cran.',
+        description: 'seules les images collées sont renommées. S\'applique uniquement lorsque le contenu d\'image PNG est collé directement depuis le presse-papiers. Typiquement, pour coller des captures d\'\u{E9}cran.',
         displayText: 'Images collées uniquement'
       }
     },

@@ -55,7 +55,7 @@ function createApp(activeEditorOverrides?: ActiveEditorOverrides): App {
   const activeEditor: null | StrictProxyPartial<App['workspace']['activeEditor']> = activeEditorOverrides
     ? {
       editor,
-      ...filePath ? { file: { path: filePath } } : {}
+      ...filePath && { file: { path: filePath } }
     }
     : null;
   return strictProxy<App>({
@@ -67,11 +67,11 @@ function createSubstitutions(overrides?: SubstitutionsOverrides): Substitutions 
   return new Substitutions({
     actionContext: ActionContext.SaveAttachment,
     app: createApp(overrides?.activeEditorOverrides),
-    ...overrides?.attachmentFileContent === undefined ? {} : { attachmentFileContent: overrides.attachmentFileContent },
-    ...overrides?.cursorLine === undefined ? {} : { cursorLine: overrides.cursorLine },
+    ...overrides?.attachmentFileContent !== undefined && { attachmentFileContent: overrides.attachmentFileContent },
+    ...overrides?.cursorLine !== undefined && { cursorLine: overrides.cursorLine },
     noteFilePath: overrides?.noteFilePath ?? 'folder/my-note.md',
     pluginSettingsComponent: strictProxy<PluginSettingsComponent>({}),
-    ...overrides?.readAttachmentFileContent === undefined ? {} : { readAttachmentFileContent: overrides.readAttachmentFileContent },
+    ...overrides?.readAttachmentFileContent !== undefined && { readAttachmentFileContent: overrides.readAttachmentFileContent },
     tokenValidator: strictProxy<TokenValidator>({})
   });
 }

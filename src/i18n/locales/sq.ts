@@ -5,7 +5,7 @@ export const sq = {
       part2: 'Ky veprim nuk mund të zhbëhet.'
     },
     progressBar: {
-      message: 'Duke mbledhur bashkëngjitjet {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Duke mbledhur bashkëngjitjet {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Duke mbledhur bashkëngjitjet...'
     }
   },

@@ -79,17 +79,20 @@ export class PluginSettings {
   public shouldRenameCollectedAttachments = false;
   public shouldSetLinkDisplayTextToAttachmentFileName = false;
   public shouldSkipCollectingAttachmentsReferencedByRawPath = false;
-  public specialCharacters = '#^[]|*\\<>:?/';
+  public specialCharacters = String.raw`#^[]|*\<>:?/`;
   public specialCharactersReplacement = '-';
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public timeoutInSeconds = 5;
   public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
   public version = '';
+  // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
   public get customTokensStr(): string {
     return this._customTokensStr;
   }
 
+  // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
   public set customTokensStr(value: string) {
+    // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
     this._customTokensStr = value;
   }
 
@@ -130,6 +133,7 @@ export class PluginSettings {
   }
 
   private readonly _attachmentCollectingPaths = new PathSettings();
+  // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
   private _customTokensStr = '';
   private readonly _multipleNotesCheckPaths = new PathSettings();
   private readonly _pathSettings = new PathSettings();

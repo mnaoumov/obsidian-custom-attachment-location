@@ -17,16 +17,16 @@ export class FrontmatterToken extends TokenBase<Format> {
     super('frontmatter', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
+  protected override evaluateImpl(context: TokenEvaluatorContext, format: Format): string {
     const file = getFileOrNull({
-      app: ctx.app,
-      pathOrFile: ctx.noteFilePath
+      app: context.app,
+      pathOrFile: context.noteFilePath
     });
     if (!file) {
       return '';
     }
 
-    const cache = ctx.app.metadataCache.getFileCache(file);
+    const cache = context.app.metadataCache.getFileCache(file);
 
     if (!cache?.frontmatter) {
       return '';

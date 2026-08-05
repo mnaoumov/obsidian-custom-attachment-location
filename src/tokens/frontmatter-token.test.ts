@@ -26,7 +26,7 @@ vi.mock('obsidian-dev-utils/object-utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('obsidian-dev-utils/object-utils')>();
   return {
     ...actual,
-    getNestedPropertyValue: vi.fn<(obj: object, path: string) => unknown>()
+    getNestedPropertyValue: vi.fn<(object: object, path: string) => unknown>()
   };
 });
 

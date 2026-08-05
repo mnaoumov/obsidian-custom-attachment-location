@@ -46,7 +46,7 @@ export function isReferencedByRawPath(params: IsReferencedByRawPathParams): bool
     }
 
     // A bare file name: require a boundary so a longer name (e.g. `myimg.png` or `sub/img.png`) does not match.
-    const boundedRegExp = new RegExp(`(?<![\\w./\\\\-])${escapeRegExp(needle)}`, 'u');
+    const boundedRegExp = new RegExp(String.raw`(?<![\w./\\-])${escapeRegExp(needle)}`, 'u');
     if (boundedRegExp.test(content)) {
       return true;
     }

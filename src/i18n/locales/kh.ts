@@ -5,7 +5,7 @@ export const kh = {
       part2: 'ប្រតិបត្តិការនេះមិនអាចបង្រ្កាបវិញបានទេ។'
     },
     progressBar: {
-      message: 'កំពុងប្រក័បអទឹងដេរ {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'កំពុងប្រក័បអទឹងដេរ {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'កំពុងប្រក័បអទឹងដេរ...'
     }
   },

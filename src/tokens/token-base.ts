@@ -5,15 +5,14 @@ import { z } from 'zod';
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 export abstract class TokenBase<TFormat> {
-  public constructor(public readonly name: string, private readonly formatSchema: z.ZodType<TFormat>) {
+  public constructor(public readonly name: string, private readonly formatSchema: z.ZodType<TFormat>) {}
+
+  public evaluate(context: TokenEvaluatorContext): Promisable<string> {
+    const format = context.format === null ? this.getDefaultFormat() : this.formatSchema.parse(context.format);
+    return this.evaluateImpl(context, format);
   }
 
-  public evaluate(ctx: TokenEvaluatorContext): Promisable<string> {
-    const format = ctx.format === null ? this.getDefaultFormat() : this.formatSchema.parse(ctx.format);
-    return this.evaluateImpl(ctx, format);
-  }
-
-  protected abstract evaluateImpl(ctx: TokenEvaluatorContext, format: TFormat): Promisable<string>;
+  protected abstract evaluateImpl(context: TokenEvaluatorContext, format: TFormat): Promisable<string>;
 
   private getDefaultFormat(): TFormat {
     const result = this.formatSchema.safeParse({});

@@ -21,8 +21,8 @@ interface EvaluateImplFormat {
 }
 
 class TestableRandomToken extends RandomToken {
-  public callEvaluateImpl(ctx: TokenEvaluatorContext, format: EvaluateImplFormat): Promisable<string> {
-    return this.evaluateImpl(ctx, format);
+  public callEvaluateImpl(context: TokenEvaluatorContext, format: EvaluateImplFormat): Promisable<string> {
+    return this.evaluateImpl(context, format);
   }
 }
 

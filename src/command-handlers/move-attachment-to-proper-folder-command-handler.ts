@@ -105,16 +105,16 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       }
     }
 
-    const attachmentFiles = Array.from(attachmentFilesSet);
+    const attachmentFiles = [...attachmentFilesSet];
     attachmentFiles.sort((a, b) => a.path.localeCompare(b.path));
 
     const abortController = new AbortController();
     const combinedAbortSignal = abortSignalAny(abortController.signal, this.abortSignalComponent.abortSignal);
-    const ctx: MoveAttachmentToProperFolderContext = {};
+    const context: MoveAttachmentToProperFolderContext = {};
 
     await loop({
       abortSignal: combinedAbortSignal,
-      buildNoticeMessage: ({ item, iterationStr }) => t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: item.path, iterationStr }),
+      buildNoticeMessage: ({ item, iterationString }) => t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: item.path, iterationString }),
       items: attachmentFiles,
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (attachmentFile) => {
@@ -123,7 +123,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
           console.warn(`Cannot move attachment to proper folder as attachment path is ignored: ${attachmentFile.path}.`);
           return;
         }
-        if (!await this.moveAttachmentToProperFolder(attachmentFile, ctx)) {
+        if (!await this.moveAttachmentToProperFolder(attachmentFile, context)) {
           return;
         }
         combinedAbortSignal.throwIfAborted();
@@ -142,7 +142,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     return true;
   }
 
-  private async moveAttachmentToProperFolder(attachmentFile: TFile, ctx: MoveAttachmentToProperFolderContext): Promise<boolean> {
+  private async moveAttachmentToProperFolder(attachmentFile: TFile, context: MoveAttachmentToProperFolderContext): Promise<boolean> {
     const app = this.app;
     let backlinks = await getBacklinksForFileSafe({
       app: this.app,
@@ -154,13 +154,14 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     }
 
     let backlinksToCopy: string[] = [];
+    // eslint-disable-next-line unicorn/no-this-assignment -- `shouldContinueWithMode` is a hoisted function declaration called before its definition, so `this` cannot be lexical here.
     const that = this;
 
     // Notes matching the configured patterns are ignored when deciding whether the attachment is used by multiple notes.
-    const relevantBacklinkKeys = Array.from(backlinks.keys()).filter((backlink) => !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
+    const relevantBacklinkKeys = [...backlinks.keys()].filter((backlink) => !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
 
     if (
-      relevantBacklinkKeys.length > 1 && !await handleMode(ctx.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)
+      relevantBacklinkKeys.length > 1 && !await shouldContinueWithMode(context.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)
     ) {
       return false;
     }
@@ -233,9 +234,9 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
     return true;
 
-    async function handleMode(mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode): Promise<boolean> {
+    async function shouldContinueWithMode(mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode): Promise<boolean> {
       switch (mode) {
-        case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel:
+        case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel: {
           if (
             that.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode
               === MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel
@@ -243,9 +244,11 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
             await selectMode({ app, attachmentPath: attachmentFile.path, backlinks: relevantBacklinkKeys, isCancelMode: true });
           }
           return false;
-        case MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll:
+        }
+        case MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll: {
           backlinksToCopy = relevantBacklinkKeys;
           return true;
+        }
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt: {
           const { backlinksToCopy: backlinksToCopy2, mode: mode2, shouldUseSameActionForOtherProblematicAttachments } = await selectMode({
             app,
@@ -253,7 +256,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
             backlinks: relevantBacklinkKeys
           });
           if (shouldUseSameActionForOtherProblematicAttachments) {
-            ctx.mode = mode2;
+            context.mode = mode2;
           }
 
           if (mode2 === MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt) {
@@ -261,13 +264,16 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
             return true;
           }
 
-          return handleMode(mode2);
+          // eslint-disable-next-line unicorn/no-useless-recursion -- A single re-dispatch after the user picks a mode in the modal; a loop would obscure the switch.
+          return shouldContinueWithMode(mode2);
         }
-        case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip:
+        case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip: {
           backlinksToCopy = [];
           return true;
-        default:
+        }
+        default: {
           return false;
+        }
       }
     }
   }

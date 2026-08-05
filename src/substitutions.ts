@@ -135,10 +135,10 @@ export class Substitutions {
   }
 
   public static isRegisteredToken(token: string): boolean {
-    return Substitutions.registeredTokens.has(token.toLowerCase());
+    return this.registeredTokens.has(token.toLowerCase());
   }
 
-  public static registerCustomTokens(customTokensStr: string): void {
+  public static registerCustomTokens(customTokensString: string): void {
     this.registeredTokens.clear();
     this.registerToken(new AttachmentFileSizeToken());
     this.registerToken(new DateToken());
@@ -161,7 +161,7 @@ export class Substitutions {
     this.registerToken(new SequenceNumberToken());
     this.registerToken(new UuidToken());
 
-    const customTokens = CustomToken.parse(customTokensStr) ?? [];
+    const customTokens = CustomToken.parse(customTokensString) ?? [];
     for (const customToken of customTokens) {
       this.registerToken(customToken);
     }
@@ -198,7 +198,7 @@ export class Substitutions {
           tokenName: scannedToken.token
         });
 
-      const ctx: TokenEvaluatorContext = {
+      const context: TokenEvaluatorContext = {
         abortSignal,
         actionContext: this.actionContext,
         app: this.app,
@@ -230,10 +230,10 @@ export class Substitutions {
         tokenWithFormat: scannedToken.raw
       };
 
-      const evaluated = await token.evaluate(ctx);
+      const evaluated = await token.evaluate(context);
       abortSignal.throwIfAborted();
       if (typeof evaluated !== 'string') {
-        console.error('Token returned non-string value.', { ctx, result: evaluated });
+        console.error('Token returned non-string value.', { context, result: evaluated });
         throw new Error('Token returned non-string value');
       }
       out += evaluated;

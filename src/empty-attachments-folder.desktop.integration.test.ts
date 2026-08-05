@@ -30,7 +30,9 @@ interface ProbeResult {
 describe('Empty attachments folder is not created on a dry resolution (issue #26)', () => {
   it('creates the per-note folder only when an attachment is actually saved', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<ProbeResult> {
         interface Settings {
           attachmentFolderPath: string;
@@ -65,11 +67,11 @@ describe('Empty attachments folder is not created on a dry resolution (issue #26
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -108,7 +110,7 @@ describe('Empty attachments folder is not created on a dry resolution (issue #26
         // A dry resolution (what core / other plugins do). This must NOT create the folder.
         await app.vault.getAvailablePathForAttachments('probe-attachment', 'png', note);
         await sleep(300);
-        const folderExistsAfterDryProbe = Boolean(app.vault.getAbstractFileByPath(resolvedFolder));
+        const isFolderExistsAfterDryProbe = Boolean(app.vault.getAbstractFileByPath(resolvedFolder));
 
         // A real save through the base method (audio-recorder style): resolve then write.
         let realSaveError = '';
@@ -116,14 +118,14 @@ describe('Empty attachments folder is not created on a dry resolution (issue #26
         try {
           realSavePath = await app.vault.getAvailablePathForAttachments('Recording', 'webm', note);
           await app.vault.createBinary(realSavePath, new ArrayBuffer(8));
-        } catch (e) {
-          realSaveError = String((e as ErrorLike).message ?? e);
+        } catch (error) {
+          realSaveError = String((error as ErrorLike).message ?? error);
         }
-        const folderExistsAfterRealSave = Boolean(app.vault.getAbstractFileByPath(realSavePath));
+        const isFolderExistsAfterRealSave = Boolean(app.vault.getAbstractFileByPath(realSavePath));
 
         return {
-          folderExistsAfterDryProbe,
-          folderExistsAfterRealSave,
+          folderExistsAfterDryProbe: isFolderExistsAfterDryProbe,
+          folderExistsAfterRealSave: isFolderExistsAfterRealSave,
           realSaveError,
           realSavePath,
           resolvedFolder,

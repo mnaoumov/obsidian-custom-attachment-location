@@ -5,7 +5,7 @@ export const ar = {
       part2: 'لا يمكن التراجع عن هذه العملية.'
     },
     progressBar: {
-      message: 'جمع المرفقات {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'جمع المرفقات {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'جمع المرفقات...'
     }
   },

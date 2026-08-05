@@ -5,7 +5,7 @@ export const ptBR = {
       part2: 'Esta operação não pode ser desfeita.'
     },
     progressBar: {
-      message: 'Coletando anexos {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Coletando anexos {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Coletando anexos...'
     }
   },

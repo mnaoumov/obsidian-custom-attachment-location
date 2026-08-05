@@ -32,10 +32,10 @@ interface CapacitorGlobal {
   Capacitor: CapacitorApi;
 }
 
-type ImportFilesFn = (files: SharedFile[]) => Promise<void>;
+type ImportFilesFunction = (files: SharedFile[]) => Promise<void>;
 
-interface ShareReceiverProto {
-  importFiles: ImportFilesFn;
+interface ShareReceiverPrototype {
+  importFiles: ImportFilesFunction;
 }
 
 describe('ShareReceiverImportFilesPatchComponent', () => {
@@ -43,8 +43,8 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
   let attachmentPathManager: AttachmentPathManager;
   let pluginSettingsComponent: PluginSettingsComponent;
   let tokenValidator: TokenValidator;
-  let importFilesMock: ReturnType<typeof vi.fn<ImportFilesFn>>;
-  let shareReceiverProto: ShareReceiverProto;
+  let importFilesMock: ReturnType<typeof vi.fn<ImportFilesFunction>>;
+  let shareReceiverPrototype: ShareReceiverPrototype;
   let shareReceiver: ShareReceiver;
   let convertFileSrcMock: ReturnType<typeof vi.fn<(uri: string) => string>>;
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -57,11 +57,11 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
     pluginSettingsComponent = strictProxy<PluginSettingsComponent>({});
     tokenValidator = strictProxy<TokenValidator>({});
 
-    importFilesMock = vi.fn<ImportFilesFn>().mockResolvedValue(undefined);
-    shareReceiverProto = {
+    importFilesMock = vi.fn<ImportFilesFunction>().mockResolvedValue(undefined);
+    shareReceiverPrototype = {
       importFiles: importFilesMock
     };
-    shareReceiver = strictProxy<ShareReceiver>(Object.create(shareReceiverProto));
+    shareReceiver = strictProxy<ShareReceiver>(Object.create(shareReceiverPrototype));
 
     convertFileSrcMock = vi.fn((uri: string): string => `capacitor://${uri}`);
     strictProxy<CapacitorGlobal>(window).Capacitor = {
@@ -106,7 +106,7 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
       uri: 'file:///shared/original.png'
     }];
 
-    await strictProxy<ShareReceiverProto>(shareReceiver).importFiles(files);
+    await strictProxy<ShareReceiverPrototype>(shareReceiver).importFiles(files);
 
     expect(convertFileSrcMock).toHaveBeenCalledWith('file:///shared/original.png');
     expect(fetchMock).toHaveBeenCalledWith('capacitor://file:///shared/original.png');
@@ -119,7 +119,7 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
     const component = createComponent();
     component.load();
 
-    await strictProxy<ShareReceiverProto>(shareReceiver).importFiles([]);
+    await strictProxy<ShareReceiverPrototype>(shareReceiver).importFiles([]);
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(importFilesMock).toHaveBeenCalledWith([]);

@@ -67,7 +67,9 @@ describe('Canvas table sized embed survives the rewrite (issue #27)', () => {
   // Persisted into the canvas text node byte-for-byte (the input the rewrite must preserve).
   it('persists a table-escaped sized embed `\\|500` into a canvas text node', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<CanvasTableSetupResult> {
         const plugin = app.plugins.getPlugin('obsidian-custom-attachment-location');
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;

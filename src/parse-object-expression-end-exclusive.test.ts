@@ -10,7 +10,7 @@ describe('parseObjectExpressionEndExclusive', () => {
   it('should return the end offset of an object expression', () => {
     expect(parseObjectExpressionEndExclusive({
       objectStart: 0,
-      str: '{ a: 1 }',
+      string: '{ a: 1 }',
       throwOnError: true,
       tokenName: 'token'
     })).toBe(8);
@@ -20,7 +20,7 @@ describe('parseObjectExpressionEndExclusive', () => {
     expect(() =>
       parseObjectExpressionEndExclusive({
         objectStart: 0,
-        str: '123',
+        string: '123',
         throwOnError: true,
         tokenName: 'token'
       })
@@ -30,7 +30,7 @@ describe('parseObjectExpressionEndExclusive', () => {
   it('should return null when the expression is not an object literal and throwOnError is false', () => {
     expect(parseObjectExpressionEndExclusive({
       objectStart: 0,
-      str: '123',
+      string: '123',
       throwOnError: false,
       tokenName: 'token'
     })).toBeNull();

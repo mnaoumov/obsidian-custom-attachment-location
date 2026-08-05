@@ -45,7 +45,7 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly attachmentPathManager: AttachmentPathManager;
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
-  readonly pluginDir: string;
+  readonly pluginDirectory: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly pluginVersion: string;
   readonly tokenValidator: TokenValidator;
@@ -69,7 +69,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   private lastOpenFilePath: null | string = null;
 
   private readonly markdownUrlMap: MarkdownUrlMap;
-  private readonly pluginDir: string;
+  private readonly pluginDirectory: string;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly pluginVersion: string;
   private readonly tokenValidator: TokenValidator;
@@ -78,7 +78,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     super(params.app);
     this.arrayBufferMap = params.arrayBufferMap;
     this.pluginVersion = params.pluginVersion;
-    this.pluginDir = params.pluginDir;
+    this.pluginDirectory = params.pluginDirectory;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.attachmentPathManager = params.attachmentPathManager;
     this.markdownUrlMap = params.markdownUrlMap;
@@ -218,16 +218,16 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     });
   }
 
-  private handleInputFileChange(evt: Event): void {
-    if (!(evt.target instanceof HTMLInputElement)) {
+  private handleInputFileChange($event: Event): void {
+    if (!($event.target instanceof HTMLInputElement)) {
       return;
     }
 
-    if (evt.target.type !== 'file') {
+    if ($event.target.type !== 'file') {
       return;
     }
 
-    for (const file of evt.target.files ?? []) {
+    for (const file of $event.target.files ?? []) {
       this.addChild(
         new FileArrayBufferPatchComponent({
           app: this.app,
@@ -245,7 +245,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     });
   }
 
-  private handleReceiveMenuItemClick(menu: Menu, prepareTextFn: (noteFile: TFile) => string): void {
+  private handleReceiveMenuItemClick(menu: Menu, prepareTextFunction: (noteFile: TFile) => string): void {
     const app = this.app;
     const menuItem = menu.items.find((item) => item instanceof MenuItem && !!item.iconEl.querySelector('.lucide-file')) as MenuItem | undefined;
     if (menuItem) {
@@ -258,7 +258,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         return;
       }
 
-      const text = prepareTextFn(markdownView.file);
+      const text = prepareTextFunction(markdownView.file);
       markdownView.editor.replaceSelection(text);
     }
   }
@@ -331,11 +331,11 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       '11.0.0': createFragment((f) => {
         f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part1));
         f.appendText(' ');
-        appendCodeBlock(f, 'ctx.attachmentFileContent');
+        appendCodeBlock(f, 'context.attachmentFileContent');
         f.appendText(' ');
         f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part2));
         f.appendText(' ');
-        appendCodeBlock(f, 'await ctx.getAttachmentFileContent()');
+        appendCodeBlock(f, 'await context.getAttachmentFileContent()');
         f.appendText(' ');
         f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part3));
         f.appendText(' ');
@@ -360,7 +360,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       releaseNotes.append(createFragment((f) => {
         f.appendText(t(($) => $.releaseNotes.versionMismatch.part1));
         f.appendText(' ');
-        appendCodeBlock(f, `${this.pluginDir}/data.json`);
+        appendCodeBlock(f, `${this.pluginDirectory}/data.json`);
         f.appendText(' ');
         f.appendText(t(($) => $.releaseNotes.versionMismatch.part2));
         f.appendText(' ');

@@ -237,12 +237,15 @@ export interface TokenEvaluatorContext {
  */
 export function actionContextToAttachmentPathContext(context: ActionContext): AttachmentPathContext {
   switch (context) {
-    case ActionContext.DeleteNote:
+    case ActionContext.DeleteNote: {
       return AttachmentPathContext.DeleteNote;
-    case ActionContext.RenameNote:
+    }
+    case ActionContext.RenameNote: {
       return AttachmentPathContext.RenameNote;
-    default:
+    }
+    default: {
       return AttachmentPathContext.Unknown;
+    }
   }
 }
 
@@ -254,11 +257,14 @@ export function actionContextToAttachmentPathContext(context: ActionContext): At
  */
 export function attachmentPathContextToActionContext(context: AttachmentPathContext): ActionContext {
   switch (context) {
-    case AttachmentPathContext.DeleteNote:
+    case AttachmentPathContext.DeleteNote: {
       return ActionContext.DeleteNote;
-    case AttachmentPathContext.RenameNote:
+    }
+    case AttachmentPathContext.RenameNote: {
       return ActionContext.RenameNote;
-    default:
+    }
+    default: {
       return ActionContext.Unknown;
+    }
   }
 }

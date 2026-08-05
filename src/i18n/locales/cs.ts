@@ -5,7 +5,7 @@ export const cs = {
       part2: 'Tuto operaci nelze vrátit zpět.'
     },
     progressBar: {
-      message: 'Shromažďování příloh {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Shromažďování příloh {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Shromažďování příloh...'
     }
   },

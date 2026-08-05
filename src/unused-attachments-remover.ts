@@ -68,7 +68,7 @@ export class UnusedAttachmentsRemover {
   public deleteUnusedAttachmentsInAbstractFiles(abstractFiles: TAbstractFile[]): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
-      operationFn: (abortSignal) => this.deleteUnusedAttachmentsInAbstractFilesImpl(abstractFiles, abortSignal),
+      operationFunction: (abortSignal) => this.deleteUnusedAttachmentsInAbstractFilesImpl(abstractFiles, abortSignal),
       operationName: t(($) => $.menuItems.deleteUnusedAttachmentsInFile),
       timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
     });
@@ -92,7 +92,7 @@ export class UnusedAttachmentsRemover {
       }
     }
 
-    const noteFiles = Array.from(noteFilesSet).sort((a, b) => a.path.localeCompare(b.path));
+    const noteFiles = [...noteFilesSet].sort((a, b) => a.path.localeCompare(b.path));
 
     // Compute the full set of attachments to trash BEFORE deleting anything, so the confirmation
     // Modal lists exactly what will be removed.
@@ -114,7 +114,7 @@ export class UnusedAttachmentsRemover {
       return;
     }
 
-    const attachmentsToDelete = Array.from(unusedAttachments).sort((a, b) => a.path.localeCompare(b.path));
+    const attachmentsToDelete = [...unusedAttachments].sort((a, b) => a.path.localeCompare(b.path));
 
     const isConfirmed = await confirm({
       app: this.app,
@@ -155,7 +155,7 @@ export class UnusedAttachmentsRemover {
     await cleanupEmptyFolders({
       app: this.app,
       emptyFolderBehavior: this.pluginSettingsComponent.settings.emptyFolderBehavior,
-      folderPaths: Array.from(oldParentFolderPaths)
+      folderPaths: [...oldParentFolderPaths]
     });
   }
 

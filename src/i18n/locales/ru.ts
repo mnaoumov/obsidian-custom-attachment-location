@@ -5,7 +5,7 @@ export const ru = {
       part2: 'Эту операцию нельзя отменить.'
     },
     progressBar: {
-      message: 'Сбор вложений {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Сбор вложений {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Сбор вложений...'
     }
   },

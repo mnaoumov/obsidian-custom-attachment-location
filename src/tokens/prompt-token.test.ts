@@ -23,16 +23,16 @@ interface CreateContextParams {
   readonly actionContext: ActionContext;
   readonly format: TokenEvaluatorContext['format'];
   readonly originalAttachmentFileName: string;
-  readonly validatePath?: ValidatePathFn;
+  readonly validatePath?: ValidatePathFunction;
 }
 
 interface PromptWithPreviewParams {
-  readonly ctx: TokenEvaluatorContext;
+  readonly context: TokenEvaluatorContext;
   readonly defaultValue: string;
   valueValidator(value: string): Promise<null | string>;
 }
 
-type ValidatePathFn = TokenValidator['validatePath'];
+type ValidatePathFunction = TokenValidator['validatePath'];
 
 vi.mock('../prompt-with-preview-modal.ts', () => ({
   promptWithPreview: vi.fn<(params: PromptWithPreviewParams) => Promise<null | string>>()
@@ -99,7 +99,7 @@ describe('PromptToken', () => {
   });
 
   it('should validate the prompted value through the context', async () => {
-    const validatePath = vi.fn<ValidatePathFn>(() => Promise.resolve('validation-error'));
+    const validatePath = vi.fn<ValidatePathFunction>(() => Promise.resolve('validation-error'));
     let capturedValidationResult: null | string = null;
     vi.mocked(promptWithPreview).mockImplementation(async (options) => {
       capturedValidationResult = await options.valueValidator('candidate');

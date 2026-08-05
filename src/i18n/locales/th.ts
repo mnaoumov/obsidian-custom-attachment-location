@@ -5,7 +5,7 @@ export const th = {
       part2: 'การดำเนินการนี้ไม่สามารถยกเลิกได้'
     },
     progressBar: {
-      message: 'กำลังรวบรวมไฟล์แนบ {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'กำลังรวบรวมไฟล์แนบ {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'กำลังรวบรวมไฟล์แนบ...'
     }
   },

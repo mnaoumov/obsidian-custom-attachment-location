@@ -15,21 +15,27 @@ export class AttachmentFileSizeToken extends TokenBase<Format> {
     super('attachmentFileSize', formatSchema);
   }
 
-  protected override async evaluateImpl(ctx: TokenEvaluatorContext, format: Format): Promise<string> {
+  protected override async evaluateImpl(context: TokenEvaluatorContext, format: Format): Promise<string> {
     // Prefer the already-available `TFile.stat` size over reading the whole binary, so the attachment content stays unread when no other token needs the bytes.
-    const sizeInBytes = ctx.attachmentFileStats?.size ?? (await ctx.getAttachmentFileContent())?.byteLength ?? 0;
+    const sizeFromStats = context.attachmentFileStats?.size;
+    const attachmentFileContent = sizeFromStats === undefined ? await context.getAttachmentFileContent() : null;
+    const sizeInBytes = sizeFromStats ?? attachmentFileContent?.byteLength ?? 0;
     const BYTES_IN_KB = 1024;
     const BYTES_IN_MB = BYTES_IN_KB * BYTES_IN_KB;
 
     switch (format.unit) {
-      case 'B':
+      case 'B': {
         return sizeInBytes.toFixed(format.decimalPoints);
-      case 'KB':
+      }
+      case 'KB': {
         return (sizeInBytes / BYTES_IN_KB).toFixed(format.decimalPoints);
-      case 'MB':
+      }
+      case 'MB': {
         return (sizeInBytes / BYTES_IN_MB).toFixed(format.decimalPoints);
-      default:
+      }
+      default: {
         throw new Error(`Invalid file size unit: ${format.unit as string}`);
+      }
     }
   }
 }

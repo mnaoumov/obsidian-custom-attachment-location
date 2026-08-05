@@ -33,7 +33,9 @@ interface LinkDisplayResult {
 describe('Link display text = attachment file name (issue #24)', () => {
   it('sets attachment link display text to the base name, excludes notes, and respects the toggle', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<LinkDisplayResult> {
         interface DisplayTextSettings {
           attachmentFolderPath: string;
@@ -65,11 +67,11 @@ describe('Link display text = attachment file name (issue #24)', () => {
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }

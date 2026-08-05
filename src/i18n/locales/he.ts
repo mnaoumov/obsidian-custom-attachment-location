@@ -5,7 +5,7 @@ export const he = {
       part2: 'לא ניתן לבטל פעולה זו.'
     },
     progressBar: {
-      message: 'אוסף קבצים מצורפים {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'אוסף קבצים מצורפים {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'אוסף קבצים מצורפים...'
     }
   },

@@ -33,7 +33,9 @@ interface ProbeResult {
 describe('Collect attachments — exclude notes from the multiple-notes check (issue #33)', () => {
   it('ignores excluded backlink notes so a shared attachment is still collected', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<ProbeResult> {
         interface MultipleNotesSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
@@ -67,11 +69,11 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -111,7 +113,7 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
           // Wait for the metadata cache to resolve both embeds so the collector sees two backlinks.
           const imgFile = app.vault.getFileByPath(imgPath);
           let backlinkCount = 0;
-          const resolveDeadline = Date.now() + 8_000;
+          const resolveDeadline = Date.now() + 8000;
           while (Date.now() < resolveDeadline) {
             backlinkCount = imgFile ? app.metadataCache.getBacklinksForFile(imgFile).keys().length : 0;
             if (backlinkCount >= 2) {
@@ -144,7 +146,7 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
         }
 
         const control = await runPhase(settings, []);
-        const fix = await runPhase(settings, ['/\\.excalidraw\\.md$/']);
+        const fix = await runPhase(settings, [String.raw`/\.excalidraw\.md$/`]);
         return { control, fix, settingsFound: true };
       },
       vaultPath: getTempVault().path

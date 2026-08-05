@@ -21,8 +21,8 @@ interface PickFormat {
 }
 
 class TestableNoteFolderNameToken extends NoteFolderNameToken {
-  public callEvaluateImpl(ctx: TokenEvaluatorContext, format: EvaluateImplFormat): Promisable<string> {
-    return this.evaluateImpl(ctx, castTo<Parameters<TestableNoteFolderNameToken['evaluateImpl']>[1]>(format));
+  public callEvaluateImpl(context: TokenEvaluatorContext, format: EvaluateImplFormat): Promisable<string> {
+    return this.evaluateImpl(context, castTo<Parameters<TestableNoteFolderNameToken['evaluateImpl']>[1]>(format));
   }
 }
 

@@ -16,20 +16,20 @@ export class HeadingToken extends TokenBase<Format> {
     super('heading', formatSchema);
   }
 
-  protected override async evaluateImpl(ctx: TokenEvaluatorContext, format: Format): Promise<string> {
-    const headingsInfo = await this.initHeadings(ctx);
+  protected override async evaluateImpl(context: TokenEvaluatorContext, format: Format): Promise<string> {
+    const headingsInfo = await this.initHeadings(context);
     const rawHeading = headingsInfo.get(format.level) ?? '';
-    return ctx.pluginSettingsComponent.replaceSpecialCharacters(rawHeading);
+    return context.pluginSettingsComponent.replaceSpecialCharacters(rawHeading);
   }
 
-  private async initHeadings(ctx: TokenEvaluatorContext): Promise<Map<HeadingLevel, string>> {
+  private async initHeadings(context: TokenEvaluatorContext): Promise<Map<HeadingLevel, string>> {
     const headingsInfo = new Map<HeadingLevel, string>();
 
-    if (!ctx.cursorLine) {
+    if (!context.cursorLine) {
       return headingsInfo;
     }
 
-    const cache = await getCacheSafe(ctx.app, ctx.noteFilePath);
+    const cache = await getCacheSafe(context.app, context.noteFilePath);
     if (!cache?.headings) {
       return headingsInfo;
     }
@@ -37,7 +37,7 @@ export class HeadingToken extends TokenBase<Format> {
     const lastLines = new Map<HeadingLevel, number>();
 
     for (const heading of cache.headings) {
-      if (heading.position.start.line > ctx.cursorLine) {
+      if (heading.position.start.line > context.cursorLine) {
         continue;
       }
 

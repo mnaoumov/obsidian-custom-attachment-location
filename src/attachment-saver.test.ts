@@ -51,7 +51,7 @@ interface TestContext {
 
 const moment = extractDefaultExportInterop(moment_);
 
-let ctx: TestContext;
+let context: TestContext;
 
 function createSaver(): TestContext {
   const isPathIgnored = vi.fn<PluginSettings['isPathIgnored']>().mockReturnValue(false);
@@ -138,116 +138,116 @@ function createTFile(overrides: Partial<TFile>): TFile {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  ctx = createSaver();
+  context = createSaver();
 });
 
 describe('AttachmentSaver', () => {
   describe('saveAttachment', () => {
     it('should save without renaming when there is no active note file', async () => {
-      ctx.getActiveFile.mockReturnValue(null);
-      const result = await ctx.saver.saveAttachment({
+      context.getActiveFile.mockReturnValue(null);
+      const result = await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
       expect(result.path).toBe('assets/saved.png');
-      expect(ctx.convertToJpeg).not.toHaveBeenCalled();
-      expect(ctx.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
+      expect(context.convertToJpeg).not.toHaveBeenCalled();
+      expect(context.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
     });
 
     it('should save without renaming when the active note path is ignored', async () => {
-      ctx.isPathIgnored.mockReturnValue(true);
-      const result = await ctx.saver.saveAttachment({
+      context.isPathIgnored.mockReturnValue(true);
+      const result = await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
       expect(result.path).toBe('assets/saved.png');
-      expect(ctx.convertToJpeg).not.toHaveBeenCalled();
+      expect(context.convertToJpeg).not.toHaveBeenCalled();
     });
 
     it('should not rename when the rename mode is None', async () => {
-      ctx.settings.attachmentRenameMode = AttachmentRenameMode.None;
-      await ctx.saver.saveAttachment({
+      context.settings.attachmentRenameMode = AttachmentRenameMode.None;
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
+      expect(context.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
     });
 
     it('should rename when the rename mode is All', async () => {
-      ctx.settings.attachmentRenameMode = AttachmentRenameMode.All;
-      await ctx.saver.saveAttachment({
+      context.settings.attachmentRenameMode = AttachmentRenameMode.All;
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.getGeneratedAttachmentFileBaseName).toHaveBeenCalled();
+      expect(context.getGeneratedAttachmentFileBaseName).toHaveBeenCalled();
     });
 
     it('should rename a recently pasted image when the rename mode is OnlyPastedImages', async () => {
-      ctx.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
+      context.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
       const timestamp = moment().format('YYYYMMDDHHmmss');
-      await ctx.saver.saveAttachment({
+      await context.saver.saveAttachment({
         attachmentFileBaseName: `Pasted image ${timestamp}`,
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.getGeneratedAttachmentFileBaseName).toHaveBeenCalled();
-      expect(ctx.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: true }));
+      expect(context.getGeneratedAttachmentFileBaseName).toHaveBeenCalled();
+      expect(context.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: true }));
     });
 
     it('should not treat a non-pasted-image base name as a pasted image', async () => {
-      ctx.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
-      await ctx.saver.saveAttachment({
+      context.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
-      expect(ctx.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: false }));
+      expect(context.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
+      expect(context.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: false }));
     });
 
     // Regression for issue #31: a clipboard image whose ArrayBuffer was flagged by the `insertFiles`
     // Interception is renamed in OnlyPastedImages mode even when its base name is not a
     // `Pasted image <timestamp>` name (e.g. a Windows 11 Win+Shift+S screenshot from a temp file).
     it('should rename a clipboard-flagged image in OnlyPastedImages mode despite a non-pasted base name', async () => {
-      ctx.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
-      ctx.isPastedImageBuffer.mockReturnValue(true);
-      await ctx.saver.saveAttachment({
+      context.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
+      context.isPastedImageBuffer.mockReturnValue(true);
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'image',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.getGeneratedAttachmentFileBaseName).toHaveBeenCalled();
-      expect(ctx.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: true }));
+      expect(context.getGeneratedAttachmentFileBaseName).toHaveBeenCalled();
+      expect(context.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: true }));
     });
 
     it('should not treat an invalid pasted-image timestamp as a pasted image', async () => {
-      ctx.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
-      await ctx.saver.saveAttachment({
+      context.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'Pasted image 99999999999999',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: false }));
+      expect(context.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: false }));
     });
 
     it('should not treat an old pasted image as a recent pasted image', async () => {
-      ctx.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
+      context.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
       const oldTimestamp = moment().subtract(1, 'hour').format('YYYYMMDDHHmmss');
-      await ctx.saver.saveAttachment({
+      await context.saver.saveAttachment({
         attachmentFileBaseName: `Pasted image ${oldTimestamp}`,
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: false }));
+      expect(context.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: false }));
     });
 
     it('should throw for an invalid rename mode', async () => {
-      ctx.settings.attachmentRenameMode = castTo<AttachmentRenameMode>('invalid');
-      await expect(ctx.saver.saveAttachment({
+      context.settings.attachmentRenameMode = castTo<AttachmentRenameMode>('invalid');
+      await expect(context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
@@ -255,113 +255,113 @@ describe('AttachmentSaver', () => {
     });
 
     it('should adopt the converted extension and content from the image manager', async () => {
-      ctx.settings.attachmentRenameMode = AttachmentRenameMode.None;
+      context.settings.attachmentRenameMode = AttachmentRenameMode.None;
       const convertedContent = new ArrayBuffer(8);
-      ctx.convertToJpeg.mockResolvedValue({
+      context.convertToJpeg.mockResolvedValue({
         attachmentFileContent: convertedContent,
         attachmentFileExtension: 'jpg'
       });
-      await ctx.saver.saveAttachment({
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.getAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({
+      expect(context.getAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({
         attachmentFileExtension: 'jpg'
       }));
-      const params = ctx.getAvailablePathForAttachments.mock.calls[0]?.[0];
+      const params = context.getAvailablePathForAttachments.mock.calls[0]?.[0];
       expect(await params?.readAttachmentFileContent?.()).toBe(convertedContent);
     });
 
     it('should set the markdown url when a markdown url format is configured', async () => {
-      ctx.settings.markdownUrlFormat = 'plain-url';
-      const result = await ctx.saver.saveAttachment({
+      context.settings.markdownUrlFormat = 'plain-url';
+      const result = await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.markdownUrlMapSet).toHaveBeenCalledWith({ path: result.path, url: 'plain-url' });
-      expect(ctx.markdownUrlMapDelete).not.toHaveBeenCalled();
+      expect(context.markdownUrlMapSet).toHaveBeenCalledWith({ path: result.path, url: 'plain-url' });
+      expect(context.markdownUrlMapDelete).not.toHaveBeenCalled();
     });
 
     it('should use the file stats from the array buffer map for the markdown url substitutions', async () => {
-      ctx.settings.markdownUrlFormat = 'plain-url';
-      ctx.getFileStats.mockReturnValue(createStats({ ctime: 1, mtime: 2, size: 3 }));
-      const result = await ctx.saver.saveAttachment({
+      context.settings.markdownUrlFormat = 'plain-url';
+      context.getFileStats.mockReturnValue(createStats({ ctime: 1, mtime: 2, size: 3 }));
+      const result = await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.markdownUrlMapSet).toHaveBeenCalledWith({ path: result.path, url: 'plain-url' });
+      expect(context.markdownUrlMapSet).toHaveBeenCalledWith({ path: result.path, url: 'plain-url' });
     });
 
     it('should delete the markdown url when no markdown url format is configured', async () => {
-      ctx.settings.markdownUrlFormat = '';
-      const result = await ctx.saver.saveAttachment({
+      context.settings.markdownUrlFormat = '';
+      const result = await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.markdownUrlMapDelete).toHaveBeenCalledWith(result.path);
-      expect(ctx.markdownUrlMapSet).not.toHaveBeenCalled();
+      expect(context.markdownUrlMapDelete).toHaveBeenCalledWith(result.path);
+      expect(context.markdownUrlMapSet).not.toHaveBeenCalled();
     });
   });
 
   describe('saveAttachmentCore', () => {
     it('should record the image size when the image manager returns one', async () => {
-      ctx.getImageSize.mockResolvedValue('100x200');
-      await ctx.saver.saveAttachment({
+      context.getImageSize.mockResolvedValue('100x200');
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.imageSizeMapSet).toHaveBeenCalledWith({ path: 'assets/saved.png', size: '100x200' });
+      expect(context.imageSizeMapSet).toHaveBeenCalledWith({ path: 'assets/saved.png', size: '100x200' });
     });
 
     it('should not record an image size when the image manager returns null', async () => {
-      ctx.getImageSize.mockResolvedValue(null);
-      await ctx.saver.saveAttachment({
+      context.getImageSize.mockResolvedValue(null);
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: new ArrayBuffer(0),
         attachmentFileExtension: 'png'
       });
-      expect(ctx.imageSizeMapSet).not.toHaveBeenCalled();
+      expect(context.imageSizeMapSet).not.toHaveBeenCalled();
     });
 
     it('should pass truncated ctime and mtime to createBinary when stats are present', async () => {
-      ctx.getFileStats.mockReturnValue(createStats({ ctime: 1234.9, mtime: 5678.1, size: 10 }));
+      context.getFileStats.mockReturnValue(createStats({ ctime: 1234.9, mtime: 5678.1, size: 10 }));
       const content = new ArrayBuffer(4);
-      await ctx.saver.saveAttachment({
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: content,
         attachmentFileExtension: 'png'
       });
-      expect(ctx.createBinary).toHaveBeenCalledWith('assets/saved.png', content, {
+      expect(context.createBinary).toHaveBeenCalledWith('assets/saved.png', content, {
         ctime: 1234,
         mtime: 5678
       });
     });
 
     it('should omit ctime and mtime from createBinary options when stats are absent', async () => {
-      ctx.getFileStats.mockReturnValue(undefined);
+      context.getFileStats.mockReturnValue(undefined);
       const content = new ArrayBuffer(4);
-      await ctx.saver.saveAttachment({
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: content,
         attachmentFileExtension: 'png'
       });
-      expect(ctx.createBinary).toHaveBeenCalledWith('assets/saved.png', content, {});
+      expect(context.createBinary).toHaveBeenCalledWith('assets/saved.png', content, {});
     });
 
     it('should omit ctime and mtime from createBinary options when stats are zero', async () => {
-      ctx.getFileStats.mockReturnValue(createStats({ ctime: 0, mtime: 0, size: 0 }));
+      context.getFileStats.mockReturnValue(createStats({ ctime: 0, mtime: 0, size: 0 }));
       const content = new ArrayBuffer(4);
-      await ctx.saver.saveAttachment({
+      await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',
         attachmentFileContent: content,
         attachmentFileExtension: 'png'
       });
-      expect(ctx.createBinary).toHaveBeenCalledWith('assets/saved.png', content, {});
+      expect(context.createBinary).toHaveBeenCalledWith('assets/saved.png', content, {});
     });
   });
 });

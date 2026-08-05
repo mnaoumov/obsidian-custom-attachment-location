@@ -5,7 +5,7 @@ export const hu = {
       part2: 'Ez a művelet nem vonható vissza.'
     },
     progressBar: {
-      message: 'Mellékletek összegyűjtése {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Mellékletek összegyűjtése {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Mellékletek összegyűjtése...'
     }
   },

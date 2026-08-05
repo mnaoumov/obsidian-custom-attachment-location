@@ -28,7 +28,10 @@ import {
   getCacheSafe,
   getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
+import {
+  createFolderSafe,
+  CreateFolderSafeResult
+} from 'obsidian-dev-utils/obsidian/vault';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeAll,
@@ -120,7 +123,7 @@ interface TestContext {
   validatePath: ReturnType<typeof vi.fn<TokenValidator['validatePath']>>;
 }
 
-let ctx: TestContext;
+let context: TestContext;
 
 function createManager(): TestContext {
   const isPathIgnored = vi.fn<PluginSettings['isPathIgnored']>().mockReturnValue(false);
@@ -157,7 +160,7 @@ function createManager(): TestContext {
   const isNoteEx = vi.fn<PluginSettingsComponent['isNoteEx']>().mockReturnValue(false);
   const pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
     isNoteEx,
-    replaceSpecialCharacters: (str: string) => settings.specialCharacters ? str.replaceAll(settings.specialCharacters, settings.specialCharactersReplacement) : str,
+    replaceSpecialCharacters: ($string: string) => settings.specialCharacters ? $string.replaceAll(settings.specialCharacters, () => settings.specialCharactersReplacement) : $string,
     settings
   });
 
@@ -199,8 +202,8 @@ function createSubstitutions(actionContext: ActionContext): Substitutions {
     app: strictProxy<App>({ workspace: strictProxy<App['workspace']>({ activeEditor: null }) }),
     noteFilePath: 'notes/note.md',
     originalAttachmentFileName: 'img.png',
-    pluginSettingsComponent: ctx.pluginSettingsComponent,
-    tokenValidator: ctx.tokenValidator
+    pluginSettingsComponent: context.pluginSettingsComponent,
+    tokenValidator: context.tokenValidator
   });
 }
 
@@ -222,15 +225,15 @@ beforeEach(() => {
   mockGetLinks.mockReturnValue([]);
   mockGetCacheSafe.mockResolvedValue(null);
   mockExtractLinkFile.mockReturnValue(null);
-  mockCreateFolderSafe.mockResolvedValue(true);
-  ctx = createManager();
+  mockCreateFolderSafe.mockResolvedValue(CreateFolderSafeResult.Created);
+  context = createManager();
 });
 
 describe('AttachmentPathManager', () => {
   describe('getAttachmentFolderFullPathForPath', () => {
     it('should resolve the attachment folder path for the note', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      const result = await ctx.manager.getAttachmentFolderFullPathForPath({
+      context.settings.attachmentFolderPath = 'assets';
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
         actionContext: ActionContext.SaveAttachment,
         attachmentFileName: 'img.png',
         notePath: 'note.md'
@@ -239,9 +242,9 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should resolve a relative path against the note folder path', async () => {
-      ctx.settings.attachmentFolderPath = './assets';
+      context.settings.attachmentFolderPath = './assets';
       const stat = strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 });
-      const result = await ctx.manager.getAttachmentFolderFullPathForPath({
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
         actionContext: ActionContext.SaveAttachment,
         attachmentFileName: 'img.png',
         attachmentFileStats: stat,
@@ -254,65 +257,65 @@ describe('AttachmentPathManager', () => {
 
   describe('getGeneratedAttachmentFileBaseName', () => {
     it('should use the collected attachment file name template for CollectAttachments', async () => {
-      ctx.settings.collectedAttachmentFileName = 'collected';
-      const result = await ctx.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.CollectAttachments));
+      context.settings.collectedAttachmentFileName = 'collected';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.CollectAttachments));
       expect(result).toBe('collected');
     });
 
     it('should use the renamed attachment file name template for RenameNote', async () => {
-      ctx.settings.renamedAttachmentFileName = 'renamed';
-      const result = await ctx.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.RenameNote));
+      context.settings.renamedAttachmentFileName = 'renamed';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.RenameNote));
       expect(result).toBe('renamed');
     });
 
     it('should fall back to the generated attachment file name template by default', async () => {
-      ctx.settings.generatedAttachmentFileName = 'generated';
-      const result = await ctx.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment));
+      context.settings.generatedAttachmentFileName = 'generated';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment));
       expect(result).toBe('generated');
     });
 
     it('should fall back to the generated template when the chosen template is empty', async () => {
-      ctx.settings.collectedAttachmentFileName = '';
-      ctx.settings.generatedAttachmentFileName = 'generated';
-      const result = await ctx.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.CollectAttachments));
+      context.settings.collectedAttachmentFileName = '';
+      context.settings.generatedAttachmentFileName = 'generated';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.CollectAttachments));
       expect(result).toBe('generated');
     });
 
     it('should validate the file name part of the resolved path', async () => {
-      ctx.settings.generatedAttachmentFileName = 'folder/file';
-      await ctx.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment));
-      expect(ctx.validateFileName).toHaveBeenCalledWith(expect.objectContaining({
+      context.settings.generatedAttachmentFileName = 'folder/file';
+      await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment));
+      expect(context.validateFileName).toHaveBeenCalledWith(expect.objectContaining({
         fileName: 'file',
         tokenValidationMode: TokenValidationMode.Error
       }));
     });
 
     it('should throw and notify when the path validation fails', async () => {
-      ctx.settings.generatedAttachmentFileName = 'bad';
-      ctx.validatePath.mockResolvedValueOnce('').mockResolvedValue('invalid path');
-      await expect(ctx.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment))).rejects.toThrow('is invalid');
+      context.settings.generatedAttachmentFileName = 'bad';
+      context.validatePath.mockResolvedValueOnce('').mockResolvedValue('invalid path');
+      await expect(context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment))).rejects.toThrow('is invalid');
       expect(noticeInstances.length).toBeGreaterThan(0);
     });
 
     it('should throw and notify when the file name validation fails', async () => {
-      ctx.settings.generatedAttachmentFileName = 'bad';
-      ctx.validateFileName.mockResolvedValue('invalid file name');
-      await expect(ctx.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment))).rejects.toThrow('is invalid');
+      context.settings.generatedAttachmentFileName = 'bad';
+      context.validateFileName.mockResolvedValue('invalid file name');
+      await expect(context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment))).rejects.toThrow('is invalid');
     });
 
     it('should use an empty file name when the resolved path is empty', async () => {
-      ctx.settings.generatedAttachmentFileName = '';
-      await ctx.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment));
-      expect(ctx.validateFileName).toHaveBeenCalledWith(expect.objectContaining({ fileName: '' }));
+      context.settings.generatedAttachmentFileName = '';
+      await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment));
+      expect(context.validateFileName).toHaveBeenCalledWith(expect.objectContaining({ fileName: '' }));
     });
   });
 
   describe('resolvePathTemplate (via getAttachmentFolderFullPathForPath)', () => {
     it('should clean special characters and trailing dots from each path part', async () => {
-      ctx.settings.specialCharacters = 'a';
-      ctx.settings.specialCharactersReplacement = 'A';
-      ctx.settings.attachmentFolderPath = 'a /b. ';
-      const result = await ctx.manager.getAttachmentFolderFullPathForPath({
+      context.settings.specialCharacters = 'a';
+      context.settings.specialCharactersReplacement = 'A';
+      context.settings.attachmentFolderPath = 'a /b. ';
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
         actionContext: ActionContext.SaveAttachment,
         attachmentFileName: 'img.png',
         notePath: 'note.md'
@@ -321,8 +324,8 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should preserve single and double dot path parts during cleaning', async () => {
-      ctx.settings.attachmentFolderPath = './..';
-      const result = await ctx.manager.getAttachmentFolderFullPathForPath({
+      context.settings.attachmentFolderPath = './..';
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
         actionContext: ActionContext.SaveAttachment,
         attachmentFileName: 'img.png',
         notePath: 'notes/note.md'
@@ -331,9 +334,9 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should throw and notify when the resolved path validation fails', async () => {
-      ctx.settings.attachmentFolderPath = 'bad';
-      ctx.validatePath.mockResolvedValue('invalid');
-      await expect(ctx.manager.getAttachmentFolderFullPathForPath({
+      context.settings.attachmentFolderPath = 'bad';
+      context.validatePath.mockResolvedValue('invalid');
+      await expect(context.manager.getAttachmentFolderFullPathForPath({
         actionContext: ActionContext.SaveAttachment,
         attachmentFileName: 'img.png',
         notePath: 'note.md'
@@ -342,8 +345,8 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should normalize an empty resolved path to an empty string', async () => {
-      ctx.settings.attachmentFolderPath = '.';
-      const result = await ctx.manager.getAttachmentFolderFullPathForPath({
+      context.settings.attachmentFolderPath = '.';
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
         actionContext: ActionContext.SaveAttachment,
         attachmentFileName: 'img.png',
         notePath: 'note.md'
@@ -352,8 +355,8 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should throw when the resolved path is still relative after normalization', async () => {
-      ctx.settings.attachmentFolderPath = '../outside';
-      await expect(ctx.manager.getAttachmentFolderFullPathForPath({
+      context.settings.attachmentFolderPath = '../outside';
+      await expect(context.manager.getAttachmentFolderFullPathForPath({
         actionContext: ActionContext.SaveAttachment,
         attachmentFileName: 'img.png',
         notePath: 'note.md'
@@ -364,7 +367,7 @@ describe('AttachmentPathManager', () => {
   describe('getSequenceNumberMap', () => {
     it('should return an empty map when there is no cache for the note', async () => {
       mockGetCacheSafe.mockResolvedValue(null);
-      const result = await ctx.manager.getSequenceNumberMap('note.md');
+      const result = await context.manager.getSequenceNumberMap('note.md');
       expect(result.size).toBe(0);
     });
 
@@ -377,7 +380,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([linkA1, linkA2, linkB]);
       mockExtractLinkFile.mockImplementation(({ link }) => link === linkB ? fileB : fileA);
-      const result = await ctx.manager.getSequenceNumberMap('note.md');
+      const result = await context.manager.getSequenceNumberMap('note.md');
       // `a.png` keeps its first-occurrence number (1); its repeat still advances the slot, so `b.png` is 3.
       expect(result.get('a.png')).toBe(1);
       expect(result.get('b.png')).toBe(3);
@@ -391,8 +394,8 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([sectionEmbedLink, attachmentLink]);
       mockExtractLinkFile.mockImplementation(({ link }) => link === sectionEmbedLink ? noteFile : attachmentFile);
-      ctx.isNoteEx.mockImplementation((pathOrFile) => pathOrFile === noteFile);
-      const result = await ctx.manager.getSequenceNumberMap('note.md');
+      context.isNoteEx.mockImplementation((pathOrFile) => pathOrFile === noteFile);
+      const result = await context.manager.getSequenceNumberMap('note.md');
       // The section embed is skipped and must not advance the slot, so the attachment stays at 1.
       expect(result.get('old.png')).toBe(1);
     });
@@ -406,7 +409,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([unresolvableLink, attachmentLink]);
       mockExtractLinkFile.mockImplementation(({ link }) => link === attachmentLink ? attachmentFile : null);
-      const result = await ctx.manager.getSequenceNumberMap('note.md');
+      const result = await context.manager.getSequenceNumberMap('note.md');
       // The broken link still occupies slot 1, so the resolved attachment is numbered 2.
       expect(result.get('old.png')).toBe(2);
     });
@@ -414,10 +417,10 @@ describe('AttachmentPathManager', () => {
 
   describe('getDownloadedImagePath', () => {
     it('should resolve the downloaded image path without creating an existing folder', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
-      ctx.exists.mockResolvedValue(true);
-      const result = await ctx.manager.getDownloadedImagePath({
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
+      context.exists.mockResolvedValue(true);
+      const result = await context.manager.getDownloadedImagePath({
         actionContext: ActionContext.CollectAttachments,
         downloadedContent: new ArrayBuffer(4),
         fileExtension: 'png',
@@ -429,10 +432,10 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should create the target folder when it does not exist', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
-      ctx.exists.mockResolvedValue(false);
-      const result = await ctx.manager.getDownloadedImagePath({
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
+      context.exists.mockResolvedValue(false);
+      const result = await context.manager.getDownloadedImagePath({
         actionContext: ActionContext.CollectAttachments,
         downloadedContent: new ArrayBuffer(4),
         fileExtension: 'png',
@@ -444,9 +447,9 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should resolve the downloaded image path when no file extension is provided', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
-      const result = await ctx.manager.getDownloadedImagePath({
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
+      const result = await context.manager.getDownloadedImagePath({
         actionContext: ActionContext.CollectAttachments,
         downloadedContent: new ArrayBuffer(4),
         fileExtension: '',
@@ -459,15 +462,15 @@ describe('AttachmentPathManager', () => {
 
   describe('getProperAttachmentPath', () => {
     it('should keep the original name when collected attachment renaming is disabled', async () => {
-      ctx.settings.shouldRenameCollectedAttachments = false;
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.shouldRenameCollectedAttachments = false;
+      context.settings.attachmentFolderPath = 'assets';
       const attachmentFile = createTFile({
         extension: 'png',
         name: 'img.png',
         path: 'old/img.png',
         stat: strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 })
       });
-      const result = await ctx.manager.getProperAttachmentPath({
+      const result = await context.manager.getProperAttachmentPath({
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
@@ -478,9 +481,9 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should generate a new name when collected attachment renaming is enabled', async () => {
-      ctx.settings.shouldRenameCollectedAttachments = true;
-      ctx.settings.collectedAttachmentFileName = 'collected';
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.shouldRenameCollectedAttachments = true;
+      context.settings.collectedAttachmentFileName = 'collected';
+      context.settings.attachmentFolderPath = 'assets';
       const referenceCache = strictProxy<ReferenceCache>({
         position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 3, offset: 0 } }
       });
@@ -490,7 +493,7 @@ describe('AttachmentPathManager', () => {
         path: 'old/img.png',
         stat: strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 })
       });
-      const result = await ctx.manager.getProperAttachmentPath({
+      const result = await context.manager.getProperAttachmentPath({
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
@@ -501,17 +504,17 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should use the injected sequence number in the generated name', async () => {
-      ctx.settings.shouldRenameCollectedAttachments = true;
+      context.settings.shouldRenameCollectedAttachments = true;
       // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      ctx.settings.collectedAttachmentFileName = 'collected-${sequenceNumber:{length:2}}';
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.collectedAttachmentFileName = 'collected-${sequenceNumber:{length:2}}';
+      context.settings.attachmentFolderPath = 'assets';
       const attachmentFile = createTFile({
         extension: 'png',
         name: 'img.png',
         path: 'old/img.png',
         stat: strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 })
       });
-      const result = await ctx.manager.getProperAttachmentPath({
+      const result = await context.manager.getProperAttachmentPath({
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
@@ -522,16 +525,16 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should use cursor line 0 for a non-reference-cache reference', async () => {
-      ctx.settings.shouldRenameCollectedAttachments = true;
-      ctx.settings.collectedAttachmentFileName = 'collected';
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.shouldRenameCollectedAttachments = true;
+      context.settings.collectedAttachmentFileName = 'collected';
+      context.settings.attachmentFolderPath = 'assets';
       const attachmentFile = createTFile({
         extension: 'png',
         name: 'img.png',
         path: 'old/img.png',
         stat: strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 })
       });
-      const result = await ctx.manager.getProperAttachmentPath({
+      const result = await context.manager.getProperAttachmentPath({
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
@@ -542,15 +545,15 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should return null when the new path equals the current path', async () => {
-      ctx.settings.shouldRenameCollectedAttachments = false;
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.shouldRenameCollectedAttachments = false;
+      context.settings.attachmentFolderPath = 'assets';
       const attachmentFile = createTFile({
         extension: 'png',
         name: 'img.png',
         path: 'assets/img.png',
         stat: strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 })
       });
-      const result = await ctx.manager.getProperAttachmentPath({
+      const result = await context.manager.getProperAttachmentPath({
         actionContext: ActionContext.CollectAttachments,
         attachmentFile,
         noteFilePath: 'note.md',
@@ -565,7 +568,7 @@ describe('AttachmentPathManager', () => {
     it('should seed default content and stats for a dummy attachment base name', async () => {
       mockGetFileOrNull.mockReturnValue(null);
       mockIsNote.mockReturnValue(false);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: DUMMY_PATH,
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -578,12 +581,12 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should not read the attachment content when no token needs it', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValue(noteFile);
       mockIsNote.mockReturnValue(true);
       const readAttachmentFileContent = vi.fn<() => Promise<ArrayBuffer>>().mockResolvedValue(new ArrayBuffer(8));
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -599,11 +602,11 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should seed empty content for a dummy attachment base name on a note path', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValue(noteFile);
       mockIsNote.mockReturnValue(true);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: DUMMY_PATH,
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -618,11 +621,11 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should strip the import-files prefix and skip generated file name', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValue(noteFile);
       mockIsNote.mockReturnValue(true);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -638,8 +641,8 @@ describe('AttachmentPathManager', () => {
     it('should delegate to the original function when the note path is ignored', async () => {
       const noteFile = createTFile({ path: 'ignored/note.md' });
       mockGetFileOrNull.mockReturnValue(noteFile);
-      ctx.isPathIgnored.mockReturnValue(true);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      context.isPathIgnored.mockReturnValue(true);
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -649,13 +652,13 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: true
       });
       expect(result).toBe('original-path');
-      expect(ctx.getAvailablePathForAttachmentsOriginal).toHaveBeenCalledWith('img', 'png', noteFile);
+      expect(context.getAvailablePathForAttachmentsOriginal).toHaveBeenCalledWith('img', 'png', noteFile);
     });
 
     it('should delegate to the dev-utils helper for a non-note path', async () => {
       mockGetFileOrNull.mockReturnValue(null);
       mockIsNote.mockReturnValue(false);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -675,7 +678,7 @@ describe('AttachmentPathManager', () => {
     it('should apply default skip flags for a non-note path', async () => {
       mockGetFileOrNull.mockReturnValue(null);
       mockIsNote.mockReturnValue(false);
-      await ctx.manager.getAvailablePathForAttachments({
+      await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -691,12 +694,12 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should generate the attachment file name for a note path', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -709,11 +712,11 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should use the duplicate-checked available path when duplicate check is not skipped', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -723,16 +726,16 @@ describe('AttachmentPathManager', () => {
         shouldSkipDuplicateCheck: false,
         shouldSkipMissingAttachmentFolderCreation: true
       });
-      expect(ctx.getAvailablePath).toHaveBeenCalledWith('assets/img', 'png');
+      expect(context.getAvailablePath).toHaveBeenCalledWith('assets/img', 'png');
       expect(result).toBe('assets/img.png');
     });
 
     it('should use the duplicate-checked available path with an empty extension', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
-      await ctx.manager.getAvailablePathForAttachments({
+      await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: '',
         context: AttachmentPathContext.Unknown,
@@ -742,17 +745,17 @@ describe('AttachmentPathManager', () => {
         shouldSkipDuplicateCheck: false,
         shouldSkipMissingAttachmentFolderCreation: true
       });
-      expect(ctx.getAvailablePath).toHaveBeenCalledWith('assets/img', '');
+      expect(context.getAvailablePath).toHaveBeenCalledWith('assets/img', '');
     });
 
     it('should create the missing attachment folder when folder creation is not skipped', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.emptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.emptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
-      ctx.exists.mockResolvedValue(false);
-      await ctx.manager.getAvailablePathForAttachments({
+      context.exists.mockResolvedValue(false);
+      await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -763,17 +766,17 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: false
       });
       expect(mockCreateFolderSafe).toHaveBeenCalledWith(expect.anything(), 'assets');
-      expect(ctx.create).not.toHaveBeenCalled();
+      expect(context.create).not.toHaveBeenCalled();
     });
 
     it('should create a gitkeep file when the empty folder behavior is Keep', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
-      ctx.exists.mockResolvedValue(false);
-      await ctx.manager.getAvailablePathForAttachments({
+      context.exists.mockResolvedValue(false);
+      await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -783,12 +786,12 @@ describe('AttachmentPathManager', () => {
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: false
       });
-      expect(ctx.create).toHaveBeenCalledWith('assets/.gitkeep', '');
+      expect(context.create).toHaveBeenCalledWith('assets/.gitkeep', '');
     });
 
     it('should not re-create the gitkeep file when a peer device already synced it (re #16)', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
@@ -796,8 +799,8 @@ describe('AttachmentPathManager', () => {
        * The attachment folder does not exist yet, but its `.gitkeep` placeholder
        * was already synced onto disk from another device.
        */
-      ctx.exists.mockImplementation((path) => Promise.resolve(path === 'assets/.gitkeep'));
-      await ctx.manager.getAvailablePathForAttachments({
+      context.exists.mockImplementation((path) => Promise.resolve(path === 'assets/.gitkeep'));
+      await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -808,16 +811,16 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: false
       });
       expect(mockCreateFolderSafe).toHaveBeenCalledWith(expect.anything(), 'assets');
-      expect(ctx.create).not.toHaveBeenCalled();
+      expect(context.create).not.toHaveBeenCalled();
     });
 
     it('should not create the folder when it already exists', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
-      ctx.exists.mockResolvedValue(true);
-      await ctx.manager.getAvailablePathForAttachments({
+      context.exists.mockResolvedValue(true);
+      await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -831,8 +834,8 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should resolve the cursor line and sequence number from the note cache when generating a name', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       const link = strictProxy<ReferenceCache>({
@@ -843,7 +846,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([link]);
       mockExtractLinkFile.mockReturnValue(oldFile);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -860,8 +863,8 @@ describe('AttachmentPathManager', () => {
 
   describe('getCursorLine (via getAvailablePathForAttachments)', () => {
     it('should skip non-reference-cache links and links with no resolved file', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       const otherFile = createTFile({ path: 'other.png' });
@@ -880,7 +883,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([nonReferenceCacheLink, unresolvedReferenceCacheLink, nonMatchingReferenceCacheLink, matchingReferenceCacheLink]);
       mockExtractLinkFile.mockReturnValueOnce(null).mockReturnValueOnce(otherFile).mockReturnValue(oldFile);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -894,8 +897,8 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should resolve the old note file path and a matching cursor line', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       const referenceCacheLink = strictProxy<ReferenceCache>({
@@ -906,7 +909,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([referenceCacheLink]);
       mockExtractLinkFile.mockReturnValue(oldFile);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -922,8 +925,8 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should return cursor line 0 when no link matches the old attachment file', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       const otherFile = createTFile({ path: 'other.png' });
@@ -935,7 +938,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([referenceCacheLink]);
       mockExtractLinkFile.mockReturnValue(otherFile);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -950,14 +953,14 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should return cursor line 0 when no cache exists for the note', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
-      ctx.settings.generatedAttachmentFileName = 'generated';
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'generated';
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
       mockIsNote.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(null);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -973,9 +976,9 @@ describe('AttachmentPathManager', () => {
 
   describe('single-pass link walk (via getAvailablePathForAttachments)', () => {
     it('should derive the sequence number and resolve the note cache in a single walk', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      ctx.settings.generatedAttachmentFileName = '${sequenceNumber}';
+      context.settings.generatedAttachmentFileName = '${sequenceNumber}';
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       const otherFile = createTFile({ path: 'other.png' });
@@ -990,7 +993,7 @@ describe('AttachmentPathManager', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([otherLink, oldLink]);
       mockExtractLinkFile.mockImplementation(({ link }) => link === oldLink ? oldFile : otherFile);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -1007,9 +1010,9 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should derive the cursor line from the matching reference and feed it to the heading token', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      ctx.settings.generatedAttachmentFileName = '${heading}';
+      context.settings.generatedAttachmentFileName = '${heading}';
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       const matchAtLine4 = strictProxy<ReferenceCache>({
@@ -1025,7 +1028,7 @@ describe('AttachmentPathManager', () => {
       }));
       mockGetLinks.mockReturnValue([matchAtLine4]);
       mockExtractLinkFile.mockReturnValue(oldFile);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,
@@ -1041,9 +1044,9 @@ describe('AttachmentPathManager', () => {
     });
 
     it('should keep the first matching reference when a later one also matches (line-0 first match wins)', async () => {
-      ctx.settings.attachmentFolderPath = 'assets';
+      context.settings.attachmentFolderPath = 'assets';
       // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      ctx.settings.generatedAttachmentFileName = '${heading}';
+      context.settings.generatedAttachmentFileName = '${heading}';
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       const firstMatchAtLine0 = strictProxy<ReferenceCache>({
@@ -1061,7 +1064,7 @@ describe('AttachmentPathManager', () => {
       }));
       mockGetLinks.mockReturnValue([firstMatchAtLine0, secondMatchAtLine5]);
       mockExtractLinkFile.mockReturnValue(oldFile);
-      const result = await ctx.manager.getAvailablePathForAttachments({
+      const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
         context: AttachmentPathContext.Unknown,

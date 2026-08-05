@@ -30,7 +30,9 @@ interface ProbeResult {
 describe('Collect attachments — raw path safety net (issue #46)', () => {
   it('leaves an attachment referenced by a non-indexed raw path in place when the setting is on', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<ProbeResult> {
         interface RawPathSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
@@ -65,11 +67,11 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -110,7 +112,7 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
           // Wait for the metadata cache to resolve the indexed embed so the collector sees one backlink.
           const imgFile = app.vault.getFileByPath(imgPath);
           let backlinkCount = 0;
-          const resolveDeadline = Date.now() + 8_000;
+          const resolveDeadline = Date.now() + 8000;
           while (Date.now() < resolveDeadline) {
             backlinkCount = imgFile ? app.metadataCache.getBacklinksForFile(imgFile).keys().length : 0;
             if (backlinkCount >= 1) {

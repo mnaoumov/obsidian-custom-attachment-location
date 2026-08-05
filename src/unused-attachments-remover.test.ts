@@ -56,7 +56,7 @@ import { translationsMap } from './i18n/locales/translations-map.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 interface QueueParamsLike {
-  operationFn(abortSignal: AbortSignal): Promise<void>;
+  operationFunction(abortSignal: AbortSignal): Promise<void>;
   operationName: string;
 }
 
@@ -191,7 +191,7 @@ describe('UnusedAttachmentsRemover', () => {
     });
     pluginNoticeComponent = new PluginNoticeComponent({ app, pluginName: PLUGIN_NAME });
     showNoticeSpy = vi.fn();
-    vi.spyOn(pluginNoticeComponent, 'showNotice').mockImplementation((...args) => castTo<PluginNoticeComponent['showNotice']>(showNoticeSpy)(...args));
+    vi.spyOn(pluginNoticeComponent, 'showNotice').mockImplementation((...$arguments) => castTo<PluginNoticeComponent['showNotice']>(showNoticeSpy)(...$arguments));
     remover = new UnusedAttachmentsRemover({
       abortSignalComponent,
       app,
@@ -209,7 +209,7 @@ describe('UnusedAttachmentsRemover', () => {
   async function runOperation(abstractFiles: TAbstractFile[], abortSignal = new AbortController().signal): Promise<void> {
     remover.deleteUnusedAttachmentsInAbstractFiles(abstractFiles);
     const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
-    await params.operationFn(abortSignal);
+    await params.operationFunction(abortSignal);
   }
 
   describe('deleteUnusedAttachmentsInAbstractFiles', () => {
@@ -245,11 +245,13 @@ describe('UnusedAttachmentsRemover', () => {
       mockIsFolder.mockImplementation((f) => f === folder);
       mockIsNote.mockImplementation((f) => f === note || f === childNote);
       mockGetCacheSafe.mockResolvedValue(null);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((root, cb) => {
-        if (root === folder) {
-          cb(childNote);
-          cb(childNonNote);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((root, callback) => {
+        if (root !== folder) {
+          return;
         }
+
+        callback(childNote);
+        callback(childNonNote);
       });
       try {
         await runOperation([note, folder]);
@@ -307,8 +309,8 @@ describe('UnusedAttachmentsRemover', () => {
       mockGetLinks.mockReturnValue([createReference('missing.png')]);
       mockExtractLinkFile.mockReturnValue(null);
       const orphan = createFile(`${ATTACHMENT_FOLDER_PATH}/orphan.png`);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(orphan);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(orphan);
       });
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
       mockConfirm.mockResolvedValue(true);
@@ -338,11 +340,11 @@ describe('UnusedAttachmentsRemover', () => {
       mockIsFile.mockImplementation((f) => f !== subFolder);
       mockIsNote.mockImplementation((f) => f === note);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === noteInFolder);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(subFolder);
-        cb(noteInFolder);
-        cb(referenced);
-        cb(unused);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(subFolder);
+        callback(noteInFolder);
+        callback(referenced);
+        callback(unused);
       });
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
       mockConfirm.mockResolvedValue(true);
@@ -361,8 +363,8 @@ describe('UnusedAttachmentsRemover', () => {
 
     it('should keep an attachment still referenced by another non-excluded note', async () => {
       const shared = createFile(`${ATTACHMENT_FOLDER_PATH}/shared.png`);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(shared);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(shared);
       });
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['other.md']));
       try {
@@ -376,8 +378,8 @@ describe('UnusedAttachmentsRemover', () => {
 
     it('should trash an attachment whose only backlinks are the note itself and excluded notes', async () => {
       const unused = createFile(`${ATTACHMENT_FOLDER_PATH}/unused.png`);
-      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(unused);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(unused);
       });
       // `note.md` is the source note (self-reference) and `drawing.excalidraw.md` is excluded, so the
       // Effective backlink count is zero and the attachment is treated as unused.
@@ -409,9 +411,9 @@ describe('UnusedAttachmentsRemover', () => {
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([]);
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
-      vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(unusedA);
-        cb(unusedB);
+      vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(unusedA);
+        callback(unusedB);
       });
     });
 

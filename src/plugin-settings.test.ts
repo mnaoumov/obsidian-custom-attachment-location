@@ -32,7 +32,7 @@ describe('PluginSettings', () => {
       expect(settings.shouldRenameAttachmentFiles).toBe(false);
       expect(settings.shouldSetLinkDisplayTextToAttachmentFileName).toBe(false);
       expect(settings.shouldSkipCollectingAttachmentsReferencedByRawPath).toBe(false);
-      expect(settings.specialCharacters).toBe('#^[]|*\\<>:?/');
+      expect(settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/`);
       expect(settings.specialCharactersReplacement).toBe('-');
       expect(settings.timeoutInSeconds).toBe(5);
       expect(settings.treatAsAttachmentExtensions).toStrictEqual(['.excalidraw.md']);
@@ -48,6 +48,7 @@ describe('PluginSettings', () => {
     it('should get and set the custom tokens string', () => {
       const settings = new PluginSettings();
       expect(settings.customTokensStr).toBe('');
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       settings.customTokensStr = 'foo';
       expect(settings.customTokensStr).toBe('foo');
     });
@@ -84,8 +85,8 @@ describe('PluginSettings', () => {
     it('should get and set the exclude paths from multiple notes check', () => {
       const settings = new PluginSettings();
       expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual([]);
-      settings.excludePathsFromMultipleNotesCheck = ['/\\.excalidraw\\.md$/'];
-      expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual(['/\\.excalidraw\\.md$/']);
+      settings.excludePathsFromMultipleNotesCheck = [String.raw`/\.excalidraw\.md$/`];
+      expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual([String.raw`/\.excalidraw\.md$/`]);
     });
   });
 
@@ -142,7 +143,7 @@ describe('PluginSettings', () => {
   describe('isExcludedFromMultipleNotesCheck', () => {
     it('should exclude notes matching the multiple-notes-check exclude paths', () => {
       const settings = new PluginSettings();
-      settings.excludePathsFromMultipleNotesCheck = ['/\\.excalidraw\\.md$/'];
+      settings.excludePathsFromMultipleNotesCheck = [String.raw`/\.excalidraw\.md$/`];
       expect(settings.isExcludedFromMultipleNotesCheck('drawings/diagram.excalidraw.md')).toBe(true);
       expect(settings.isExcludedFromMultipleNotesCheck('notes/note.md')).toBe(false);
     });

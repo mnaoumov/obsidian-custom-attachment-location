@@ -119,6 +119,21 @@ const originalAddNumber = SettingEx.prototype.addNumber;
 const originalAddMultipleText = SettingEx.prototype.addMultipleText;
 const originalSetName = SettingEx.prototype.setName;
 
+/**
+ * Resolves a declarative predicate that may be a boolean, a function, or absent.
+ *
+ * @param predicate - The predicate.
+ * @param shouldDefaultTo - The value to use when the predicate is absent.
+ * @returns The resolved value.
+ */
+function checkPredicate(predicate: (() => boolean) | boolean | undefined, shouldDefaultTo: boolean): boolean {
+  if (typeof predicate === 'function') {
+    return predicate();
+  }
+
+  return predicate ?? shouldDefaultTo;
+}
+
 async function createTab(configure?: (settings: PluginSettings) => void): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const originalApp = app.asOriginalType__();
@@ -146,64 +161,64 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   const multipleTextComponents: CapturedMultipleTextComponent[] = [];
 
   const addTextSpy = vi.spyOn(SettingEx.prototype, 'addText');
-  addTextSpy.mockImplementation(function capturingAddText(this: SettingEx, cb): SettingEx {
+  addTextSpy.mockImplementation(function capturingAddText(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddText.call(this, (component) => {
       textLikeComponents.push({ inputEl: component.inputEl, name, setValue: (value) => component.setValue(value) });
-      cb(component);
+      callback(component);
     });
   });
 
   const addCodeHighlighterSpy = vi.spyOn(SettingEx.prototype, 'addCodeHighlighter');
-  addCodeHighlighterSpy.mockImplementation(function capturingAddCodeHighlighter(this: SettingEx, cb): SettingEx {
+  addCodeHighlighterSpy.mockImplementation(function capturingAddCodeHighlighter(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddCodeHighlighter.call(this, (component: CodeHighlighterComponent) => {
       textLikeComponents.push({ name, setValue: (value) => component.setValue(value) });
-      cb(component);
+      callback(component);
     });
   });
 
   const addDropdownSpy = vi.spyOn(SettingEx.prototype, 'addDropdown');
-  addDropdownSpy.mockImplementation(function capturingAddDropdown(this: SettingEx, cb): SettingEx {
+  addDropdownSpy.mockImplementation(function capturingAddDropdown(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddDropdown.call(this, (component: DropdownComponent) => {
       textLikeComponents.push({ name, setValue: (value) => component.setValue(value) });
-      cb(component);
+      callback(component);
     });
   });
 
   const addNumberSpy = vi.spyOn(SettingEx.prototype, 'addNumber');
-  addNumberSpy.mockImplementation(function capturingAddNumber(this: SettingEx, cb): SettingEx {
+  addNumberSpy.mockImplementation(function capturingAddNumber(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddNumber.call(this, (component: NumberComponent) => {
       textLikeComponents.push({ inputEl: component.inputEl, name, setValue: (value) => component.setValue(Number(value)) });
-      cb(component);
+      callback(component);
     });
   });
 
   const addMultipleTextSpy = vi.spyOn(SettingEx.prototype, 'addMultipleText');
-  addMultipleTextSpy.mockImplementation(function capturingAddMultipleText(this: SettingEx, cb): SettingEx {
+  addMultipleTextSpy.mockImplementation(function capturingAddMultipleText(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddMultipleText.call(this, (component: MultipleTextComponent) => {
       multipleTextComponents.push({ name, setValue: (value) => component.setValue(value) });
-      cb(component);
+      callback(component);
     });
   });
 
   const addButtonSpy = vi.spyOn(SettingEx.prototype, 'addButton');
-  addButtonSpy.mockImplementation(function capturingAddButton(this: SettingEx, cb): SettingEx {
+  addButtonSpy.mockImplementation(function capturingAddButton(this: SettingEx, callback): SettingEx {
     return originalAddButton.call(this, (button: ButtonComponent) => {
       buttons.push(ButtonComponentClass.fromOriginalType2__(button));
-      cb(button);
+      callback(button);
     });
   });
 
   const addToggleSpy = vi.spyOn(SettingEx.prototype, 'addToggle');
-  addToggleSpy.mockImplementation(function capturingAddToggle(this: SettingEx, cb): SettingEx {
+  addToggleSpy.mockImplementation(function capturingAddToggle(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddToggle.call(this, (toggle: ToggleComponent) => {
       toggles.push({ name, toggle });
-      cb(toggle);
+      callback(toggle);
     });
   });
 
@@ -245,21 +260,6 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
 }
 
 /**
- * Resolves a declarative predicate that may be a boolean, a function, or absent.
- *
- * @param predicate - The predicate.
- * @param defaultValue - The value to use when the predicate is absent.
- * @returns The resolved value.
- */
-function evaluatePredicate(predicate: (() => boolean) | boolean | undefined, defaultValue: boolean): boolean {
-  if (typeof predicate === 'function') {
-    return predicate();
-  }
-
-  return predicate ?? defaultValue;
-}
-
-/**
  * Finds a declared row by name.
  *
  * @param tab - The settings tab.
@@ -290,7 +290,7 @@ function isRowDisabled(tab: PluginSettingsTab, name: string): boolean {
     const rows = 'items' in item ? castTo<SettingDefinition[]>(item.items ?? []) : [castTo<SettingDefinition>(item)];
     const row = rows.find((candidate) => 'name' in candidate && candidate.name === name);
     if (row) {
-      return evaluatePredicate(castTo<DeclaredRow>(row).disabled, false);
+      return checkPredicate(castTo<DeclaredRow>(row).disabled, false);
     }
   }
 
@@ -312,8 +312,8 @@ function renderRows(tab: PluginSettingsTab): void {
         continue;
       }
 
-      const rowExt = castTo<DeclaredRow>(row);
-      if (!evaluatePredicate(rowExt.visible, true)) {
+      const rowExtension = castTo<DeclaredRow>(row);
+      if (!checkPredicate(rowExtension.visible, true)) {
         continue;
       }
 
@@ -324,7 +324,7 @@ function renderRows(tab: PluginSettingsTab): void {
       }
 
       row.render(setting, castTo<SettingGroup>(null));
-      setting.setDisabled(evaluatePredicate(rowExt.disabled, false));
+      setting.setDisabled(checkPredicate(rowExtension.disabled, false));
     }
   }
 }
@@ -333,15 +333,15 @@ beforeAll(async () => {
   await initI18N(translationsMap);
   // Obsidian-dev-utils' bind() probes setPlaceholderValue to detect text-based components.
   for (
-    const proto of [
+    const prototype of [
       ToggleComponentClass.prototype,
       DropdownComponentClass.prototype,
       TextComponentClass.prototype,
       ButtonComponentClass.prototype
     ]
   ) {
-    if (!('setPlaceholderValue' in proto)) {
-      Object.defineProperty(proto, 'setPlaceholderValue', { value: undefined });
+    if (!('setPlaceholderValue' in prototype)) {
+      Object.defineProperty(prototype, 'setPlaceholderValue', { value: undefined });
     }
   }
 });
@@ -474,6 +474,7 @@ describe('PluginSettingsTab', () => {
   it('should do nothing when resetting custom tokens that already match the sample', async () => {
     const { buttons, pluginSettingsComponent } = await createTab();
     await pluginSettingsComponent.editAndSave((settings) => {
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       settings.customTokensStr = SAMPLE_CUSTOM_TOKENS;
     });
     const button = getResetButton(buttons);
@@ -497,6 +498,7 @@ describe('PluginSettingsTab', () => {
     vi.mocked(confirm).mockResolvedValue(true);
     const { buttons, pluginSettingsComponent } = await createTab();
     await pluginSettingsComponent.editAndSave((settings) => {
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       settings.customTokensStr = 'registerCustomToken(\'foo\', () => \'bar\');';
     });
     const button = getResetButton(buttons);
@@ -511,6 +513,7 @@ describe('PluginSettingsTab', () => {
     const { buttons, pluginSettingsComponent } = await createTab();
     const existingCode = 'registerCustomToken(\'foo\', () => \'bar\');';
     await pluginSettingsComponent.editAndSave((settings) => {
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       settings.customTokensStr = existingCode;
     });
     const button = getResetButton(buttons);
@@ -636,8 +639,10 @@ describe('PluginSettingsTab', () => {
     if (!inputEl) {
       return;
     }
-    Object.defineProperty(inputEl, 'selectionStart', { configurable: true, value: null });
-    Object.defineProperty(inputEl, 'selectionEnd', { configurable: true, value: null });
+    Object.defineProperties(inputEl, {
+      selectionEnd: { configurable: true, value: null },
+      selectionStart: { configurable: true, value: null }
+    });
     inputEl.value = 'c d';
     inputEl.dispatchEvent(new Event('input'));
     expect(inputEl.value).toBe('c␣d');
