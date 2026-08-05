@@ -39,7 +39,7 @@ const CONTENT_TYPE_TO_EXTENSION: Record<string, string> = {
 
 interface MagicBytesEntry {
   readonly bytes: readonly number[];
-  readonly ext: string;
+  readonly extension: string;
 }
 
 const MAGIC_BYTES_LENGTH = 8;
@@ -49,11 +49,11 @@ const MAGIC_BYTES_LENGTH = 8;
  */
 const MAGIC_BYTES_TO_EXTENSION: readonly MagicBytesEntry[] = [
   /* eslint-disable no-magic-numbers -- Magic bytes constants are clearer as hex literals. */
-  { bytes: [0x89, 0x50, 0x4E, 0x47], ext: 'png' },
-  { bytes: [0xFF, 0xD8, 0xFF], ext: 'jpg' },
-  { bytes: [0x47, 0x49, 0x46, 0x38], ext: 'gif' },
-  { bytes: [0x52, 0x49, 0x46, 0x46], ext: 'webp' },
-  { bytes: [0x42, 0x4D], ext: 'bmp' }
+  { bytes: [0x89, 0x50, 0x4E, 0x47], extension: 'png' },
+  { bytes: [0xFF, 0xD8, 0xFF], extension: 'jpg' },
+  { bytes: [0x47, 0x49, 0x46, 0x38], extension: 'gif' },
+  { bytes: [0x52, 0x49, 0x46, 0x46], extension: 'webp' },
+  { bytes: [0x42, 0x4D], extension: 'bmp' }
   /* eslint-enable no-magic-numbers -- Magic bytes constants are clearer as hex literals. */
 ];
 
@@ -115,7 +115,7 @@ export class NetworkImageDownloader {
     if (replacements.size > 0) {
       let newContent = content;
       for (const [networkUrl, localPath] of replacements) {
-        newContent = newContent.replaceAll(networkUrl, localPath);
+        newContent = newContent.replaceAll(networkUrl, () => localPath);
       }
       await this.app.vault.modify(noteFile, newContent);
     }
@@ -123,16 +123,16 @@ export class NetworkImageDownloader {
 
   private detectExtension(content: ArrayBuffer, contentType: null | string): string {
     if (contentType) {
-      const mimeExt = CONTENT_TYPE_TO_EXTENSION[contentType.toLowerCase()];
-      if (mimeExt) {
-        return mimeExt;
+      const mimeExtension = CONTENT_TYPE_TO_EXTENSION[contentType.toLowerCase()];
+      if (mimeExtension) {
+        return mimeExtension;
       }
     }
 
     const bytes = new Uint8Array(content.slice(0, MAGIC_BYTES_LENGTH));
-    for (const { bytes: magic, ext } of MAGIC_BYTES_TO_EXTENSION) {
+    for (const { bytes: magic, extension } of MAGIC_BYTES_TO_EXTENSION) {
       if (magic.every((byte, index) => bytes[index] === byte)) {
-        return ext;
+        return extension;
       }
     }
 
@@ -162,7 +162,7 @@ export class NetworkImageDownloader {
   private async downloadImage(url: string): Promise<DownloadImageResult> {
     const HTTP_ERROR_THRESHOLD = 400;
     const response = await runWithTimeout({
-      operationFn: () =>
+      operationFunction: () =>
         requestUrl({
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; Obsidian/1.0)'
@@ -199,9 +199,9 @@ export class NetworkImageDownloader {
 
   private sanitizeFileName(name: string): string {
     const specialCharactersRegExp = this.pluginSettingsComponent.settings.specialCharactersRegExp;
-    let sanitized = name.replace(specialCharactersRegExp, this.pluginSettingsComponent.settings.specialCharactersReplacement);
-    sanitized = sanitized.replace(/[/\\:*?"<>|]/gu, '_');
-    sanitized = sanitized.replace(/\s+/gu, ' ').trim();
+    let sanitized = name.replace(specialCharactersRegExp, () => this.pluginSettingsComponent.settings.specialCharactersReplacement);
+    sanitized = sanitized.replaceAll(/[/\\:*?"<>|]/gu, '_');
+    sanitized = sanitized.replaceAll(/\s+/gu, ' ').trim();
     return sanitized || 'image';
   }
 }

@@ -5,7 +5,7 @@ export const de = {
       part2: 'Dieser Vorgang kann nicht rückgängig gemacht werden.'
     },
     progressBar: {
-      message: 'Sammle Anhänge {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Sammle Anhänge {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Sammle Anhänge...'
     }
   },

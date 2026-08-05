@@ -5,7 +5,7 @@ export const id = {
       part2: 'Operasi ini tidak dapat dibatalkan.'
     },
     progressBar: {
-      message: 'Mengumpulkan lampiran {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Mengumpulkan lampiran {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Mengumpulkan lampiran...'
     }
   },

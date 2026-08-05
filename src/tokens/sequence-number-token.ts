@@ -14,7 +14,7 @@ export class SequenceNumberToken extends TokenBase<Format> {
     super('sequenceNumber', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
-    return String(ctx.sequenceNumber).padStart(format.length, '0');
+  protected override evaluateImpl(context: TokenEvaluatorContext, format: Format): string {
+    return String(context.sequenceNumber).padStart(format.length, '0');
   }
 }

@@ -20,9 +20,9 @@ export class OriginalAttachmentFileModificationDateToken extends TokenBase<Forma
     super('originalAttachmentFileModificationDate', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
-    if (ctx.attachmentFileStats?.mtime !== undefined) {
-      return formatDate(ctx.attachmentFileStats.mtime, format);
+  protected override evaluateImpl(context: TokenEvaluatorContext, format: Format): string {
+    if (context.attachmentFileStats?.mtime !== undefined) {
+      return formatDate(context.attachmentFileStats.mtime, format);
     }
 
     if (format.valueWhenUnknown === 'now') {

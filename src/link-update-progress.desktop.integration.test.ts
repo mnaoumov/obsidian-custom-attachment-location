@@ -42,7 +42,9 @@ describe('Link-update progress notification (issue #25)', () => {
   it('shows an "Updating links: N/M" progress notice while a renamed file\'s backlinks are updated', async () => {
     const SOURCE_COUNT = 3;
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: { sourceCount: SOURCE_COUNT },
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app, lib: { waitUntil }, sourceCount }): Promise<LinkUpdateProgressResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
@@ -76,11 +78,11 @@ describe('Link-update progress notification (issue #25)', () => {
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -105,8 +107,8 @@ describe('Link-update progress notification (issue #25)', () => {
         await app.vault.createFolder(folder);
         const target = await app.vault.create(`${folder}/target.md`, '');
         const sources: (typeof target)[] = [];
-        for (let i = 0; i < sourceCount; i++) {
-          const src = await app.vault.create(`${folder}/src-${i.toString()}.md`, `See [[${folder}/target]].`);
+        for (let index = 0; index < sourceCount; index++) {
+          const src = await app.vault.create(`${folder}/src-${index.toString()}.md`, `See [[${folder}/target]].`);
           sources.push(src);
         }
 
@@ -126,7 +128,7 @@ describe('Link-update progress notification (issue #25)', () => {
         // Collect every "Updating links: N/M" notice text mutated into the DOM during the rename.
         const captured = new Set<string>();
         function collect(): void {
-          for (const el of Array.from(document.querySelectorAll('.notice'))) {
+          for (const el of document.querySelectorAll('.notice')) {
             const text = el.textContent;
             if (text.includes('Updating links:')) {
               captured.add(text);
@@ -139,7 +141,7 @@ describe('Link-update progress notification (issue #25)', () => {
         observer.observe(document.body, { characterData: true, childList: true, subtree: true });
 
         function countLingeringProgressNotices(): number {
-          return Array.from(document.querySelectorAll('.notice')).filter((el) => el.textContent.includes('Updating links:')).length;
+          return [...document.querySelectorAll('.notice')].filter((el) => el.textContent.includes('Updating links:')).length;
         }
 
         async function areAllSourcesRewritten(): Promise<boolean> {
@@ -160,7 +162,7 @@ describe('Link-update progress notification (issue #25)', () => {
             renamePromise.catch(() => {
               // Lingering `onCleanCache`; the effect is polled below.
             }),
-            sleep(6_000)
+            sleep(6000)
           ]);
 
           // Wait until EVERY backlink source note is rewritten, so the whole link-update pass has run.
@@ -186,11 +188,11 @@ describe('Link-update progress notification (issue #25)', () => {
           observer.disconnect();
         }
 
-        const targetRenamed = Boolean(app.vault.getFileByPath(`${folder}/renamed.md`));
-        const sourceRewritten = (await app.vault.read(firstSource)) !== before;
+        const isTargetRenamed = Boolean(app.vault.getFileByPath(`${folder}/renamed.md`));
+        const isSourceRewritten = (await app.vault.read(firstSource)) !== before;
         const lingeringProgressNoticeCount = countLingeringProgressNotices();
 
-        return { capturedMessages: Array.from(captured), lingeringProgressNoticeCount, settingsFound: true, sourceCount, sourceRewritten, targetRenamed };
+        return { capturedMessages: [...captured], lingeringProgressNoticeCount, settingsFound: true, sourceCount, sourceRewritten: isSourceRewritten, targetRenamed: isTargetRenamed };
       },
       vaultPath: getTempVault().path
     });

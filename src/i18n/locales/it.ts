@@ -5,7 +5,7 @@ export const it = {
       part2: 'Questa operazione non può essere annullata.'
     },
     progressBar: {
-      message: 'Raccolta allegati {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Raccolta allegati {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Raccolta allegati...'
     }
   },

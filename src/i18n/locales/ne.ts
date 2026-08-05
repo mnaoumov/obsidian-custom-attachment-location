@@ -5,7 +5,7 @@ export const ne = {
       part2: 'यो कार्य उल्ट्याउन सकिँदैन।'
     },
     progressBar: {
-      message: 'संलग्नकहरू संकलन गर्दै {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'संलग्नकहरू संकलन गर्दै {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'संलग्नकहरू संकलन गर्दै...'
     }
   },

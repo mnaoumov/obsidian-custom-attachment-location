@@ -43,11 +43,11 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: getPrototypeOf(this.shareReceiver),
       methodName: 'importFiles',
-      obj: getPrototypeOf(this.shareReceiver),
       patchHandler: async ({
         fallback,
-        originalArgs: [files]
+        originalArguments: [files]
       }) => {
         for (const file of files) {
           const fileUri = window.Capacitor.convertFileSrc(file.uri);

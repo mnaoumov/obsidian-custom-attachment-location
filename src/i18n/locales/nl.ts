@@ -5,7 +5,7 @@ export const nl = {
       part2: 'Deze bewerking kan niet ongedaan worden gemaakt.'
     },
     progressBar: {
-      message: 'Bijlagen verzamelen {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Bijlagen verzamelen {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Bijlagen verzamelen...'
     }
   },

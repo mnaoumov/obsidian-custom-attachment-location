@@ -5,7 +5,7 @@ export const vi = {
       part2: 'Thao tác này không thể hoàn tác.'
     },
     progressBar: {
-      message: 'Đang thu thập tệp đính kèm {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Đang thu thập tệp đính kèm {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Đang thu thập tệp đính kèm...'
     }
   },

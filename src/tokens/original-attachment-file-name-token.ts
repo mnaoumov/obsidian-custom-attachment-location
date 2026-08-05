@@ -18,7 +18,7 @@ export class OriginalAttachmentFileNameToken extends TokenBase<Format> {
     super('originalAttachmentFileName', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
-    return formatString(ctx.originalAttachmentFileName, format);
+  protected override evaluateImpl(context: TokenEvaluatorContext, format: Format): string {
+    return formatString(context.originalAttachmentFileName, format);
   }
 }

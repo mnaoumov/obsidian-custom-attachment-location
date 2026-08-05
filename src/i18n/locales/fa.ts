@@ -5,7 +5,7 @@ export const fa = {
       part2: 'این عملیات قابل بازگشت نیست.'
     },
     progressBar: {
-      message: 'جمع‌آوری پیوست‌ها {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'جمع‌آوری پیوست‌ها {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'در حال جمع‌آوری پیوست‌ها...'
     }
   },

@@ -5,7 +5,7 @@ export const pl = {
       part2: 'Tej operacji nie można cofnąć.'
     },
     progressBar: {
-      message: 'Zbieranie załączników {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Zbieranie załączników {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Zbieranie załączników...'
     }
   },

@@ -94,7 +94,7 @@ export class Plugin extends PluginBase {
         attachmentPathManager,
         imageSizeMap,
         markdownUrlMap,
-        pluginDir: this.manifest.dir ?? '',
+        pluginDirectory: this.manifest.dir ?? '',
         pluginSettingsComponent,
         pluginVersion: this.manifest.version,
         tokenValidator: validator
@@ -161,7 +161,7 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
-    this.commandHandlerComponent.registerCommandHandlers([
+    this.commandHandlerComponent.registerCommandHandlers(() => [
       new CollectAttachmentsInFileCommandHandler({
         attachmentCollector
       }),

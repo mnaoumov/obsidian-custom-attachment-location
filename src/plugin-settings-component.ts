@@ -35,8 +35,8 @@ import { CustomToken } from './tokens/custom-token.ts';
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
 
 interface AddDateTimeFormatParams {
+  readonly $string: string;
   readonly dateTimeFormat: string;
-  readonly str: string;
 }
 
 interface PluginSettingsComponentConstructorParams {
@@ -56,6 +56,7 @@ class LegacySettings {
   public convertImagesOnDragAndDrop = false;
   public convertImagesToJpeg = false;
   public dateTimeFormat = '';
+  // eslint-disable-next-line unicorn/no-non-function-verb-prefix -- A legacy persisted settings key; renaming it would break migration from every existing `data.json`.
   public deleteOrphanAttachments = false;
   public emptyAttachmentFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
   public generatedAttachmentFilename = '';
@@ -99,8 +100,7 @@ class LegacySettings {
 }
 
 class LegacySettingsConverter {
-  public constructor(private readonly legacySettings: Partial<LegacySettings> & Partial<PluginSettings>) {
-  }
+  public constructor(private readonly legacySettings: Partial<LegacySettings> & Partial<PluginSettings>) {}
 
   public convert(): void {
     this.convertWarningVersion();
@@ -113,7 +113,7 @@ class LegacySettingsConverter {
     this.convertDeleteOrphanAttachments();
     this.convertKeepEmptyAttachmentFolders();
     this.convertRenameCollectedFiles();
-    this.convertCustomTokensStr();
+    this.convertCustomTokensString();
     this.convertConvertImagesToJpeg();
     this.convertWhitespaceReplacement();
     this.convertShouldKeepEmptyAttachmentFolders();
@@ -151,8 +151,9 @@ class LegacySettingsConverter {
     }
   }
 
-  private convertCustomTokensStr(): void {
+  private convertCustomTokensString(): void {
     if (this.legacySettings.customTokensStr && this.legacySettings.version && compare(this.legacySettings.version, '9.0.0') < 0) {
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       this.legacySettings.customTokensStr = `${t(($) => $.pluginSettingsManager.customToken.codeComment)}
 
 ${commentOut(this.legacySettings.customTokensStr)}
@@ -162,16 +163,16 @@ ${commentOut(this.legacySettings.customTokensStr)}
 
   private convertDateTimeFormat(): void {
     const dateTimeFormat = this.legacySettings.dateTimeFormat ?? 'YYYYMMDDHHmmssSSS';
-    this.legacySettings.attachmentFolderPath = addDateTimeFormat({ dateTimeFormat, str: this.legacySettings.attachmentFolderPath ?? '' });
+    this.legacySettings.attachmentFolderPath = addDateTimeFormat({ $string: this.legacySettings.attachmentFolderPath ?? '', dateTimeFormat });
 
     this.legacySettings.generatedAttachmentFileName = addDateTimeFormat({
-      dateTimeFormat,
-      str: this.legacySettings.generatedAttachmentFileName
+      $string: this.legacySettings.generatedAttachmentFileName
         ?? this.legacySettings.generatedAttachmentFilename
         ?? this.legacySettings.pastedFileName
         ?? this.legacySettings.pastedImageFileName
         // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-        ?? 'file-${date}'
+        ?? 'file-${date}',
+      dateTimeFormat
     });
   }
 
@@ -234,8 +235,8 @@ ${commentOut(this.legacySettings.customTokensStr)}
   }
 
   private convertSpecialCharacters(): void {
-    if (this.legacySettings.version && compare(this.legacySettings.version, '9.16.0') < 0 && this.legacySettings.specialCharacters === '#^[]|*\\<>:?') {
-      this.legacySettings.specialCharacters = '#^[]|*\\<>:?/';
+    if (this.legacySettings.version && compare(this.legacySettings.version, '9.16.0') < 0 && this.legacySettings.specialCharacters === String.raw`#^[]|*\<>:?`) {
+      this.legacySettings.specialCharacters = String.raw`#^[]|*\<>:?/`;
     }
   }
 
@@ -246,23 +247,25 @@ ${commentOut(this.legacySettings.customTokensStr)}
   }
 
   private convertWhitespaceReplacement(): void {
-    if (this.legacySettings.whitespaceReplacement) {
-      this.legacySettings.specialCharacters = `${this.legacySettings.specialCharacters ?? ''} `;
-      this.legacySettings.specialCharactersReplacement = this.legacySettings.whitespaceReplacement;
+    if (!this.legacySettings.whitespaceReplacement) {
+      return;
     }
+
+    this.legacySettings.specialCharacters = `${this.legacySettings.specialCharacters ?? ''} `;
+    this.legacySettings.specialCharactersReplacement = this.legacySettings.whitespaceReplacement;
   }
 
-  private replaceLegacyTokens(str: string | undefined): string {
-    if (str === undefined) {
+  private replaceLegacyTokens($string: string | undefined): string {
+    if ($string === undefined) {
       return '';
     }
 
     return replaceAll({
-      replacer: ({ capturedGroupArgs: [token, momentJsFormat] }) => {
+      $string,
+      replacer: ({ capturedGroupArguments: [token, momentJsFormat] }) => {
         return `\${${ensureNonNullable(token)}:{momentJsFormat:'${ensureNonNullable(momentJsFormat)}'}}`;
       },
-      searchValue: /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi,
-      str
+      searchValue: /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi
     });
   }
 }
@@ -300,13 +303,13 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     return this.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
   }
 
-  public replaceSpecialCharacters(str: string): string {
+  public replaceSpecialCharacters($string: string): string {
     if (!this.settings.specialCharacters) {
-      return str;
+      return $string;
     }
 
-    str = str.replace(this.settings.specialCharactersRegExp, this.settings.specialCharactersReplacement);
-    return str;
+    $string = $string.replace(this.settings.specialCharactersRegExp, () => this.settings.specialCharactersReplacement);
+    return $string;
   }
 
   protected override registerLegacySettingsConverters(): void {
@@ -328,14 +331,14 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       }));
 
     this.registerValidator('specialCharactersReplacement', (value): MaybeReturn<string> => {
-      if (getOsUnsafePathCharsRegExp().exec(value)) {
+      if (getOsUnsafePathCharsRegExp().test(value)) {
         return t(($) => $.pluginSettingsManager.validation.specialCharactersReplacementMustNotContainInvalidFileNamePathCharacters);
       }
     });
 
     this.registerValidator('defaultImageSize', (value): MaybeReturn<string> => {
       const REG_EXP = /^(?:\d+(?:px|%))?$/g;
-      if (!REG_EXP.exec(value)) {
+      if (!REG_EXP.test(value)) {
         return t(($) => $.pluginSettingsManager.validation.defaultImageSizeMustBePercentageOrPixels);
       }
     });
@@ -366,39 +369,41 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     });
   }
 
-  private customTokensValidator(customTokensStr: string): MaybeReturn<string> {
+  private customTokensValidator(customTokensString: string): MaybeReturn<string> {
     if (this.shouldDebounceCustomTokensValidation) {
-      this.customTokensValidatorDebounced(customTokensStr);
+      this.customTokensValidatorDebounced(customTokensString);
     } else {
-      this.customTokensValidatorImpl(customTokensStr);
+      this.customTokensValidatorImpl(customTokensString);
     }
 
     return this.lastCustomTokenValidatorResult ?? undefined;
   }
 
-  private customTokensValidatorImpl(customTokensStr: string): void {
-    const customTokens = CustomToken.parse(customTokensStr);
+  private customTokensValidatorImpl(customTokensString: string): void {
+    const customTokens = CustomToken.parse(customTokensString);
     this.lastCustomTokenValidatorResult = customTokens === null ? t(($) => $.pluginSettingsManager.validation.invalidCustomTokensCode) : undefined;
   }
 }
 
 function addDateTimeFormat(params: AddDateTimeFormatParams): string {
-  const { dateTimeFormat, str } = params;
+  const { $string, dateTimeFormat } = params;
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-  return str.replaceAll('${date}', `\${date:{momentJsFormat:'${dateTimeFormat}'}}`);
+  return $string.replaceAll('${date}', () => `\${date:{momentJsFormat:'${dateTimeFormat}'}}`);
 }
 
-function commentOut(str: string): string {
-  return str.replaceAll(/^/gm, '// ');
+function commentOut($string: string): string {
+  return $string.replaceAll(/^/gm, '// ');
 }
 
 function pathsValidator(paths: string[]): MaybeReturn<string> {
   for (const path of paths) {
-    if (path.startsWith('/') && path.endsWith('/')) {
-      const regExp = path.slice(1, -1);
-      if (!isValidRegExp(regExp)) {
-        return t(($) => $.pluginSettingsManager.validation.invalidRegularExpression, { regExp: path });
-      }
+    if (!(path.startsWith('/') && path.endsWith('/'))) {
+      continue;
+    }
+
+    const regExp = path.slice(1, -1);
+    if (!isValidRegExp(regExp)) {
+      return t(($) => $.pluginSettingsManager.validation.invalidRegularExpression, { regExp: path });
     }
   }
 }

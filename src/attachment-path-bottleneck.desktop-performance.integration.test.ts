@@ -1,8 +1,8 @@
 import type { TFile } from 'obsidian';
 import type {
   AttachmentPathContext,
-  GetAvailablePathForAttachmentsExtendedFnParams,
-  GetAvailablePathForAttachmentsFnExtended
+  GetAvailablePathForAttachmentsExtendedFunctionParams,
+  GetAvailablePathForAttachmentsFunctionExtended
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 
 import { evalInObsidian } from 'obsidian-integration-testing';
@@ -41,8 +41,8 @@ const PLUGIN_ID = 'obsidian-custom-attachment-location';
 // The literal context string `consistent-attachments-and-links` passes (files-handler.ts).
 const CONSUMER_CONTEXT = 'consistent-attachments-and-links';
 const INDEX_WAIT_IN_MS = 180_000;
-const INDEX_POLL_IN_MS = 2_000;
-const SETTLE_DELAY_IN_MS = 5_000;
+const INDEX_POLL_IN_MS = 2000;
+const SETTLE_DELAY_IN_MS = 5000;
 const SCENARIO_TIMEOUT_IN_MS = 480_000;
 // Warm repeats when isolating the handler-only micro-cost.
 const HANDLER_ITERATIONS = 200;
@@ -77,6 +77,7 @@ const fatAttachmentPaths: string[] = Array.from({ length: FAT_NOTE_LINK_COUNT },
 describe('Attachment-path bottleneck', () => {
   it('attributes the per-call cost to the wasted binary read, not the handler', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {
         CONSUMER_CONTEXT,
         EXPECTED_FILE_COUNT: PERFORMANCE_VAULT_TOTAL_FILE_COUNT,
@@ -90,6 +91,7 @@ describe('Attachment-path bottleneck', () => {
         SETTLE_DELAY_IN_MS,
         smallPairs
       },
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({
         app,
         CONSUMER_CONTEXT: consumerContext,
@@ -123,12 +125,12 @@ describe('Attachment-path bottleneck', () => {
         }
 
         const context = consumerContext as AttachmentPathContext;
-        const extendedFn = (app.vault.getAvailablePathForAttachments as Partial<GetAvailablePathForAttachmentsFnExtended>).extended;
-        if (!extendedFn) {
+        const extendedFunction = (app.vault.getAvailablePathForAttachments as Partial<GetAvailablePathForAttachmentsFunctionExtended>).extended;
+        if (!extendedFunction) {
           return { ...EMPTY_RESULT, error: 'Patched getAvailablePathForAttachments.extended is not installed' };
         }
         // Bind the narrowed (non-undefined) handler so the hoisted timing helpers can invoke it.
-        const invokeExtended = extendedFn;
+        const invokeExtended = extendedFunction;
 
         // Wait for Obsidian's startup scan to index the whole pre-populated vault.
         const deadline = Date.now() + waitMs;
@@ -200,7 +202,7 @@ describe('Attachment-path bottleneck', () => {
           return { attachmentFile, noteFile };
         }
 
-        function buildParams(noteFile: TFile, attachmentFile: TFile, content: ArrayBuffer | undefined): GetAvailablePathForAttachmentsExtendedFnParams {
+        function buildParams(noteFile: TFile, attachmentFile: TFile, content: ArrayBuffer | undefined): GetAvailablePathForAttachmentsExtendedFunctionParams {
           return {
             attachmentFileBaseName: attachmentFile.basename,
             attachmentFileExtension: attachmentFile.extension,

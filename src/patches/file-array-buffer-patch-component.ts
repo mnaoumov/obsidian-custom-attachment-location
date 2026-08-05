@@ -27,8 +27,8 @@ export class FileArrayBufferPatchComponent extends MonkeyAroundComponent {
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: this.file,
       methodName: 'arrayBuffer',
-      obj: this.file,
       patchHandler: async ({
         fallback
       }) => {

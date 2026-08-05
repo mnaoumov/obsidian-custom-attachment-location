@@ -651,7 +651,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               setting.addDropdown((dropDown) => {
                 dropDown.addOptions(generateJpegQualityOptions());
                 this.bind({
-                  componentToPluginSettingsValueConverter: (value) => Number(value),
+                  componentToPluginSettingsValueConverter: Number,
                   pluginSettingsToComponentValueConverter: (value) => value.toPrecision(JPEG_QUALITY_PRECISION),
                   propertyName: 'jpegQuality',
                   valueComponent: dropDown
@@ -830,6 +830,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               // Render-time setup: the builder must stay pure, because Obsidian calls it at plugin load to
               // Index the settings for search. `hide()` clears the flag again.
               this.pluginSettingsComponent2.shouldDebounceCustomTokensValidation = true;
+              // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
               const registerCustomTokensDebounced = debounce((customTokensStr: string) => {
                 invokeAsyncSafely(async () => {
                   Substitutions.registerCustomTokens(customTokensStr);
@@ -878,6 +879,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
                   }
 
                   await this.pluginSettingsComponent.editAndSave((settings) => {
+                    // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
                     settings.customTokensStr = SAMPLE_CUSTOM_TOKENS;
                   });
                   this.refresh();
@@ -961,9 +963,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
 function generateJpegQualityOptions(): Record<string, string> {
   const MAX_QUALITY = 20;
   const ans: Record<string, string> = {};
-  for (let i = 1; i <= MAX_QUALITY; i++) {
-    const valueStr = (i / MAX_QUALITY).toFixed(JPEG_QUALITY_PRECISION);
-    ans[valueStr] = valueStr;
+  for (let index = 1; index <= MAX_QUALITY; index++) {
+    const valueString = (index / MAX_QUALITY).toFixed(JPEG_QUALITY_PRECISION);
+    ans[valueString] = valueString;
   }
 
   return ans;
@@ -978,10 +980,10 @@ function handleWhitespace(text: TextComponent): void {
   });
 }
 
-function restoreSpaceCharacter(str: string): string {
-  return str.replaceAll(VISIBLE_SPACE_CHARACTER, ' ');
+function restoreSpaceCharacter($string: string): string {
+  return $string.replaceAll(VISIBLE_SPACE_CHARACTER, ' ');
 }
 
-function showSpaceCharacter(str: string): string {
-  return str.replaceAll(' ', VISIBLE_SPACE_CHARACTER);
+function showSpaceCharacter($string: string): string {
+  return $string.replaceAll(' ', () => VISIBLE_SPACE_CHARACTER);
 }

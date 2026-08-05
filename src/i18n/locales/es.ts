@@ -5,7 +5,7 @@ export const es = {
       part2: 'Esta operación no se puede deshacer.'
     },
     progressBar: {
-      message: 'Recopilando archivos adjuntos {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Recopilando archivos adjuntos {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Recopilando archivos adjuntos...'
     }
   },

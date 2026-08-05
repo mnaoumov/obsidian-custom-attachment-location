@@ -12,7 +12,7 @@ export class GeneratedAttachmentFilePathToken extends TokenBase<Format> {
     super('generatedAttachmentFilePath', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext): string {
-    return ctx.generatedAttachmentFilePath;
+  protected override evaluateImpl(context: TokenEvaluatorContext): string {
+    return context.generatedAttachmentFilePath;
   }
 }

@@ -109,15 +109,6 @@ export function generatePerformanceVault(): PopulateFilesParams {
   files[FAT_NOTE_PATH] = fatNoteContent;
 
   return files;
-
-  function embed(attachmentPath: string): string {
-    const baseName = attachmentPath.split('/').at(-1) ?? attachmentPath;
-    return `![[${baseName}]]\n`;
-  }
-
-  function makeBytes(size: number): Uint8Array {
-    return new Uint8Array(size).fill(1);
-  }
 }
 
 /**
@@ -158,4 +149,13 @@ export function smallAttachmentPath(index: number): string {
  */
 export function smallNotePath(index: number): string {
   return `${SMALL_FOLDER}/note-${String(index)}.md`;
+}
+
+function embed(attachmentPath: string): string {
+  const baseName = attachmentPath.split('/').at(-1) ?? attachmentPath;
+  return `![[${baseName}]]\n`;
+}
+
+function makeBytes(size: number): Uint8Array {
+  return new Uint8Array(size).fill(1);
 }

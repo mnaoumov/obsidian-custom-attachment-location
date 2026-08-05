@@ -5,7 +5,7 @@ export const zhTW = {
       part2: '此操作無法復原。'
     },
     progressBar: {
-      message: '正在收集附件 {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: '正在收集附件 {{iterationString}} - \'{{noteFilePath}}\'.',
       title: '正在收集附件...'
     }
   },

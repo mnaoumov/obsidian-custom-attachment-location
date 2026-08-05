@@ -20,7 +20,7 @@ interface ParseFormatObjectParams {
 
 interface ParseHeadAtParams {
   readonly start: number;
-  readonly str: string;
+  readonly string: string;
   readonly throwOnError: boolean;
 }
 
@@ -32,7 +32,7 @@ interface ParseHeadAtResult {
 
 interface ParseTokenAtParams {
   readonly start: number;
-  readonly str: string;
+  readonly string: string;
   readonly throwOnError: boolean;
 }
 
@@ -42,15 +42,15 @@ interface ScanTokensOptions {
 
 interface SkipWhitespaceParams {
   readonly start: number;
-  readonly str: string;
+  readonly string: string;
 }
 
 export function parseFormatObject(params: ParseFormatObjectParams): Record<string, unknown> {
   let parsed: unknown;
   try {
     parsed = parse(params.formatText);
-  } catch (e) {
-    throw new Error('Invalid JSON5', { cause: e });
+  } catch (error) {
+    throw new Error('Invalid JSON5', { cause: error });
   }
 
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -59,16 +59,16 @@ export function parseFormatObject(params: ParseFormatObjectParams): Record<strin
   return parsed as Record<string, unknown>;
 }
 
-export function scanTokens(str: string, options?: ScanTokensOptions): ScannedToken[] {
-  const throwOnError = options?.throwOnError ?? true;
+export function scanTokens($string: string, options?: ScanTokensOptions): ScannedToken[] {
+  const isThrowOnError = options?.throwOnError ?? true;
   const tokens: ScannedToken[] = [];
 
-  for (const match of str.matchAll(/\$\{/g)) {
+  for (const match of $string.matchAll(/\$\{/g)) {
     const start = match.index;
     const token = parseTokenAt({
       start,
-      str,
-      throwOnError
+      string: $string,
+      throwOnError: isThrowOnError
     });
     if (token) {
       tokens.push(token);
@@ -80,7 +80,7 @@ export function scanTokens(str: string, options?: ScanTokensOptions): ScannedTok
 
 function parseHeadAt(params: ParseHeadAtParams): null | ParseHeadAtResult {
   TOKEN_HEAD_REGEXP.lastIndex = params.start;
-  const head = TOKEN_HEAD_REGEXP.exec(params.str);
+  const head = TOKEN_HEAD_REGEXP.exec(params.string);
   if (!head) {
     if (params.throwOnError) {
       throw new Error('Invalid token start');
@@ -103,7 +103,7 @@ function parseHeadAt(params: ParseHeadAtParams): null | ParseHeadAtResult {
 function parseTokenAt(params: ParseTokenAtParams): null | ScannedToken {
   const head = parseHeadAt({
     start: params.start,
-    str: params.str,
+    string: params.string,
     throwOnError: params.throwOnError
   });
   if (!head) {
@@ -112,22 +112,22 @@ function parseTokenAt(params: ParseTokenAtParams): null | ScannedToken {
 
   // No format -> must close with `}`
   if (!head.hasColon) {
-    const closeIdx = skipWhitespace({
+    const closeIndex = skipWhitespace({
       start: head.indexAfterHead,
-      str: params.str
+      string: params.string
     });
-    if (closeIdx >= params.str.length || params.str[closeIdx] !== '}') {
+    if (closeIndex >= params.string.length || params.string[closeIndex] !== '}') {
       if (params.throwOnError) {
         throw new Error(`Token '${head.tokenName}' is missing closing '}'`);
       }
       return null;
     }
 
-    const end = closeIdx + 1;
+    const end = closeIndex + 1;
     return {
       end,
       formatText: null,
-      raw: params.str.slice(params.start, end),
+      raw: params.string.slice(params.start, end),
       start: params.start,
       token: head.tokenName
     };
@@ -135,7 +135,7 @@ function parseTokenAt(params: ParseTokenAtParams): null | ScannedToken {
 
   // Format part: must be JSON5 object `{...}`
   const objectStart = head.indexAfterHead;
-  if (objectStart >= params.str.length || params.str[objectStart] !== '{') {
+  if (objectStart >= params.string.length || params.string[objectStart] !== '{') {
     if (params.throwOnError) {
       throw new Error(`Token '${head.tokenName}' format must be a JSON5 object starting with '{'`);
     }
@@ -144,7 +144,7 @@ function parseTokenAt(params: ParseTokenAtParams): null | ScannedToken {
 
   const objectEndExclusive = parseObjectExpressionEndExclusive({
     objectStart,
-    str: params.str,
+    string: params.string,
     throwOnError: params.throwOnError,
     tokenName: head.tokenName
   });
@@ -152,31 +152,31 @@ function parseTokenAt(params: ParseTokenAtParams): null | ScannedToken {
     return null;
   }
 
-  const closeIdx = skipWhitespace({
+  const closeIndex = skipWhitespace({
     start: objectEndExclusive,
-    str: params.str
+    string: params.string
   });
-  if (closeIdx >= params.str.length || params.str[closeIdx] !== '}') {
+  if (closeIndex >= params.string.length || params.string[closeIndex] !== '}') {
     if (params.throwOnError) {
       throw new Error(`Token '${head.tokenName}' is missing closing '}'`);
     }
     return null;
   }
 
-  const end = closeIdx + 1;
+  const end = closeIndex + 1;
   return {
     end,
-    formatText: params.str.slice(objectStart, objectEndExclusive),
-    raw: params.str.slice(params.start, end),
+    formatText: params.string.slice(objectStart, objectEndExclusive),
+    raw: params.string.slice(params.start, end),
     start: params.start,
     token: head.tokenName
   };
 }
 
 function skipWhitespace(params: SkipWhitespaceParams): number {
-  let i = params.start;
-  while (i < params.str.length && /\s/.test(ensureNonNullable(params.str[i]))) {
-    i++;
+  let index = params.start;
+  while (index < params.string.length && /\s/.test(ensureNonNullable(params.string[index]))) {
+    index++;
   }
-  return i;
+  return index;
 }

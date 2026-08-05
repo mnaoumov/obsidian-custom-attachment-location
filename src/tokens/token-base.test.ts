@@ -20,7 +20,7 @@ class TestToken extends TokenBase<Format> {
     super('test', formatSchema);
   }
 
-  protected override evaluateImpl(_ctx: TokenEvaluatorContext, format: Format): string {
+  protected override evaluateImpl(_context: TokenEvaluatorContext, format: Format): string {
     return format.value;
   }
 }
@@ -35,7 +35,7 @@ class NoDefaultToken extends TokenBase<NoDefaultFormat> {
     super('noDefault', noDefaultFormatSchema);
   }
 
-  protected override evaluateImpl(_ctx: TokenEvaluatorContext, format: NoDefaultFormat): string {
+  protected override evaluateImpl(_context: TokenEvaluatorContext, format: NoDefaultFormat): string {
     return format.value;
   }
 }

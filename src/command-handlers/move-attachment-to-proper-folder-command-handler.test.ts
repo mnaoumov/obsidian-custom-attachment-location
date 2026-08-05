@@ -26,7 +26,10 @@ import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import { copySafe } from 'obsidian-dev-utils/obsidian/vault';
-import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
+import {
+  deleteIfNotUsed,
+  DeleteIfNotUsedResult
+} from 'obsidian-dev-utils/obsidian/vault-delete';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeAll,
@@ -52,7 +55,7 @@ interface ActiveFileProviderHolder {
 
 interface LoopBuildNoticeMessageParamsLike {
   item: TFile;
-  iterationStr: string;
+  iterationString: string;
 }
 
 interface LoopParams {
@@ -143,7 +146,7 @@ function createBacklinks(map: Map<string, Reference[]>): CustomArrayDict<Referen
       return map.get(key) ?? null;
     },
     keys(): string[] {
-      return Array.from(map.keys());
+      return [...map.keys()];
     }
   });
 }
@@ -301,9 +304,9 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       });
       mockIsFolder.mockImplementation((value) => castTo<TAbstractFile>(value) === folder);
       mockIsNoteEx.mockImplementation((value) => castTo<TAbstractFile>(value).path.endsWith('.md'));
-      vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, cb) => {
-        cb(childAttachment);
-        cb(childNote);
+      vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(childAttachment);
+        callback(childNote);
       });
       mockLoop.mockResolvedValue();
 
@@ -311,7 +314,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       const params = getLoopParams();
       expect(params.items.map((file) => file.path)).toEqual(['a-b.png', 'folder/child.png', 'z-a.png']);
-      expect(params.buildNoticeMessage({ item: attachmentA, iterationStr: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
+      expect(params.buildNoticeMessage({ item: attachmentA, iterationString: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
       expect(params.progressBarTitle).toBe('My Plugin: Moving attachment to proper folder...');
     });
 
@@ -421,7 +424,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         await converter(reference);
         await converter(createReference('non-matching'));
       });
-      mockDeleteIfNotUsed.mockResolvedValue(true);
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
       mockCopySafe.mockResolvedValue('new-folder/attachment.png');
 
       await runProcessItem(attachment);

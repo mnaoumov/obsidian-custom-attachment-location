@@ -44,7 +44,7 @@ const hoisted = vi.hoisted(() => ({
     loadFile: vi.fn(),
     unload: vi.fn()
   },
-  mockTrashSafe: vi.fn((..._args: unknown[]): Promise<void> => noopAsync())
+  mockTrashSafe: vi.fn((..._arguments: unknown[]): Promise<void> => noopAsync())
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/plugin/plugin-context', () => ({
@@ -52,7 +52,7 @@ vi.mock('obsidian-dev-utils/obsidian/plugin/plugin-context', () => ({
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/vault', () => ({
-  trashSafe: (...args: unknown[]): Promise<void> => hoisted.mockTrashSafe(...args)
+  trashSafe: (...$arguments: unknown[]): Promise<void> => hoisted.mockTrashSafe(...$arguments)
 }));
 
 const originalOnClick = ButtonComponentClass.prototype.onClick;
@@ -74,7 +74,7 @@ function createApp(overrides: StrictProxyPartial<App>): App {
   });
 }
 
-function createCtx(overrides: StrictProxyPartial<TokenEvaluatorContext>): TokenEvaluatorContext {
+function createContext(overrides: StrictProxyPartial<TokenEvaluatorContext>): TokenEvaluatorContext {
   return strictProxy<TokenEvaluatorContext>({
     app: createApp({}),
     fillTemplate: vi.fn((template: string): Promise<string> => Promise.resolve(template)),
@@ -101,7 +101,7 @@ function createEmbedRegistry(embedByExtension: EmbedByExtension): App['embedRegi
 }
 
 async function flushOnOpen(): Promise<void> {
-  for (let i = 0; i < 10; i++) {
+  for (let index = 0; index < 10; index++) {
     await noopAsync();
   }
 }
@@ -143,7 +143,7 @@ describe('promptWithPreview', () => {
     // (via their onClick/onChange registration) so interactions can be driven through real DOM.
     vi.spyOn(ButtonComponentClass.prototype, 'onClick').mockImplementation(function capturingOnClick(
       this: ButtonComponentClass,
-      callback: (evt: MouseEvent) => unknown
+      callback: ($event: MouseEvent) => unknown
     ): ButtonComponentClass {
       captured.buttons.push(castTo<ButtonComponent>(this));
       return originalOnClick.call(this, callback);
@@ -166,7 +166,7 @@ describe('promptWithPreview', () => {
 
   it('should resolve with null when closed without clicking OK', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({}),
+      context: createContext({}),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
@@ -178,19 +178,19 @@ describe('promptWithPreview', () => {
 
   it('should render OK, Cancel and Preview buttons', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({}),
+      context: createContext({}),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
-    expect(captured.buttons.map(getButtonText)).toStrictEqual(['OK', 'Cancel', 'Preview attachment file']);
+    expect(captured.buttons.map((button) => getButtonText(button))).toStrictEqual(['OK', 'Cancel', 'Preview attachment file']);
     await vi.advanceTimersByTimeAsync(0);
     await promise;
   });
 
   it('should resolve with the filled template value when OK is clicked on a valid input', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({ fillTemplate: vi.fn((): Promise<string> => Promise.resolve('filled-value')) }),
+      context: createContext({ fillTemplate: vi.fn((): Promise<string> => Promise.resolve('filled-value')) }),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
@@ -202,7 +202,7 @@ describe('promptWithPreview', () => {
 
   it('should not resolve with the value when OK is clicked on an invalid input', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({}),
+      context: createContext({}),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve('error'))
     });
@@ -216,7 +216,7 @@ describe('promptWithPreview', () => {
 
   it('should resolve with the updated value when the input changes and OK is clicked', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({}),
+      context: createContext({}),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
@@ -229,7 +229,7 @@ describe('promptWithPreview', () => {
 
   it('should resolve with the value when Enter is pressed on a valid input', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({ fillTemplate: vi.fn((): Promise<string> => Promise.resolve('filled-value')) }),
+      context: createContext({ fillTemplate: vi.fn((): Promise<string> => Promise.resolve('filled-value')) }),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
@@ -241,7 +241,7 @@ describe('promptWithPreview', () => {
 
   it('should resolve with null when Escape is pressed', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({}),
+      context: createContext({}),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
@@ -253,7 +253,7 @@ describe('promptWithPreview', () => {
 
   it('should ignore other keydown keys', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({}),
+      context: createContext({}),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
@@ -266,7 +266,7 @@ describe('promptWithPreview', () => {
 
   it('should disable the Preview button when there is no attachment content', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({ getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(undefined) }),
+      context: createContext({ getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(undefined) }),
       defaultValue: 'default-value',
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
@@ -279,7 +279,7 @@ describe('promptWithPreview', () => {
   it('should enable the Preview button when an embeddable creator and content are available', async () => {
     const embeddableCreator = vi.fn<EmbedCreator>(() => castTo<ReturnType<EmbedCreator>>(hoisted.embedComponent));
     const promise = promptWithPreview({
-      ctx: createCtx({
+      context: createContext({
         app: createApp({
           embedRegistry: createEmbedRegistry({ png: embeddableCreator })
         }),
@@ -298,7 +298,7 @@ describe('promptWithPreview', () => {
     const embeddableCreator = vi.fn<EmbedCreator>(() => castTo<ReturnType<EmbedCreator>>(hoisted.embedComponent));
     const createBinary = vi.fn((path: string): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ name: 'temp', path })));
     const promise = promptWithPreview({
-      ctx: createCtx({
+      context: createContext({
         app: createApp({
           embedRegistry: createEmbedRegistry({ png: embeddableCreator }),
           vault: castTo<App['vault']>({ createBinary })
@@ -320,7 +320,7 @@ describe('promptWithPreview', () => {
 
   it('should not load an embed in the preview modal when there is no embeddable creator', async () => {
     const promise = promptWithPreview({
-      ctx: createCtx({
+      context: createContext({
         app: createApp({
           embedRegistry: createEmbedRegistry({})
         }),
@@ -340,7 +340,7 @@ describe('promptWithPreview', () => {
   it('should unload the embed and trash the temp file when the preview modal closes', async () => {
     const embeddableCreator = vi.fn<EmbedCreator>(() => castTo<ReturnType<EmbedCreator>>(hoisted.embedComponent));
     const promise = promptWithPreview({
-      ctx: createCtx({
+      context: createContext({
         app: createApp({
           embedRegistry: createEmbedRegistry({ png: embeddableCreator })
         }),

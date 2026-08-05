@@ -5,7 +5,7 @@ export const ko = {
       part2: '이 작업은 되돌릴 수 없습니다.'
     },
     progressBar: {
-      message: '첨부 파일 수집 중 {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: '첨부 파일 수집 중 {{iterationString}} - \'{{noteFilePath}}\'.',
       title: '첨부 파일 수집 중...'
     }
   },

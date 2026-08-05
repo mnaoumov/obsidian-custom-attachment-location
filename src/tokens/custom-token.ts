@@ -8,30 +8,30 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 import { TokenBase } from './token-base.ts';
 
-type TokenEvaluator = (ctx: TokenEvaluatorContext) => Promisable<string>;
+type TokenEvaluator = (context: TokenEvaluatorContext) => Promisable<string>;
 
 const formatSchema = z.looseObject({});
 type Format = z.infer<typeof formatSchema>;
-type RegisterCustomTokenFn = (token: string, evaluator: TokenEvaluator) => void;
-type RegisterCustomTokensWrapperFn = (registerCustomToken: RegisterCustomTokenFn) => void;
+type RegisterCustomTokenFunction = (token: string, evaluator: TokenEvaluator) => void;
+type RegisterCustomTokensWrapperFunction = (registerCustomToken: RegisterCustomTokenFunction) => void;
 
 export class CustomToken extends TokenBase<Format> {
   public constructor(name: string, private readonly evaluator: TokenEvaluator) {
     super(name, formatSchema);
   }
 
-  public static parse(customTokensStr: string): CustomToken[] | null {
+  public static parse(customTokensString: string): CustomToken[] | null {
     const customTokens: CustomToken[] = [];
     try {
-      const registerCustomTokensWrapperFn = createFunction<RegisterCustomTokensWrapperFn>({
-        argNames: ['registerCustomToken'],
-        functionBody: customTokensStr
+      const registerCustomTokensWrapperFunction = createFunction<RegisterCustomTokensWrapperFunction>({
+        argumentNames: ['registerCustomToken'],
+        functionBody: customTokensString
       });
 
-      registerCustomTokensWrapperFn(registerCustomToken);
+      registerCustomTokensWrapperFunction(registerCustomToken);
       return customTokens;
-    } catch (e) {
-      printError(new Error('Error registering custom tokens', { cause: e }));
+    } catch (error) {
+      printError(new Error('Error registering custom tokens', { cause: error }));
       return null;
     }
 
@@ -40,7 +40,7 @@ export class CustomToken extends TokenBase<Format> {
     }
   }
 
-  protected override async evaluateImpl(ctx: TokenEvaluatorContext): Promise<string> {
-    return this.evaluator(ctx);
+  protected override async evaluateImpl(context: TokenEvaluatorContext): Promise<string> {
+    return this.evaluator(context);
   }
 }

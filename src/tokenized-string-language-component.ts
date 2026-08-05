@@ -17,7 +17,7 @@ export const TOKENIZED_STRING_LANGUAGE = 'custom-attachment-location-tokenized-s
  */
 export class TokenizedStringLanguageComponent extends SyntaxHighlightingComponent {
   public override async onloadAsync(): Promise<void> {
-    await this.registerPrismLanguageAsync({
+    await this.registerPrismLanguage({
       grammar: (params) => {
         const javascriptLanguage = params.requirePrismLanguage('javascript');
 

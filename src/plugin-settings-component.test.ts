@@ -234,7 +234,7 @@ describe('PluginSettingsComponent', () => {
       const settings = createSettings();
       settings.includePaths = ['/valid.*/'];
       settings.excludePaths = ['plain/path'];
-      settings.excludePathsFromMultipleNotesCheck = ['/\\.excalidraw\\.md$/'];
+      settings.excludePathsFromMultipleNotesCheck = [String.raw`/\.excalidraw\.md$/`];
       const result = await component.validate(settings);
       expect(result.includePaths).toBeUndefined();
       expect(result.excludePaths).toBeUndefined();
@@ -281,6 +281,7 @@ describe('PluginSettingsComponent', () => {
     it('should accept valid custom tokens code when not debounced', async () => {
       const component = await createComponent();
       const settings = createSettings();
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       settings.customTokensStr = 'registerCustomToken(\'foo\', () => \'bar\');';
       const result = await component.validate(settings);
       expect(result.customTokensStr).toBeUndefined();
@@ -289,6 +290,7 @@ describe('PluginSettingsComponent', () => {
     it('should reject invalid custom tokens code when not debounced', async () => {
       const component = await createComponent();
       const settings = createSettings();
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       settings.customTokensStr = 'this is not valid javascript {{{';
       const result = await component.validate(settings);
       expect(result.customTokensStr).toBe('Invalid custom tokens code');
@@ -299,6 +301,7 @@ describe('PluginSettingsComponent', () => {
       vi.useFakeTimers();
       component.shouldDebounceCustomTokensValidation = true;
       const settings = createSettings();
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       settings.customTokensStr = 'this is not valid javascript {{{';
       // First call schedules the debounced validation and returns the previous (undefined) result.
       const firstResult = await component.validate(settings);
@@ -399,6 +402,7 @@ describe('PluginSettingsComponent', () => {
 
     it('should comment out legacy custom tokens for versions earlier than 9.0.0', async () => {
       const component = await createComponent({
+        // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
         customTokensStr: 'registerCustomToken();',
         version: '8.0.0'
       });
@@ -416,10 +420,10 @@ describe('PluginSettingsComponent', () => {
 
     it('should upgrade the special characters default before 9.16.0', async () => {
       const component = await createComponent({
-        specialCharacters: '#^[]|*\\<>:?',
+        specialCharacters: String.raw`#^[]|*\<>:?`,
         version: '9.15.0'
       });
-      expect(component.settings.specialCharacters).toBe('#^[]|*\\<>:?/');
+      expect(component.settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/`);
     });
 
     it('should convert legacy moment-format tokens into the new format', async () => {

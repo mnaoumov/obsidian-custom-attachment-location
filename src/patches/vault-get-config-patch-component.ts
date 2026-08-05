@@ -21,11 +21,11 @@ export class VaultGetConfigPatchComponent extends MonkeyAroundComponent {
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: this.vault,
       methodName: 'getConfig',
-      obj: this.vault,
       patchHandler: ({
         fallback,
-        originalArgs: [name]
+        originalArguments: [name]
       }) => {
         if (name !== 'attachmentFolderPath' || this.customAttachmentLocationComponent.currentAttachmentFolderPath === null) {
           return fallback();

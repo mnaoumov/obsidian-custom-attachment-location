@@ -36,7 +36,9 @@ interface ProbeResult {
 describe('Delete unused attachments (issue #23)', () => {
   it('trashes only the genuinely-unused attachment, keeping referenced and shared ones', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<ProbeResult> {
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const folderPath = `assets/note-${stamp}`;
@@ -60,7 +62,7 @@ describe('Delete unused attachments (issue #23)', () => {
         const sharedFile = app.vault.getFileByPath(sharedPath);
         let refBacklinkCount = 0;
         let sharedBacklinkCount = 0;
-        const resolveDeadline = Date.now() + 8_000;
+        const resolveDeadline = Date.now() + 8000;
         while (Date.now() < resolveDeadline) {
           refBacklinkCount = refFile ? app.metadataCache.getBacklinksForFile(refFile).keys().length : 0;
           sharedBacklinkCount = sharedFile ? app.metadataCache.getBacklinksForFile(sharedFile).keys().length : 0;
@@ -75,12 +77,12 @@ describe('Delete unused attachments (issue #23)', () => {
         app.commands.executeCommandById('obsidian-custom-attachment-location:delete-unused-attachments-in-file');
 
         // Drive the real confirmation modal: wait for it, then click its OK button.
-        let modalShown = false;
+        let isModalShown = false;
         const modalDeadline = Date.now() + 12_000;
         while (Date.now() < modalDeadline) {
           const okButton = document.querySelector('.modal-container .ok-button');
           if (okButton) {
-            modalShown = true;
+            isModalShown = true;
             (okButton as HTMLElement).click();
             break;
           }
@@ -97,7 +99,7 @@ describe('Delete unused attachments (issue #23)', () => {
         }
 
         return {
-          modalShown,
+          modalShown: isModalShown,
           orphanTrashed: !app.vault.getFileByPath(orphanPath),
           refBacklinkCount,
           referencedSurvived: Boolean(app.vault.getFileByPath(refPath)),

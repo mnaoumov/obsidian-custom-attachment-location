@@ -23,10 +23,10 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: this.vault,
       methodName: 'getAvailablePathForAttachments',
-      obj: this.vault,
       patchHandler: ({
-        originalArgs: [attachmentFileBaseName, attachmentFileExtension, notePathOrFile]
+        originalArguments: [attachmentFileBaseName, attachmentFileExtension, notePathOrFile]
       }) => {
         /*
          * The base method is invoked for dry resolutions (Obsidian core and third-party plugins probe

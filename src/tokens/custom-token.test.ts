@@ -42,10 +42,10 @@ describe('CustomToken', () => {
   it('should delegate evaluation to the evaluator', async () => {
     const evaluator = vi.fn<TokenEvaluator>(() => 'evaluated');
     const token = new CustomToken('myToken', evaluator);
-    const ctx = createContext({ extra: true });
-    const result = await token.evaluate(ctx);
+    const context = createContext({ extra: true });
+    const result = await token.evaluate(context);
     expect(result).toBe('evaluated');
-    expect(evaluator).toHaveBeenCalledWith(ctx);
+    expect(evaluator).toHaveBeenCalledWith(context);
   });
 
   it('should accept any loose format object', async () => {
@@ -83,12 +83,12 @@ describe('CustomToken.parse', () => {
     const tokens = CustomToken.parse('this is not valid javascript (');
     expect(tokens).toBeNull();
     expect(printError).toHaveBeenCalledTimes(1);
-    const [errorArg] = vi.mocked(printError).mock.calls[0] ?? [];
-    expect(errorArg).toBeInstanceOf(Error);
-    if (!(errorArg instanceof Error)) {
+    const [errorArgument] = vi.mocked(printError).mock.calls[0] ?? [];
+    expect(errorArgument).toBeInstanceOf(Error);
+    if (!(errorArgument instanceof Error)) {
       throw new Error('Expected the printed error to be an Error instance.');
     }
-    expect(errorArg.message).toBe('Error registering custom tokens');
-    expect(errorArg.cause).toBeInstanceOf(Error);
+    expect(errorArgument.message).toBe('Error registering custom tokens');
+    expect(errorArgument.cause).toBeInstanceOf(Error);
   });
 });

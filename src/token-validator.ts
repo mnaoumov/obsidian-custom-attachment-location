@@ -64,8 +64,9 @@ export class TokenValidator {
         }
         break;
       }
-      case TokenValidationMode.Skip:
+      case TokenValidationMode.Skip: {
         break;
+      }
       case TokenValidationMode.Validate: {
         const validationMessage = await this.validateTokens(params.fileName);
         if (validationMessage) {
@@ -73,8 +74,9 @@ export class TokenValidator {
         }
         break;
       }
-      default:
+      default: {
         throw new Error(`Invalid token validation mode: ${params.tokenValidationMode as string}`);
+      }
     }
 
     let cleanFileName: string;
@@ -118,11 +120,11 @@ export class TokenValidator {
     }
 
     let path = trimStart({
-      prefix: '/',
-      str: params.path
+      $string: params.path,
+      prefix: '/'
     });
     path = trimEnd({
-      str: path,
+      $string: path,
       suffix: '/'
     });
 
@@ -147,7 +149,7 @@ export class TokenValidator {
     return '';
   }
 
-  private async validateTokens(str: string): Promise<null | string> {
+  private async validateTokens($string: string): Promise<null | string> {
     const FAKE_SUBSTITUTION = new Substitutions({
       actionContext: ActionContext.ValidateTokens,
       app: this.app,
@@ -157,7 +159,7 @@ export class TokenValidator {
       tokenValidator: this
     });
 
-    const extractedTokens = extractTokens(str);
+    const extractedTokens = extractTokens($string);
 
     for (const extractedToken of extractedTokens) {
       if (!Substitutions.isRegisteredToken(extractedToken.token)) {
@@ -171,16 +173,16 @@ export class TokenValidator {
             formatText: extractedToken.formatText,
             tokenName: extractedToken.token
           });
-        } catch (e) {
-          return `Invalid format for token '${extractedToken.token}': ${(e as Error).message}`;
+        } catch (error) {
+          return `Invalid format for token '${extractedToken.token}': ${(error as Error).message}`;
         }
       }
 
       // Validate token-specific schema by evaluating in a safe context.
       try {
         await FAKE_SUBSTITUTION.fillTemplate(extractedToken.raw);
-      } catch (e) {
-        return `Invalid token '${extractedToken.raw}': ${(e as Error).message}`;
+      } catch (error) {
+        return `Invalid token '${extractedToken.raw}': ${(error as Error).message}`;
       }
     }
 
@@ -188,22 +190,22 @@ export class TokenValidator {
   }
 }
 
-function extractTokens(str: string): Token[] {
-  return scanTokens(str, { throwOnError: false });
+function extractTokens($string: string): Token[] {
+  return scanTokens($string, { throwOnError: false });
 }
 
 const MORE_THAN_TWO_DOTS_REG_EXP = /^\.{3,}$/;
 const TRAILING_DOTS_REG_EXP = /\.+$/;
 
-function removeTokens(str: string): string {
-  const tokens = scanTokens(str);
+function removeTokens($string: string): string {
+  const tokens = scanTokens($string);
   let out = '';
   let lastOffset = 0;
   for (const t of tokens) {
-    out += str.slice(lastOffset, t.start);
+    out += $string.slice(lastOffset, t.start);
     out += `__${t.token}__`;
     lastOffset = t.end;
   }
-  out += str.slice(lastOffset);
+  out += $string.slice(lastOffset);
   return out;
 }

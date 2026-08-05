@@ -15,12 +15,12 @@ export class UuidToken extends TokenBase<Format> {
     super('uuid', formatSchema);
   }
 
-  protected override evaluateImpl(_ctx: TokenEvaluatorContext, format: Format): string {
+  protected override evaluateImpl(_context: TokenEvaluatorContext, format: Format): string {
     // eslint-disable-next-line n/no-unsupported-features/node-builtins -- crypto.randomUUID is the Web Crypto API, available in Obsidian's Electron renderer; the rule incorrectly flags it as a Node experimental builtin.
     let uuid = crypto.randomUUID() as string;
     if (format.case === 'upper') {
       uuid = uuid.toUpperCase();
     }
-    return format.hyphens ? uuid : uuid.replace(/-/g, '');
+    return format.hyphens ? uuid : uuid.replaceAll('-', '');
   }
 }

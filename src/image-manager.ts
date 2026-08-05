@@ -45,23 +45,28 @@ export class ImageManager {
 
     if (mimeType) {
       switch (this.pluginSettingsComponent.settings.convertImagesToJpegMode) {
-        case ConvertImagesToJpegMode.AllImages:
+        case ConvertImagesToJpegMode.AllImages: {
           shouldConvertImageToJpeg = true;
           break;
-        case ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles:
+        }
+        case ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles: {
           if (mimeType !== 'image/jpeg') {
             shouldConvertImageToJpeg = true;
           }
           break;
-        case ConvertImagesToJpegMode.None:
+        }
+        case ConvertImagesToJpegMode.None: {
           break;
-        case ConvertImagesToJpegMode.OnlyPastedClipboardPngImages:
+        }
+        case ConvertImagesToJpegMode.OnlyPastedClipboardPngImages: {
           if (params.isPastedImage && mimeType === 'image/png') {
             shouldConvertImageToJpeg = true;
           }
           break;
-        default:
+        }
+        default: {
           throw new Error(`Invalid convert images to JPEG mode: ${this.pluginSettingsComponent.settings.convertImagesToJpegMode as string}`);
+        }
       }
     }
 
@@ -108,17 +113,13 @@ export class ImageManager {
 
     if (this.pluginSettingsComponent.settings.defaultImageSize.endsWith(PX)) {
       const dimensionInPixels = Number(trimEnd({
-        str: this.pluginSettingsComponent.settings.defaultImageSize,
+        $string: this.pluginSettingsComponent.settings.defaultImageSize,
         suffix: PX
       }));
-      if (this.pluginSettingsComponent.settings.defaultImageSizeDimension === DefaultImageSizeDimension.Width) {
-        width = dimensionInPixels;
-      } else {
-        width = Math.trunc(dimensionInPixels / image.height * image.width);
-      }
+      width = this.pluginSettingsComponent.settings.defaultImageSizeDimension === DefaultImageSizeDimension.Width ? dimensionInPixels : Math.trunc(dimensionInPixels / image.height * image.width);
     } else {
       const percentage = Number(trimEnd({
-        str: this.pluginSettingsComponent.settings.defaultImageSize,
+        $string: this.pluginSettingsComponent.settings.defaultImageSize,
         suffix: PERCENTAGE
       }));
       const FULL_IMAGE_PERCENTAGE = 100;

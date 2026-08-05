@@ -41,7 +41,7 @@ interface TestContext {
   settings: PluginSettings;
 }
 
-let ctx: TestContext;
+let context: TestContext;
 
 function createContext(): TestContext {
   const settings = new PluginSettings();
@@ -112,127 +112,127 @@ function toArrayBuffer(bytes: readonly number[]): ArrayBuffer {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  ctx = createContext();
+  context = createContext();
 });
 
 describe('NetworkImageDownloader', () => {
   describe('downloadNetworkImagesForNote', () => {
     it('should do nothing when downloading network images is disabled', async () => {
-      ctx.settings.downloadNetworkImages = false;
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
-      expect(ctx.cachedRead).not.toHaveBeenCalled();
+      context.settings.downloadNetworkImages = false;
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
+      expect(context.cachedRead).not.toHaveBeenCalled();
       expect(mockRequestUrl).not.toHaveBeenCalled();
     });
 
     it('should do nothing when the note has no network image links', async () => {
-      ctx.cachedRead.mockResolvedValue('# No images here, just [a local link](local.md).');
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
-      expect(ctx.cachedRead).toHaveBeenCalledWith(ctx.noteFile);
+      context.cachedRead.mockResolvedValue('# No images here, just [a local link](local.md).');
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
+      expect(context.cachedRead).toHaveBeenCalledWith(context.noteFile);
       expect(mockRequestUrl).not.toHaveBeenCalled();
-      expect(ctx.modify).not.toHaveBeenCalled();
+      expect(context.modify).not.toHaveBeenCalled();
     });
 
     it('should download a network image and replace the link with the local path', async () => {
-      ctx.cachedRead.mockResolvedValue('![My Image](https://example.com/pic.png)');
+      context.cachedRead.mockResolvedValue('![My Image](https://example.com/pic.png)');
       mockRequestUrl.mockResolvedValue(createResponse({
         arrayBuffer: toArrayBuffer([0x89, 0x50, 0x4E, 0x47]),
         headers: { 'content-type': 'image/png' }
       }));
-      ctx.getDownloadedImagePath.mockResolvedValue('assets/My Image.png');
+      context.getDownloadedImagePath.mockResolvedValue('assets/My Image.png');
 
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
 
-      expect(ctx.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
+      expect(context.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
         fileExtension: 'png',
         fileName: 'My Image',
         noteFilePath: 'notes/note.md'
       }));
-      expect(ctx.createBinary).toHaveBeenCalledWith('assets/My Image.png', expect.any(ArrayBuffer));
-      expect(ctx.modify).toHaveBeenCalledWith(ctx.noteFile, '![My Image](assets/My Image.png)');
+      expect(context.createBinary).toHaveBeenCalledWith('assets/My Image.png', expect.any(ArrayBuffer));
+      expect(context.modify).toHaveBeenCalledWith(context.noteFile, '![My Image](assets/My Image.png)');
     });
 
     it('should derive the base name from the URL when the alt text is empty', async () => {
-      ctx.cachedRead.mockResolvedValue('![](https://example.com/photo.jpg)');
+      context.cachedRead.mockResolvedValue('![](https://example.com/photo.jpg)');
       mockRequestUrl.mockResolvedValue(createResponse({
         arrayBuffer: toArrayBuffer([0xFF, 0xD8, 0xFF]),
         headers: {}
       }));
 
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
 
-      expect(ctx.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
+      expect(context.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
         fileExtension: 'jpg',
         fileName: 'photo'
       }));
     });
 
     it('should fall back to the image base name when neither alt nor URL provide one', async () => {
-      ctx.cachedRead.mockResolvedValue('![](https://example.com/)');
+      context.cachedRead.mockResolvedValue('![](https://example.com/)');
       mockRequestUrl.mockResolvedValue(createResponse({
         arrayBuffer: toArrayBuffer([0x89, 0x50, 0x4E, 0x47]),
         headers: { 'content-type': 'image/png' }
       }));
 
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
 
-      expect(ctx.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
+      expect(context.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
         fileName: 'image'
       }));
     });
 
     it('should fall back to the image base name when sanitizing removes every character', async () => {
-      ctx.settings.specialCharactersReplacement = '';
-      ctx.cachedRead.mockResolvedValue('![###](https://example.com/pic.png)');
+      context.settings.specialCharactersReplacement = '';
+      context.cachedRead.mockResolvedValue('![###](https://example.com/pic.png)');
       mockRequestUrl.mockResolvedValue(createResponse({
         arrayBuffer: toArrayBuffer([0x89, 0x50, 0x4E, 0x47]),
         headers: { 'content-type': 'image/png' }
       }));
 
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
 
-      expect(ctx.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
+      expect(context.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
         fileName: 'image'
       }));
     });
 
     it('should detect the extension from magic bytes when the content type is unknown', async () => {
-      ctx.cachedRead.mockResolvedValue('![gif](https://example.com/anim)');
+      context.cachedRead.mockResolvedValue('![gif](https://example.com/anim)');
       mockRequestUrl.mockResolvedValue(createResponse({
         arrayBuffer: toArrayBuffer([0x47, 0x49, 0x46, 0x38]),
         headers: { 'content-type': 'application/octet-stream' }
       }));
 
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
 
-      expect(ctx.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
+      expect(context.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
         fileExtension: 'gif'
       }));
     });
 
     it('should fall back to png when the extension cannot be detected', async () => {
-      ctx.cachedRead.mockResolvedValue('![blob](https://example.com/blob)');
+      context.cachedRead.mockResolvedValue('![blob](https://example.com/blob)');
       mockRequestUrl.mockResolvedValue(createResponse({
         arrayBuffer: toArrayBuffer([0x00, 0x01, 0x02, 0x03]),
         headers: { 'content-type': 'application/octet-stream' }
       }));
 
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
 
-      expect(ctx.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
+      expect(context.getDownloadedImagePath).toHaveBeenCalledWith(expect.objectContaining({
         fileExtension: 'png'
       }));
     });
 
     it('should warn and skip the image when the download fails', async () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-      ctx.cachedRead.mockResolvedValue('![broken](https://example.com/missing.png)');
+      context.cachedRead.mockResolvedValue('![broken](https://example.com/missing.png)');
       mockRequestUrl.mockResolvedValue(createResponse({ status: 404 }));
 
-      await ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
 
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('https://example.com/missing.png'), expect.any(Error));
-      expect(ctx.createBinary).not.toHaveBeenCalled();
-      expect(ctx.modify).not.toHaveBeenCalled();
+      expect(context.createBinary).not.toHaveBeenCalled();
+      expect(context.modify).not.toHaveBeenCalled();
       warnSpy.mockRestore();
     });
 
@@ -240,17 +240,17 @@ describe('NetworkImageDownloader', () => {
       vi.useFakeTimers();
       try {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-        ctx.settings.networkImageDownloadTimeoutInSeconds = 5;
-        ctx.cachedRead.mockResolvedValue('![slow](https://example.com/slow.png)');
+        context.settings.networkImageDownloadTimeoutInSeconds = 5;
+        context.cachedRead.mockResolvedValue('![slow](https://example.com/slow.png)');
         mockRequestUrl.mockReturnValue(createHangingRequest());
 
-        const promise = ctx.downloader.downloadNetworkImagesForNote(ctx.noteFile);
+        const promise = context.downloader.downloadNetworkImagesForNote(context.noteFile);
         await vi.advanceTimersByTimeAsync(5000);
         await promise;
 
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('https://example.com/slow.png'), expect.any(Error));
-        expect(ctx.createBinary).not.toHaveBeenCalled();
-        expect(ctx.modify).not.toHaveBeenCalled();
+        expect(context.createBinary).not.toHaveBeenCalled();
+        expect(context.modify).not.toHaveBeenCalled();
         warnSpy.mockRestore();
       } finally {
         vi.useRealTimers();
@@ -269,10 +269,10 @@ describe('NetworkImageDownloader', () => {
           })
         }),
         attachmentPathManager: strictProxy<AttachmentPathManager>({}),
-        pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ settings: ctx.settings })
+        pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ settings: context.settings })
       });
 
-      await expect(downloader.downloadNetworkImagesForNote(ctx.noteFile)).rejects.toThrow();
+      await expect(downloader.downloadNetworkImagesForNote(context.noteFile)).rejects.toThrow();
     });
   });
 });

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
-import { getRangeStr } from './get-range-str.ts';
+import { getRangeString } from './get-range-string.ts';
 import { TokenBase } from './token-base.ts';
 
 const formatSchema = z.strictObject({
@@ -18,31 +18,35 @@ export class RandomToken extends TokenBase<Format> {
     super('random', formatSchema);
   }
 
-  protected override evaluateImpl(_ctx: TokenEvaluatorContext, format: Format): string {
+  protected override evaluateImpl(_context: TokenEvaluatorContext, format: Format): string {
     let symbols = '';
     if (format.digits) {
-      symbols += getRangeStr({ from: '0', to: '9' });
+      symbols += getRangeString({ from: '0', to: '9' });
     }
     if (format.letters) {
       switch (format.letterCase) {
-        case 'lower':
-          symbols += getRangeStr({ from: 'a', to: 'z' });
+        case 'lower': {
+          symbols += getRangeString({ from: 'a', to: 'z' });
           break;
-        case 'mixed':
-          symbols += getRangeStr({ from: 'a', to: 'z' }) + getRangeStr({ from: 'A', to: 'Z' });
+        }
+        case 'mixed': {
+          symbols += getRangeString({ from: 'a', to: 'z' }) + getRangeString({ from: 'A', to: 'Z' });
           break;
-        case 'upper':
-          symbols += getRangeStr({ from: 'A', to: 'Z' });
+        }
+        case 'upper': {
+          symbols += getRangeString({ from: 'A', to: 'Z' });
           break;
-        default:
+        }
+        default: {
           throw new Error(`Invalid letter case: ${format.letterCase as string}`);
+        }
       }
     }
 
     let ans = '';
 
     // eslint-disable-next-line @typescript-eslint/prefer-for-of -- Non-iterable.
-    for (let i = 0; i < format.length; i++) {
+    for (let index = 0; index < format.length; index++) {
       ans += symbols[Math.floor(Math.random() * symbols.length)] ?? '';
     }
 

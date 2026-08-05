@@ -33,7 +33,7 @@ function createContext(cursorLine: null | number, format: TokenEvaluatorContext[
     format,
     noteFilePath: 'note.md',
     pluginSettingsComponent: castTo<PluginSettingsComponent>({
-      replaceSpecialCharacters: vi.fn((str: string) => `clean:${str}`)
+      replaceSpecialCharacters: vi.fn(($string: string) => `clean:${$string}`)
     })
   });
 }

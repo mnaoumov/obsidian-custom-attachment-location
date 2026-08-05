@@ -16,16 +16,16 @@ import type { ArrayBufferMap } from '../array-buffer-map.ts';
 
 import { ClipboardManagerInsertFilesPatchComponent } from './clipboard-manager-insert-files-patch-component.ts';
 
-interface ClipboardManagerProto {
-  insertFiles: InsertFilesFn;
+interface ClipboardManagerPrototype {
+  insertFiles: InsertFilesFunction;
 }
 
-type InsertFilesFn = (importedAttachments: ImportedAttachment[]) => Promise<void>;
+type InsertFilesFunction = (importedAttachments: ImportedAttachment[]) => Promise<void>;
 
 describe('ClipboardManagerInsertFilesPatchComponent', () => {
   let arrayBufferMap: ArrayBufferMap;
-  let insertFilesMock: ReturnType<typeof vi.fn<InsertFilesFn>>;
-  let clipboardManagerProto: ClipboardManagerProto;
+  let insertFilesMock: ReturnType<typeof vi.fn<InsertFilesFunction>>;
+  let clipboardManagerPrototype: ClipboardManagerPrototype;
   let clipboardManager: ClipboardManager;
 
   beforeEach(() => {
@@ -33,11 +33,11 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
       markAsPastedImage: vi.fn(),
       trySetByPath: vi.fn().mockResolvedValue(true)
     });
-    insertFilesMock = vi.fn<InsertFilesFn>().mockResolvedValue(undefined);
-    clipboardManagerProto = {
+    insertFilesMock = vi.fn<InsertFilesFunction>().mockResolvedValue(undefined);
+    clipboardManagerPrototype = {
       insertFiles: insertFilesMock
     };
-    clipboardManager = strictProxy<ClipboardManager>(Object.create(clipboardManagerProto));
+    clipboardManager = strictProxy<ClipboardManager>(Object.create(clipboardManagerPrototype));
   });
 
   function createComponent(): ClipboardManagerInsertFilesPatchComponent {
@@ -76,7 +76,7 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
       createAttachment('folder/b.png', buffer2)
     ];
 
-    await strictProxy<ClipboardManagerProto>(clipboardManager).insertFiles(attachments);
+    await strictProxy<ClipboardManagerPrototype>(clipboardManager).insertFiles(attachments);
 
     expect(vi.mocked(arrayBufferMap.trySetByPath)).toHaveBeenCalledWith(buffer1, 'folder/a.png');
     expect(vi.mocked(arrayBufferMap.trySetByPath)).toHaveBeenCalledWith(buffer2, 'folder/b.png');
@@ -94,7 +94,7 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
       createAttachment('folder/doc.pdf', pdfBuffer, 'pdf')
     ];
 
-    await strictProxy<ClipboardManagerProto>(clipboardManager).insertFiles(attachments);
+    await strictProxy<ClipboardManagerPrototype>(clipboardManager).insertFiles(attachments);
 
     // Assert by reference identity (`.mock.calls`) rather than structural `toHaveBeenCalledWith`,
     // Because all-zero ArrayBuffers compare loosely so identity is the only reliable check.
@@ -107,7 +107,7 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
     const component = createComponent();
     component.load();
 
-    await strictProxy<ClipboardManagerProto>(clipboardManager).insertFiles([]);
+    await strictProxy<ClipboardManagerPrototype>(clipboardManager).insertFiles([]);
 
     expect(vi.mocked(arrayBufferMap.trySetByPath)).not.toHaveBeenCalled();
     expect(insertFilesMock).toHaveBeenCalledTimes(1);

@@ -47,7 +47,9 @@ describe('Moving a canvas moves its embedded attachment (issue #22)', () => {
   // Skipped in the aggregate (shared-instance renameFile/onCleanCache stall); passes in isolation.
   it.skip('moves the canvas-embedded attachment resolved through a relative shared folder', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<CanvasMoveResult> {
         interface CanvasSettings {
           attachmentFolderPath: string;
@@ -81,11 +83,11 @@ describe('Moving a canvas moves its embedded attachment (issue #22)', () => {
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -147,7 +149,7 @@ describe('Moving a canvas moves its embedded attachment (issue #22)', () => {
           renamePromise.catch(() => {
             // Lingering `onCleanCache`; the effect is polled below.
           }),
-          sleep(6_000)
+          sleep(6000)
         ]);
 
         // The rename handler moves the attachment AND rewrites the canvas file-node reference on its
@@ -157,8 +159,8 @@ describe('Moving a canvas moves its embedded attachment (issue #22)', () => {
         while (Date.now() < deadline) {
           const movedCanvasFile = app.vault.getFileByPath(movedCanvasPath);
           canvasContentAfter = movedCanvasFile ? await app.vault.read(movedCanvasFile) : '';
-          const imgRelocated = Boolean(app.vault.getFileByPath(imgNewPath)) && !app.vault.getFileByPath(imgOldPath);
-          if (imgRelocated && canvasContentAfter.includes(folderB) && !canvasContentAfter.includes(folderA)) {
+          const isImgRelocated = Boolean(app.vault.getFileByPath(imgNewPath)) && !app.vault.getFileByPath(imgOldPath);
+          if (isImgRelocated && canvasContentAfter.includes(folderB) && !canvasContentAfter.includes(folderA)) {
             break;
           }
           await sleep(300);

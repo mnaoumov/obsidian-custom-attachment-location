@@ -5,7 +5,7 @@ export const am = {
       part2: 'ይህ እርምጃ መመለስ አይቻልም።'
     },
     progressBar: {
-      message: 'ተያያዥ ፋይሎችን በመሰብሰብ ላይ {{iterationStr}} - \'{{noteFilePath}}\'።',
+      message: 'ተያያዥ ፋይሎችን በመሰብሰብ ላይ {{iterationString}} - \'{{noteFilePath}}\'።',
       title: 'ተያያዥ ፋይሎችን በመሰብሰብ ላይ...'
     }
   },

@@ -24,11 +24,11 @@ export class ClipboardManagerInsertFilesPatchComponent extends MonkeyAroundCompo
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: getPrototypeOf(this.clipboardManager),
       methodName: 'insertFiles',
-      obj: getPrototypeOf(this.clipboardManager),
       patchHandler: async ({
         fallback,
-        originalArgs: [importedAttachments]
+        originalArguments: [importedAttachments]
       }) => {
         for (const importedAttachment of importedAttachments) {
           const arrayBuffer = await importedAttachment.data;

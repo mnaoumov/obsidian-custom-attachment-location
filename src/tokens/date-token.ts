@@ -18,7 +18,7 @@ export class DateToken extends TokenBase<Format> {
     super('date', formatSchema);
   }
 
-  protected override evaluateImpl(_ctx: TokenEvaluatorContext, format: Format): string {
+  protected override evaluateImpl(_context: TokenEvaluatorContext, format: Format): string {
     return formatNow(format);
   }
 }

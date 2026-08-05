@@ -60,7 +60,9 @@ interface PathModuleLike {
 describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issue #31)', () => {
   it('renames a non-"Pasted image"-named clipboard image via the generated pattern', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<ClipboardRenameResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
@@ -95,11 +97,11 @@ describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issu
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -142,18 +144,18 @@ describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issu
         // `trySetByPath` stat succeeds), and only the ArrayBuffer-identity flag can mark it pasted.
         const originalBaseName = `screenshot-original-${stamp}`;
         // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
-        const os = require('os') as OsModuleLike;
+        const os = require('node:os') as OsModuleLike;
         // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
-        const nodePath = require('path') as PathModuleLike;
-        const tempFilePath = nodePath.join(os.tmpdir(), `${originalBaseName}.png`);
+        const nodePath = require('node:path') as PathModuleLike;
+        const temporaryFilePath = nodePath.join(os.tmpdir(), `${originalBaseName}.png`);
         const adapterUnknown: unknown = app.vault.adapter;
         const fsPromises = (adapterUnknown as AdapterWithFsPromises).fsPromises;
-        await fsPromises.writeFile(tempFilePath, new Uint8Array(8));
+        await fsPromises.writeFile(temporaryFilePath, new Uint8Array(8));
 
         const importedAttachment = {
           data: Promise.resolve(new ArrayBuffer(8)),
           extension: 'png',
-          filepath: tempFilePath,
+          filepath: temporaryFilePath,
           name: `${originalBaseName}.png`
         };
         await clipboardManager.insertFiles([importedAttachment]);
@@ -171,15 +173,15 @@ describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issu
           await sleep(300);
         }
 
-        const originalNameSurvived = app.vault.getFiles().some((file) => file.path.includes(originalBaseName));
-        await fsPromises.unlink(tempFilePath).catch(() => {
+        const isOriginalNameSurvived = app.vault.getFiles().some((file) => file.path.includes(originalBaseName));
+        await fsPromises.unlink(temporaryFilePath).catch(() => {
           // Best-effort temp cleanup.
         });
 
         // Detach the opened leaf so it does not keep the workspace focused on this note's editor.
         leaf.detach();
 
-        return { originalNameSurvived, renamedPaths, settingsFound: true };
+        return { originalNameSurvived: isOriginalNameSurvived, renamedPaths, settingsFound: true };
       },
       vaultPath: getTempVault().path
     });

@@ -5,7 +5,7 @@ export const lv = {
       part2: 'Šo darbību nevar atsaukt.'
     },
     progressBar: {
-      message: 'Apkopoju pielikumus {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Apkopoju pielikumus {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Apkopoju pielikumus...'
     }
   },

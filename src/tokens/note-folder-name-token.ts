@@ -23,21 +23,25 @@ export class NoteFolderNameToken extends TokenBase<Format> {
     super('noteFolderName', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
-    const folderParts = ctx.noteFolderPath.split('/');
+  protected override evaluateImpl(context: TokenEvaluatorContext, format: Format): string {
+    const folderParts = context.noteFolderPath.split('/');
     let folderPartIndex = folderParts.length - 1;
     const pick = format.pick;
     switch (pick?.from) {
-      case 'end':
+      case 'end': {
         folderPartIndex = folderParts.length - 1 - pick.index;
         break;
-      case 'start':
+      }
+      case 'start': {
         folderPartIndex = pick.index;
         break;
-      case undefined:
+      }
+      case undefined: {
         break;
-      default:
+      }
+      default: {
         throw new Error(`Invalid pick from: ${ensureNonNullable(pick).from as string}`);
+      }
     }
 
     return formatString(folderParts[folderPartIndex] ?? '', format);

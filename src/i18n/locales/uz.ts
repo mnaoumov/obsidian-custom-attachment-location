@@ -5,7 +5,7 @@ export const uz = {
       part2: 'Bu amalni ortga qaytarib bo‘lmaydi.'
     },
     progressBar: {
-      message: 'Qo\'shimchalarni yig\'layapman {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Qo\'shimchalarni yig\'layapman {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Qo\'shimchalarni yig\'layapman...'
     }
   },

@@ -19,16 +19,20 @@ type StringFormat = z.infer<typeof stringFormatSchema>;
 export function formatString(value: string, format: StringFormat): string {
   const trim = format.trim;
   switch (trim?.side) {
-    case 'left':
+    case 'left': {
       value = value.slice(0, trim.length);
       break;
-    case 'right':
+    }
+    case 'right': {
       value = value.slice(-trim.length);
       break;
-    case undefined:
+    }
+    case undefined: {
       break;
-    default:
+    }
+    default: {
       throw new Error(`Invalid trim side: ${ensureNonNullable(trim).side as string}`);
+    }
   }
 
   if (format.slugify) {
@@ -36,13 +40,17 @@ export function formatString(value: string, format: StringFormat): string {
   }
 
   switch (format.case) {
-    case 'lower':
+    case 'lower': {
       return value.toLowerCase();
-    case undefined:
+    }
+    case undefined: {
       return value;
-    case 'upper':
+    }
+    case 'upper': {
       return value.toUpperCase();
-    default:
+    }
+    default: {
       throw new Error(`Invalid case: ${format.case as string}`);
+    }
   }
 }

@@ -18,7 +18,7 @@ export class NoteFileNameToken extends TokenBase<Format> {
     super('noteFileName', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
-    return formatString(ctx.noteFileName, format);
+  protected override evaluateImpl(context: TokenEvaluatorContext, format: Format): string {
+    return formatString(context.noteFileName, format);
   }
 }

@@ -25,11 +25,11 @@ export class VaultCreateBinaryEnsureFolderPatchComponent extends MonkeyAroundCom
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: this.vault,
       methodName: 'createBinary',
-      obj: this.vault,
       patchHandler: ({
         fallback,
-        originalArgs: [path]
+        originalArguments: [path]
       }) => {
         /*
          * The plugin no longer lets a dry `getAvailablePathForAttachments` resolution eagerly create

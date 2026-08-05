@@ -50,7 +50,7 @@ describe('createLinkUpdateProgressReporter', () => {
       notices.push(notice);
       return castTo<Notice>(notice);
     });
-    vi.spyOn(pluginNoticeComponent, 'showNotice').mockImplementation((...args) => castTo<PluginNoticeComponent['showNotice']>(showNoticeSpy)(...args));
+    vi.spyOn(pluginNoticeComponent, 'showNotice').mockImplementation((...$arguments) => castTo<PluginNoticeComponent['showNotice']>(showNoticeSpy)(...$arguments));
     reporter = createLinkUpdateProgressReporter({ pluginNoticeComponent });
   });
 

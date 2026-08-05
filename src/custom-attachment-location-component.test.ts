@@ -40,7 +40,7 @@ interface CapturedChild {
   type: string;
 }
 
-type EventHandler = (...args: unknown[]) => unknown;
+type EventHandler = (...$arguments: unknown[]) => unknown;
 
 interface EventOnSpy {
   mock: EventOnSpyMock;
@@ -54,10 +54,10 @@ interface FileChildParams {
   readonly file: File;
 }
 
-type GenerateMarkdownLinkFn = (file: TFile, sourcePath: string) => string;
+type GenerateMarkdownLinkFunction = (file: TFile, sourcePath: string) => string;
 
 interface GenerateMarkdownLinkHolder {
-  generateMarkdownLink: GenerateMarkdownLinkFn;
+  generateMarkdownLink: GenerateMarkdownLinkFunction;
 }
 
 interface LayoutReadyTrigger {
@@ -86,7 +86,7 @@ interface ObsidianComponentModule {
   Component: new () => object;
 }
 
-type ReplaceSelectionFn = (replacement: string, origin?: string) => void;
+type ReplaceSelectionFunction = (replacement: string, origin?: string) => void;
 
 interface ShareReceiverHolder {
   shareReceiver: object;
@@ -178,6 +178,7 @@ describe('CustomAttachmentLocationComponent', () => {
     vi.useFakeTimers();
 
     const settings = strictProxy<PluginSettings>({
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       customTokensStr: 'custom-tokens',
       isPathIgnored: vi.fn((_path: string): boolean => false),
       version: ''
@@ -414,7 +415,7 @@ describe('CustomAttachmentLocationComponent', () => {
 
     it('should insert the text when the callback runs with an active markdown view', () => {
       const component = createComponent();
-      const replaceSelection = vi.fn<ReplaceSelectionFn>();
+      const replaceSelection = vi.fn<ReplaceSelectionFunction>();
       setActiveMarkdownView(replaceSelection, strictProxy<TFile>({ path: 'note.md' }));
       const handler = loadAndGetWorkspaceHandler(component, 'receive-text-menu');
       const menuItem = createMenuItem(true);
@@ -436,7 +437,7 @@ describe('CustomAttachmentLocationComponent', () => {
   describe('handleReceiveFilesMenu', () => {
     it('should build markdown links for the received attachment files', () => {
       const component = createComponent();
-      const replaceSelection = vi.fn<ReplaceSelectionFn>();
+      const replaceSelection = vi.fn<ReplaceSelectionFunction>();
       const generateMarkdownLinkMock = vi.fn((_file: TFile, _sourcePath: string): string => '[[link]]');
       castTo<GenerateMarkdownLinkHolder>(context.app.fileManager).generateMarkdownLink = generateMarkdownLinkMock;
       setActiveMarkdownView(replaceSelection, strictProxy<TFile>({ path: 'note.md' }));
@@ -534,7 +535,7 @@ function createComponent(): CustomAttachmentLocationComponent {
     attachmentPathManager: context.attachmentPathManager,
     imageSizeMap: strictProxy<ImageSizeMap>({}),
     markdownUrlMap: strictProxy<MarkdownUrlMap>({}),
-    pluginDir: 'plugins/custom-attachment-location',
+    pluginDirectory: 'plugins/custom-attachment-location',
     pluginSettingsComponent: context.pluginSettingsComponent,
     pluginVersion: PLUGIN_VERSION,
     tokenValidator: strictProxy<TokenValidator>({})
@@ -558,7 +559,9 @@ function createMenuItem(hasFileIcon: boolean): MenuItemLike {
   const menuItem = castTo<MenuItemLike>(Object.create(MenuItem.prototype));
   menuItem.iconEl = activeWindow.createDiv();
   if (hasFileIcon) {
-    menuItem.iconEl.appendChild(activeWindow.createDiv()).addClass('lucide-file');
+    const fileIconEl = activeWindow.createDiv();
+    fileIconEl.addClass('lucide-file');
+    menuItem.iconEl.append(fileIconEl);
   }
   return menuItem;
 }
@@ -602,7 +605,7 @@ function menuWith(menuItem: MenuItemLike): MenuLike {
   return { items: [menuItem] };
 }
 
-function setActiveMarkdownView(replaceSelection: ReplaceSelectionFn, file: null | TFile): void {
+function setActiveMarkdownView(replaceSelection: ReplaceSelectionFunction, file: null | TFile): void {
   context.getActiveViewOfTypeMock.mockReturnValue(strictProxy<MarkdownViewOriginal>({
     editor: strictProxy<MarkdownViewOriginal['editor']>({ replaceSelection }),
     file

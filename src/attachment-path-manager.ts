@@ -57,7 +57,7 @@ import {
 
 interface AttachmentPathManagerConstructorParams {
   readonly app: App;
-  readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
+  readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFunction;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly tokenValidator: TokenValidator;
@@ -114,7 +114,7 @@ interface CursorLineAndSequenceNumber {
   readonly sequenceNumber: number;
 }
 
-type GetAvailablePathForAttachmentsFn = Vault['getAvailablePathForAttachments'];
+type GetAvailablePathForAttachmentsFunction = Vault['getAvailablePathForAttachments'];
 
 interface NoteLinkWalkResult {
   readonly cursorLine: number;
@@ -123,7 +123,7 @@ interface NoteLinkWalkResult {
 
 export class AttachmentPathManager {
   private readonly app: App;
-  private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFn;
+  private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFunction;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly tokenValidator: TokenValidator;
@@ -177,8 +177,8 @@ export class AttachmentPathManager {
 
     if (attachmentFileBaseName.startsWith(IMPORT_FILES_PREFIX)) {
       attachmentFileBaseName = trimStart({
-        prefix: IMPORT_FILES_PREFIX,
-        str: attachmentFileBaseName
+        $string: attachmentFileBaseName,
+        prefix: IMPORT_FILES_PREFIX
       });
       shouldSkipGeneratedAttachmentFileName = true;
     }
@@ -239,9 +239,9 @@ export class AttachmentPathManager {
       if (params.shouldSkipDuplicateCheck) {
         attachmentPath = generatedAttachmentFileNamePath;
       } else {
-        const dir = dirname(generatedAttachmentFileNamePath);
+        const directory = dirname(generatedAttachmentFileNamePath);
         const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.attachmentFileExtension ? `.${params.attachmentFileExtension}` : '');
-        attachmentPath = this.app.vault.getAvailablePath(join(dir, generatedAttachmentFileNameBaseName), params.attachmentFileExtension);
+        attachmentPath = this.app.vault.getAvailablePath(join(directory, generatedAttachmentFileNameBaseName), params.attachmentFileExtension);
       }
     }
 
@@ -308,9 +308,9 @@ export class AttachmentPathManager {
     });
 
     const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
-    const dir = dirname(generatedAttachmentFileNamePath);
+    const directory = dirname(generatedAttachmentFileNamePath);
     const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.fileExtension ? `.${params.fileExtension}` : '');
-    const attachmentPath = this.app.vault.getAvailablePath(join(dir, generatedAttachmentFileNameBaseName), params.fileExtension);
+    const attachmentPath = this.app.vault.getAvailablePath(join(directory, generatedAttachmentFileNameBaseName), params.fileExtension);
 
     const folderPath = parentFolderPath(attachmentPath);
     if (!await this.app.vault.exists(folderPath)) {
@@ -323,15 +323,18 @@ export class AttachmentPathManager {
   public async getGeneratedAttachmentFileBaseName(substitutions: Substitutions): Promise<string> {
     let baseTemplate: string;
     switch (substitutions.actionContext) {
-      case ActionContext.CollectAttachments:
+      case ActionContext.CollectAttachments: {
         baseTemplate = this.pluginSettingsComponent.settings.collectedAttachmentFileName;
         break;
-      case ActionContext.RenameNote:
+      }
+      case ActionContext.RenameNote: {
         baseTemplate = this.pluginSettingsComponent.settings.renamedAttachmentFileName;
         break;
-      default:
+      }
+      default: {
         baseTemplate = this.pluginSettingsComponent.settings.generatedAttachmentFileName;
         break;
+      }
     }
 
     baseTemplate ||= this.pluginSettingsComponent.settings.generatedAttachmentFileName;

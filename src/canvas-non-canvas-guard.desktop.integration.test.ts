@@ -72,7 +72,9 @@ describe('Rename over a partial canvas is safe (issue #45)', () => {
   // Run alone: npx vitest run --project=integration-tests:desktop canvas-non-canvas-guard
   it.skip('completes without crashing, relocates the attachment, and keeps the canvas valid', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app }): Promise<CanvasGuardResult> {
         interface CanvasSettings {
           attachmentFolderPath: string;
@@ -106,11 +108,11 @@ describe('Rename over a partial canvas is safe (issue #45)', () => {
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -159,7 +161,7 @@ describe('Rename over a partial canvas is safe (issue #45)', () => {
           renamePromise.catch(() => {
             // Lingering `onCleanCache`; the effect is polled below.
           }),
-          sleep(6_000)
+          sleep(6000)
         ]);
 
         // Poll until the attachment relocates (proves ODU processed the canvas).
@@ -171,23 +173,23 @@ describe('Rename over a partial canvas is safe (issue #45)', () => {
           await sleep(300);
         }
         // Let any canvas rewrite settle, then confirm the canvas is still valid (not corrupted).
-        await sleep(1_000);
+        await sleep(1000);
 
         const movedCanvas = app.vault.getFileByPath(movedCanvasPath);
         const canvasContentAfter = movedCanvas ? await app.vault.read(movedCanvas) : '';
-        let canvasParsesAfter = false;
-        let canvasHasNodesArrayAfter = false;
+        let isCanvasParsesAfter = false;
+        let isCanvasHasNodesArrayAfter = false;
         try {
           const parsed = JSON.parse(canvasContentAfter) as CanvasNodesProbe;
-          canvasParsesAfter = true;
-          canvasHasNodesArrayAfter = Array.isArray(parsed.nodes);
+          isCanvasParsesAfter = true;
+          isCanvasHasNodesArrayAfter = Array.isArray(parsed.nodes);
         } catch {
           // Left corrupted / unparseable — canvasParsesAfter stays false.
         }
 
         return {
-          canvasHasNodesArrayAfter,
-          canvasParsesAfter,
+          canvasHasNodesArrayAfter: isCanvasHasNodesArrayAfter,
+          canvasParsesAfter: isCanvasParsesAfter,
           imgAtNewPath: Boolean(app.vault.getFileByPath(imgNewPath)),
           imgAtOldPath: Boolean(app.vault.getFileByPath(imgOldPath)),
           settingsFound: true

@@ -119,16 +119,20 @@ export class AttachmentSaver {
     let shouldRename = false;
 
     switch (this.pluginSettingsComponent.settings.attachmentRenameMode) {
-      case AttachmentRenameMode.All:
+      case AttachmentRenameMode.All: {
         shouldRename = true;
         break;
-      case AttachmentRenameMode.None:
+      }
+      case AttachmentRenameMode.None: {
         break;
-      case AttachmentRenameMode.OnlyPastedImages:
+      }
+      case AttachmentRenameMode.OnlyPastedImages: {
         shouldRename = isPastedImage;
         break;
-      default:
+      }
+      default: {
         throw new Error('Invalid attachment rename mode');
+      }
     }
 
     if (shouldRename) {

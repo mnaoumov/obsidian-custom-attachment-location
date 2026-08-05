@@ -5,7 +5,7 @@ export const ro = {
       part2: 'Această operațiune nu poate fi anulată.'
     },
     progressBar: {
-      message: 'Colectez atașamente {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Colectez atașamente {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Colectez atașamente...'
     }
   },

@@ -20,13 +20,13 @@ export class NoteFileModificationDateToken extends TokenBase<Format> {
     super('noteFileModificationDate', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext, format: Format): string {
-    if (ctx.noteFilePath === DUMMY_PATH) {
+  protected override evaluateImpl(context: TokenEvaluatorContext, format: Format): string {
+    if (context.noteFilePath === DUMMY_PATH) {
       return formatDate(Date.now(), format);
     }
     const noteFile = getFile({
-      app: ctx.app,
-      pathOrFile: ctx.noteFilePath
+      app: context.app,
+      pathOrFile: context.noteFilePath
     });
     return formatDate(noteFile.stat.mtime, format);
   }

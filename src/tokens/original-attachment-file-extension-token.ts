@@ -12,7 +12,7 @@ export class OriginalAttachmentFileExtensionToken extends TokenBase<Format> {
     super('originalAttachmentFileExtension', formatSchema);
   }
 
-  protected override evaluateImpl(ctx: TokenEvaluatorContext): string {
-    return ctx.originalAttachmentFileExtension;
+  protected override evaluateImpl(context: TokenEvaluatorContext): string {
+    return context.originalAttachmentFileExtension;
   }
 }

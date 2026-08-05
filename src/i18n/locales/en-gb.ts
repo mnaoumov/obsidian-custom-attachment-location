@@ -5,7 +5,7 @@ export const enGB = {
       part2: 'This operation cannot be undone.'
     },
     progressBar: {
-      message: 'Collecting attachments {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Collecting attachments {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Collecting attachments...'
     }
   },

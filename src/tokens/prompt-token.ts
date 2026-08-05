@@ -23,16 +23,16 @@ export class PromptToken extends TokenBase<Format> {
     super('prompt', formatSchema);
   }
 
-  protected override async evaluateImpl(ctx: TokenEvaluatorContext, format: Format): Promise<string> {
-    if (ctx.actionContext === ActionContext.ValidateTokens || ctx.originalAttachmentFileName === DUMMY_PATH) {
+  protected override async evaluateImpl(context: TokenEvaluatorContext, format: Format): Promise<string> {
+    if (context.actionContext === ActionContext.ValidateTokens || context.originalAttachmentFileName === DUMMY_PATH) {
       return DUMMY_PATH;
     }
 
     const promptResult = await promptWithPreview({
-      ctx,
+      context,
       defaultValue: format.defaultValueTemplate,
       valueValidator: (value) =>
-        ctx.tokenValidator.validatePath({
+        context.tokenValidator.validatePath({
           areTokensAllowed: false,
           path: value
         })

@@ -5,7 +5,7 @@ export const uk = {
       part2: 'Цю операцію неможливо скасувати.'
     },
     progressBar: {
-      message: 'Збирання вкладень {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Збирання вкладень {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Збирання вкладень...'
     }
   },

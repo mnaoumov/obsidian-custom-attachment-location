@@ -5,7 +5,7 @@ export const ca = {
       part2: 'Aquesta operació no es pot desfer.'
     },
     progressBar: {
-      message: 'Recollint adjunts {{iterationStr}} - \'{{noteFilePath}}\'.',
+      message: 'Recollint adjunts {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Recollint adjunts...'
     }
   },
