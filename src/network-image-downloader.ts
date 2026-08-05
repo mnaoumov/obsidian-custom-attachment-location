@@ -6,6 +6,7 @@ import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/component
 
 import { requestUrl } from 'obsidian';
 import { runWithTimeout } from 'obsidian-dev-utils/async';
+import { hasEmbedSyntax } from 'obsidian-dev-utils/obsidian/link';
 import {
   basename,
   extname
@@ -72,7 +73,14 @@ interface NetworkImageDownloaderConstructorParams {
 interface NetworkImageLink {
   readonly alt: string;
   readonly fullMatch: string;
+  readonly startIndex: number;
   readonly url: string;
+}
+
+interface NetworkImageReplacement {
+  readonly endIndexExclusive: number;
+  readonly replacement: string;
+  readonly startIndex: number;
 }
 
 export class NetworkImageDownloader {
@@ -99,23 +107,33 @@ export class NetworkImageDownloader {
       return;
     }
 
-    const replacements = new Map<string, string>();
+    const replacements: NetworkImageReplacement[] = [];
 
     for (const link of networkLinks) {
       this.abortSignalComponent.abortSignal.throwIfAborted();
 
       try {
-        const localPath = await this.downloadAndSaveImage(link, noteFile);
-        replacements.set(link.url, localPath);
+        const attachmentFile = await this.downloadAndSaveImage(link, noteFile);
+        const markdownLink = this.app.fileManager.generateMarkdownLink(
+          attachmentFile,
+          noteFile.path,
+          undefined,
+          link.alt || undefined
+        );
+        replacements.push({
+          endIndexExclusive: link.startIndex + link.fullMatch.length,
+          replacement: hasEmbedSyntax(markdownLink) ? markdownLink : `!${markdownLink}`,
+          startIndex: link.startIndex
+        });
       } catch (error) {
         console.warn(`Failed to download network image: ${link.url}`, error);
       }
     }
 
-    if (replacements.size > 0) {
+    if (replacements.length > 0) {
       let newContent = content;
-      for (const [networkUrl, localPath] of replacements) {
-        newContent = newContent.replaceAll(networkUrl, () => localPath);
+      for (const replacement of replacements.reverse()) {
+        newContent = newContent.slice(0, replacement.startIndex) + replacement.replacement + newContent.slice(replacement.endIndexExclusive);
       }
       await this.app.vault.modify(noteFile, newContent);
     }
@@ -139,7 +157,7 @@ export class NetworkImageDownloader {
     return 'png';
   }
 
-  private async downloadAndSaveImage(link: NetworkImageLink, noteFile: TFile): Promise<string> {
+  private async downloadAndSaveImage(link: NetworkImageLink, noteFile: TFile): Promise<TFile> {
     const { arrayBuffer, contentType } = await this.downloadImage(link.url);
     const extension = this.detectExtension(arrayBuffer, contentType);
 
@@ -155,8 +173,7 @@ export class NetworkImageDownloader {
       noteFilePath: noteFile.path
     });
 
-    await this.app.vault.createBinary(savePath, arrayBuffer);
-    return savePath;
+    return await this.app.vault.createBinary(savePath, arrayBuffer);
   }
 
   private async downloadImage(url: string): Promise<DownloadImageResult> {
@@ -191,6 +208,7 @@ export class NetworkImageDownloader {
       links.push({
         alt: ensureNonNullable(groups['alt']),
         fullMatch: match[0],
+        startIndex: match.index,
         url: ensureNonNullable(groups['url'])
       });
     }
