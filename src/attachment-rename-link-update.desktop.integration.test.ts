@@ -29,15 +29,11 @@ import {
  * The fix belongs to obsidian-dev-utils (gate `refreshLinks()` on `shouldHandleRenames`, whose only
  * consumers are the link-rewrite steps); this suite is the consumer-side regression guard.
  *
- * CURRENTLY `it.skip` - NOT a harness wall, and not silently omitted. This suite RUNS headlessly and
- * REPRODUCES the defect: verified 2026-08-02 against obsidian-dev-utils 88.8.0, where it fails on both
- * assertions - the embed stays `att-<stamp>.png` after the attachment is renamed, and the old path is
- * still present in `vault.fileMap` once the rename has landed (the phantom above, measured directly).
- * It is skipped only so the committed gate stays green while the upstream fix is pending as T329-P1;
- * un-skip it when the ODU release that carries the fix is consumed here.
- *
- * Reproduce the red state at any time with:
- *   npx vitest run --project=integration-tests:desktop attachment-rename-link-update
+ * This suite REPRODUCED the defect against obsidian-dev-utils 88.8.0 (verified 2026-08-02): it failed on
+ * both assertions - the embed stayed `att-<stamp>.png` after the attachment was renamed, and the old
+ * path was still present in `vault.fileMap` once the rename had landed (the phantom above, measured
+ * directly). It was committed `it.skip` while the upstream fix was pending as T331-P1, and un-skipped
+ * once obsidian-dev-utils 89.0.0 shipped that fix (`isNoOpRename` plus the `refreshLinks` gate).
  *
  * Desktop-only: no Android emulator is provisioned in this environment. The rename/link-update flow is
  * cross-platform, so renaming this file to `*.cross-platform.integration.test.ts` lifts it to Android
@@ -49,14 +45,17 @@ interface AttachmentRenameResult {
   readonly attachmentRenamed: boolean;
   readonly before: string;
   readonly oldPathReregistered: boolean;
+  readonly renamedAttachmentPath: string;
+  readonly resolvedEmbedPath: null | string;
   readonly settingsFound: boolean;
 }
 
 describe('Renaming an attachment keeps its links valid (issue #47)', () => {
-  // Skipped until the ODU fix (T329-P1) lands; reproduces the defect today - see the header comment.
-  it.skip('rewrites the embed when the attachment is renamed with link updating switched off', async () => {
+  it('rewrites the embed when the attachment is renamed with link updating switched off', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app, lib: { waitUntil } }): Promise<AttachmentRenameResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
@@ -92,11 +91,11 @@ describe('Renaming an attachment keeps its links valid (issue #47)', () => {
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -111,11 +110,11 @@ describe('Renaming an attachment keeps its links valid (issue #47)', () => {
 
         const settings = findSettings();
         if (!settings) {
-          return { after: '', attachmentRenamed: false, before: '', oldPathReregistered: false, settingsFound: false };
+          return { after: '', attachmentRenamed: false, before: '', oldPathReregistered: false, renamedAttachmentPath: '', resolvedEmbedPath: null, settingsFound: false };
         }
 
-        const originalShouldHandleRenames = settings.shouldHandleRenames;
-        const originalShouldRenameAttachmentFiles = settings.shouldRenameAttachmentFiles;
+        const isOriginalShouldHandleRenames = settings.shouldHandleRenames;
+        const isOriginalShouldRenameAttachmentFiles = settings.shouldRenameAttachmentFiles;
         const originalAlwaysUpdateLinks = app.vault.getConfig('alwaysUpdateLinks');
 
         try {
@@ -138,14 +137,14 @@ describe('Renaming an attachment keeps its links valid (issue #47)', () => {
 
           const attachment = app.vault.getFileByPath(oldAttachmentPath);
           if (!attachment) {
-            return { after: '', attachmentRenamed: false, before: '', oldPathReregistered: false, settingsFound: true };
+            return { after: '', attachmentRenamed: false, before: '', oldPathReregistered: false, renamedAttachmentPath: '', resolvedEmbedPath: null, settingsFound: true };
           }
 
           // Wait for the metadata cache to resolve the embed, so Obsidian's pre-rename snapshot of the
           // Link's `resolvedPaths` is populated - that snapshot is what the post-rename check compares.
           await waitUntil({
             message: 'the embed resolves to the attachment',
-            predicate: () => app.metadataCache.getBacklinksForFile(attachment).keys().length >= 1,
+            predicate: () => app.metadataCache.getBacklinksForFile(attachment).keys().length > 0,
             timeoutInMilliseconds: 40_000
           });
 
@@ -156,14 +155,14 @@ describe('Renaming an attachment keeps its links valid (issue #47)', () => {
            * path must never reappear in `vault.fileMap`. Sampling on a short interval catches the
            * window even though it is only open across a couple of awaits.
            */
-          let oldPathReregistered = false;
+          let isOldPathReregistered = false;
           const samplePhantom = window.setInterval(() => {
             // Only meaningful once the rename has landed - before that the old path legitimately exists.
             if (!app.vault.getFileByPath(newAttachmentPath)) {
               return;
             }
-            if (app.vault.fileMap[oldAttachmentPath]) {
-              oldPathReregistered = true;
+            if (Object.hasOwn(app.vault.fileMap, oldAttachmentPath)) {
+              isOldPathReregistered = true;
             }
           }, 5);
 
@@ -175,7 +174,7 @@ describe('Renaming an attachment keeps its links valid (issue #47)', () => {
               renamePromise.catch(() => {
                 // Lingering `onCleanCache`; the effect is polled below.
               }),
-              sleep(6_000)
+              sleep(6000)
             ]);
 
             /*
@@ -194,16 +193,29 @@ describe('Renaming an attachment keeps its links valid (issue #47)', () => {
             window.clearInterval(samplePhantom);
           }
 
+          const after = await app.vault.read(note);
+
+          /*
+           * What the reporter actually asked for: the link still points at the file. Assert that by
+           * RESOLVING it rather than by matching its text — Obsidian rewrites using the vault's
+           * configured link format, so a folder-qualified embed legitimately comes back as a
+           * shortest-path one. A text assertion would fail on a correct rewrite.
+           */
+          const embeddedLinkPath = /!\[\[(?<linkPath>[^\]|]+)/.exec(after)?.groups?.['linkPath']?.trim() ?? '';
+          const resolvedFile = embeddedLinkPath ? app.metadataCache.getFirstLinkpathDest(embeddedLinkPath, note.path) : null;
+
           return {
-            after: await app.vault.read(note),
+            after,
             attachmentRenamed: Boolean(app.vault.getFileByPath(newAttachmentPath)),
             before,
-            oldPathReregistered,
+            oldPathReregistered: isOldPathReregistered,
+            renamedAttachmentPath: newAttachmentPath,
+            resolvedEmbedPath: resolvedFile?.path ?? null,
             settingsFound: true
           };
         } finally {
-          settings.shouldHandleRenames = originalShouldHandleRenames;
-          settings.shouldRenameAttachmentFiles = originalShouldRenameAttachmentFiles;
+          settings.shouldHandleRenames = isOriginalShouldHandleRenames;
+          settings.shouldRenameAttachmentFiles = isOriginalShouldRenameAttachmentFiles;
           app.vault.setConfig('alwaysUpdateLinks', originalAlwaysUpdateLinks);
         }
       },
@@ -218,8 +230,16 @@ describe('Renaming an attachment keeps its links valid (issue #47)', () => {
     // Obsidian's post-rename check still resolves it and concludes the link needs no rewrite.
     expect(result.oldPathReregistered).toBe(false);
 
-    // Issue #47: the embed must follow the attachment to its new name and must not keep the old one.
-    expect(result.after).toContain('/renamed-');
-    expect(result.after).not.toContain('/att-');
+    /*
+     * Issue #47: the embed must follow the attachment to its new name and must not keep the old one.
+     *
+     * Asserted by RESOLUTION, not by the link's text. Obsidian rewrites using the vault's configured
+     * link format, so the folder-qualified `![[folder/att-x.png]]` legitimately comes back as the
+     * shortest-path `![[renamed-x.png]]` — measured, on ODU 89. What the reporter cares about, and all
+     * that "links break" means, is whether the link still points at the file.
+     */
+    expect(result.resolvedEmbedPath).toBe(result.renamedAttachmentPath);
+    expect(result.after).toContain('renamed-');
+    expect(result.after).not.toContain('att-');
   }, 120_000);
 });

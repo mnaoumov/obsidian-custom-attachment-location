@@ -40,15 +40,14 @@ import {
  * and runs a control phase first, with the rename handler switched off, to show that the replayed
  * sequence is sound on its own - the damage belongs to the handler, not to Advanced Note Composer.
  *
- * CURRENTLY `it.skip` - NOT a harness wall. This suite RUNS headlessly and REPRODUCES the defect;
- * verified 2026-08-02 against obsidian-dev-utils 88.8.0 / Obsidian 1.13.4, where the control phase
- * is clean and the reporter phase reports all three file moves as unlocked and lands
- * `B/A/Overview 1.md` - the reporter's own damage. It is skipped only so the committed gate stays
- * green while the upstream fix is pending in obsidian-dev-utils (T332-P1: re-key `lockEntriesByPath`
- * when a locked folder is renamed; T331-P1 removes the phantom that supplies the de-duplication).
- * Un-skip it when the ODU release carrying the fix is consumed here.
+ * This suite REPRODUCED the defect headlessly against obsidian-dev-utils 88.8.0 / Obsidian 1.13.4
+ * (verified 2026-08-02): the control phase was clean while the reporter phase reported all three file
+ * moves as unlocked and landed `B/A/Overview 1.md` - the reporter's own damage. It was committed
+ * `it.skip` while the upstream fixes were pending (T332-P1: re-key `lockEntriesByPath` when a locked
+ * folder is renamed; T331-P1: remove the phantom old-path registration that supplies the
+ * de-duplication), and un-skipped once obsidian-dev-utils 89.0.0 shipped both.
  *
- * Reproduce the red state at any time with:
+ * Run it with:
  *   npx vitest run --project=integration-tests:desktop foreign-locked-folder-swap
  *
  * Desktop-only: no Android emulator is provisioned in this environment. The rename/lock flow is
@@ -76,10 +75,11 @@ interface SwapResult {
 }
 
 describe('A folder swap owned by another plugin (issue #49)', () => {
-  // Skipped until the ODU fix lands; reproduces the defect today - see the header comment.
-  it.skip('leaves every rename of the locked transaction untouched', async () => {
+  it('leaves every rename of the locked transaction untouched', async () => {
     const result = await evalInObsidian({
+      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
       args: {},
+      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
       async fn({ app, lib: { waitUntil } }): Promise<SwapResult> {
         interface LockDisposable {
           dispose(): void;
@@ -208,11 +208,11 @@ describe('A folder swap owned by another plugin (issue #49)', () => {
             if (Array.isArray(current)) {
               values = current;
             } else if (current instanceof Map) {
-              values = Array.from(current.values());
+              values = [...current.values()];
             } else {
-              for (const key of Object.keys(record)) {
+              for (const [key, value] of Object.entries(record)) {
                 if (!block.has(key)) {
-                  values.push(record[key]);
+                  values.push(value);
                 }
               }
             }
@@ -289,7 +289,7 @@ describe('A folder swap owned by another plugin (issue #49)', () => {
           }
 
           // The handler runs on a queue of its own, so give its damage time to land before sampling.
-          await sleep(5_000);
+          await sleep(5000);
 
           const finalPaths = app.vault.getFiles()
             .map((file) => file.path)
@@ -348,7 +348,7 @@ describe('A folder swap owned by another plugin (issue #49)', () => {
          * than the literal `__temp` ANC picks, purely so parallel suites cannot collide; it sits at
          * the vault root and outside every lock either way.
          */
-        async function swapFolder(sourceFolderPath: string, targetFolderPath: string, tempFolderPath: string): Promise<void> {
+        async function swapFolder(sourceFolderPath: string, targetFolderPath: string, temporaryFolderPath: string): Promise<void> {
           const sourceFolder = app.vault.getFolderByPath(sourceFolderPath);
           const targetFolder = app.vault.getFolderByPath(targetFolderPath);
           if (!sourceFolder || !targetFolder) {
@@ -379,7 +379,7 @@ describe('A folder swap owned by another plugin (issue #49)', () => {
             }
           }
 
-          await app.vault.createFolder(tempFolderPath);
+          await app.vault.createFolder(temporaryFolderPath);
 
           const sourceChildren = sourceFolder.children.flatMap((child) => app.vault.getFileByPath(child.path) ?? []);
           const targetChildren = targetFolder.children.flatMap((child) => app.vault.getFileByPath(child.path) ?? []);
@@ -387,7 +387,7 @@ describe('A folder swap owned by another plugin (issue #49)', () => {
           const targetFolderPathBeforeChildren = targetFolder.path;
 
           for (const sourceChild of sourceChildren) {
-            await renameSafe(sourceChild.path, joinPath(tempFolderPath, sourceChild.name));
+            await renameSafe(sourceChild.path, joinPath(temporaryFolderPath, sourceChild.name));
             stagedChildren.push(sourceChild);
           }
 
@@ -403,15 +403,15 @@ describe('A folder swap owned by another plugin (issue #49)', () => {
           }
 
           for (const stagedChild of stagedChildren) {
-            if (!isChildPath(stagedChild.path, tempFolderPath)) {
+            if (!isChildPath(stagedChild.path, temporaryFolderPath)) {
               continue;
             }
             await renameSafe(stagedChild.path, joinPath(targetFolder.path, stagedChild.name));
           }
 
-          const tempFolder = app.vault.getFolderByPath(tempFolderPath);
-          if (tempFolder) {
-            await app.fileManager.trashFile(tempFolder);
+          const temporaryFolder = app.vault.getFolderByPath(temporaryFolderPath);
+          if (temporaryFolder) {
+            await app.fileManager.trashFile(temporaryFolder);
           }
 
           function isChildPath(childPath: string, parentPath: string): boolean {
