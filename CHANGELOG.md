@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 11.6.1
+
+- chore: update libs
+- test: un-skip the #47 and #49 reproductions, now green on ODU 89 (re #47, re #49)
+- test: re #49
+- test: re #47
+- chore: update libs
+- refactor(prism): register the tokenized-string language through ODU's SyntaxHighlightingComponent
+- chore(vitest): consume the shared vitest configuration and collapse the desktop-only suites
+
 ## 11.6.0
 
 - test(settings): exercise the custom-tokens row teardown
