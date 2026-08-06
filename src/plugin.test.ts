@@ -184,7 +184,7 @@ vi.mock('./unused-attachments-remover.ts', () => ({
 import { Plugin } from './plugin.ts';
 
 // The base pre-wires `commandHandlerComponent`; stub its `registerCommandHandlers` so the plugin's registration is asserted without exercising the mocked command handlers.
-vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers').mockReturnValue(castTo<DisposableEx>({}));
+vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers').mockResolvedValue(castTo<DisposableEx>({}));
 
 interface AppGlobal {
   app: AppOriginal;
