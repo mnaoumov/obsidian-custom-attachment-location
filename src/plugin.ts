@@ -37,7 +37,7 @@ export class Plugin extends PluginBase {
     return translationsMap;
   }
 
-  protected override onloadImpl(): void {
+  protected override async onloadImpl(): Promise<void> {
     const validatorWrapper = ValueWrapper.unset<TokenValidator>();
 
     const pluginSettingsComponent = this.addChild(
@@ -161,7 +161,7 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
-    this.commandHandlerComponent.registerCommandHandlers(() => [
+    await this.commandHandlerComponent.registerCommandHandlers(() => [
       new CollectAttachmentsInFileCommandHandler({
         attachmentCollector
       }),
