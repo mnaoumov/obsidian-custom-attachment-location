@@ -200,6 +200,46 @@ describe('NetworkImageDownloader', () => {
       );
     });
 
+    it('should give each occurrence of the same image expression its own link', async () => {
+      const url = 'https://example.com/pic.png';
+      context.cachedRead.mockResolvedValue(`![My Image](${url})\ntext\n![My Image](${url})`);
+      mockRequestUrl.mockResolvedValue(createResponse({
+        arrayBuffer: toArrayBuffer([0x89, 0x50, 0x4E, 0x47]),
+        headers: { 'content-type': 'image/png' }
+      }));
+      context.getDownloadedImagePath
+        .mockResolvedValueOnce('assets/first.png')
+        .mockResolvedValueOnce('assets/second.png');
+      context.generateMarkdownLink
+        .mockReturnValueOnce('[first](../assets/first.png)')
+        .mockReturnValueOnce('[second](../assets/second.png)');
+
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
+
+      // Both copies are downloaded, so each one has to point at the file saved for it - keying the rewrite by the matched text instead
+      // Would leave the first attachment orphaned and both embeds pointing at the second.
+      expect(context.createBinary).toHaveBeenCalledTimes(2);
+      expect(context.modify).toHaveBeenCalledWith(
+        context.noteFile,
+        '![first](../assets/first.png)\ntext\n![second](../assets/second.png)'
+      );
+    });
+
+    it('should not add a second embed prefix when the generated link is already an embed', async () => {
+      context.cachedRead.mockResolvedValue('![My Image](https://example.com/pic.png)');
+      mockRequestUrl.mockResolvedValue(createResponse({
+        arrayBuffer: toArrayBuffer([0x89, 0x50, 0x4E, 0x47]),
+        headers: { 'content-type': 'image/png' }
+      }));
+
+      // Another plugin patching `generateMarkdownLink` may hand back an embed already.
+      context.generateMarkdownLink.mockReturnValue('![[assets/generated.png]]');
+
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
+
+      expect(context.modify).toHaveBeenCalledWith(context.noteFile, '![[assets/generated.png]]');
+    });
+
     it('should derive the base name from the URL when the alt text is empty', async () => {
       context.cachedRead.mockResolvedValue('![](https://example.com/photo.jpg)');
       mockRequestUrl.mockResolvedValue(createResponse({

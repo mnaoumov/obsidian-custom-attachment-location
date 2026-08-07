@@ -6,6 +6,7 @@ import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/component
 
 import { requestUrl } from 'obsidian';
 import { runWithTimeout } from 'obsidian-dev-utils/async';
+import { hasEmbedSyntax } from 'obsidian-dev-utils/obsidian/link';
 import {
   basename,
   extname
@@ -77,8 +78,15 @@ interface NetworkImageDownloaderGenerateImageLinkParams {
 
 interface NetworkImageLink {
   readonly alt: string;
-  readonly fullMatch: string;
+  readonly endIndexExclusive: number;
+  readonly startIndex: number;
   readonly url: string;
+}
+
+interface NetworkImageReplacement {
+  readonly endIndexExclusive: number;
+  readonly markdownLink: string;
+  readonly startIndex: number;
 }
 
 export class NetworkImageDownloader {
@@ -105,23 +113,29 @@ export class NetworkImageDownloader {
       return;
     }
 
-    const replacements = new Map<string, string>();
+    const replacements: NetworkImageReplacement[] = [];
 
     for (const link of networkLinks) {
       this.abortSignalComponent.abortSignal.throwIfAborted();
 
       try {
         const attachmentFile = await this.downloadAndSaveImage(link, noteFile);
-        replacements.set(link.fullMatch, this.generateImageLink({ attachmentFile, link, noteFile }));
+        replacements.push({
+          endIndexExclusive: link.endIndexExclusive,
+          markdownLink: this.generateImageLink({ attachmentFile, link, noteFile }),
+          startIndex: link.startIndex
+        });
       } catch (error) {
         console.warn(`Failed to download network image: ${link.url}`, error);
       }
     }
 
-    if (replacements.size > 0) {
+    if (replacements.length > 0) {
       let newContent = content;
-      for (const [fullMatch, markdownLink] of replacements) {
-        newContent = newContent.replaceAll(fullMatch, () => markdownLink);
+      // Splicing by position, and from the end backwards so the earlier offsets stay valid, keeps every occurrence separate: the same image
+      // Expression repeated twice is downloaded twice and each copy gets its own link, which a text-keyed replacement would collapse into one.
+      for (const replacement of replacements.reverse()) {
+        newContent = newContent.slice(0, replacement.startIndex) + replacement.markdownLink + newContent.slice(replacement.endIndexExclusive);
       }
       await this.app.vault.modify(noteFile, newContent);
     }
@@ -195,7 +209,8 @@ export class NetworkImageDownloader {
       const groups = ensureNonNullable(match.groups);
       links.push({
         alt: ensureNonNullable(groups['alt']),
-        fullMatch: match[0],
+        endIndexExclusive: match.index + match[0].length,
+        startIndex: match.index,
         url: ensureNonNullable(groups['url'])
       });
     }
@@ -213,9 +228,11 @@ export class NetworkImageDownloader {
     const alias = link.alt.trim() ? link.alt : undefined;
 
     // Issue #50: going through `app.fileManager.generateMarkdownLink` is what honors the vault's "New link format" and "Use Wikilinks"
-    // Settings, applies the plugin's own patch, and escapes the destination. Obsidian never adds the embed prefix itself, so the caller
-    // Has to - otherwise the image would turn into a plain link.
-    return `!${this.app.fileManager.generateMarkdownLink(attachmentFile, noteFile.path, undefined, alias)}`;
+    // Settings, applies the plugin's own patch, and escapes the destination. Obsidian does not add the embed prefix itself, so the caller
+    // Has to - otherwise the image would turn into a plain link. Another plugin patching the same method may already return an embed,
+    // Which must not be prefixed twice.
+    const markdownLink = this.app.fileManager.generateMarkdownLink(attachmentFile, noteFile.path, undefined, alias);
+    return hasEmbedSyntax(markdownLink) ? markdownLink : `!${markdownLink}`;
   }
 
   private sanitizeFileName(name: string): string {
