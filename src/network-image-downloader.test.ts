@@ -1,5 +1,6 @@
 import type {
   App,
+  FileManager,
   RequestUrlResponse,
   RequestUrlResponsePromise,
   TFile,
@@ -35,6 +36,7 @@ interface TestContext {
   cachedRead: ReturnType<typeof vi.fn<Vault['cachedRead']>>;
   createBinary: ReturnType<typeof vi.fn<Vault['createBinary']>>;
   downloader: NetworkImageDownloader;
+  generateMarkdownLink: ReturnType<typeof vi.fn<FileManager['generateMarkdownLink']>>;
   getDownloadedImagePath: ReturnType<typeof vi.fn<AttachmentPathManager['getDownloadedImagePath']>>;
   modify: ReturnType<typeof vi.fn<Vault['modify']>>;
   noteFile: TFile;
@@ -48,7 +50,7 @@ function createContext(): TestContext {
   settings.downloadNetworkImages = true;
 
   const cachedRead = vi.fn<Vault['cachedRead']>().mockResolvedValue('');
-  const createBinary = vi.fn<Vault['createBinary']>().mockResolvedValue(strictProxy<TFile>({}));
+  const createBinary = vi.fn<Vault['createBinary']>().mockImplementation((path: string) => Promise.resolve(strictProxy<TFile>({ path })));
   const modify = vi.fn<Vault['modify']>().mockResolvedValue(undefined);
 
   const vault = strictProxy<Vault>({
@@ -56,7 +58,16 @@ function createContext(): TestContext {
     createBinary,
     modify
   });
-  const app = strictProxy<App>({ vault });
+
+  // Stands in for Obsidian's own link generation. The real one honors "New link format" / "Use Wikilinks" and escapes the destination,
+  // Which is precisely what the downloader must delegate to rather than reimplement, so the stub only has to be recognizable.
+  const generateMarkdownLink = vi.fn<FileManager['generateMarkdownLink']>().mockReturnValue('[generated](../assets/generated.png)');
+  const fileManager = strictProxy<FileManager>({ generateMarkdownLink });
+
+  const app = strictProxy<App>({
+    fileManager,
+    vault
+  });
 
   const getDownloadedImagePath = vi.fn<AttachmentPathManager['getDownloadedImagePath']>().mockResolvedValue('assets/image.png');
   const attachmentPathManager = strictProxy<AttachmentPathManager>({ getDownloadedImagePath });
@@ -80,6 +91,7 @@ function createContext(): TestContext {
     cachedRead,
     createBinary,
     downloader,
+    generateMarkdownLink,
     getDownloadedImagePath,
     modify,
     noteFile,
@@ -148,7 +160,44 @@ describe('NetworkImageDownloader', () => {
         noteFilePath: 'notes/note.md'
       }));
       expect(context.createBinary).toHaveBeenCalledWith('assets/My Image.png', expect.any(ArrayBuffer));
-      expect(context.modify).toHaveBeenCalledWith(context.noteFile, '![My Image](assets/My Image.png)');
+
+      // Issue #50: the link must come from Obsidian's own generator, not from the raw vault-relative save path.
+      const [attachmentFile, sourcePath, subpath, alias] = context.generateMarkdownLink.mock.calls[0] ?? [];
+      expect(attachmentFile?.path).toBe('assets/My Image.png');
+      expect(sourcePath).toBe('notes/note.md');
+      expect(subpath).toBeUndefined();
+      expect(alias).toBe('My Image');
+
+      expect(context.modify).toHaveBeenCalledWith(context.noteFile, '![generated](../assets/generated.png)');
+    });
+
+    it('should pass no alias when the alt text is blank, so the display-text settings apply', async () => {
+      context.cachedRead.mockResolvedValue('![   ](https://example.com/pic.png)');
+      mockRequestUrl.mockResolvedValue(createResponse({
+        arrayBuffer: toArrayBuffer([0x89, 0x50, 0x4E, 0x47]),
+        headers: { 'content-type': 'image/png' }
+      }));
+
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
+
+      const alias = context.generateMarkdownLink.mock.calls[0]?.[3];
+      expect(alias).toBeUndefined();
+    });
+
+    it('should replace only the image expression, leaving the same URL in prose untouched', async () => {
+      context.cachedRead.mockResolvedValue('See https://example.com/pic.png for ![My Image](https://example.com/pic.png)');
+      mockRequestUrl.mockResolvedValue(createResponse({
+        arrayBuffer: toArrayBuffer([0x89, 0x50, 0x4E, 0x47]),
+        headers: { 'content-type': 'image/png' }
+      }));
+      context.getDownloadedImagePath.mockResolvedValue('assets/My Image.png');
+
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
+
+      expect(context.modify).toHaveBeenCalledWith(
+        context.noteFile,
+        'See https://example.com/pic.png for ![generated](../assets/generated.png)'
+      );
     });
 
     it('should derive the base name from the URL when the alt text is empty', async () => {

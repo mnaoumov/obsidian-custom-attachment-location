@@ -69,6 +69,12 @@ interface NetworkImageDownloaderConstructorParams {
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
+interface NetworkImageDownloaderGenerateImageLinkParams {
+  readonly attachmentFile: TFile;
+  readonly link: NetworkImageLink;
+  readonly noteFile: TFile;
+}
+
 interface NetworkImageLink {
   readonly alt: string;
   readonly fullMatch: string;
@@ -105,8 +111,8 @@ export class NetworkImageDownloader {
       this.abortSignalComponent.abortSignal.throwIfAborted();
 
       try {
-        const localPath = await this.downloadAndSaveImage(link, noteFile);
-        replacements.set(link.url, localPath);
+        const attachmentFile = await this.downloadAndSaveImage(link, noteFile);
+        replacements.set(link.fullMatch, this.generateImageLink({ attachmentFile, link, noteFile }));
       } catch (error) {
         console.warn(`Failed to download network image: ${link.url}`, error);
       }
@@ -114,8 +120,8 @@ export class NetworkImageDownloader {
 
     if (replacements.size > 0) {
       let newContent = content;
-      for (const [networkUrl, localPath] of replacements) {
-        newContent = newContent.replaceAll(networkUrl, () => localPath);
+      for (const [fullMatch, markdownLink] of replacements) {
+        newContent = newContent.replaceAll(fullMatch, () => markdownLink);
       }
       await this.app.vault.modify(noteFile, newContent);
     }
@@ -139,7 +145,7 @@ export class NetworkImageDownloader {
     return 'png';
   }
 
-  private async downloadAndSaveImage(link: NetworkImageLink, noteFile: TFile): Promise<string> {
+  private async downloadAndSaveImage(link: NetworkImageLink, noteFile: TFile): Promise<TFile> {
     const { arrayBuffer, contentType } = await this.downloadImage(link.url);
     const extension = this.detectExtension(arrayBuffer, contentType);
 
@@ -155,8 +161,7 @@ export class NetworkImageDownloader {
       noteFilePath: noteFile.path
     });
 
-    await this.app.vault.createBinary(savePath, arrayBuffer);
-    return savePath;
+    return await this.app.vault.createBinary(savePath, arrayBuffer);
   }
 
   private async downloadImage(url: string): Promise<DownloadImageResult> {
@@ -195,6 +200,22 @@ export class NetworkImageDownloader {
       });
     }
     return links;
+  }
+
+  private generateImageLink(params: NetworkImageDownloaderGenerateImageLinkParams): string {
+    const {
+      attachmentFile,
+      link,
+      noteFile
+    } = params;
+
+    // A blank alt is passed as `undefined` so the plugin's own display-text handling applies, exactly as it does for a pasted attachment.
+    const alias = link.alt.trim() ? link.alt : undefined;
+
+    // Issue #50: going through `app.fileManager.generateMarkdownLink` is what honors the vault's "New link format" and "Use Wikilinks"
+    // Settings, applies the plugin's own patch, and escapes the destination. Obsidian never adds the embed prefix itself, so the caller
+    // Has to - otherwise the image would turn into a plain link.
+    return `!${this.app.fileManager.generateMarkdownLink(attachmentFile, noteFile.path, undefined, alias)}`;
   }
 
   private sanitizeFileName(name: string): string {
