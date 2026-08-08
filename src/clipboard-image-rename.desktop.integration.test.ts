@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -60,10 +60,7 @@ interface PathModuleLike {
 describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issue #31)', () => {
   it('renames a non-"Pasted image"-named clipboard image via the generated pattern', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app }): Promise<ClipboardRenameResult> {
+      async callback({ app }): Promise<ClipboardRenameResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
           attachmentRenameMode: string;
@@ -183,7 +180,8 @@ describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issu
 
         return { originalNameSurvived: isOriginalNameSurvived, renamedPaths, settingsFound: true };
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

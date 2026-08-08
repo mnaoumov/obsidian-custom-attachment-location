@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -47,10 +47,7 @@ describe('Moving a canvas moves its embedded attachment (issue #22)', () => {
   // Skipped in the aggregate (shared-instance renameFile/onCleanCache stall); passes in isolation.
   it.skip('moves the canvas-embedded attachment resolved through a relative shared folder', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app }): Promise<CanvasMoveResult> {
+      async callback({ app }): Promise<CanvasMoveResult> {
         interface CanvasSettings {
           attachmentFolderPath: string;
           shouldHandleRenames: boolean;
@@ -175,7 +172,8 @@ describe('Moving a canvas moves its embedded attachment (issue #22)', () => {
           settingsFound: true
         };
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

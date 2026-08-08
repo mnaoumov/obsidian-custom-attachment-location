@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -72,10 +72,7 @@ describe('Rename over a partial canvas is safe (issue #45)', () => {
   // Run alone: npx vitest run --project=integration-tests:desktop canvas-non-canvas-guard
   it.skip('completes without crashing, relocates the attachment, and keeps the canvas valid', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app }): Promise<CanvasGuardResult> {
+      async callback({ app }): Promise<CanvasGuardResult> {
         interface CanvasSettings {
           attachmentFolderPath: string;
           shouldHandleRenames: boolean;
@@ -195,7 +192,8 @@ describe('Rename over a partial canvas is safe (issue #45)', () => {
           settingsFound: true
         };
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

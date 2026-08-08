@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -53,10 +53,7 @@ interface AttachmentRenameResult {
 describe('Renaming an attachment keeps its links valid (issue #47)', () => {
   it('rewrites the embed when the attachment is renamed with link updating switched off', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app, lib: { waitUntil } }): Promise<AttachmentRenameResult> {
+      async callback({ app, lib: { waitUntil } }): Promise<AttachmentRenameResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
           shouldHandleRenames: boolean;
@@ -219,7 +216,8 @@ describe('Renaming an attachment keeps its links valid (issue #47)', () => {
           app.vault.setConfig('alwaysUpdateLinks', originalAlwaysUpdateLinks);
         }
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

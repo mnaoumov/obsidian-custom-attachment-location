@@ -86,7 +86,7 @@ export function fatAttachmentPath(index: number): string {
 }
 
 /**
- * Builds the file map for the performance vault, written to disk by `TempVault.populate()`
+ * Builds the file map for the performance vault, written to disk by `TemporaryVault.populate()`
  * before Obsidian opens it (so its startup scan indexes everything in one pass).
  *
  * @returns A map of vault-relative paths to content.

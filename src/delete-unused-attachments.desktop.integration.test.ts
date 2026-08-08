@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -36,10 +36,7 @@ interface ProbeResult {
 describe('Delete unused attachments (issue #23)', () => {
   it('trashes only the genuinely-unused attachment, keeping referenced and shared ones', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app }): Promise<ProbeResult> {
+      async callback({ app }): Promise<ProbeResult> {
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const folderPath = `assets/note-${stamp}`;
         const notePath = `note-${stamp}.md`;
@@ -107,7 +104,8 @@ describe('Delete unused attachments (issue #23)', () => {
           sharedSurvived: Boolean(app.vault.getFileByPath(sharedPath))
         };
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     // The scenario really staged the two backlinks before the command ran.

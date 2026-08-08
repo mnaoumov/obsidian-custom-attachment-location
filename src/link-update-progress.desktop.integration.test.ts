@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -42,10 +42,7 @@ describe('Link-update progress notification (issue #25)', () => {
   it('shows an "Updating links: N/M" progress notice while a renamed file\'s backlinks are updated', async () => {
     const SOURCE_COUNT = 3;
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: { sourceCount: SOURCE_COUNT },
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app, lib: { waitUntil }, sourceCount }): Promise<LinkUpdateProgressResult> {
+      async callback({ app, lib: { waitUntil }, sourceCount }): Promise<LinkUpdateProgressResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
           shouldHandleRenames: boolean;
@@ -194,7 +191,8 @@ describe('Link-update progress notification (issue #25)', () => {
 
         return { capturedMessages: [...captured], lingeringProgressNoticeCount, settingsFound: true, sourceCount, sourceRewritten: isSourceRewritten, targetRenamed: isTargetRenamed };
       },
-      vaultPath: getTempVault().path
+      input: { sourceCount: SOURCE_COUNT },
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

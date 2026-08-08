@@ -2,7 +2,7 @@ import type { Server } from 'node:http';
 
 import { createServer } from 'node:http';
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   afterAll,
   beforeAll,
@@ -62,10 +62,7 @@ afterAll(async () => {
 describe('Network image link format (issue #50)', () => {
   it('should link a downloaded network image through Obsidian link generation', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: { imageUrl },
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app, imageUrl: url }): Promise<ProbeResult> {
+      async callback({ app, imageUrl: url }): Promise<ProbeResult> {
         interface NetworkImageSettings {
           attachmentFolderPath: string;
           downloadNetworkImages: boolean;
@@ -166,7 +163,8 @@ describe('Network image link format (issue #50)', () => {
           app.vault.setConfig('newLinkFormat', originalNewLinkFormat);
         }
       },
-      vaultPath: getTempVault().path
+      input: { imageUrl },
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

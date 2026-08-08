@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -44,10 +44,7 @@ describe('Rename refreshes a file-name alias (issue #20)', () => {
   // Skipped in the aggregate (shared-instance renameFile/onCleanCache stall); passes in isolation.
   it.skip('rewrites [[folder/2|2]] to [[folder/222|222]] when the target is renamed', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app, lib: { waitUntil } }): Promise<RenameAliasResult> {
+      async callback({ app, lib: { waitUntil } }): Promise<RenameAliasResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
           shouldHandleRenames: boolean;
@@ -142,7 +139,8 @@ describe('Rename refreshes a file-name alias (issue #20)', () => {
         const after = await app.vault.read(src);
         return { after, before, settingsFound: true, targetRenamed: isTargetRenamed };
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

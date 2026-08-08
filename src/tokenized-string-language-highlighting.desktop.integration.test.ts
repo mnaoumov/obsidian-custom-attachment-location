@@ -15,10 +15,7 @@ describe('tokenized-string language', () => {
   // eslint-disable-next-line no-template-curly-in-string -- Intentional plugin token, not a JS template literal.
   it('highlights the ${token:format} placeholders of a tokenized string through real Prism', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: { language: TOKENIZED_STRING_LANGUAGE },
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ language, lib: { waitUntil }, obsidianModule }) {
+      async callback({ language, lib: { waitUntil }, obsidianModule }) {
         // `obsidian`'s own `loadPrism()` is typed as returning `unknown`.
         const prism = await obsidianModule.loadPrism() as PrismModule;
 
@@ -38,7 +35,8 @@ describe('tokenized-string language', () => {
           plainHtml: prism.highlight('./${noteFileName}/${date:YYYY-MM-DD}', grammar, language)
         };
         /* eslint-enable no-template-curly-in-string -- Intentional plugin tokens, not JS template literals. */
-      }
+      },
+      input: { language: TOKENIZED_STRING_LANGUAGE }
     });
 
     // The settings tab's code-highlighter fields render exactly this markup, so this asserts what the

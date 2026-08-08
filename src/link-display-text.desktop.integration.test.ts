@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -33,10 +33,7 @@ interface LinkDisplayResult {
 describe('Link display text = attachment file name (issue #24)', () => {
   it('sets attachment link display text to the base name, excludes notes, and respects the toggle', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app }): Promise<LinkDisplayResult> {
+      async callback({ app }): Promise<LinkDisplayResult> {
         interface DisplayTextSettings {
           attachmentFolderPath: string;
           shouldSetLinkDisplayTextToAttachmentFileName: boolean;
@@ -120,7 +117,8 @@ describe('Link display text = attachment file name (issue #24)', () => {
           settingsFound: true
         };
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

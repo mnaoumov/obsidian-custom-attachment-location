@@ -6,7 +6,7 @@ import type {
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -77,22 +77,7 @@ const fatAttachmentPaths: string[] = Array.from({ length: FAT_NOTE_LINK_COUNT },
 describe('Attachment-path bottleneck', () => {
   it('attributes the per-call cost to the wasted binary read, not the handler', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {
-        CONSUMER_CONTEXT,
-        EXPECTED_FILE_COUNT: PERFORMANCE_VAULT_TOTAL_FILE_COUNT,
-        FAT_NOTE_PATH,
-        fatAttachmentPaths,
-        HANDLER_ITERATIONS,
-        INDEX_POLL_IN_MS,
-        INDEX_WAIT_IN_MS,
-        largePairs,
-        PLUGIN_ID,
-        SETTLE_DELAY_IN_MS,
-        smallPairs
-      },
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({
+      async callback({
         app,
         CONSUMER_CONTEXT: consumerContext,
         EXPECTED_FILE_COUNT: expectedFileCount,
@@ -249,7 +234,20 @@ describe('Attachment-path bottleneck', () => {
           return (performance.now() - start) / handlerIterations;
         }
       },
-      vaultPath: getTempVault().path
+      input: {
+        CONSUMER_CONTEXT,
+        EXPECTED_FILE_COUNT: PERFORMANCE_VAULT_TOTAL_FILE_COUNT,
+        FAT_NOTE_PATH,
+        fatAttachmentPaths,
+        HANDLER_ITERATIONS,
+        INDEX_POLL_IN_MS,
+        INDEX_WAIT_IN_MS,
+        largePairs,
+        PLUGIN_ID,
+        SETTLE_DELAY_IN_MS,
+        smallPairs
+      },
+      vaultPath: getTemporaryVault().path
     });
 
     // Surface the full decomposition so a run reads as a diagnosis, not just a pass/fail.

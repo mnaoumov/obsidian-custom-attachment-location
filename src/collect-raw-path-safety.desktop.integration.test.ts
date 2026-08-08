@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -30,10 +30,7 @@ interface ProbeResult {
 describe('Collect attachments — raw path safety net (issue #46)', () => {
   it('leaves an attachment referenced by a non-indexed raw path in place when the setting is on', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app }): Promise<ProbeResult> {
+      async callback({ app }): Promise<ProbeResult> {
         interface RawPathSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
           isExcludedFromMultipleNotesCheck(path: string): boolean;
@@ -143,7 +140,8 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
         const fix = await runPhase(settings, true);
         return { control, fix, settingsFound: true };
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

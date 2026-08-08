@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -33,10 +33,7 @@ interface ProbeResult {
 describe('Collect attachments — exclude notes from the multiple-notes check (issue #33)', () => {
   it('ignores excluded backlink notes so a shared attachment is still collected', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app }): Promise<ProbeResult> {
+      async callback({ app }): Promise<ProbeResult> {
         interface MultipleNotesSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
           excludePathsFromMultipleNotesCheck: string[];
@@ -149,7 +146,8 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
         const fix = await runPhase(settings, [String.raw`/\.excalidraw\.md$/`]);
         return { control, fix, settingsFound: true };
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     expect(result.settingsFound).toBe(true);

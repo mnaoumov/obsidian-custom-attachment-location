@@ -1,5 +1,5 @@
 import { evalInObsidian } from 'obsidian-integration-testing';
-import { getTempVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
   expect,
@@ -77,10 +77,7 @@ interface SwapResult {
 describe('A folder swap owned by another plugin (issue #49)', () => {
   it('leaves every rename of the locked transaction untouched', async () => {
     const result = await evalInObsidian({
-      // eslint-disable-next-line unicorn/name-replacements -- `args` is an `obsidian-integration-testing` parameter name.
-      args: {},
-      // eslint-disable-next-line unicorn/name-replacements -- `fn` is an `obsidian-integration-testing` parameter name.
-      async fn({ app, lib: { waitUntil } }): Promise<SwapResult> {
+      async callback({ app, lib: { waitUntil } }): Promise<SwapResult> {
         interface LockDisposable {
           dispose(): void;
         }
@@ -423,7 +420,8 @@ describe('A folder swap owned by another plugin (issue #49)', () => {
           }
         }
       },
-      vaultPath: getTempVault().path
+      input: {},
+      vaultPath: getTemporaryVault().path
     });
 
     const expectedFinalPaths = ['B/A/Overview.md', 'B/C/Overview.md', 'B/Overview.md'];
