@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 11.6.3
+
+- chore: update libs and adopt obsidian-integration-testing 10
+
 ## 11.6.2
 
 - fix: re #50
