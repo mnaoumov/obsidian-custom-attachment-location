@@ -1,8 +1,6 @@
-[Docs](https://github.com/mnaoumov/obsidian-custom-attachment-location/)
-
 # Custom tokens
 
-When the built-in tokens (see [[03 Tokens and patterns]]) are not enough, you can define your **own** tokens as JavaScript functions - both synchronous and asynchronous are supported. They are stored in the `customTokensStr` setting and edited under **Settings -> Community plugins -> Custom Attachment Location -> Custom tokens**.
+When the built-in tokens (see [03 Tokens and patterns](<./03 Tokens and patterns.md>)) are not enough, you can define your **own** tokens as JavaScript functions - both synchronous and asynchronous are supported. They are stored in the `customTokensStr` setting and edited under **Settings -> Community plugins -> Custom Attachment Location -> Custom tokens**.
 
 ## Example
 

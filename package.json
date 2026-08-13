@@ -77,7 +77,7 @@
     "json5": "^2.2.3",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.13.1",
-    "obsidian-dev-utils": "^91.0.0",
+    "obsidian-dev-utils": "^93.3.1",
     "obsidian-integration-testing": "^10.0.0",
     "obsidian-test-mocks": "^4.0.0",
     "semver": "^7.8.5",

@@ -1,5 +1,3 @@
-[Docs](https://github.com/mnaoumov/obsidian-custom-attachment-location/)
-
 # Delete unused attachments
 
 Over time a note's attachment folder collects files the note no longer links to - an image you removed from the text, an older screenshot you replaced. **Custom Attachment Location** adds a **Delete unused attachments** command (and a right-click menu item on notes and folders) that moves those leftover files to the trash.
@@ -50,4 +48,4 @@ Then:
 
 If you add `![[orphan.png]]` to another note first and run the command again, `orphan.png` is kept - a shared attachment is never deleted.
 
-Related: [[05 Collect attachments]] reorganizes the attachments a note *does* use; this command removes the ones it no longer uses. All settings are explained in [[06 Settings]].
+Related: [05 Collect attachments](<./05 Collect attachments.md>) reorganizes the attachments a note *does* use; this command removes the ones it no longer uses. All settings are explained in [06 Settings](<./06 Settings.md>).

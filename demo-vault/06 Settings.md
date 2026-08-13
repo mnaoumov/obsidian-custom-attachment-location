@@ -1,8 +1,6 @@
-[Docs](https://github.com/mnaoumov/obsidian-custom-attachment-location/)
-
 # Settings
 
-Open **Settings -> Community plugins -> Custom Attachment Location** to configure the plugin. Each option below lists the setting key stored in the plugin's `data.json`. Many of these accept **patterns with tokens** - see [[03 Tokens and patterns]].
+Open **Settings -> Community plugins -> Custom Attachment Location** to configure the plugin. Each option below lists the setting key stored in the plugin's `data.json`. Many of these accept **patterns with tokens** - see [03 Tokens and patterns](<./03 Tokens and patterns.md>).
 
 ## Location for new attachments
 
@@ -27,11 +25,11 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
 
 ## Link display text
 
-- `shouldSetLinkDisplayTextToAttachmentFileName` - when inserting a link to an **attachment**, use the attachment's base name (without extension) as the link's display text. Notes are left alone, and an explicit alias or a cached image size still wins. See [[07 Link display text]].
+- `shouldSetLinkDisplayTextToAttachmentFileName` - when inserting a link to an **attachment**, use the attachment's base name (without extension) as the link's display text. Notes are left alone, and an explicit alias or a cached image size still wins. See [07 Link display text](<./07 Link display text.md>).
 
 ## Custom tokens
 
-- `customTokensStr` - JavaScript that registers your own tokens (see [[04 Custom tokens]]).
+- `customTokensStr` - JavaScript that registers your own tokens (see [04 Custom tokens](<./04 Custom tokens.md>)).
 
 ## Collecting attachments
 
@@ -41,7 +39,7 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
 - `moveAttachmentToProperFolderUsedByMultipleNotesMode` - the same choice for the **Move attachment to proper folder** command.
 - `excludePathsFromAttachmentCollecting` - paths ignored by the collecting commands.
 - `excludePathsFromMultipleNotesCheck` - notes on these paths are ignored when deciding whether a collected attachment is used by multiple notes, so a shared embed (e.g. an `.excalidraw` drawing) does not block collecting.
-- `shouldSkipCollectingAttachmentsReferencedByRawPath` - a safety net for attachments referenced by other plugins' non-standard syntaxes. When on, before collecting an attachment the plugin also scans every note's raw text for the attachment's path or file name; if a note references it in a format Obsidian does not index, the attachment is treated as still used and left in place (it is not moved or renamed). Default off. See [[05 Collect attachments]].
+- `shouldSkipCollectingAttachmentsReferencedByRawPath` - a safety net for attachments referenced by other plugins' non-standard syntaxes. When on, before collecting an attachment the plugin also scans every note's raw text for the attachment's path or file name; if a note references it in a format Obsidian does not index, the attachment is treated as still used and left in place (it is not moved or renamed). Default off. See [05 Collect attachments](<./05 Collect attachments.md>).
 
 ## Renames and deletions
 
