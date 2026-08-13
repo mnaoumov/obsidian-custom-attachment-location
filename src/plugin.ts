@@ -48,6 +48,7 @@ export class Plugin extends PluginBase {
         validatorWrapper
       })
     );
+    this.pluginSettingsComponent = pluginSettingsComponent;
 
     const validator = new TokenValidator({
       app: this.app,
