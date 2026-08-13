@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 11.6.4
+
+- docs: make the demo vault the documentation, in the standard layout
+- feat(demo-vault): migrate to obsidian-dev-utils 93.3.1 and adopt the authoring convention
+
 ## 11.6.3
 
 - chore: update libs and adopt obsidian-integration-testing 10
