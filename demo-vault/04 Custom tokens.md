@@ -25,4 +25,32 @@ After registering them, you can use `${foo}` and `${bar:{formatKey:'baz'}}` in a
 2. Set **Generated attachment file name** to a pattern using your token, e.g. `${foo}`.
 3. Paste an image (you supply the file) and watch the generated name.
 
-The `ctx` argument exposes the note, the attachment, the app, and a `ctx.fillTemplate(...)` helper. Its full shape is documented in the plugin's [`token-evaluator-context.ts`](https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/src/token-evaluator-context.ts).
+The `ctx` argument exposes the note, the attachment, the app, and a `ctx.fillTemplate(...)` helper that
+resolves a pattern of its own from inside your token:
+
+```javascript
+registerCustomToken('bar', async (ctx) => {
+  const filledTemplate = await ctx.fillTemplate('qux ${quux} corge ${grault:{garply:\'waldo\'}} fred');
+  return ctx.noteFileName + filledTemplate;
+});
+```
+
+Its full shape is documented in the plugin's [`token-evaluator-context.ts`](https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/src/token-evaluator-context.ts).
+
+## Reading the attachment's bytes
+
+`ctx.attachmentFileContent` (synchronous) was replaced by the lazy async
+`ctx.getAttachmentFileContent()`. Reading an attachment's bytes costs more the larger the file is, so
+they are now read on demand, only when a token actually asks for them, and never for the built-in
+tokens. Migrate a token that needs the content like this:
+
+```javascript
+// Before
+registerCustomToken('size', (ctx) => String(ctx.attachmentFileContent?.byteLength ?? 0));
+
+// After
+registerCustomToken('size', async (ctx) => {
+  const content = await ctx.getAttachmentFileContent();
+  return String(content?.byteLength ?? 0);
+});
+```

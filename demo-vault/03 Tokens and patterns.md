@@ -42,4 +42,8 @@ ${noteFileName:{case:'lower',slugify:true}}
 ${attachmentFileSize:{unit:'KB',decimalPoints:2}}
 ```
 
-Unknown format properties are rejected with an error, so a typo fails loudly instead of silently. The full token catalog (every token, its format schema, and examples) lives in the [plugin README](https://github.com/mnaoumov/obsidian-custom-attachment-location/#tokens). To define your own tokens, see [04 Custom tokens](<./04 Custom tokens.md>).
+Unknown format properties are rejected with an error, so a typo fails loudly instead of silently.
+
+The full catalog — every token, its format schema and worked examples — is
+[09 Token reference](<./09 Token reference.md>). To define your own tokens, see
+[04 Custom tokens](<./04 Custom tokens.md>).
