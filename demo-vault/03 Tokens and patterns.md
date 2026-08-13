@@ -1,5 +1,3 @@
-[Docs](https://github.com/mnaoumov/obsidian-custom-attachment-location/)
-
 # Tokens and patterns
 
 A *pattern* is just text with **tokens** in it. Tokens are written `${token}` (default format) or `${token:{...}}` (with an explicit [JSON5](https://json5.org/) format object). Token names are case-insensitive; format keys are case-sensitive. Patterns power three settings: `attachmentFolderPath`, `generatedAttachmentFileName`, and `markdownUrlFormat`.
@@ -33,4 +31,4 @@ ${noteFileName:{case:'lower',slugify:true}}
 ${attachmentFileSize:{unit:'KB',decimalPoints:2}}
 ```
 
-Unknown format properties are rejected with an error, so a typo fails loudly instead of silently. The full token catalog (every token, its format schema, and examples) lives in the [plugin README](https://github.com/mnaoumov/obsidian-custom-attachment-location/#tokens). To define your own tokens, see [[04 Custom tokens]].
+Unknown format properties are rejected with an error, so a typo fails loudly instead of silently. The full token catalog (every token, its format schema, and examples) lives in the [plugin README](https://github.com/mnaoumov/obsidian-custom-attachment-location/#tokens). To define your own tokens, see [04 Custom tokens](<./04 Custom tokens.md>).

@@ -1,5 +1,3 @@
-[Docs](https://github.com/mnaoumov/obsidian-custom-attachment-location/)
-
 # Attachment folder location
 
 The headline feature: **you** decide the folder each attachment is saved into, per note, using tokens. This vault ships with the plugin's default location setting:
@@ -16,7 +14,7 @@ The `./` means "relative to the folder of the note you are editing", and `${note
 2. Paste an image from your clipboard (or drag an image file into the editor). You supply the file - the demo cannot paste for you.
 3. Look in the File Explorer: a folder like `assets/01 Attachment folder location/` now holds the file, and the inserted link points at it.
 
-Paste another image into [[02 Attachment file naming]] and notice it lands in a *different* per-note folder. That is `${noteFileName}` at work.
+Paste another image into [02 Attachment file naming](<./02 Attachment file naming.md>) and notice it lands in a *different* per-note folder. That is `${noteFileName}` at work.
 
 ## Change the location
 
@@ -26,4 +24,4 @@ Open **Settings -> Community plugins -> Custom Attachment Location** and edit **
 - `./attachments` - a folder next to each note.
 - `./assets/${noteFileName}/${date:{momentJsFormat:'YYYY'}}` - per-note, then split by year.
 
-See [[03 Tokens and patterns]] for the full token list.
+See [03 Tokens and patterns](<./03 Tokens and patterns.md>) for the full token list.

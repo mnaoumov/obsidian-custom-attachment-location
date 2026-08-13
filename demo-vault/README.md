@@ -1,3 +1,5 @@
+# Custom Attachment Location demo vault
+
 This is an [Obsidian](https://obsidian.md/) vault demonstrating features of the [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location) plugin.
 
 ## Opening this vault
