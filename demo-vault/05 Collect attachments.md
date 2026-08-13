@@ -6,9 +6,12 @@ Changing your location or naming pattern only affects *new* attachments. To brin
 
 Open the Command Palette (`Ctrl`/`Cmd` + `P`) and search for *Custom Attachment Location*:
 
-- **Collect attachments in current note** - reorganizes only the attachments used by the active note.
-- **Collect attachments in current folder** - every note in the active note's folder.
-- **Collect attachments in entire vault** - the whole vault at once.
+- **Collect attachments in current note**
+  - reorganizes only the attachments used by the active note.
+- **Collect attachments in current folder**
+  - every note in the active note's folder.
+- **Collect attachments in entire vault**
+  - the whole vault at once.
 
 There is also **Move attachment to proper folder**, which relocates a single attachment file to where the settings say it belongs.
 

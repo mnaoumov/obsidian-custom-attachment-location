@@ -17,8 +17,11 @@ So a pasted image is saved as something like `file-20251231093015123.png` instea
 
 Open **Settings -> Community plugins -> Custom Attachment Location** and edit **Generated attachment file name**. A few ideas:
 
-- `${noteFileName}-${date:{momentJsFormat:'YYYYMMDD'}}` - name after the note plus the date.
-- `${originalAttachmentFileName}` - keep the file's original name (handy for dragged files).
-- `${prompt}` - ask you for a name each time, with a live preview of the file.
+- `${noteFileName}-${date:{momentJsFormat:'YYYYMMDD'}}`
+  - name after the note plus the date.
+- `${originalAttachmentFileName}`
+  - keep the file's original name (handy for dragged files).
+- `${prompt}`
+  - ask you for a name each time, with a live preview of the file.
 
 Related settings you can explore: `renamedAttachmentFileName`, `shouldRenameAttachmentFiles`, `attachmentRenameMode`, `duplicateNameSeparator`, and `collectedAttachmentFileName`. Every key is described in [06 Settings](<./06 Settings.md>). The tokens themselves live in [03 Tokens and patterns](<./03 Tokens and patterns.md>).

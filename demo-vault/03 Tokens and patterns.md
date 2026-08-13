@@ -10,17 +10,28 @@ Example folder pattern:
 
 ## Commonly used tokens
 
-- `${noteFileName}` - the current note's file name (basename).
-- `${noteFilePath}` - the current note's full path.
-- `${noteFolderName}` / `${noteFolderPath}` - the note's folder name / full folder path.
-- `${originalAttachmentFileName}` - the pasted/dragged file's original name.
-- `${originalAttachmentFileExtension}` - its extension.
-- `${date:{momentJsFormat:'YYYY-MM-DD'}}` - current date/time in [Moment.js](https://momentjs.com/docs/#/displaying/format/) format.
-- `${uuid}` / `${random:{length:6}}` - a random UUID / random string, for guaranteed-unique names.
-- `${prompt}` - ask you for a value each time (with a file preview).
-- `${frontmatter:{key:'project'}}` - a value read from the note's frontmatter.
-- `${heading}` - the nearest heading above the cursor.
-- `${sequenceNumber}` - the position of the first link to the attachment (used during renames and collecting).
+- `${noteFileName}`
+  - the current note's file name (basename).
+- `${noteFilePath}`
+  - the current note's full path.
+- `${noteFolderName}` / `${noteFolderPath}`
+  - the note's folder name / full folder path.
+- `${originalAttachmentFileName}`
+  - the pasted/dragged file's original name.
+- `${originalAttachmentFileExtension}`
+  - its extension.
+- `${date:{momentJsFormat:'YYYY-MM-DD'}}`
+  - current date/time in [Moment.js](https://momentjs.com/docs/#/displaying/format/) format.
+- `${uuid}` / `${random:{length:6}}`
+  - a random UUID / random string, for guaranteed-unique names.
+- `${prompt}`
+  - ask you for a value each time (with a file preview).
+- `${frontmatter:{key:'project'}}`
+  - a value read from the note's frontmatter.
+- `${heading}`
+  - the nearest heading above the cursor.
+- `${sequenceNumber}`
+  - the position of the first link to the attachment (used during renames and collecting).
 
 ## Format objects
 

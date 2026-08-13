@@ -1,8 +1,8 @@
 {
   "attachmentFolderPath": "_assets/attachments",
-  "newLinkFormat": "shortest",
-  "useMarkdownLinks": false,
+  "newLinkFormat": "relative",
+  "useMarkdownLinks": true,
   "showUnsupportedFiles": true,
-  "defaultViewMode": "source",
-  "livePreview": true
+  "defaultViewMode": "preview",
+  "livePreview": false
 }
