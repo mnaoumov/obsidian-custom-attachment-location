@@ -20,8 +20,11 @@ Paste another image into [02 Attachment file naming](<./02 Attachment file namin
 
 Open **Settings -> Community plugins -> Custom Attachment Location** and edit **Location for new attachments** (`attachmentFolderPath`). For example:
 
-- `assets` - one shared folder (an absolute, vault-root path, because there is no leading `./`).
-- `./attachments` - a folder next to each note.
-- `./assets/${noteFileName}/${date:{momentJsFormat:'YYYY'}}` - per-note, then split by year.
+- `assets`
+  - one shared folder (an absolute, vault-root path, because there is no leading `./`).
+- `./attachments`
+  - a folder next to each note.
+- `./assets/${noteFileName}/${date:{momentJsFormat:'YYYY'}}`
+  - per-note, then split by year.
 
 See [03 Tokens and patterns](<./03 Tokens and patterns.md>) for the full token list.
