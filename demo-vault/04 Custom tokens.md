@@ -5,32 +5,32 @@ When the built-in tokens (see [03 Tokens and patterns](<./03 Tokens and patterns
 ## Example
 
 ```javascript
-registerCustomToken('foo', (ctx) => {
+registerCustomToken('alpha', (ctx) => {
   const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
   return ctx.noteFileName + ctx.app.appId + formatValue + ctx.obsidian.apiVersion;
 });
 
-registerCustomToken('bar', async (ctx) => {
+registerCustomToken('bravo', async (ctx) => {
   await sleep(100);
   const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
   return ctx.noteFileName + formatValue;
 });
 ```
 
-After registering them, you can use `${foo}` and `${bar:{formatKey:'baz'}}` in any pattern - the same three settings that accept built-in tokens: `attachmentFolderPath`, `generatedAttachmentFileName`, and `markdownUrlFormat`.
+After registering them, you can use `${alpha}` and `${bravo:{formatKey:'charlie'}}` in any pattern - the same three settings that accept built-in tokens: `attachmentFolderPath`, `generatedAttachmentFileName`, and `markdownUrlFormat`.
 
 ## Try it
 
 1. Open **Settings -> Community plugins -> Custom Attachment Location -> Custom tokens** and paste a `registerCustomToken(...)` block.
-2. Set **Generated attachment file name** to a pattern using your token, e.g. `${foo}`.
+2. Set **Generated attachment file name** to a pattern using your token, e.g. `${alpha}`.
 3. Paste an image (you supply the file) and watch the generated name.
 
 The `ctx` argument exposes the note, the attachment, the app, and a `ctx.fillTemplate(...)` helper that
 resolves a pattern of its own from inside your token:
 
 ```javascript
-registerCustomToken('bar', async (ctx) => {
-  const filledTemplate = await ctx.fillTemplate('qux ${quux} corge ${grault:{garply:\'waldo\'}} fred');
+registerCustomToken('bravo', async (ctx) => {
+  const filledTemplate = await ctx.fillTemplate('delta ${echo} foxtrot ${golf:{hotel:\'india\'}} juliett');
   return ctx.noteFileName + filledTemplate;
 });
 ```
