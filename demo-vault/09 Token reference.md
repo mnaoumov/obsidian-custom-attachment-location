@@ -43,7 +43,7 @@ Each token validates its own `format` shape at runtime. Unknown object propertie
 
 Example (error):
 
-`❌ ${attachmentFileSize:{unit:'B',decimalPoints:3,unknownProperty:'foo'}}`
+`❌ ${attachmentFileSize:{unit:'B',decimalPoints:3,unknownProperty:'alpha'}}`
 
 ## `${attachmentFileSize}`
 
@@ -133,12 +133,12 @@ The generated file name of the attachment (available only inside [`markdownUrlFo
 
 ### Examples
 
-- `${generatedAttachmentFileName}`: `foo/bar/baz.pdf -> baz`.
-- `${generatedAttachmentFileName:{case:'lower'}}`: `foo/bar/BAZ.pdf -> baz`.
-- `${generatedAttachmentFileName:{case:'upper'}}`: `foo/bar/baz.pdf -> BAZ`.
-- `${generatedAttachmentFileName:{slugify:true}}`: `foo/bar/baz qux.pdf -> baz-qux`.
-- `${generatedAttachmentFileName:{trim:{side:'left',length:2}}}`: `foo/bar/baz.pdf -> ba`.
-- `${generatedAttachmentFileName:{trim:{side:'right',length:2}}}`: `foo/bar/baz.pdf -> az`.
+- `${generatedAttachmentFileName}`: `alpha/bravo/charlie.pdf -> charlie`.
+- `${generatedAttachmentFileName:{case:'lower'}}`: `alpha/bravo/CHARLIE.pdf -> charlie`.
+- `${generatedAttachmentFileName:{case:'upper'}}`: `alpha/bravo/charlie.pdf -> CHARLIE`.
+- `${generatedAttachmentFileName:{slugify:true}}`: `alpha/bravo/charlie delta.pdf -> charlie-delta`.
+- `${generatedAttachmentFileName:{trim:{side:'left',length:2}}}`: `alpha/bravo/charlie.pdf -> ch`.
+- `${generatedAttachmentFileName:{trim:{side:'right',length:2}}}`: `alpha/bravo/charlie.pdf -> ie`.
 
 ## `${generatedAttachmentFilePath}`
 
@@ -154,7 +154,7 @@ The generated file path of the attachment (available only inside [`markdownUrlFo
 
 ### Examples
 
-- `${generatedAttachmentFilePath}`: `foo/bar/baz.pdf`.
+- `${generatedAttachmentFilePath}`: `alpha/bravo/charlie.pdf`.
 
 ## `${heading}`
 
@@ -249,12 +249,12 @@ Current note file name.
 
 ### Examples
 
-- `${noteFileName}`: `foo/bar/baz.md -> baz`.
-- `${noteFileName:{case:'lower'}}`: `foo/bar/BAZ.md -> baz`.
-- `${noteFileName:{case:'upper'}}`: `foo/bar/baz.md -> BAZ`.
-- `${noteFileName:{slugify:true}}`: `foo/bar/baz qux.md -> baz-qux`.
-- `${noteFileName:{trim:{side:'left',length:2}}}`: `foo/bar/baz.md -> ba`.
-- `${noteFileName:{trim:{side:'right',length:2}}}`: `foo/bar/baz.md -> az`.
+- `${noteFileName}`: `alpha/bravo/charlie.md -> charlie`.
+- `${noteFileName:{case:'lower'}}`: `alpha/bravo/CHARLIE.md -> charlie`.
+- `${noteFileName:{case:'upper'}}`: `alpha/bravo/charlie.md -> CHARLIE`.
+- `${noteFileName:{slugify:true}}`: `alpha/bravo/charlie delta.md -> charlie-delta`.
+- `${noteFileName:{trim:{side:'left',length:2}}}`: `alpha/bravo/charlie.md -> ch`.
+- `${noteFileName:{trim:{side:'right',length:2}}}`: `alpha/bravo/charlie.md -> ie`.
 
 ## `${noteFilePath}`
 
@@ -270,7 +270,7 @@ Current note full path.
 
 ### Examples
 
-- `${noteFilePath}`: `foo/bar/baz.md`.
+- `${noteFilePath}`: `alpha/bravo/charlie.md`.
 
 ## `${noteFolderName}`
 
@@ -299,14 +299,14 @@ Current note's folder name.
 
 ### Examples
 
-- `${noteFolderName}`: `foo/bar/baz/qux.md -> baz`.
-- `${noteFolderName:{pick:{from:'end',index:1}}}`: `foo/bar/baz/qux/quux/corge.md -> qux`.
-- `${noteFolderName:{pick:{from:'start',index:1}}}`: `foo/bar/baz/qux/quux/corge.md -> bar`.
-- `${noteFolderName:{case:'lower'}}`: `foo/bar/BAZ/qux.md -> baz`.
-- `${noteFolderName:{case:'upper'}}`: `foo/bar/baz/qux.md -> BAZ`.
-- `${noteFolderName:{slugify:true}}`: `foo/bar/baz qux/quux.md -> baz-qux`.
-- `${noteFolderName:{trim:{side:'left',length:2}}}`: `foo/bar/baz/qux.md -> ba`.
-- `${noteFolderName:{trim:{side:'right',length:2}}}`: `foo/bar/baz/qux.md -> az`.
+- `${noteFolderName}`: `alpha/bravo/charlie/delta.md -> charlie`.
+- `${noteFolderName:{pick:{from:'end',index:1}}}`: `alpha/bravo/charlie/delta/echo/foxtrot.md -> delta`.
+- `${noteFolderName:{pick:{from:'start',index:1}}}`: `alpha/bravo/charlie/delta/echo/foxtrot.md -> bravo`.
+- `${noteFolderName:{case:'lower'}}`: `alpha/bravo/CHARLIE/delta.md -> charlie`.
+- `${noteFolderName:{case:'upper'}}`: `alpha/bravo/charlie/delta.md -> CHARLIE`.
+- `${noteFolderName:{slugify:true}}`: `alpha/bravo/charlie delta/echo.md -> charlie-delta`.
+- `${noteFolderName:{trim:{side:'left',length:2}}}`: `alpha/bravo/charlie/delta.md -> ch`.
+- `${noteFolderName:{trim:{side:'right',length:2}}}`: `alpha/bravo/charlie/delta.md -> ie`.
 
 ## `${noteFolderPath}`
 
@@ -322,7 +322,7 @@ Current note's folder full path.
 
 ### Examples
 
-- `${noteFolderPath}`: `foo/bar/baz.md -> foo/bar`.
+- `${noteFolderPath}`: `alpha/bravo/charlie.md -> alpha/bravo`.
 
 ## `${originalAttachmentFileCreationDate}`
 
@@ -362,7 +362,7 @@ Extension of the original attachment file.
 
 ### Examples
 
-- `${originalAttachmentFileExtension}`: `foo.bar.pdf -> pdf`.
+- `${originalAttachmentFileExtension}`: `alpha.bravo.pdf -> pdf`.
 
 ## `${originalAttachmentFileModificationDate}`
 
@@ -411,12 +411,12 @@ File name of the original attachment file.
 
 ### Examples
 
-- `${originalAttachmentFileName}`: `foo.pdf -> foo`.
-- `${originalAttachmentFileName:{case:'lower'}}`: `FOO.pdf -> foo`.
-- `${originalAttachmentFileName:{case:'upper'}}`: `foo.pdf -> FOO`.
-- `${originalAttachmentFileName:{slugify:true}}`: `foo bar.pdf -> foo-bar`.
-- `${originalAttachmentFileName:{trim:{side:'left',length:2}}}`: `foo.pdf -> fo`.
-- `${originalAttachmentFileName:{trim:{side:'right',length:2}}}`: `foo.pdf -> oo`.
+- `${originalAttachmentFileName}`: `alpha.pdf -> alpha`.
+- `${originalAttachmentFileName:{case:'lower'}}`: `ALPHA.pdf -> alpha`.
+- `${originalAttachmentFileName:{case:'upper'}}`: `alpha.pdf -> ALPHA`.
+- `${originalAttachmentFileName:{slugify:true}}`: `alpha bravo.pdf -> alpha-bravo`.
+- `${originalAttachmentFileName:{trim:{side:'left',length:2}}}`: `alpha.pdf -> al`.
+- `${originalAttachmentFileName:{trim:{side:'right',length:2}}}`: `alpha.pdf -> ha`.
 
 ## `${prompt}`
 
@@ -444,13 +444,13 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 
 ### Examples
 
-- `${prompt}`: `foo -> foo`.
-- `${prompt:{case:'lower'}}`: `FOO -> foo`.
-- `${prompt:{case:'upper'}}`: `foo -> FOO`.
+- `${prompt}`: `alpha -> alpha`.
+- `${prompt:{case:'lower'}}`: `ALPHA -> alpha`.
+- `${prompt:{case:'upper'}}`: `alpha -> ALPHA`.
 - `${prompt:{defaultValueTemplate:'${uuid}'}}`: shows prompt with default value as generated `${uuid}`.
-- `${prompt:{slugify:true}}`: `foo bar -> foo-bar`.
-- `${prompt:{trim:{side:'left',length:2}}}`: `foo -> fo`.
-- `${prompt:{trim:{side:'right',length:2}}}`: `foo -> oo`.
+- `${prompt:{slugify:true}}`: `alpha bravo -> alpha-bravo`.
+- `${prompt:{trim:{side:'left',length:2}}}`: `alpha -> al`.
+- `${prompt:{trim:{side:'right',length:2}}}`: `alpha -> ha`.
 
 ## `${random}`
 
