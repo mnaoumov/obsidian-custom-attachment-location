@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 11.6.5
+
+- docs(demo-vault): use NATO placeholders instead of foo, bar and baz
+
 ## 11.6.4
 
 - docs: make the demo vault the documentation, in the standard layout
