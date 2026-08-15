@@ -24,4 +24,36 @@ Open **Settings -> Community plugins -> Custom Attachment Location** and edit **
 - `${prompt}`
   - ask you for a name each time, with a live preview of the file.
 
+The first two are buttons; `${prompt}` is left to set by hand, since it interrupts every paste until you change it back:
+
+```code-button
+---
+caption: Name after the note plus the date
+---
+await require('/demoSetup.ts').changeSettings(app, { generatedAttachmentFileName: '${noteFileName}-${date:{momentJsFormat:\'YYYYMMDD\'}}' });
+```
+
+```code-button
+---
+caption: Keep the original file name
+---
+await require('/demoSetup.ts').changeSettings(app, { generatedAttachmentFileName: '${originalAttachmentFileName}' });
+```
+
+```code-button
+---
+caption: Where would a pasted image go, and what would it be called?
+---
+await require('/demoSetup.ts').previewAttachmentPath(app);
+```
+
+```code-button
+---
+caption: Restore this vault's default patterns
+---
+await require('/demoSetup.ts').restoreDefaultPatterns(app);
+```
+
+Manual equivalent: edit **Generated attachment file name** in **Settings -> Community plugins -> Custom Attachment Location**.
+
 Related settings you can explore: `renamedAttachmentFileName`, `shouldRenameAttachmentFiles`, `attachmentRenameMode`, `duplicateNameSeparator`, and `collectedAttachmentFileName`. Every key is described in [06 Settings](<./06 Settings.md>). The tokens themselves live in [03 Tokens and patterns](<./03 Tokens and patterns.md>).
