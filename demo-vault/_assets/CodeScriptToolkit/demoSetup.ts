@@ -3,7 +3,9 @@ import type { App } from 'obsidian';
 import { Notice } from 'obsidian';
 import { configureCommunityPlugin } from 'obsidian-dev-utils/obsidian/community-plugins';
 
-const PLUGIN_ID = 'custom-attachment-location';
+// The `obsidian-` prefix is part of the id, not decoration: it is what `manifest.json` and the vault's
+// `community-plugins.json` both say, so it is the folder every settings write has to land in.
+const PLUGIN_ID = 'obsidian-custom-attachment-location';
 
 interface DemoSettingsPatch {
   attachmentFolderPath?: string;

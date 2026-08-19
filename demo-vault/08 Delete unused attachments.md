@@ -13,7 +13,10 @@ It is deliberately careful, because it deletes your data:
 
 Click the button below. It creates a note `Delete unused demo` whose attachment folder holds two images: `keep.png` (embedded in the note) and `orphan.png` (referenced by nothing).
 
-```code-button "Set up the delete-unused demo"
+```code-button
+---
+caption: Set up the delete-unused demo
+---
 const folderPath = 'assets/Delete unused demo';
 const notePath = 'Delete unused demo.md';
 

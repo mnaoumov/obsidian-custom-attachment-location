@@ -63,7 +63,7 @@ await require('/demoSetup.ts').changeSettings(app, { attachmentFolderPath: './as
 
 ```code-button
 ---
-caption: Where would a pasted image go?
+caption: Where would a pasted image go now?
 ---
 await require('/demoSetup.ts').previewAttachmentPath(app);
 ```
