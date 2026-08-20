@@ -712,6 +712,37 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           }),
           this.settingEx({
             desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part1));
+              f.appendText(' ');
+              appendCodeBlock(f, t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part2));
+              f.appendText(' ');
+              f.appendText(t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part3));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part4));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part5));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part6));
+              f.appendText(' ');
+              appendCodeBlock(f, t(($) => $.regularExpression));
+              f.appendText('.');
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part7));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part8));
+            }),
+            name: t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.name),
+            render: (setting) => {
+              setting.addMultipleText((multipleText) => {
+                this.bind({
+                  propertyName: 'attachmentUnitFolderPaths',
+                  valueComponent: multipleText
+                });
+              });
+            }
+          }),
+          this.settingEx({
+            desc: createFragment((f) => {
               f.appendText(t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part1));
               f.appendText(' ');
               appendCodeBlock(f, t(($) => $.pluginSettingsTab.excludePathsFromAttachmentCollecting.description.part2));

@@ -67,6 +67,7 @@ export const defaultTranslations = {
   },
   notice: {
     attachmentReferencedByRawPath: 'Skipping collecting attachment \'{{attachmentPath}}\' because it is referenced by a raw path in \'{{noteFilePath}}\'.',
+    attachmentUnitFolderUsedByMultipleNotes: 'Skipping collecting attachment \'{{attachmentPath}}\' because its attachment unit folder \'{{unitFolderPath}}\' is referenced by multiple notes.',
     collectingAttachments: 'Collecting attachments for \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Collecting attachments cancelled. See console for details.',
     couldNotResolveTemplatePath: 'Could not resolve template path \'{{template}}\'. See console for details.',
@@ -213,6 +214,19 @@ export const defaultTranslations = {
         part1: 'When attaching files:'
       },
       name: 'Attachment rename mode'
+    },
+    attachmentUnitFolderPaths: {
+      description: {
+        part1: 'Treat the following folders as a single attachment. When',
+        part2: 'Collect attachments',
+        part3: 'moves an attachment from one of them, the whole folder moves along with it.',
+        part4: 'Use this for attachments that are really a folder: a saved page next to its files folder, a drawing next to the images it references.',
+        part5: 'Insert each path on a new line.',
+        part6: 'You can use path string or',
+        part7: 'A plain path is matched from the vault root. To match a folder name wherever it appears, use a regular expression.',
+        part8: 'If the setting is empty, every attachment is moved on its own, which is the behavior without this setting.'
+      },
+      name: 'Attachment unit folders'
     },
     collectAttachmentUsedByMultipleNotesMode: {
       description: {

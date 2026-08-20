@@ -55,6 +55,8 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
   - what to do when a collected attachment is referenced by several notes: cancel, copy, move, prompt, or skip.
 - `moveAttachmentToProperFolderUsedByMultipleNotesMode`
   - the same choice for the **Move attachment to proper folder** command.
+- `attachmentUnitFolderPaths`
+  - folders whose whole hierarchy is one attachment, so collecting moves the entire folder rather than the single linked file. Use it for a saved page next to its `_files/` folder or a drawing next to the images it references. See [05 Collect attachments](<./05 Collect attachments.md>).
 - `excludePathsFromAttachmentCollecting`
   - paths ignored by the collecting commands.
 - `excludePathsFromMultipleNotesCheck`
