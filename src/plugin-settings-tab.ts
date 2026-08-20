@@ -551,6 +551,47 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             }
           }),
           this.settingEx({
+            desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part1));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part2));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part3));
+              f.appendText(' ');
+              appendCodeBlock(f, '.md');
+              f.appendText('.');
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part4));
+              f.appendText(' ');
+              appendCodeBlock(f, 'property:');
+              f.appendText(' ');
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part5));
+              f.appendText(' ');
+              appendCodeBlock(f, 'property:excalidraw-plugin');
+              f.appendText('.');
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part6));
+              f.appendText(' ');
+              appendCodeBlock(f, t(($) => $.regularExpression));
+              f.appendText('.');
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part7));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part8));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part9));
+            }),
+            name: t(($) => $.pluginSettingsTab.notePriorities.name),
+            render: (setting) => {
+              setting.addMultipleText((multipleText) => {
+                this.bind({
+                  propertyName: 'notePriorities',
+                  valueComponent: multipleText
+                });
+              });
+            }
+          }),
+          this.settingEx({
             desc: t(($) => $.pluginSettingsTab.shouldSkipCollectingAttachmentsReferencedByRawPath.description),
             name: t(($) => $.pluginSettingsTab.shouldSkipCollectingAttachmentsReferencedByRawPath.name),
             render: (setting) => {

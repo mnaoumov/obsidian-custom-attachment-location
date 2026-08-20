@@ -382,6 +382,20 @@ export const defaultTranslations = {
       description: 'The timeout in seconds for downloading each network image.',
       name: 'Network image download timeout in seconds'
     },
+    notePriorities: {
+      description: {
+        part1: 'When an attachment is referenced by several notes, the first matching entry decides which note it belongs to.',
+        part2: 'Insert each entry on a new line, highest priority first.',
+        part3: 'An entry starting with a dot is a file extension, e.g.',
+        part4: 'An entry starting with',
+        part5: 'matches a frontmatter property, optionally with a value, e.g.',
+        part6: 'Anything else is a path from the vault root, or a',
+        part7: 'When no entry matches, or when the best entry matches several of the notes, the ambiguity is left to the mode above.',
+        part8: 'If the setting is empty, every such attachment is left to the mode above, which is the behavior without this setting.',
+        part9: 'Note that this can move an attachment into a note other than the one you ran the command on.'
+      },
+      name: 'Note priorities'
+    },
     renameAttachmentsToLowerCase: 'Rename attachments to lower case',
     renamedAttachmentFileName: {
       description: {
