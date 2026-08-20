@@ -1,11 +1,13 @@
 import type {
   App as AppOriginal,
-  PluginManifest
+  PluginManifest,
+  TFile
 } from 'obsidian';
 import type { DisposableEx } from 'obsidian-dev-utils/disposable';
 import type { CommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler';
 
 import { Component } from 'obsidian';
+import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { CommandHandlerComponent } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler-component';
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
@@ -13,6 +15,7 @@ import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/componen
 import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
@@ -281,6 +284,44 @@ describe('Plugin', () => {
     ]);
     expect(AppSaveAttachmentPatchComponent).toHaveBeenCalledOnce();
     expect(TokenizedStringLanguageComponent).toHaveBeenCalledOnce();
+  });
+
+  describe('collectAttachmentsInAbstractFiles', () => {
+    afterEach(() => {
+      // The stub below is installed on the module-level mock, so it would leak into every later test.
+      vi.mocked(AttachmentCollector).mockReset();
+    });
+
+    // The plugin's public surface for other plugins. The command itself acts on the ACTIVE file, so
+    // A caller wanting a specific note collected would otherwise have to open it first.
+    it('should delegate to the attachment collector', async () => {
+      const collectAttachmentsInAbstractFiles = vi.fn();
+      // A constructor mock has to be `new`-able, so this cannot be an arrow function. Returning an
+      // Object from it overrides the instance, which is how the stub gets in.
+      vi.mocked(AttachmentCollector).mockImplementation(castTo<typeof AttachmentCollector>(
+        // eslint-disable-next-line prefer-arrow-callback -- An arrow function cannot be `new`-ed, and this stands in for a constructor.
+        function mockAttachmentCollector(): AttachmentCollector {
+          return castTo<AttachmentCollector>({ collectAttachmentsInAbstractFiles });
+        }
+      ));
+
+      const plugin = new Plugin(app, manifest);
+      await plugin.onload();
+
+      const noteFile = castTo<TFile>({ path: 'note.md' });
+      plugin.collectAttachmentsInAbstractFiles([noteFile]);
+
+      expect(collectAttachmentsInAbstractFiles).toHaveBeenCalledWith([noteFile]);
+    });
+
+    it('should do nothing when called before the plugin has loaded', async () => {
+      // Another plugin can hold a reference across a reload, so this must not throw.
+      const plugin = new Plugin(app, manifest);
+      expect(() => {
+        plugin.collectAttachmentsInAbstractFiles([castTo<TFile>({ path: 'note.md' })]);
+      }).not.toThrow();
+      await noopAsync();
+    });
   });
 
   it('should register all collect/delete/move command handlers', async () => {

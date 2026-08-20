@@ -1,3 +1,4 @@
+import type { TAbstractFile } from 'obsidian';
 import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
@@ -33,6 +34,30 @@ import { TokenizedStringLanguageComponent } from './tokenized-string-language-co
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 export class Plugin extends PluginBase {
+  private attachmentCollector: AttachmentCollector | null = null;
+
+  /**
+   * Collects the attachments of the given notes into the folders the settings say they belong in,
+   * exactly as the **Collect attachments in current note** command does.
+   *
+   * This is the plugin's public surface for other plugins. It exists because the command itself acts
+   * on the ACTIVE file, so a caller that wants a specific note collected would otherwise have to open
+   * it first — a visible side effect of an unrelated operation. Reached as:
+   *
+   * ```ts
+   * const plugin = app.plugins.getPlugin('obsidian-custom-attachment-location');
+   * // Check the method is there before calling it: the user may have an older version, or none.
+   * plugin?.collectAttachmentsInAbstractFiles?.([noteFile]);
+   * ```
+   *
+   * The work is queued rather than awaited, matching the command, so this returns immediately.
+   *
+   * @param abstractFiles - The notes, or folders of notes, to collect attachments for.
+   */
+  public collectAttachmentsInAbstractFiles(abstractFiles: TAbstractFile[]): void {
+    this.attachmentCollector?.collectAttachmentsInAbstractFiles(abstractFiles);
+  }
+
   protected override createTranslationsMap(): TranslationsMap {
     return translationsMap;
   }
@@ -153,6 +178,7 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent,
       resourceLockComponent: this.resourceLockComponent
     });
+    this.attachmentCollector = attachmentCollector;
 
     const unusedAttachmentsRemover = new UnusedAttachmentsRemover({
       abortSignalComponent: this.abortSignalComponent,
