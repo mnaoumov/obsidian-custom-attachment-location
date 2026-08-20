@@ -638,6 +638,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
                   /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
                 });
                 this.bind({
+                  onChanged: () => {
+                    // The metadata row below only reads this value through its `disabled` predicate.
+                    this.refreshDomState();
+                  },
                   propertyName: 'convertImagesToJpegMode',
                   valueComponent: dropdown
                 });
@@ -655,6 +659,25 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
                   pluginSettingsToComponentValueConverter: (value) => value.toPrecision(JPEG_QUALITY_PRECISION),
                   propertyName: 'jpegQuality',
                   valueComponent: dropDown
+                });
+              });
+            }
+          }),
+          this.settingEx({
+            desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.shouldPreserveImageMetadata.description.part1));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldPreserveImageMetadata.description.part2));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldPreserveImageMetadata.description.part3));
+            }),
+            disabled: () => this.pluginSettingsComponent.settings.convertImagesToJpegMode === ConvertImagesToJpegMode.None,
+            name: t(($) => $.pluginSettingsTab.shouldPreserveImageMetadata.name),
+            render: (setting) => {
+              setting.addToggle((toggle) => {
+                this.bind({
+                  propertyName: 'shouldPreserveImageMetadata',
+                  valueComponent: toggle
                 });
               });
             }

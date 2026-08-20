@@ -398,6 +398,14 @@ export const defaultTranslations = {
       },
       name: 'Should handle renames'
     },
+    shouldPreserveImageMetadata: {
+      description: {
+        part1: 'If enabled, the EXIF, GPS, XMP and ICC profile data of a converted image is carried into the JPEG. Only works when the original is already a JPEG; nothing else stores that data in a form that can be copied across.',
+        part2: 'Enable it if you rely on the geolocation of your photos, for example to plot them on a map. Leave it off if you share your vault, since the same data also carries camera serial numbers and the times and places the photos were taken.',
+        part3: 'The orientation is always reset, because the conversion has already rotated the pixels.'
+      },
+      name: 'Should preserve image metadata'
+    },
     shouldRenameAttachmentFiles: {
       description: {
         part1: 'If enabled, when a note is renamed or moved, its attachments will be renamed according to the',
