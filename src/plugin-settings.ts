@@ -71,6 +71,15 @@ export class PluginSettings {
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public networkImageDownloadTimeoutInSeconds = 30;
 
+  /**
+   * Which referencing note owns an attachment that several notes reference, highest priority first.
+   *
+   * Empty by default, which keeps today's behavior: the ambiguity falls to
+   * `collectAttachmentUsedByMultipleNotesMode`. A tie between equally-ranked notes falls there too,
+   * deliberately — see `note-priority.ts`.
+   */
+  public notePriorities: readonly string[] = [];
+
   public renamedAttachmentFileName = '';
   public shouldDeleteOrphanAttachments = false;
   public shouldHandleRenames = true;

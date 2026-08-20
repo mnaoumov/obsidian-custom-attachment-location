@@ -65,6 +65,10 @@ import {
   rebasePathOntoFolder
 } from './attachment-unit-folder.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
+import {
+  findNotePriorityRank,
+  pickHighestPriorityNotePath
+} from './note-priority.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 import { isReferencedByRawPath } from './raw-path-reference.ts';
 import { ActionContext } from './token-evaluator-context.ts';
@@ -85,6 +89,13 @@ interface AttachmentCollectorConstructorParams {
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly resourceLockComponent: null | ResourceLockComponent;
+}
+
+interface AttachmentCollectorPrepareAttachmentToMoveForNoteParams {
+  readonly attachmentMoveResult: AttachmentMoveResult;
+  readonly newNotePath: string;
+  readonly reference: Reference;
+  readonly sequenceNumberByAttachmentPath: ReadonlyMap<string, number>;
 }
 
 interface AttachmentCollectorPrepareAttachmentToMoveParams {
@@ -291,6 +302,32 @@ export class AttachmentCollector {
         if (relevantBacklinks.length > 1) {
           const backlinksSorted = relevantBacklinks.sort((a, b) => a.localeCompare(b));
           const backlinksString = backlinksSorted.map((backlink) => `- ${backlink}`).join('\n');
+
+          /*
+           * A configured priority answers "which of these notes owns it" outright, so the mode
+           * dispatch below never runs. Note this can move the attachment into a note OTHER than the
+           * one being collected — that is the point of the setting, and why it is empty by default.
+           */
+          const priorityWinnerNotePath = this.pickPriorityWinnerNotePath(backlinksSorted);
+          if (priorityWinnerNotePath) {
+            const priorityResult = await this.prepareAttachmentToMoveForNote({
+              attachmentMoveResult,
+              newNotePath: priorityWinnerNotePath,
+              reference: link,
+              sequenceNumberByAttachmentPath
+            });
+            params.abortSignal.throwIfAborted();
+            if (priorityResult) {
+              // eslint-disable-next-line require-atomic-updates -- Matches how the surrounding code reassigns this; a single note's links are collected in sequence.
+              attachmentMoveResult = priorityResult;
+              this.consoleDebugComponent.consoleDebug(
+                `Collecting attachment ${attachmentMoveResult.oldAttachmentPath} into ${priorityWinnerNotePath} as the highest-priority referencing note.`
+              );
+              await registerMoveAttachment();
+              params.abortSignal.throwIfAborted();
+              continue;
+            }
+          }
 
           async function shouldCollectWithMode(
             collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode
@@ -590,6 +627,30 @@ export class AttachmentCollector {
     });
   }
 
+  /**
+   * Picks the note that owns an attachment several notes reference, or `null` when the priority list
+   * does not settle it — no entry matched, or the best rank is shared. Both are left to the
+   * multiple-notes mode, which is the setting that already exists for exactly this ambiguity.
+   */
+  private pickPriorityWinnerNotePath(notePaths: readonly string[]): null | string {
+    const entries = this.pluginSettingsComponent.settings.notePriorities;
+    if (entries.length === 0) {
+      return null;
+    }
+
+    return pickHighestPriorityNotePath({
+      notePaths,
+      rank: (notePath) => {
+        const noteFile = this.app.vault.getFileByPath(notePath);
+        return findNotePriorityRank({
+          entries,
+          frontmatter: noteFile ? this.app.metadataCache.getFileCache(noteFile)?.frontmatter ?? null : null,
+          notePath
+        });
+      }
+    });
+  }
+
   private async prepareAttachmentToMove(params: AttachmentCollectorPrepareAttachmentToMoveParams): Promise<AttachmentMoveResult | null> {
     const oldAttachmentFile = extractLinkFile({
       app: this.app,
@@ -641,6 +702,34 @@ export class AttachmentCollector {
         attachmentPath: oldAttachmentFile.path,
         checkIsAttachmentUnitFolder: (folderPath) => this.pluginSettingsComponent.settings.isAttachmentUnitFolder(folderPath)
       })
+    };
+  }
+
+  /**
+   * Recomputes where an attachment belongs when a note other than the one being collected has won it
+   * on priority. Only the destination changes; the attachment and its unit folder are untouched.
+   */
+  private async prepareAttachmentToMoveForNote(params: AttachmentCollectorPrepareAttachmentToMoveForNoteParams): Promise<AttachmentMoveResult | null> {
+    const attachmentFile = this.app.vault.getFileByPath(params.attachmentMoveResult.oldAttachmentPath);
+    if (!attachmentFile) {
+      return null;
+    }
+
+    const newAttachmentPath = await this.attachmentPathManager.getProperAttachmentPath({
+      actionContext: ActionContext.CollectAttachments,
+      attachmentFile,
+      noteFilePath: params.newNotePath,
+      reference: params.reference,
+      sequenceNumber: params.sequenceNumberByAttachmentPath.get(attachmentFile.path) ?? 0
+    });
+
+    if (!newAttachmentPath) {
+      return null;
+    }
+
+    return {
+      ...params.attachmentMoveResult,
+      newAttachmentPath
     };
   }
 

@@ -42,6 +42,7 @@ describe('PluginSettings', () => {
       expect(settings.excludePathsFromAttachmentCollecting).toStrictEqual([]);
       expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual([]);
       expect(settings.attachmentUnitFolderPaths).toStrictEqual([]);
+      expect(settings.notePriorities).toStrictEqual([]);
     });
   });
 

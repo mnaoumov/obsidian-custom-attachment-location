@@ -110,6 +110,7 @@ interface SettingsLike {
   isExcludedFromAttachmentCollecting(path: string): boolean;
   isExcludedFromMultipleNotesCheck(path: string): boolean;
   isPathIgnored(path: string): boolean;
+  notePriorities: readonly string[];
   shouldSkipCollectingAttachmentsReferencedByRawPath: boolean;
 }
 
@@ -265,6 +266,8 @@ describe('AttachmentCollector', () => {
   let errorSpy: MockInstance<typeof console.error>;
   let getProperAttachmentPath: Mock<AttachmentPathManager['getProperAttachmentPath']>;
   let getSequenceNumberMap: Mock<AttachmentPathManager['getSequenceNumberMap']>;
+  let getFileByPath: Mock<(path: string) => null | TFile>;
+  let getFileCache: Mock<(file: TFile) => CachedMetadataEx | null>;
   let getFolderByPath: Mock<(path: string) => null | TFolder>;
   let getRoot: Mock<() => TFolder>;
   let getMarkdownFiles: Mock<() => TFile[]>;
@@ -287,6 +290,7 @@ describe('AttachmentCollector', () => {
       isExcludedFromAttachmentCollecting: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isExcludedFromMultipleNotesCheck: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false),
+      notePriorities: [],
       shouldSkipCollectingAttachmentsReferencedByRawPath: false
     };
     getRoot = vi.fn<() => TFolder>().mockReturnValue(strictProxy<TFolder>({ path: '/' }));
@@ -294,9 +298,15 @@ describe('AttachmentCollector', () => {
     getMarkdownFiles = vi.fn<() => TFile[]>().mockReturnValue([]);
     cachedRead = vi.fn<(file: TFile) => Promise<string>>().mockResolvedValue('');
     getFolderByPath = vi.fn<(path: string) => null | TFolder>().mockReturnValue(null);
+    getFileByPath = vi.fn<(path: string) => null | TFile>().mockImplementation((path) => createFile(path));
+    getFileCache = vi.fn<(file: TFile) => CachedMetadataEx | null>().mockReturnValue(null);
     app = strictProxy<App>({
+      metadataCache: strictProxy<App['metadataCache']>({
+        getFileCache: (file: TFile) => getFileCache(file)
+      }),
       vault: strictProxy<App['vault']>({
         cachedRead: (file: TFile) => cachedRead(file),
+        getFileByPath: (path: string) => getFileByPath(path),
         getFolderByPath: (path: string) => getFolderByPath(path),
         getMarkdownFiles: () => getMarkdownFiles(),
         getRoot: () => getRoot(),
@@ -485,6 +495,114 @@ describe('AttachmentCollector', () => {
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
       await runSingleFile(note);
       expect(mockRenameSafe).not.toHaveBeenCalled();
+    });
+
+    describe('note priorities', () => {
+      beforeEach(() => {
+        mockGetLinks.mockReturnValue([createReference()]);
+        mockExtractLinkFile.mockReturnValue(createFile('img.png'));
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['drawing.excalidraw.md', 'note.md']));
+        getProperAttachmentPath.mockResolvedValue('attachments/img.png');
+        mockRenameSafe.mockResolvedValue('attachments/img.png');
+      });
+
+      it('should move the attachment into the highest-priority referencing note', async () => {
+        // The reporter's scenario: an image shared by a drawing and a markdown note, with markdown
+        // Ranked first, belongs to the markdown note.
+        settings.notePriorities = ['.md', '.excalidraw.md'];
+
+        await runSingleFile(note);
+
+        expect(getProperAttachmentPath).toHaveBeenLastCalledWith(expect.objectContaining({ noteFilePath: 'note.md' }));
+        expect(mockRenameSafe).toHaveBeenCalled();
+        expect(mockSelectMode).not.toHaveBeenCalled();
+      });
+
+      it('should move it into a note other than the one being collected', async () => {
+        // The command runs on `note.md`, but the drawing outranks it, so the image goes to the
+        // Drawing's folder. That is the point of the setting, and why it is empty by default.
+        settings.notePriorities = ['.excalidraw.md', '.md'];
+
+        await runSingleFile(note);
+
+        expect(getProperAttachmentPath).toHaveBeenLastCalledWith(expect.objectContaining({ noteFilePath: 'drawing.excalidraw.md' }));
+      });
+
+      it('should rank a note by a frontmatter property', async () => {
+        settings.notePriorities = ['property:excalidraw-plugin'];
+        getFileCache.mockImplementation((file) =>
+          file.path === 'drawing.excalidraw.md'
+            ? castTo<CachedMetadataEx>({ frontmatter: { 'excalidraw-plugin': 'parsed' } })
+            : null
+        );
+
+        await runSingleFile(note);
+
+        expect(getProperAttachmentPath).toHaveBeenLastCalledWith(expect.objectContaining({ noteFilePath: 'drawing.excalidraw.md' }));
+      });
+
+      it('should fall back to the mode when the priority list is empty', async () => {
+        settings.notePriorities = [];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
+
+        await runSingleFile(note);
+
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
+      });
+
+      it('should fall back to the mode when several notes tie on the best entry', async () => {
+        // Two notes of equal priority is the ambiguity the mode setting already exists for, so the
+        // Priority list must not silently pick one of them.
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md']));
+        settings.notePriorities = ['.md'];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
+
+        await runSingleFile(note);
+
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
+      });
+
+      it('should fall back to the mode when no note matches any entry', async () => {
+        settings.notePriorities = ['.canvas'];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
+
+        await runSingleFile(note);
+
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+      });
+
+      it('should fall back to the mode when the winner yields no destination', async () => {
+        settings.notePriorities = ['.excalidraw.md'];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
+        // First call plans the move from the collected note, the recompute for the winner returns null.
+        getProperAttachmentPath.mockResolvedValueOnce('attachments/img.png').mockResolvedValueOnce(null);
+
+        await runSingleFile(note);
+
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+      });
+
+      it('should fall back to the mode when the attachment file cannot be resolved', async () => {
+        settings.notePriorities = ['.excalidraw.md'];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
+        getFileByPath.mockReturnValue(null);
+
+        await runSingleFile(note);
+
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+      });
+
+      it('should leave a singly-referenced attachment alone', async () => {
+        settings.notePriorities = ['.md'];
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
+
+        await runSingleFile(note);
+
+        expect(getProperAttachmentPath).toHaveBeenLastCalledWith(expect.objectContaining({ noteFilePath: 'note.md' }));
+        expect(mockRenameSafe).toHaveBeenCalledTimes(1);
+      });
     });
 
     describe('attachment unit folders', () => {
