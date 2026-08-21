@@ -50,6 +50,7 @@
   "overrides": {
     "@puppeteer/browsers": "^3.2.0",
     "brace-expansion": "file:patches/brace-expansion-callable",
+    "deepmerge-ts": "^8.0.0",
     "eslint": "$eslint",
     "js-yaml": "^5.3.0",
     "markdown-it": "^15.0.0",
