@@ -71,6 +71,15 @@ export class PluginSettings {
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public networkImageDownloadTimeoutInSeconds = 30;
 
+  /**
+   * Which referencing note owns an attachment that several notes reference, highest priority first.
+   *
+   * Empty by default, which keeps today's behavior: the ambiguity falls to
+   * `collectAttachmentUsedByMultipleNotesMode`. A tie between equally-ranked notes falls there too,
+   * deliberately — see `note-priority.ts`.
+   */
+  public notePriorities: readonly string[] = [];
+
   public renamedAttachmentFileName = '';
   public shouldDeleteOrphanAttachments = false;
   public shouldHandleRenames = true;
@@ -86,6 +95,21 @@ export class PluginSettings {
   public timeoutInSeconds = 5;
   public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
   public version = '';
+  /**
+   * Folders whose whole hierarchy travels as one attachment.
+   *
+   * Same vocabulary as the include / exclude path settings: a plain entry is a path from the vault
+   * root, and an entry wrapped in `/` is a regular expression. Matching a folder *name* wherever it
+   * appears therefore needs the regular-expression form, e.g. `/(^|\/)[^/]+_files(\/|$)/`.
+   */
+  public get attachmentUnitFolderPaths(): string[] {
+    return this._attachmentUnitFolderPaths.excludePaths;
+  }
+
+  public set attachmentUnitFolderPaths(value: string[]) {
+    this._attachmentUnitFolderPaths.excludePaths = value;
+  }
+
   // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
   public get customTokensStr(): string {
     return this._customTokensStr;
@@ -134,6 +158,9 @@ export class PluginSettings {
   }
 
   private readonly _attachmentCollectingPaths = new PathSettings();
+  // Only the exclude half is exposed: `isPathIgnored` then reduces to "matches one of these
+  // Patterns", which is what a designation list needs. Same shape as `_attachmentCollectingPaths`.
+  private readonly _attachmentUnitFolderPaths = new PathSettings();
   // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
   private _customTokensStr = '';
   private readonly _multipleNotesCheckPaths = new PathSettings();
@@ -147,6 +174,10 @@ export class PluginSettings {
   public getTimeoutInMilliseconds(): number {
     const MILLISECONDS_IN_SECOND = 1000;
     return this.timeoutInSeconds === 0 ? INFINITE_TIMEOUT : this.timeoutInSeconds * MILLISECONDS_IN_SECOND;
+  }
+
+  public isAttachmentUnitFolder(path: string): boolean {
+    return this._attachmentUnitFolderPaths.isPathIgnored(path);
   }
 
   public isExcludedFromAttachmentCollecting(path: string): boolean {

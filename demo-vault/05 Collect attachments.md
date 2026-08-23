@@ -34,3 +34,45 @@ Turn on **Skip collecting attachments referenced by a raw path** (`shouldSkipCol
 1. Create a note `raw-ref.md` whose body embeds an image with raw HTML, e.g. `<img src="my-image.png">` (Obsidian will not index this link).
 2. Reference the same image with a normal `![[my-image.png]]` embed from another note and run **Collect attachments** with the setting **off** - the image is relocated even though `raw-ref.md` still points at the old path.
 3. Turn the setting **on** and repeat - the image is left where it is, and a notice reports that it is referenced by a raw path.
+
+## Attachments that are really a folder
+
+Some attachments are a directory tree rather than a file: a page saved from a browser sits next to a `_files/` folder holding its images and stylesheets, and a drawing sits next to the pictures it references. Collecting moves the file that was linked and leaves its siblings behind, so the attachment arrives intact-looking but blank.
+
+List those folders under **Attachment unit folders** (`attachmentUnitFolderPaths`) and the whole folder travels whenever collecting moves any attachment inside it. The folder lands in the note's attachment folder under its own name, so its internal shape - and the relative links inside it - keep working.
+
+Entries use the same vocabulary as the include / exclude path settings: a plain entry is a path from the vault root, while an entry wrapped in `/` is a regular expression. To designate a folder by *name* wherever it appears, use the regular-expression form, e.g. `/(^|\/)[^/]+_files(\/|$)/`.
+
+Two things worth knowing:
+
+- When folders are nested and both are designated, the **outermost** one travels. Moving the inner one would tear the outer tree in half, which is the failure this setting exists to prevent.
+- An attachment inside such a folder that is referenced by several notes is left where it is rather than copied, because copying the single file out of the folder produces exactly the broken attachment the setting prevents.
+
+### Try it
+
+1. Create `saved-page/page_files/logo.png` and `saved-page/page_files/style.css`, and a note embedding only `![[saved-page/page_files/logo.png]]`.
+2. Run **Collect attachments in current note** with the setting empty - only `logo.png` moves, and `style.css` is stranded.
+3. Add `saved-page/page_files` to **Attachment unit folders** and repeat with a fresh copy - the whole `page_files` folder moves, `style.css` included.
+
+## When several notes reference the same attachment
+
+An attachment referenced by more than one note has no single correct home, so collecting falls back to **Collect attachment used by multiple notes mode** - skip it, copy it, cancel, or ask.
+
+**Note priorities** (`notePriorities`) lets you answer the question once instead. List the kinds of note in order, highest priority first, and the winning note takes the attachment:
+
+- an entry starting with a dot is a file extension, e.g. `.md`;
+- an entry starting with `property:` matches a frontmatter property, optionally with a value, e.g. `property:excalidraw-plugin` or `property:type=drawing`;
+- anything else is a path from the vault root, or a `/regular expression/`.
+
+When a note matches several entries, the **longest** one decides its rank. That is what makes the common case work: `drawing.excalidraw.md` also ends with `.md`, so without it a list of `.md` then `.excalidraw.md` would tie instead of putting the plain note first.
+
+Two things worth knowing:
+
+- If no entry matches, or if the best entry matches several of the referencing notes, nothing is decided here and the mode setting handles it as before. A tie is never broken silently.
+- The winner does not have to be the note you ran the command on. Collecting from a drawing can hand the image to a markdown note that outranks it. That is the point of the setting, and why it is empty by default.
+
+### Try it
+
+1. Embed the same image in a note and in an Excalidraw drawing.
+2. Run **Collect attachments in current note** with **Note priorities** empty - the image is left alone (or handled per the mode).
+3. Set **Note priorities** to `.md` then `.excalidraw.md` and repeat - the image moves into the markdown note's attachment folder, whichever of the two you ran the command on.

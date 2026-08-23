@@ -385,6 +385,8 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('JPEG Quality');
     expect(names).toContain('Include paths');
     expect(names).toContain('Exclude paths');
+    expect(names).toContain('Attachment unit folders');
+    expect(names).toContain('Note priorities');
     expect(names).toContain('Exclude paths from attachment collecting');
     expect(names).toContain('Treat as attachment extensions');
     expect(names).toContain('Custom tokens');

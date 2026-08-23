@@ -67,6 +67,7 @@ export const defaultTranslations = {
   },
   notice: {
     attachmentReferencedByRawPath: 'Skipping collecting attachment \'{{attachmentPath}}\' because it is referenced by a raw path in \'{{noteFilePath}}\'.',
+    attachmentUnitFolderUsedByMultipleNotes: 'Skipping collecting attachment \'{{attachmentPath}}\' because its attachment unit folder \'{{unitFolderPath}}\' is referenced by multiple notes.',
     collectingAttachments: 'Collecting attachments for \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Collecting attachments cancelled. See console for details.',
     couldNotResolveTemplatePath: 'Could not resolve template path \'{{template}}\'. See console for details.',
@@ -213,6 +214,19 @@ export const defaultTranslations = {
         part1: 'When attaching files:'
       },
       name: 'Attachment rename mode'
+    },
+    attachmentUnitFolderPaths: {
+      description: {
+        part1: 'Treat the following folders as a single attachment. When',
+        part2: 'Collect attachments',
+        part3: 'moves an attachment from one of them, the whole folder moves along with it.',
+        part4: 'Use this for attachments that are really a folder: a saved page next to its files folder, a drawing next to the images it references.',
+        part5: 'Insert each path on a new line.',
+        part6: 'You can use path string or',
+        part7: 'A plain path is matched from the vault root. To match a folder name wherever it appears, use a regular expression.',
+        part8: 'If the setting is empty, every attachment is moved on its own, which is the behavior without this setting.'
+      },
+      name: 'Attachment unit folders'
     },
     collectAttachmentUsedByMultipleNotesMode: {
       description: {
@@ -367,6 +381,20 @@ export const defaultTranslations = {
     networkImageDownloadTimeoutInSeconds: {
       description: 'The timeout in seconds for downloading each network image.',
       name: 'Network image download timeout in seconds'
+    },
+    notePriorities: {
+      description: {
+        part1: 'When an attachment is referenced by several notes, the first matching entry decides which note it belongs to.',
+        part2: 'Insert each entry on a new line, highest priority first.',
+        part3: 'An entry starting with a dot is a file extension, e.g.',
+        part4: 'An entry starting with',
+        part5: 'matches a frontmatter property, optionally with a value, e.g.',
+        part6: 'Anything else is a path from the vault root, or a',
+        part7: 'When no entry matches, or when the best entry matches several of the notes, the ambiguity is left to the mode above.',
+        part8: 'If the setting is empty, every such attachment is left to the mode above, which is the behavior without this setting.',
+        part9: 'Note that this can move an attachment into a note other than the one you ran the command on.'
+      },
+      name: 'Note priorities'
     },
     renameAttachmentsToLowerCase: 'Rename attachments to lower case',
     renamedAttachmentFileName: {
