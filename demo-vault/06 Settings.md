@@ -83,6 +83,8 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
   - convert pasted/dragged images to JPEG (none, only clipboard PNGs, all, or all except existing JPEGs).
 - `jpegQuality`
   - the JPEG quality (0-1) used for conversion.
+- `shouldPreserveImageMetadata`
+  - carry the original's EXIF, GPS, XMP and ICC profile data into the converted JPEG, so photos keep the geolocation that mapping plugins read. Only works when the original is already a JPEG, since nothing else stores that data in a copyable form, and the orientation is always reset because the conversion has already rotated the pixels. Default off: the same data also carries camera serial numbers and the times and places the photos were taken, which matters if you share your vault.
 - `defaultImageSize`
   - a default size applied to inserted images (blank leaves them untouched).
 - `defaultImageSizeDimension`

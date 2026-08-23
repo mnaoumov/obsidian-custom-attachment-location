@@ -74,7 +74,8 @@ export class ImageManager {
       return {
         attachmentFileContent: await blobToJpegArrayBuffer(
           new Blob([params.attachmentFileContent], { type: mimeType }),
-          this.pluginSettingsComponent.settings.jpegQuality
+          this.pluginSettingsComponent.settings.jpegQuality,
+          { shouldPreserveMetadata: this.pluginSettingsComponent.settings.shouldPreserveImageMetadata }
         ),
         attachmentFileExtension: 'jpg'
       };

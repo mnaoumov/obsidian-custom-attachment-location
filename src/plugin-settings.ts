@@ -83,6 +83,7 @@ export class PluginSettings {
   public renamedAttachmentFileName = '';
   public shouldDeleteOrphanAttachments = false;
   public shouldHandleRenames = true;
+  public shouldPreserveImageMetadata = false;
   public shouldRenameAttachmentFiles = false;
   public shouldRenameAttachmentFolder = true;
   public shouldRenameCollectedAttachments = false;

@@ -47,6 +47,7 @@ import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import {
   AttachmentRenameMode,
+  ConvertImagesToJpegMode,
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
 import { TokenValidator } from './token-validator.ts';
@@ -471,6 +472,31 @@ describe('PluginSettingsTab', () => {
     // On every render and on every `refreshDomState()`.
     expect(isRowDisabled(tab, 'Should rename attachment folders')).toBe(true);
     expect(isRowDisabled(tab, 'Should rename attachment files')).toBe(true);
+  });
+
+  it('should re-evaluate the predicates when the convert-images-to-JPEG dropdown changes', async () => {
+    const { tab, textLikeComponents } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = textLikeComponents.find((entry) => entry.name === 'Convert images to JPEG mode');
+    expect(captured).toBeDefined();
+    captured?.setValue(ConvertImagesToJpegMode.AllImages);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should disable the preserve-metadata row while nothing is being converted', async () => {
+    // Nothing is re-encoded in `None` mode, so there is no metadata loss for the row to prevent.
+    const { tab } = await createTab();
+    expect(isRowDisabled(tab, 'Should preserve image metadata')).toBe(true);
+  });
+
+  it('should enable the preserve-metadata row once images are converted', async () => {
+    const { tab } = await createTab((settings) => {
+      settings.convertImagesToJpegMode = ConvertImagesToJpegMode.AllImages;
+    });
+    expect(isRowDisabled(tab, 'Should preserve image metadata')).toBe(false);
   });
 
   it('should do nothing when resetting custom tokens that already match the sample', async () => {

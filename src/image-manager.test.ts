@@ -1,3 +1,5 @@
+import type { BlobToJpegArrayBufferOptions } from 'obsidian-dev-utils/blob';
+
 import {
   blobToDataUrl,
   blobToJpegArrayBuffer
@@ -24,7 +26,7 @@ import {
 
 vi.mock('obsidian-dev-utils/blob', () => ({
   blobToDataUrl: vi.fn<(blob: Blob) => Promise<string>>(),
-  blobToJpegArrayBuffer: vi.fn<(blob: Blob, jpegQuality: number) => Promise<ArrayBuffer>>()
+  blobToJpegArrayBuffer: vi.fn<(blob: Blob, jpegQuality: number, options?: BlobToJpegArrayBufferOptions) => Promise<ArrayBuffer>>()
 }));
 
 const mockBlobToDataUrl = vi.mocked(blobToDataUrl);
@@ -145,7 +147,8 @@ describe('ImageManager', () => {
       mockBlobToJpegArrayBuffer.mockResolvedValue(jpegContent);
       const imageManager = createImageManager({
         convertImagesToJpegMode: ConvertImagesToJpegMode.AllImages,
-        jpegQuality: 0.5
+        jpegQuality: 0.5,
+        shouldPreserveImageMetadata: false
       });
       const result = await imageManager.convertToJpeg({
         attachmentFileContent: new ArrayBuffer(4),
@@ -154,13 +157,28 @@ describe('ImageManager', () => {
       });
       expect(result.attachmentFileExtension).toBe('jpg');
       expect(result.attachmentFileContent).toBe(jpegContent);
-      expect(mockBlobToJpegArrayBuffer).toHaveBeenCalledWith(expect.any(Blob), 0.5);
+      expect(mockBlobToJpegArrayBuffer).toHaveBeenCalledWith(expect.any(Blob), 0.5, { shouldPreserveMetadata: false });
+    });
+
+    it('should ask for the source metadata to be kept when the setting is on', async () => {
+      const imageManager = createImageManager({
+        convertImagesToJpegMode: ConvertImagesToJpegMode.AllImages,
+        jpegQuality: 0.5,
+        shouldPreserveImageMetadata: true
+      });
+      await imageManager.convertToJpeg({
+        attachmentFileContent: new ArrayBuffer(4),
+        attachmentFileExtension: 'jpg',
+        isPastedImage: false
+      });
+      expect(mockBlobToJpegArrayBuffer).toHaveBeenCalledWith(expect.any(Blob), 0.5, { shouldPreserveMetadata: true });
     });
 
     it('should convert non-jpeg images in AllImagesExceptAlreadyJpegFiles mode', async () => {
       const imageManager = createImageManager({
         convertImagesToJpegMode: ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles,
-        jpegQuality: 0.8
+        jpegQuality: 0.8,
+        shouldPreserveImageMetadata: false
       });
       const result = await imageManager.convertToJpeg({
         attachmentFileContent: new ArrayBuffer(4),
@@ -175,7 +193,8 @@ describe('ImageManager', () => {
       const content = new ArrayBuffer(4);
       const imageManager = createImageManager({
         convertImagesToJpegMode: ConvertImagesToJpegMode.AllImagesExceptAlreadyJpegFiles,
-        jpegQuality: 0.8
+        jpegQuality: 0.8,
+        shouldPreserveImageMetadata: false
       });
       const result = await imageManager.convertToJpeg({
         attachmentFileContent: content,
@@ -203,7 +222,8 @@ describe('ImageManager', () => {
     it('should convert a pasted PNG image in OnlyPastedClipboardPngImages mode', async () => {
       const imageManager = createImageManager({
         convertImagesToJpegMode: ConvertImagesToJpegMode.OnlyPastedClipboardPngImages,
-        jpegQuality: 0.8
+        jpegQuality: 0.8,
+        shouldPreserveImageMetadata: false
       });
       const result = await imageManager.convertToJpeg({
         attachmentFileContent: new ArrayBuffer(4),
@@ -218,7 +238,8 @@ describe('ImageManager', () => {
       const content = new ArrayBuffer(4);
       const imageManager = createImageManager({
         convertImagesToJpegMode: ConvertImagesToJpegMode.OnlyPastedClipboardPngImages,
-        jpegQuality: 0.8
+        jpegQuality: 0.8,
+        shouldPreserveImageMetadata: false
       });
       const result = await imageManager.convertToJpeg({
         attachmentFileContent: content,
@@ -234,7 +255,8 @@ describe('ImageManager', () => {
       const content = new ArrayBuffer(4);
       const imageManager = createImageManager({
         convertImagesToJpegMode: ConvertImagesToJpegMode.OnlyPastedClipboardPngImages,
-        jpegQuality: 0.8
+        jpegQuality: 0.8,
+        shouldPreserveImageMetadata: false
       });
       const result = await imageManager.convertToJpeg({
         attachmentFileContent: content,
