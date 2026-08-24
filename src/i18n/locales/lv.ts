@@ -294,6 +294,15 @@ export const lv = {
       description: 'Vai pārdēvēt pielikumu mapes, kad piezime tiek pārdēvēta vai pārvietota.',
       name: 'Vai pārdēvēt pielikumu mapes'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Vai pielikumu mapes un faila nosaukuma iestatījumus piemērot pielikumiem, ko izveido CITI spraudņi.',
+        part2:
+          'Daži spraudņi ieraksta pielikumu glabātavā ar savu nosaukumu, nejautājot Obsidian, kur tam būtu jāatrodas. Ja šis ir ieslēgts, šāds fails tiek pārvietots un pārdēvēts uzreiz pēc parādīšanās.',
+        part3: 'Tiek apstrādāti tikai faili, kas radīti, kamēr piezīme ir atvērta, nekad faili, kas nāk no sinhronizācijas vai glabātavas importa.'
+      },
+      name: 'Pārdēvēt pielikumus, ko izveido citi spraudņi'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Ja iespējots, pielikumi, kas apstrādāti caur',
@@ -338,6 +347,8 @@ export const lv = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Pārdēvēt pielikuma failu',
+    folderTitle: 'Izvēlieties pielikumu mapi',
     previewModal: {
       title: 'Pielikuma faila priekšskatījums \'{{fullFileName}}\''
     },

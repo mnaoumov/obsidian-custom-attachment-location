@@ -298,6 +298,15 @@ export const es = {
       description: 'Si renombrar carpetas de archivos adjuntos cuando una nota es renombrada o movida.',
       name: 'Si renombrar carpetas de archivos adjuntos'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Si se deben aplicar los ajustes de carpeta de adjuntos y nombre de archivo a los adjuntos que crean OTROS complementos.',
+        part2:
+          'Algunos complementos escriben un adjunto en la bóveda con un nombre propio, sin preguntar a Obsidian dónde corresponde. Con esta opción activada, ese archivo se mueve y se renombra en cuanto aparece.',
+        part3: 'Solo se tocan los archivos creados mientras hay una nota abierta, nunca los que llegan de una sincronización o de una importación de bóveda.'
+      },
+      name: 'Renombrar adjuntos creados por otros complementos'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Si está habilitado, archivos adjuntos procesados vía',
@@ -342,6 +351,8 @@ export const es = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Renombrar archivo adjunto',
+    folderTitle: 'Elegir carpeta de adjuntos',
     previewModal: {
       title: 'Vista previa del archivo adjunto \'{{fullFileName}}\''
     },

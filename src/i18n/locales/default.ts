@@ -445,6 +445,15 @@ export const defaultTranslations = {
       description: 'Whether to rename attachment folders when a note is renamed or moved.',
       name: 'Should rename attachment folders'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Whether to apply the attachment folder and file name settings to attachments that OTHER plugins create.',
+        part2:
+          'Some plugins write an attachment into the vault under a name of their own, without asking Obsidian where it belongs. With this enabled, such a file is moved and renamed right after it appears.',
+        part3: 'Only files created while a note is open are touched, never files arriving from a sync or a vault import.'
+      },
+      name: 'Rename attachments created by other plugins'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'If enabled, attachments processed via',
@@ -498,6 +507,8 @@ export const defaultTranslations = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Rename attachment file',
+    folderTitle: 'Choose attachment folder',
     previewModal: {
       title: 'Preview attachment file \'{{fullFileName}}\''
     },

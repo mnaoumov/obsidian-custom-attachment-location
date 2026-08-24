@@ -56,4 +56,6 @@ await require('/demoSetup.ts').restoreDefaultPatterns(app);
 
 Manual equivalent: edit **Generated attachment file name** in **Settings -> Community plugins -> Custom Attachment Location**.
 
-Related settings you can explore: `renamedAttachmentFileName`, `shouldRenameAttachmentFiles`, `attachmentRenameMode`, `duplicateNameSeparator`, and `collectedAttachmentFileName`. Every key is described in [06 Settings](<./06 Settings.md>). The tokens themselves live in [03 Tokens and patterns](<./03 Tokens and patterns.md>).
+These patterns apply to attachments saved through Obsidian itself — a paste, a drop, an import. A plugin that writes an attachment into the vault under a name of its own instead bypasses them; turn on `shouldRenameAttachmentsCreatedByOtherPlugins` to have those files moved and renamed too, just after they appear.
+
+Related settings you can explore: `renamedAttachmentFileName`, `shouldRenameAttachmentFiles`, `attachmentRenameMode`, `shouldRenameAttachmentsCreatedByOtherPlugins`, `duplicateNameSeparator`, and `collectedAttachmentFileName`. Every key is described in [06 Settings](<./06 Settings.md>). The tokens themselves live in [03 Tokens and patterns](<./03 Tokens and patterns.md>).

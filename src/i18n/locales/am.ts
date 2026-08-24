@@ -298,6 +298,15 @@ export const am = {
       description: 'ማስታወሻ ሲሰየም ወይም ሲወሰድ፣ ተያያዥ ፎልደሮችን መሰየም አለበት።',
       name: 'ተያያዥ ፎልደሮችን መሰየም አለበት'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'የተያያዥ አቃፊ እና የፋይል ስም ቅንብሮች ሌሎች ተሰኪዎች በሚፈጥሯቸው ተያያዥ ፋይሎች ላይ ይተግበሩ እንደሆነ።',
+        part2:
+          'አንዳንድ ተሰኪዎች ኦብሲዲያንን የት እንደሚገባ ሳይጠይቁ ተያያዥ ፋይልን በራሳቸው ስም ወደ ቮልት ይጽፋሉ። ይህ ሲነቃ፣ እንዲህ ያለ ፋይል እንደታየ ወዲያውኑ ይንቀሳቀሳል እና ዳግም ይሰየማል።',
+        part3: 'ማስታወሻ ክፍት ሆኖ የተፈጠሩ ፋይሎች ብቻ ይነካሉ፤ ከማመሳሰል ወይም ከቮልት አስመጣ የሚመጡ ፋይሎች በጭራሽ አይነኩም።'
+      },
+      name: 'በሌሎች ተሰኪዎች የተፈጠሩ ተያያዥ ፋይሎችን ዳግም ሰይም'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'ከተንቃ፣ በ',
@@ -342,6 +351,8 @@ export const am = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'የተያያዥ ፋይል ዳግም ሰይም',
+    folderTitle: 'የተያያዥ አቃፊ ይምረጡ',
     previewModal: {
       title: 'ተያያዥ ፋይል ቅድመ እይታ \'{{fullFileName}}\''
     },

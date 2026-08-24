@@ -298,6 +298,15 @@ export const fr = {
       description: 'Renommer les dossiers de pièces jointes lorsqu\'une note est renommée ou déplacée.',
       name: 'Renommer les dossiers de pièces jointes'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Appliquer ou non les réglages de dossier de pièces jointes et de nom de fichier aux pièces jointes créées par D\'AUTRES modules.',
+        part2:
+          'Certains modules écrivent une pièce jointe dans le coffre sous un nom de leur choix, sans demander à Obsidian où elle doit aller. Avec cette option, un tel fichier est déplacé et renommé dès son apparition.',
+        part3: 'Seuls les fichiers créés pendant qu\'une note est ouverte sont concernés, jamais ceux provenant d\'une synchronisation ou d\'un import de coffre.'
+      },
+      name: 'Renommer les pièces jointes créées par d\'autres modules'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Si activé, les pièces jointes traitées via les commandes',
@@ -342,6 +351,8 @@ export const fr = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Renommer le fichier de pièce jointe',
+    folderTitle: 'Choisir le dossier des pièces jointes',
     previewModal: {
       title: 'Aperçu du fichier de pièce jointe \'{{fullFileName}}\''
     },

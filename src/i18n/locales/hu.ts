@@ -298,6 +298,15 @@ export const hu = {
       description: 'Melléklet mappák átnevezése, amikor egy jegyzet átnevezésre kerül vagy áthelyezésre.',
       name: 'Melléklet mappák átnevezése'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Alkalmazza-e a melléklet mappa és fájlnév beállításait a MÁS bővítmények által létrehozott mellékletekre.',
+        part2:
+          'Egyes bővítmények saját néven írnak mellékletet a tárolóba, anélkül hogy megkérdeznék az Obsidiant, hová tartozik. Ha ez be van kapcsolva, az ilyen fájl a megjelenése után azonnal átkerül és átnevezésre kerül.',
+        part3: 'Csak a nyitott jegyzet mellett létrejövő fájlokat érinti, a szinkronizálásból vagy tárolóimportból érkezőket soha.'
+      },
+      name: 'Más bővítmények által létrehozott mellékletek átnevezése'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Ha engedélyezve, a',
@@ -342,6 +351,8 @@ export const hu = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Melléklet fájl átnevezése',
+    folderTitle: 'Melléklet mappa kiválasztása',
     previewModal: {
       title: 'Melléklet fájl előnézete \'{{fullFileName}}\''
     },

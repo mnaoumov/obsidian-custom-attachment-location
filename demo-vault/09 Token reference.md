@@ -422,6 +422,15 @@ File name of the original attachment file.
 
 The value asked from the user prompt.
 
+The modal opens with the input already focused and the pre-filled value selected, so you can type the
+new name straight away — the first keystroke replaces what is there. `defaultValueTemplate` controls
+what it is pre-filled with; set it to something other than the attachment's own name if you would
+rather start from `${uuid}`, `${date}`, or anything else.
+
+The heading names what you are deciding: **Rename attachment file** when `${prompt}` sits in the
+generated file name, **Choose attachment folder** when it sits in the attachment folder path. The
+second line shows the whole template with the current token highlighted.
+
 Also in the prompt modal, you can preview the file, if it is supported by Obsidian (image, video, pdf).
 
 ### Format schema

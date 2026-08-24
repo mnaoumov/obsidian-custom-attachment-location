@@ -23,6 +23,8 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
   - rename the per-note attachment folder when the note is renamed.
 - `attachmentRenameMode`
   - which attachments get renamed on paste: none, only pasted images, or all.
+- `shouldRenameAttachmentsCreatedByOtherPlugins`
+  - **off by default.** Apply the attachment folder and file name settings to attachments **other plugins** create. Some plugins write an attachment into the vault under a name of their own rather than asking Obsidian where it belongs — Media Extended's video screenshots, for instance — which puts them out of this plugin's reach until the file already exists. `attachmentRenameMode` cannot help there, not even on `All`: that setting only governs attachments that go through Obsidian's own save. With this on, such a file is moved and renamed just after it appears, and the link the creating plugin inserted is updated with it. Only files created while a note is open, and created within the last few seconds, are touched — never files arriving from a sync or a vault import.
 - `duplicateNameSeparator`
   - the separator inserted before the counter when a name already exists (e.g. `file 1.png`).
 - `specialCharacters`

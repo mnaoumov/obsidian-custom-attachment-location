@@ -298,6 +298,15 @@ export const ga = {
       description: 'Cibé an gcaithfear fhillteáin ceangaltán a athainmniú nuair a athainmnítear nó a aistrítear nóta.',
       name: 'An gcaithfear fhillteáin ceangaltán a athainmniú'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Cé acu na socruithe fillteáin ceangaltán agus ainm comhaid a chur i bhfeidhm ar cheangaltáin a chruthaíonn breiseáin EILE.',
+        part2:
+          'Scríobhann roinnt breiseán ceangaltán isteach sa taisce faoi ainm dá gcuid féin, gan fiafraí d\'Obsidian cá mbaineann sé. Agus é seo ar siúl, bogtar agus athainmnítear comhad den sórt sin díreach tar éis dó teacht chun cinn.',
+        part3: 'Ní bhaintear ach le comhaid a chruthaítear agus nóta ar oscailt, riamh le comhaid a thagann ó shioncronú nó ó iompórtáil taisce.'
+      },
+      name: 'Athainmnigh ceangaltáin a chruthaíonn breiseáin eile'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Má tá sé cumasaithe, athainmneofar ceangaltáin a phróiseáladh trí',
@@ -342,6 +351,8 @@ export const ga = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Athainmnigh comhad ceangaltáin',
+    folderTitle: 'Roghnaigh fillteán ceangaltán',
     previewModal: {
       title: 'Réamhamharc comhad ceangaltáin \'{{fullFileName}}\''
     },

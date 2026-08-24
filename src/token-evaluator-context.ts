@@ -23,6 +23,11 @@ export enum ActionContext {
   DeleteNote = 'DeleteNote',
 
   /**
+   * An attachment another plugin created directly in the vault, caught after the fact.
+   */
+  ExternalAttachmentCreated = 'ExternalAttachmentCreated',
+
+  /**
    * Import files.
    */
   ImportFiles = 'ImportFiles',
@@ -56,6 +61,29 @@ export enum ActionContext {
    * Validate tokens.
    */
   ValidateTokens = 'ValidateTokens'
+}
+
+/**
+ * Which template a token is being evaluated in.
+ *
+ * Tells a token what the value it returns will become, which is what lets `${prompt}` ask a question
+ * that matches what the user is actually deciding — a file name, a folder, or neither.
+ */
+export enum TemplatePart {
+  /**
+   * The generated attachment file name template.
+   */
+  FileName = 'FileName',
+
+  /**
+   * The attachment folder path template.
+   */
+  Folder = 'Folder',
+
+  /**
+   * Any other template, e.g. the Markdown URL format. Neither a file name nor a folder.
+   */
+  Other = 'Other'
 }
 
 /**
@@ -202,6 +230,12 @@ export interface TokenEvaluatorContext {
    * `0` if the sequence number is not known.
    */
   sequenceNumber: number;
+
+  /**
+   * Which template the token is being evaluated in — the generated file name, the attachment folder
+   * path, or neither.
+   */
+  templatePart: TemplatePart;
 
   /**
    * A token being evaluated.

@@ -294,6 +294,15 @@ export const uz = {
       description: 'Nota nomi o\'zgartirilganda yoki ko\'chirilganda qo\'shimcha papkalarni qayta nomlash kerakligini belgilaydi.',
       name: 'Qo\'shimcha papkalarni qayta nomlash'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Ilova papkasi va fayl nomi sozlamalari BOSHQA plaginlar yaratgan ilovalarga ham qo\'llanilsinmi.',
+        part2:
+          'Ba\'zi plaginlar ilovani qayerga tegishli ekanini Obsidian\'dan so\'ramasdan, o\'z nomi bilan to\'g\'ridan-to\'g\'ri omborga yozadi. Bu yoqilganda, bunday fayl paydo bo\'lishi bilanoq ko\'chiriladi va nomi o\'zgartiriladi.',
+        part3: 'Faqat qayd ochiq turganda yaratilgan fayllarga tegiladi, sinxronlash yoki ombor import qilishdan kelgan fayllarga hech qachon tegilmaydi.'
+      },
+      name: 'Boshqa plaginlar yaratgan ilovalar nomini o\'zgartirish'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Faollashtirilganda, qo\'llanilgan qo\'shimchalar',
@@ -338,6 +347,8 @@ export const uz = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Ilova faylini qayta nomlash',
+    folderTitle: 'Ilova papkasini tanlang',
     previewModal: {
       title: 'Qo\'shimcha faylni oldindan ko\'rish \'{{fullFileName}}\''
     },

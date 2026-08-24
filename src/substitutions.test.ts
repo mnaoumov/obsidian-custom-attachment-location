@@ -21,7 +21,10 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { TokenValidator } from './token-validator.ts';
 
 import { Substitutions } from './substitutions.ts';
-import { ActionContext } from './token-evaluator-context.ts';
+import {
+  ActionContext,
+  TemplatePart
+} from './token-evaluator-context.ts';
 
 vi.mock('obsidian-dev-utils/error', () => ({
   printError: vi.fn<(error: unknown) => void>()
@@ -188,6 +191,23 @@ describe('Substitutions', () => {
       Substitutions.registerCustomTokens('registerCustomToken("nonString", () => 42);');
       await expect(createSubstitutions().fillTemplate(tk('nonString'))).rejects.toThrow('Token returned non-string value');
       expect(errorSpy).toHaveBeenCalledWith('Token returned non-string value.', expect.anything());
+    });
+
+    it('should report the template part to a token, defaulting to neither file name nor folder', async () => {
+      Substitutions.registerCustomTokens('registerCustomToken("part", (ctx) => ctx.templatePart);');
+      expect(await createSubstitutions().fillTemplate(tk('part'))).toBe(TemplatePart.Other);
+      expect(await createSubstitutions().fillTemplate(tk('part'), TemplatePart.FileName)).toBe(TemplatePart.FileName);
+      expect(await createSubstitutions().fillTemplate(tk('part'), TemplatePart.Folder)).toBe(TemplatePart.Folder);
+    });
+
+    it('should carry the template part into a nested fill', async () => {
+      // A token reaching back through `ctx.fillTemplate` must not silently drop to the default —
+      // This is the path `${prompt}` takes when it resolves its own `defaultValueTemplate`.
+      Substitutions.registerCustomTokens(
+        'registerCustomToken("part", (ctx) => ctx.templatePart);'
+        + `registerCustomToken("nested", (ctx) => ctx.fillTemplate('${tk('part')}'));`
+      );
+      expect(await createSubstitutions().fillTemplate(tk('nested'), TemplatePart.FileName)).toBe(TemplatePart.FileName);
     });
   });
 

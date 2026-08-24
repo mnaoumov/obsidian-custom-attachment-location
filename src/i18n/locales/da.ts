@@ -298,6 +298,15 @@ export const da = {
       description: 'Om vedhæftningsmapper skal omdøbes når en note omdøbes eller flyttes.',
       name: 'Skal omdøbe vedhæftningsmapper'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Om indstillingerne for vedhæftningsmappe og filnavn skal anvendes på vedhæftninger, som ANDRE plugins opretter.',
+        part2:
+          'Nogle plugins skriver en vedhæftning direkte i boksen under deres eget navn uden at spørge Obsidian, hvor den hører hjemme. Med dette slået til flyttes og omdøbes en sådan fil, så snart den dukker op.',
+        part3: 'Kun filer oprettet, mens en note er åben, berøres — aldrig filer, der kommer fra en synkronisering eller en boks-import.'
+      },
+      name: 'Omdøb vedhæftninger oprettet af andre plugins'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Hvis aktiveret, vedhæftninger behandlet via',
@@ -342,6 +351,8 @@ export const da = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Omdøb vedhæftningsfil',
+    folderTitle: 'Vælg vedhæftningsmappe',
     previewModal: {
       title: 'Forhåndsvis vedhæftningsfil \'{{fullFileName}}\''
     },

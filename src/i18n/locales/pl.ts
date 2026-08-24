@@ -294,6 +294,15 @@ export const pl = {
       description: 'Czy przemianowywać foldery załączników, gdy notatka jest przemianowana lub przeniesiona.',
       name: 'Czy przemianować foldery załączników'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Czy stosować ustawienia folderu załączników i nazwy pliku do załączników tworzonych przez INNE wtyczki.',
+        part2:
+          'Niektóre wtyczki zapisują załącznik do skarbca pod własną nazwą, nie pytając Obsidiana, gdzie powinien trafić. Gdy ta opcja jest włączona, taki plik zostaje przeniesiony i przemianowany zaraz po pojawieniu się.',
+        part3: 'Dotyczy wyłącznie plików powstałych przy otwartej notatce, nigdy plików pochodzących z synchronizacji ani z importu skarbca.'
+      },
+      name: 'Zmieniaj nazwy załączników tworzonych przez inne wtyczki'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Jeśli włączone, załączniki przetworzone przez polecenia',
@@ -338,6 +347,8 @@ export const pl = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Zmień nazwę pliku załącznika',
+    folderTitle: 'Wybierz folder załączników',
     previewModal: {
       title: 'Podgląd pliku załącznika \'{{fullFileName}}\''
     },
