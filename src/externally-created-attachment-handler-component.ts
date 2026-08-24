@@ -1,5 +1,10 @@
-import type { TAbstractFile } from 'obsidian';
+import type {
+  EditorChange,
+  MarkdownView,
+  TAbstractFile
+} from 'obsidian';
 
+import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   App,
   Component,
@@ -180,11 +185,55 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
       await createFolderSafe(this.app, newAttachmentFolderPath);
     }
 
-    /*
-     * `renameFile` waits for a clean metadata cache, so the embed the creating plugin inserts AFTER its
-     * write has been indexed by the time the move happens and gets rewritten with everything else that
-     * references the attachment.
-     */
+    const oldAttachmentPath = attachmentFile.path;
     await this.app.fileManager.renameFile(attachmentFile, newAttachmentPath);
+    this.repointUnsavedEditorLinks(oldAttachmentPath, newAttachmentPath);
+  }
+
+  /**
+   * Repoints links the creating plugin inserted into an editor that has not been saved yet.
+   *
+   * `fileManager.renameFile` rewrites every reference the metadata cache knows about, but a plugin that
+   * inserts its embed straight into the editor the moment its write resolves leaves that text unsaved,
+   * and therefore unindexed. The rename cannot see it, so the note is left pointing at a path that no
+   * longer exists — verified against a real Obsidian, not assumed. This is the same gap the *Paste
+   * image rename* plugin closes by rewriting the current editor line by hand; every open markdown
+   * editor is checked here, since the note being written into need not be the focused one.
+   *
+   * Runs AFTER the rename, which is what makes the timing work: by then the creating plugin has had its
+   * turn to insert.
+   */
+  private repointUnsavedEditorLinks(oldPath: string, newPath: string): void {
+    // A Markdown link percent-encodes the path where a wikilink does not, so both spellings are fixed.
+    const replacements = new Map<string, string>([
+      [encodeURI(oldPath), encodeURI(newPath)],
+      [oldPath, newPath]
+    ]);
+
+    for (const leaf of this.app.workspace.getLeavesOfType(ViewType.Markdown)) {
+      const { editor } = leaf.view as MarkdownView;
+      const changes: EditorChange[] = [];
+
+      for (let line = 0; line < editor.lineCount(); line++) {
+        const text = editor.getLine(line);
+        let newText = text;
+        for (const [from, to] of replacements) {
+          newText = newText.split(from).join(to);
+        }
+
+        if (newText !== text) {
+          changes.push({
+            from: { ch: 0, line },
+            text: newText,
+            to: { ch: text.length, line }
+          });
+        }
+      }
+
+      if (changes.length > 0) {
+        // A line-scoped transaction rather than `setValue`, so the cursor and the undo history survive.
+        editor.transaction({ changes });
+      }
+    }
   }
 }

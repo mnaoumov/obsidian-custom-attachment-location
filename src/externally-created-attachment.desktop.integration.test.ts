@@ -19,8 +19,18 @@ import {
  * so renaming this file to `*.cross-platform.integration.test.ts` lifts it to Android once one exists.
  */
 
+interface EditableViewLike {
+  readonly editor?: EditorLike;
+  save?(): Promise<void>;
+}
+
+interface EditorLike {
+  replaceSelection(text: string): void;
+}
+
 interface ForeignAttachmentResult {
   readonly finalPaths: readonly string[];
+  readonly noteContent: string;
   readonly settingsFound: boolean;
 }
 
@@ -80,7 +90,7 @@ describe('Attachments created by other plugins (issue #59)', () => {
 
         const settings = findSettings();
         if (!settings) {
-          return { finalPaths: [], settingsFound: false };
+          return { finalPaths: [], noteContent: '', settingsFound: false };
         }
 
         /*
@@ -116,6 +126,16 @@ describe('Attachments created by other plugins (issue #59)', () => {
         const foreignPath = `${foreignFolder}/mx-img-${stamp}.png`;
         await app.vault.createBinary(foreignPath, new ArrayBuffer(8));
 
+        /*
+         * ...and then, as soon as that write resolves, it inserts its own embed into the editor — by
+         * which time the `create` handler has ALREADY begun moving the file. That ordering is the
+         * whole risk in catching an attachment after the fact, and it is why *Paste image rename*
+         * rewrites the current editor line by hand instead of trusting the rename to do it. Assert
+         * the embed ends up pointing at the moved file.
+         */
+        const view = leaf.view as EditableViewLike;
+        view.editor?.replaceSelection(`![[${foreignPath}]]`);
+
         const properPath = `proper-${stamp}/renamed-${stamp}.png`;
         const deadline = Date.now() + 15_000;
         while (Date.now() < deadline) {
@@ -131,22 +151,28 @@ describe('Attachments created by other plugins (issue #59)', () => {
           .map((file) => file.path)
           .filter((path) => path.includes(stamp) && path.endsWith('.png'));
 
+        await view.save?.();
+        const noteContent = await app.vault.read(note);
+
         leaf.detach();
         restoreSettings(settings);
 
-        return { finalPaths, settingsFound: true };
+        return { finalPaths, noteContent, settingsFound: true };
       },
       input: { shouldRename },
       vaultPath: getTemporaryVault().path
     });
   }
 
-  it('moves and renames a foreign attachment when the setting is on', async () => {
+  it('moves and renames a foreign attachment when the setting is on, and repoints the embed', async () => {
     const result = await run(true);
 
     expect(result.settingsFound).toBe(true);
     expect(result.finalPaths).toHaveLength(1);
     expect(result.finalPaths[0]).toMatch(/^proper-[\d-]+\/renamed-[\d-]+\.png$/);
+    // The embed the creating plugin inserted must follow the file, or the note is left broken.
+    expect(result.noteContent).toContain('renamed-');
+    expect(result.noteContent).not.toContain('mx-img-');
   }, 120_000);
 
   it('leaves a foreign attachment exactly where it was written when the setting is off', async () => {
@@ -155,5 +181,7 @@ describe('Attachments created by other plugins (issue #59)', () => {
     expect(result.settingsFound).toBe(true);
     expect(result.finalPaths).toHaveLength(1);
     expect(result.finalPaths[0]).toMatch(/^foreign-[\d-]+\/mx-img-[\d-]+\.png$/);
+    // Nothing moved, so the embed still points where the creating plugin put it.
+    expect(result.noteContent).toContain('mx-img-');
   }, 120_000);
 });

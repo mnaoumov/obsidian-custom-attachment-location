@@ -6,10 +6,15 @@ import type {
 import type { StrictProxyPartial } from 'obsidian-dev-utils/strict-proxy';
 import type { MockInstance } from 'vitest';
 
+import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
 import { printError } from 'obsidian-dev-utils/error';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
-import { App } from 'obsidian-test-mocks/obsidian';
+import {
+  App,
+  Editor,
+  MarkdownView
+} from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
   beforeEach,
@@ -302,6 +307,53 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
     await createForeignAttachment('notes/assets/already-right.png');
 
     expect(renameFileSpy).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Opens a markdown leaf holding `content`, standing in for the note a foreign plugin has just
+   * inserted its embed into but whose editor has not saved yet.
+   */
+  async function openEditorWith(content: string): Promise<Editor> {
+    const leaf = app.workspace.getLeaf(true);
+    const view = MarkdownView.create2__(leaf);
+    await leaf.open(view.asOriginalType7__());
+    await leaf.setViewState({ type: ViewType.Markdown });
+    view.editor.setValue(content);
+    return view.editor;
+  }
+
+  it('should repoint a link the creating plugin left unsaved in an editor', async () => {
+    await setUp();
+    /*
+     * The rename only rewrites references the metadata cache knows about, and an embed inserted into
+     * an unsaved editor is not one of them — without the editor pass the note keeps pointing at a
+     * path that no longer exists.
+     */
+    const editor = await openEditorWith(`intro\n![[${FOREIGN_ATTACHMENT_PATH}]]\noutro`);
+
+    await createForeignAttachment();
+
+    expect(editor.getValue()).toBe('intro\n![[notes/assets/renamed.png]]\noutro');
+  });
+
+  it('should repoint a percent-encoded Markdown link too', async () => {
+    await setUp();
+    const editor = await openEditorWith(`![](${encodeURI(FOREIGN_ATTACHMENT_PATH)})`);
+
+    await createForeignAttachment();
+
+    expect(editor.getValue()).toBe('![](notes/assets/renamed.png)');
+  });
+
+  it('should leave an editor that does not mention the attachment untouched', async () => {
+    await setUp();
+    const editor = await openEditorWith('nothing to do with it');
+    const transactionSpy = vi.spyOn(editor, 'transaction');
+
+    await createForeignAttachment();
+
+    expect(transactionSpy).not.toHaveBeenCalled();
+    expect(editor.getValue()).toBe('nothing to do with it');
   });
 
   it('should report a failed move instead of swallowing it', async () => {
