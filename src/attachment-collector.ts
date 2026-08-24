@@ -17,6 +17,10 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
+import {
+  findAttachmentUnitFolderPath,
+  rebasePathOntoFolder
+} from 'obsidian-dev-utils/obsidian/attachment-unit-folder';
 import { getCanvasReferences } from 'obsidian-dev-utils/obsidian/canvas';
 import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
@@ -60,10 +64,6 @@ import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
-import {
-  findAttachmentUnitFolderPath,
-  rebasePathOntoFolder
-} from './attachment-unit-folder.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import {
   findNotePriorityRank,
