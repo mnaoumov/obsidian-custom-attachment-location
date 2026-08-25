@@ -374,6 +374,7 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Move attachment to proper folder used by multiple notes mode');
     expect(names).toContain('Empty folder behavior');
     expect(names).toContain('Should delete orphan attachments');
+    expect(names).toContain('Should rescue shared attachments');
     expect(names).toContain('Special characters');
     expect(names).toContain('Special characters replacement');
     expect(names).toContain('Should rename collected attachments');
@@ -442,6 +443,31 @@ describe('PluginSettingsTab', () => {
     captured?.toggle.setValue(true);
     await waitForAllAsyncOperations();
     expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should re-evaluate the predicates when the delete-orphan-attachments toggle changes', async () => {
+    const { tab, toggles } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = toggles.find((entry) => entry.name === 'Should delete orphan attachments');
+    expect(captured).toBeDefined();
+    captured?.toggle.setValue(true);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should disable the rescue row while orphan attachments are not deleted', async () => {
+    // The rescue rides on the delete path, so with deletions unhandled the toggle would do nothing.
+    const { tab } = await createTab();
+    expect(isRowDisabled(tab, 'Should rescue shared attachments')).toBe(true);
+  });
+
+  it('should enable the rescue row once orphan attachments are deleted', async () => {
+    const { tab } = await createTab((settings) => {
+      settings.shouldDeleteOrphanAttachments = true;
+    });
+    expect(isRowDisabled(tab, 'Should rescue shared attachments')).toBe(false);
   });
 
   it('should render the network image download timeout setting when downloading is enabled', async () => {
