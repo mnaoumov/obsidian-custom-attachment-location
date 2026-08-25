@@ -454,6 +454,15 @@ export const defaultTranslations = {
       },
       name: 'Should rename collected attachments'
     },
+    shouldRescueSharedAttachments: {
+      description: {
+        part1: 'If enabled, when a note or its attachment folder is deleted while another note still references one of its attachments, that attachment is moved into the surviving note\'s attachment folder instead of being left behind in the deleted note\'s folder. Its file name is kept.',
+        part2: 'It moves only when a single note is left referencing the attachment, or when the',
+        part3: 'setting names a clear winner among several. Otherwise the attachment stays where it is.',
+        part4: 'Takes effect only while orphan attachments are deleted.'
+      },
+      name: 'Should rescue shared attachments'
+    },
     shouldSetLinkDisplayTextToAttachmentFileName: {
       description: 'If enabled, when a link to an attachment is inserted, its display text is set to the attachment file name (without extension). Does not affect links between notes.',
       name: 'Set link display text to attachment file name'

@@ -369,7 +369,34 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             render: (setting) => {
               setting.addToggle((toggle) => {
                 this.bind({
+                  onChanged: () => {
+                    // The row below only reads this value through its `disabled` predicate.
+                    this.refreshDomState();
+                  },
                   propertyName: 'shouldDeleteOrphanAttachments',
+                  valueComponent: toggle
+                });
+              });
+            }
+          }),
+          this.settingEx({
+            desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.description.part1));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.description.part2));
+              f.appendText(' ');
+              appendCodeBlock(f, t(($) => $.pluginSettingsTab.notePriorities.name));
+              f.appendText(' ');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.description.part3));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.description.part4));
+            }),
+            disabled: () => !this.pluginSettingsComponent.settings.shouldDeleteOrphanAttachments,
+            name: t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.name),
+            render: (setting) => {
+              setting.addToggle((toggle) => {
+                this.bind({
+                  propertyName: 'shouldRescueSharedAttachments',
                   valueComponent: toggle
                 });
               });

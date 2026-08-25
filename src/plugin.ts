@@ -13,6 +13,7 @@ import { ValueWrapper } from 'obsidian-dev-utils/value-wrapper';
 import { ArrayBufferMap } from './array-buffer-map.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
 import { AttachmentPathManager } from './attachment-path-manager.ts';
+import { AttachmentRescuer } from './attachment-rescue.ts';
 import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
@@ -137,6 +138,12 @@ export class Plugin extends PluginBase {
       })
     );
 
+    const attachmentRescuer = new AttachmentRescuer({
+      app: this.app,
+      attachmentPathManager,
+      pluginSettingsComponent
+    });
+
     this.addChild(
       new RenameDeleteHandlerComponent({
         abortSignalComponent: this.abortSignalComponent,
@@ -149,6 +156,7 @@ export class Plugin extends PluginBase {
         resourceLockComponent: this.resourceLockComponent,
         settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => ({
           emptyFolderBehavior: pluginSettingsComponent.settings.emptyFolderBehavior,
+          getRescuePath: async (params) => await attachmentRescuer.getRescuePath(params),
           isNote: (path: string): boolean => pluginSettingsComponent.isNoteEx(path),
           isPathIgnored: (path: string): boolean => pluginSettingsComponent.settings.isPathIgnored(path),
           shouldHandleDeletions: pluginSettingsComponent.settings.shouldDeleteOrphanAttachments,

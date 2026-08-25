@@ -87,6 +87,20 @@ export class PluginSettings {
   public shouldRenameAttachmentFiles = false;
   public shouldRenameAttachmentFolder = true;
   public shouldRenameCollectedAttachments = false;
+
+  /**
+   * Whether to move an attachment that a deletion would otherwise strand.
+   *
+   * When a note (or its attachment folder) is deleted while another note still references one of its
+   * attachments, the attachment survives but is left sitting in a folder whose owning note is gone.
+   * With this on, it is moved into the surviving note's attachment folder instead, keeping its file
+   * name.
+   *
+   * Takes effect only while `shouldDeleteOrphanAttachments` is on — that is the setting which hands
+   * the delete path to the rename/delete handler in the first place.
+   */
+  public shouldRescueSharedAttachments = false;
+
   public shouldSetLinkDisplayTextToAttachmentFileName = false;
   public shouldSkipCollectingAttachmentsReferencedByRawPath = false;
   public specialCharacters = String.raw`#^[]|*\<>:?/`;

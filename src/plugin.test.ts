@@ -26,6 +26,7 @@ import {
 import { ArrayBufferMap } from './array-buffer-map.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
 import { AttachmentPathManager } from './attachment-path-manager.ts';
+import { AttachmentRescuer } from './attachment-rescue.ts';
 import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
@@ -46,6 +47,7 @@ import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 // --- Hoisted shared state ---
 
 const hoisted = vi.hoisted(() => ({
+  getRescuePath: vi.fn((_params: unknown): Promise<null | string> => Promise.resolve('assets/note-b/shared.png')),
   isNoteEx: vi.fn((_path: string): boolean => true),
   isPathIgnored: vi.fn((_path: string): boolean => false),
   settings: {
@@ -95,6 +97,15 @@ vi.mock('./attachment-collector.ts', () => ({
 
 vi.mock('./attachment-path-manager.ts', () => ({
   AttachmentPathManager: vi.fn()
+}));
+
+vi.mock('./attachment-rescue.ts', () => ({
+  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works.
+  AttachmentRescuer: vi.fn(function attachmentRescuerStub() {
+    return {
+      getRescuePath: (params: unknown): Promise<null | string> => hoisted.getRescuePath(params)
+    };
+  })
 }));
 
 vi.mock('./attachment-saver.ts', () => ({
@@ -198,6 +209,7 @@ interface RenameDeleteHandlerParamsProbe {
 
 interface SettingsBuilderProbe {
   emptyFolderBehavior: string;
+  getRescuePath(params: unknown): Promise<null | string>;
   isNote(path: string): boolean;
   isPathIgnored(path: string): boolean;
   shouldUpdateFileNameAliases: boolean;
@@ -262,6 +274,7 @@ describe('Plugin', () => {
     expect(PluginSettingsComponent).toHaveBeenCalledOnce();
     expect(TokenValidator).toHaveBeenCalledOnce();
     expect(AttachmentPathManager).toHaveBeenCalledOnce();
+    expect(AttachmentRescuer).toHaveBeenCalledOnce();
     expect(ArrayBufferMap).toHaveBeenCalledOnce();
     expect(ImageSizeMap).toHaveBeenCalledOnce();
     expect(MarkdownUrlMap).toHaveBeenCalledOnce();
@@ -353,6 +366,19 @@ describe('Plugin', () => {
     const settings = getSettingsBuilder()();
     expect(settings.isNote('note.md')).toBe(false);
     expect(hoisted.isNoteEx).toHaveBeenCalledWith('note.md');
+  });
+
+  it('should delegate getRescuePath in the settings builder to the attachment rescuer', async () => {
+    const plugin = new Plugin(app, manifest);
+    await plugin.onload();
+
+    const rescueParams = {
+      attachmentPath: 'assets/note-a/shared.png',
+      survivingNotePaths: ['note-b.md']
+    };
+    const settings = getSettingsBuilder()();
+    await expect(settings.getRescuePath(rescueParams)).resolves.toBe('assets/note-b/shared.png');
+    expect(hoisted.getRescuePath).toHaveBeenCalledWith(rescueParams);
   });
 
   it('should delegate isPathIgnored in the settings builder to the plugin settings', async () => {
