@@ -1,7 +1,8 @@
 import type {
   EditorChange,
   MarkdownView,
-  TAbstractFile
+  TAbstractFile,
+  WorkspaceLeaf
 } from 'obsidian';
 
 import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
@@ -14,6 +15,7 @@ import { convertAsyncToSync } from 'obsidian-dev-utils/async';
 import { printError } from 'obsidian-dev-utils/error';
 import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 import {
+  basename,
   dirname,
   join,
   makeFileName
@@ -74,6 +76,38 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
     this.registerEvent(this.app.vault.on('create', convertAsyncToSync(this.handleCreate.bind(this))));
   }
 
+  /**
+   * Resolves the note the templates are evaluated against.
+   *
+   * Usually that is simply the active file. But a foreign plugin need not be driven from a note at all:
+   * Media Extended's screenshot command is issued from its OWN player leaf, so the active file is the
+   * VIDEO, and taking the active file at face value would abandon every screenshot taken the way the
+   * reporter of issue #59 takes them — confirmed against the real plugin, not reasoned about.
+   *
+   * The attachment still belongs to a note (Media Extended inserts its embed into the media note), so
+   * fall back to the most recently active markdown leaf, which is that note.
+   */
+  private findNoteFile(): null | TFile {
+    const activeFile = this.app.workspace.getActiveFile();
+    if (activeFile && this.pluginSettingsComponent.isNoteEx(activeFile)) {
+      return activeFile;
+    }
+
+    let mostRecentLeaf: null | WorkspaceLeaf = null;
+    for (const leaf of this.app.workspace.getLeavesOfType(ViewType.Markdown)) {
+      if (!mostRecentLeaf || leaf.activeTime > mostRecentLeaf.activeTime) {
+        mostRecentLeaf = leaf;
+      }
+    }
+
+    const noteFile = (mostRecentLeaf?.view as MarkdownView | undefined)?.file ?? null;
+    if (!noteFile || !this.pluginSettingsComponent.isNoteEx(noteFile)) {
+      return null;
+    }
+
+    return noteFile;
+  }
+
   private async handleCreate(abstractFile: TAbstractFile): Promise<void> {
     if (!this.pluginSettingsComponent.settings.shouldRenameAttachmentsCreatedByOtherPlugins) {
       return;
@@ -114,9 +148,9 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
       return;
     }
 
-    const noteFile = this.app.workspace.getActiveFile();
+    const noteFile = this.findNoteFile();
     // The templates are relative to a note. Without one there is nothing to resolve them against.
-    if (!noteFile || !this.pluginSettingsComponent.isNoteEx(noteFile)) {
+    if (!noteFile) {
       return;
     }
 
@@ -187,7 +221,7 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
 
     const oldAttachmentPath = attachmentFile.path;
     await this.app.fileManager.renameFile(attachmentFile, newAttachmentPath);
-    this.repointUnsavedEditorLinks(oldAttachmentPath, newAttachmentPath);
+    this.repointUnsavedEditorLinks(oldAttachmentPath, newAttachmentPath, attachmentFile, noteFile);
   }
 
   /**
@@ -203,12 +237,30 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
    * Runs AFTER the rename, which is what makes the timing work: by then the creating plugin has had its
    * turn to insert.
    */
-  private repointUnsavedEditorLinks(oldPath: string, newPath: string): void {
-    // A Markdown link percent-encodes the path where a wikilink does not, so both spellings are fixed.
-    const replacements = new Map<string, string>([
+  private repointUnsavedEditorLinks(oldPath: string, newPath: string, attachmentFile: TFile, noteFile: TFile): void {
+    /*
+     * Four spellings, longest first — replacing the full path before the bare file name matters, since
+     * the former contains the latter.
+     *
+     * The bare file name is not an edge case: Obsidian's shortest-form links are the DEFAULT, and Media
+     * Extended inserts exactly that — `![[<file name>|<alias>]]`, no folder at all — so a full-path-only
+     * rewrite left the reporter's note pointing at a file that no longer exists. Confirmed by driving
+     * the real plugin, which is the only reason it was caught.
+     */
+    const newLinkText = this.app.metadataCache.fileToLinktext(attachmentFile, noteFile.path);
+    const oldFileName = basename(oldPath);
+    /*
+     * An ORDERED list, not a `Map` — the order is part of the behavior, and a sorted-map lint rule would
+     * silently reorder it into a bug.
+     *
+     * A Markdown link percent-encodes the path where a wikilink does not, so both spellings are fixed.
+     */
+    const replacements: readonly (readonly [string, string])[] = [
       [encodeURI(oldPath), encodeURI(newPath)],
-      [oldPath, newPath]
-    ]);
+      [oldPath, newPath],
+      [encodeURI(oldFileName), encodeURI(newLinkText)],
+      [oldFileName, newLinkText]
+    ];
 
     for (const leaf of this.app.workspace.getLeavesOfType(ViewType.Markdown)) {
       const { editor } = leaf.view as MarkdownView;

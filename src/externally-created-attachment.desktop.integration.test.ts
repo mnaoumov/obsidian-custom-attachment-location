@@ -134,7 +134,12 @@ describe('Attachments created by other plugins (issue #59)', () => {
          * the embed ends up pointing at the moved file.
          */
         const view = leaf.view as EditableViewLike;
-        view.editor?.replaceSelection(`![[${foreignPath}]]`);
+        /*
+         * The SHORTEST-FORM spelling, `![[<file name>|<alias>]]`, because that is what Obsidian's link
+         * generation produces by default and therefore what Media Extended actually inserts. Asserting
+         * only the full-path spelling here is what let a dangling embed ship past this suite once.
+         */
+        view.editor?.replaceSelection(`![[mx-img-${stamp}.png|Some title]]`);
 
         const properPath = `proper-${stamp}/renamed-${stamp}.png`;
         const deadline = Date.now() + 15_000;

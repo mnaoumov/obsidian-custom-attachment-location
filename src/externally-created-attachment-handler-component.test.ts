@@ -36,7 +36,16 @@ vi.mock('obsidian-dev-utils/error', () => ({
   printError: vi.fn<(error: unknown) => void>()
 }));
 
+interface ActiveTimeLike {
+  activeTime: number;
+}
+
+interface FileViewLike {
+  file: null | TFile;
+}
+
 interface GetAttachmentFolderFullPathForPathParams {
+  readonly notePath?: string | undefined;
   readonly readAttachmentFileContent?: (() => Promise<ArrayBuffer>) | undefined;
 }
 
@@ -303,6 +312,22 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
     return view.editor;
   }
 
+  /**
+   * Opens the note in a markdown leaf, so the leaf carries a `file` the handler can fall back to when
+   * the ACTIVE file is not a note at all.
+   */
+  async function openNoteLeaf(notePath = NOTE_PATH, activeTime?: number): Promise<void> {
+    await openEditorWith('');
+    const leaf = getApp().workspace.getLeavesOfType(ViewType.Markdown).at(-1);
+    // `obsidian-test-mocks` puts neither a file nor an `activeTime` on a leaf, so stand both up.
+    const view: unknown = leaf?.view;
+    (view as FileViewLike).file = getApp().vault.getFileByPath(notePath);
+    if (activeTime !== undefined) {
+      const leafValue: unknown = leaf;
+      (leafValue as ActiveTimeLike).activeTime = activeTime;
+    }
+  }
+
   it('should repoint a link the creating plugin left unsaved in an editor', async () => {
     await setUp();
     /*
@@ -315,6 +340,60 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
     await createForeignAttachment();
 
     expect(editor.getValue()).toBe('intro\n![[notes/assets/renamed.png]]\noutro');
+  });
+
+  it('should repoint a shortest-form wikilink, the spelling Obsidian actually inserts', async () => {
+    await setUp();
+    /*
+     * Media Extended inserts `![[<file name>|<alias>]]` — no folder at all, because shortest-form links
+     * are Obsidian's default. Repointing only the full-path spelling left that embed dangling; caught
+     * by driving the real plugin, so it is asserted here.
+     */
+    const editor = await openEditorWith('![[mx-img-abc.png|Some title]]');
+
+    await createForeignAttachment();
+
+    expect(editor.getValue()).toBe('![[renamed.png|Some title]]');
+  });
+
+  it('should resolve the note from the most recent markdown leaf when the active file is not a note', async () => {
+    /*
+     * The creating plugin need not be driven from a note: Media Extended's screenshot command runs in
+     * its own player leaf, so the active file is the VIDEO. Taking that at face value abandoned every
+     * screenshot taken the way issue #59's reporter takes them.
+     *
+     * The video is written before the component is listening, so it is a player's media rather than
+     * another foreign creation to react to.
+     */
+    const videoFile = await getApp().vault.createBinary('some-video.mp4', new ArrayBuffer(4));
+    await setUp();
+    await openNoteLeaf();
+    vi.spyOn(getApp().workspace, 'getActiveFile').mockReturnValue(videoFile);
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).toHaveBeenCalledOnce();
+    expect(renameFileSpy.mock.calls[0]?.[1]).toBe('notes/assets/renamed.png');
+  });
+
+  it('should pick the MOST recently active markdown leaf, not merely the first open one', async () => {
+    let chosenNotePath: string | undefined;
+    await setUp({
+      onGetAttachmentFolderFullPathForPath: (params): void => {
+        chosenNotePath = params.notePath;
+      }
+    });
+    await getApp().vault.create('notes/stale.md', '');
+    await getApp().vault.create('notes/newest.md', '');
+    await getApp().vault.create('notes/middling.md', '');
+    await openNoteLeaf('notes/stale.md', 1);
+    await openNoteLeaf('notes/newest.md', 9);
+    await openNoteLeaf('notes/middling.md', 5);
+    vi.spyOn(getApp().workspace, 'getActiveFile').mockReturnValue(null);
+
+    await createForeignAttachment();
+
+    expect(chosenNotePath).toBe('notes/newest.md');
   });
 
   it('should repoint a percent-encoded Markdown link too', async () => {
