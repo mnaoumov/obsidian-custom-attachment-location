@@ -4,13 +4,7 @@ Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian
 
 **How to try it:** open [01 Attachment folder location](<./01 Attachment folder location.md>) and paste an image into it. With this vault's default settings, the file lands in a per-note folder such as `assets/01 Attachment folder location/` instead of one global pile. You supply the pasted or dragged file - the plugin decides where it goes and what it is called.
 
-Most of this vault is driven by you supplying a file, so there is little to click. The one exception is
-[08 Delete unused attachments](<./08 Delete unused attachments.md>), which carries a **code button** — a
-captioned rectangle that runs the code it contains when you click it, showing the result underneath, with
-a `</>` toggle beside it that reveals the source. It is powered by
-[`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault
-installs for you on first open. The note spells out the manual equivalent too, so you never strictly
-need it.
+Most of this vault is driven by you supplying a file, so there is little to click. The one exception is [08 Delete unused attachments](<./08 Delete unused attachments.md>), which carries a **code button** — a captioned rectangle that runs the code it contains when you click it, showing the result underneath, with a `</>` toggle beside it that reveals the source. It is powered by [`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault installs for you on first open. The note spells out the manual equivalent too, so you never strictly need it.
 
 ## Features
 

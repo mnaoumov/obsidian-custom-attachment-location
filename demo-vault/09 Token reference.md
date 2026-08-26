@@ -1,12 +1,8 @@
 # Token reference
 
-Every token, its format schema and worked examples. This is the catalog you scan when you already
-know you want a token and need its exact spelling or options; for what a pattern *is* and the
-handful of tokens most people use, start at [03 Tokens and patterns](<./03 Tokens and patterns.md>).
+Every token, its format schema and worked examples. This is the catalog you scan when you already know you want a token and need its exact spelling or options; for what a pattern *is* and the handful of tokens most people use, start at [03 Tokens and patterns](<./03 Tokens and patterns.md>).
 
-Tokens work in the three pattern settings: `attachmentFolderPath`, `generatedAttachmentFileName`
-and `markdownUrlFormat` — see [06 Settings](<./06 Settings.md>). To define your own, see
-[04 Custom tokens](<./04 Custom tokens.md>).
+Tokens work in the three pattern settings: `attachmentFolderPath`, `generatedAttachmentFileName` and `markdownUrlFormat` — see [06 Settings](<./06 Settings.md>). To define your own, see [04 Custom tokens](<./04 Custom tokens.md>).
 
 Token strings:
 
@@ -422,14 +418,9 @@ File name of the original attachment file.
 
 The value asked from the user prompt.
 
-The modal opens with the input already focused and the pre-filled value selected, so you can type the
-new name straight away — the first keystroke replaces what is there. `defaultValueTemplate` controls
-what it is pre-filled with; set it to something other than the attachment's own name if you would
-rather start from `${uuid}`, `${date}`, or anything else.
+The modal opens with the input already focused and the pre-filled value selected, so you can type the new name straight away — the first keystroke replaces what is there. `defaultValueTemplate` controls what it is pre-filled with; set it to something other than the attachment's own name if you would rather start from `${uuid}`, `${date}`, or anything else.
 
-The heading names what you are deciding: **Rename attachment file** when `${prompt}` sits in the
-generated file name, **Choose attachment folder** when it sits in the attachment folder path. The
-second line shows the whole template with the current token highlighted.
+The heading names what you are deciding: **Rename attachment file** when `${prompt}` sits in the generated file name, **Choose attachment folder** when it sits in the attachment folder path. The second line shows the whole template with the current token highlighted.
 
 Also in the prompt modal, you can preview the file, if it is supported by Obsidian (image, video, pdf).
 
