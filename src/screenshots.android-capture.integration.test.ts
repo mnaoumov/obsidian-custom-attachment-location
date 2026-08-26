@@ -39,7 +39,7 @@ import {
   readPngDimensions
 } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
-import sharp from 'sharp';
+import { sharp } from 'sharp';
 import {
   beforeAll,
   describe,
