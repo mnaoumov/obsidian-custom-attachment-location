@@ -18,6 +18,7 @@ import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
+import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './command-handlers/delete-unused-attachments-entire-vault-command-handler.ts';
 import { DeleteUnusedAttachmentsInFileCommandHandler } from './command-handlers/delete-unused-attachments-in-file-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
@@ -192,6 +193,7 @@ export class Plugin extends PluginBase {
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
       attachmentPathManager,
+      pluginName: this.manifest.name,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent
     });
@@ -208,6 +210,9 @@ export class Plugin extends PluginBase {
       }),
       new CollectAttachmentsEntireVaultCommandHandler({
         attachmentCollector
+      }),
+      new DeleteUnusedAttachmentsEntireVaultCommandHandler({
+        unusedAttachmentsRemover
       }),
       new MoveAttachmentToProperFolderCommandHandler({
         abortSignalComponent: this.abortSignalComponent,

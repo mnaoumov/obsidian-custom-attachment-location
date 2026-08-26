@@ -31,6 +31,7 @@ import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
+import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './command-handlers/delete-unused-attachments-entire-vault-command-handler.ts';
 import { DeleteUnusedAttachmentsInFileCommandHandler } from './command-handlers/delete-unused-attachments-in-file-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
@@ -292,6 +293,7 @@ describe('Plugin', () => {
       expect.any(DeleteUnusedAttachmentsInFileCommandHandler),
       expect.any(CollectAttachmentsInCurrentFolderCommandHandler),
       expect.any(CollectAttachmentsEntireVaultCommandHandler),
+      expect.any(DeleteUnusedAttachmentsEntireVaultCommandHandler),
       expect.any(MoveAttachmentToProperFolderCommandHandler),
       expect.any(OpenDemoVaultCommandHandler)
     ]);

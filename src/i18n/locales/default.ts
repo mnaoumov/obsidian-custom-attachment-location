@@ -40,12 +40,19 @@ export const defaultTranslations = {
     collectAttachmentsCurrentNote: 'Collect attachments in current note',
     collectAttachmentsEntireVault: 'Collect attachments in entire vault',
     deleteUnusedAttachmentsCurrentNote: 'Delete unused attachments in current note',
+    deleteUnusedAttachmentsEntireVault: 'Delete unused attachments in entire vault',
     moveAttachmentToProperFolder: 'Move attachment to proper folder'
   },
   deleteUnusedAttachments: {
     confirm: {
+      andMore: '... and {{count}} more.',
+      count: '{{count}} attachment(s) will be moved to the trash.',
       part1: 'The following unused attachments will be moved to the trash:',
       part2: 'This operation cannot be undone.'
+    },
+    progressBar: {
+      message: 'Scanning for unused attachments {{iterationString}} - \'{{noteFilePath}}\'.',
+      title: 'Scanning for unused attachments...'
     }
   },
   menuItems: {

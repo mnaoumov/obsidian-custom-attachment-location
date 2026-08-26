@@ -20,6 +20,7 @@ import {
 import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
+import { loop } from 'obsidian-dev-utils/obsidian/loop';
 import {
   getBacklinksForFileSafe,
   getCacheSafe,
@@ -42,10 +43,17 @@ import { ActionContext } from './token-evaluator-context.ts';
 // `./assets/${noteFileName}` does not), so a placeholder name is enough to resolve the folder to scan.
 const PLACEHOLDER_ATTACHMENT_FILE_NAME = 'unused-attachment';
 
+/**
+ * How many paths the confirmation dialog names before summarizing the rest. Enough to recognize what
+ * the sweep found, short enough that the buttons stay on screen.
+ */
+const CONFIRM_LIST_LIMIT = 50;
+
 interface UnusedAttachmentsRemoverConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -54,6 +62,7 @@ export class UnusedAttachmentsRemover {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
@@ -61,8 +70,18 @@ export class UnusedAttachmentsRemover {
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
+  }
+
+  public deleteUnusedAttachmentsEntireVault(): void {
+    addToQueue({
+      abortSignal: this.abortSignalComponent.abortSignal,
+      operationFunction: (abortSignal) => this.deleteUnusedAttachmentsInAbstractFilesImpl([this.app.vault.getRoot()], abortSignal),
+      operationName: t(($) => $.commands.deleteUnusedAttachmentsEntireVault),
+      timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
+    });
   }
 
   public deleteUnusedAttachmentsInAbstractFiles(abstractFiles: TAbstractFile[]): void {
@@ -97,17 +116,32 @@ export class UnusedAttachmentsRemover {
     // Compute the full set of attachments to trash BEFORE deleting anything, so the confirmation
     // Modal lists exactly what will be removed.
     const unusedAttachments = new Set<TFile>();
-    for (const noteFile of noteFiles) {
-      abortSignal.throwIfAborted();
-      if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
-        console.warn(`Cannot delete unused attachments as note path is ignored: ${noteFile.path}.`);
-        continue;
-      }
 
-      for (const attachment of await this.findUnusedAttachments(noteFile, abortSignal)) {
-        unusedAttachments.add(attachment);
-      }
-    }
+    /*
+     * The scan is the slow half, and vault-wide it walks every note in the vault while looking up the
+     * backlinks of every attachment it meets — minutes on a large vault, with nothing on screen. The
+     * progress notice is what makes that survivable, and what gives the user somewhere to cancel.
+     */
+    await loop({
+      abortSignal,
+      buildNoticeMessage: ({ item, iterationString }) => t(($) => $.deleteUnusedAttachments.progressBar.message, { iterationString, noteFilePath: item.path }),
+      items: noteFiles,
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      processItem: async (noteFile) => {
+        abortSignal.throwIfAborted();
+        if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
+          console.warn(`Cannot delete unused attachments as note path is ignored: ${noteFile.path}.`);
+          return;
+        }
+
+        for (const attachment of await this.findUnusedAttachments(noteFile, abortSignal)) {
+          unusedAttachments.add(attachment);
+        }
+      },
+      progressBarTitle: `${this.pluginName}: ${t(($) => $.deleteUnusedAttachments.progressBar.title)}`,
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
+    });
 
     if (unusedAttachments.size === 0) {
       this.pluginNoticeComponent.showNotice(t(($) => $.notice.noUnusedAttachments));
@@ -122,10 +156,22 @@ export class UnusedAttachmentsRemover {
       message: createFragment((f) => {
         f.appendText(t(($) => $.deleteUnusedAttachments.confirm.part1));
         f.createEl('br');
+        /*
+         * The COUNT, always, and before the list. Vault-wide this dialog can be asked to name
+         * thousands of files, at which point an unbounded list is not a safety check — it is a wall
+         * the user scrolls past. The number is the part they can actually weigh.
+         */
+        f.createEl('strong', { text: t(($) => $.deleteUnusedAttachments.confirm.count, { count: attachmentsToDelete.length }) });
+        f.createEl('br');
         f.createEl('ul', {}, (ul) => {
-          for (const attachment of attachmentsToDelete) {
+          for (const attachment of attachmentsToDelete.slice(0, CONFIRM_LIST_LIMIT)) {
             ul.createEl('li', {}, (li) => {
               appendCodeBlock(li, attachment.path);
+            });
+          }
+          if (attachmentsToDelete.length > CONFIRM_LIST_LIMIT) {
+            ul.createEl('li', {
+              text: t(($) => $.deleteUnusedAttachments.confirm.andMore, { count: attachmentsToDelete.length - CONFIRM_LIST_LIMIT })
             });
           }
         });
