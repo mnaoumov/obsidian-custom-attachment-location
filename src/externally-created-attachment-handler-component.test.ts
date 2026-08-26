@@ -1,7 +1,6 @@
 import type {
   TAbstractFile,
-  TFile,
-  TFolder
+  TFile
 } from 'obsidian';
 import type { StrictProxyPartial } from 'obsidian-dev-utils/strict-proxy';
 import type { MockInstance } from 'vitest';
@@ -9,6 +8,7 @@ import type { MockInstance } from 'vitest';
 import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
 import { printError } from 'obsidian-dev-utils/error';
 import { noopAsync } from 'obsidian-dev-utils/function';
+import { dirname } from 'obsidian-dev-utils/path';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   App,
@@ -121,50 +121,27 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
   }
 
   /**
-   * Writes a file the way a foreign plugin does — a path of its own, straight through
-   * `createBinary` — WITHOUT firing the creation the handler reacts to.
+   * Creates a file the way a foreign plugin does — a path of its own, straight through
+   * `createBinary`.
    *
-   * Writing and firing are separate steps because `obsidian-test-mocks` leaves `TFile.stat` at
-   * all-zeroes (its vault never copies the adapter's stat onto the file), so a test has to stamp the
-   * stat itself before the event — something the real Obsidian has already done by the time it fires
-   * `create`.
+   * That single call is the whole simulation: `obsidian-test-mocks` stats the new file from the
+   * adapter and fires `create` for it, exactly as the real vault does, so nothing here stamps a
+   * `ctime` or fires the event by hand.
    */
-  async function writeForeignFile(path = FOREIGN_ATTACHMENT_PATH): Promise<TFile> {
-    await getApp().vault.createFolder('wherever');
-    await getApp().vault.createBinary(path, new ArrayBuffer(4));
+  async function createForeignAttachment(path = FOREIGN_ATTACHMENT_PATH): Promise<TFile> {
+    const parentFolderPath = dirname(path);
+    if (!await getApp().vault.exists(parentFolderPath)) {
+      await getApp().vault.createFolder(parentFolderPath);
+    }
+
+    const file = await getApp().vault.createBinary(path, new ArrayBuffer(4));
     await flush();
-    const file = getFile(path);
-    file.stat.ctime = Date.now();
     return file;
   }
 
   async function fireCreate(abstractFile: TAbstractFile): Promise<void> {
     getApp().vault.trigger('create', abstractFile);
     await flush();
-  }
-
-  function getFile(path: string): TFile {
-    const file = getApp().vault.getFileByPath(path);
-    if (!file) {
-      throw new Error(`No file at ${path}`);
-    }
-
-    return file;
-  }
-
-  function getFolder(path: string): TFolder {
-    const folder = getApp().vault.getFolderByPath(path);
-    if (!folder) {
-      throw new Error(`No folder at ${path}`);
-    }
-
-    return folder;
-  }
-
-  async function createForeignAttachment(path = FOREIGN_ATTACHMENT_PATH): Promise<TFile> {
-    const file = await writeForeignFile(path);
-    await fireCreate(file);
-    return file;
   }
 
   async function flush(): Promise<void> {
@@ -228,37 +205,41 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
 
   it('should ignore a file the plugin wrote itself', async () => {
     await setUp();
-    const file = await writeForeignFile();
+    // The plugin claims the path BEFORE writing it, which is the order the component documents.
+    selfWriteRegistry.register(FOREIGN_ATTACHMENT_PATH);
 
-    selfWriteRegistry.register(file.path);
-    await fireCreate(file);
+    await createForeignAttachment();
 
     expect(renameFileSpy).not.toHaveBeenCalled();
   });
 
   it('should ignore a newly created note', async () => {
     await setUp();
-    await getApp().vault.create('notes/another.md', '');
-    const noteFile = getFile('notes/another.md');
-    noteFile.stat.ctime = Date.now();
 
-    await fireCreate(noteFile);
+    await getApp().vault.create('notes/another.md', '');
+    await flush();
 
     expect(renameFileSpy).not.toHaveBeenCalled();
   });
 
   it('should ignore a folder', async () => {
     await setUp();
-    await getApp().vault.createFolder('some-folder');
 
-    await fireCreate(getFolder('some-folder'));
+    await getApp().vault.createFolder('some-folder');
+    await flush();
 
     expect(renameFileSpy).not.toHaveBeenCalled();
   });
 
   it('should ignore a file that already existed, such as one arriving from a sync', async () => {
+    /*
+     * Written before the component is listening, so its own `create` goes unheard — then `create`
+     * replays for it, the way a sync catching up or a folder import replays one for a file that
+     * already existed.
+     */
+    await getApp().vault.createFolder('wherever');
+    const file = await getApp().vault.createBinary(FOREIGN_ATTACHMENT_PATH, new ArrayBuffer(4));
     await setUp();
-    const file = await writeForeignFile();
     // Backdated past the window, the way a synced or imported file looks when `create` replays.
     file.stat.ctime = Date.now() - FRESHLY_CREATED_THRESHOLD_IN_MILLISECONDS - 1;
 
