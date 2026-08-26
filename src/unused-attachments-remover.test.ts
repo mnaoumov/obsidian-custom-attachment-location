@@ -125,6 +125,10 @@ const mockTrashSafe = vi.mocked(trashSafe);
 const PLUGIN_NAME = 'Custom Attachment Location';
 const ATTACHMENT_FOLDER_PATH = 'assets/note';
 
+interface ConfirmParamsLike {
+  message: DocumentFragment;
+}
+
 function createBacklinks(keys: string[]): CustomArrayDict<Reference> {
   return strictProxy<CustomArrayDict<Reference>>({
     keys: () => keys
@@ -138,11 +142,24 @@ function createFile(path: string): TFile {
   });
 }
 
+let vaultRootFolder: TFolder;
+
+function createFolder(path: string): TFolder {
+  return strictProxy<TFolder>({
+    name: path.split('/').at(-1) ?? '',
+    path
+  });
+}
+
 function createReference(link: string): Reference {
   return strictProxy<Reference>({
     link,
     original: `![[${link}]]`
   });
+}
+
+function getConfirmMessageText(): string {
+  return castTo<ConfirmParamsLike>(mockConfirm.mock.calls[0]?.[0]).message.textContent;
 }
 
 beforeAll(async () => {
@@ -175,9 +192,11 @@ describe('UnusedAttachmentsRemover', () => {
     getFolderByPath = vi.fn<(path: string) => null | TFolder>().mockReturnValue(attachmentFolder);
     app = strictProxy<App>({
       vault: strictProxy<App['vault']>({
-        getFolderByPath: (path: string) => getFolderByPath(path)
+        getFolderByPath: (path: string) => getFolderByPath(path),
+        getRoot: () => vaultRootFolder
       })
     });
+    vaultRootFolder = createFolder('/');
     pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
       isNoteEx: vi.fn<PluginSettingsComponent['isNoteEx']>().mockReturnValue(false),
       settings: castTo<PluginSettings>(settings)
@@ -196,6 +215,7 @@ describe('UnusedAttachmentsRemover', () => {
       abortSignalComponent,
       app,
       attachmentPathManager,
+      pluginName: PLUGIN_NAME,
       pluginNoticeComponent,
       pluginSettingsComponent
     });
@@ -435,6 +455,68 @@ describe('UnusedAttachmentsRemover', () => {
       await runOperation([note]);
       expect(mockTrashSafe).not.toHaveBeenCalled();
       expect(mockCleanupEmptyFolders).not.toHaveBeenCalled();
+    });
+
+    it('should state the count in the confirmation', async () => {
+      mockConfirm.mockResolvedValue(false);
+      await runOperation([note]);
+      expect(getConfirmMessageText()).toContain('2 attachment(s) will be moved to the trash.');
+    });
+
+    it('should list every path while there are few of them', async () => {
+      mockConfirm.mockResolvedValue(false);
+      await runOperation([note]);
+      const text = getConfirmMessageText();
+      expect(text).toContain(unusedA.path);
+      expect(text).toContain(unusedB.path);
+      expect(text).not.toContain('... and');
+    });
+
+    it('should cap the list and summarize the rest', async () => {
+      // Vault-wide this dialog can be handed thousands of paths; an unbounded list is a wall the user
+      // Scrolls past rather than a safety check.
+      const many = Array.from({ length: 60 }, (_unused, index) => createFile(`${ATTACHMENT_FOLDER_PATH}/many-${index.toString().padStart(2, '0')}.png`));
+      vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        for (const file of many) {
+          callback(file);
+        }
+      });
+      mockConfirm.mockResolvedValue(false);
+      await runOperation([note]);
+
+      const text = getConfirmMessageText();
+      expect(text).toContain('60 attachment(s) will be moved to the trash.');
+      expect(text).toContain('... and 10 more.');
+      expect(text).toContain(many[0]?.path ?? '');
+      expect(text).not.toContain(many[59]?.path ?? '');
+    });
+  });
+
+  describe('deleteUnusedAttachmentsEntireVault', () => {
+    it('should enqueue an operation over the vault root under its own name', () => {
+      remover.deleteUnusedAttachmentsEntireVault();
+      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+      expect(params.operationName).toBe('Delete unused attachments in entire vault');
+    });
+
+    it('should scan every note in the vault', async () => {
+      const rootFolder = vaultRootFolder;
+      const note = createFile('deep/note.md');
+      mockIsFile.mockImplementation((f) => f === note);
+      mockIsNote.mockReturnValue(true);
+      mockIsFolder.mockImplementation((f) => f === rootFolder);
+      mockGetCacheSafe.mockResolvedValue(null);
+      vi.spyOn(Vault, 'recurseChildren').mockImplementation((root, callback) => {
+        if (root === rootFolder) {
+          callback(note);
+        }
+      });
+
+      remover.deleteUnusedAttachmentsEntireVault();
+      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+      await params.operationFunction(new AbortController().signal);
+
+      expect(mockGetCacheSafe).toHaveBeenCalledWith(app, note);
     });
   });
 });

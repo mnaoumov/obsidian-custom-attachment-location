@@ -2,12 +2,23 @@
 
 Over time a note's attachment folder collects files the note no longer links to - an image you removed from the text, an older screenshot you replaced. **Custom Attachment Location** adds a **Delete unused attachments** command (and a right-click menu item on notes and folders) that moves those leftover files to the trash.
 
+There are two scopes:
+
+- **Delete unused attachments in current note** (also a right-click item on a note or a folder) - only what that note, or every note under that folder, no longer uses.
+- **Delete unused attachments in entire vault** - the same sweep over every note in the vault.
+
+They are separate commands rather than one command with a scope option, so a hotkey or a muscle-memory palette entry bound to the per-note one can never turn into a whole-vault deletion.
+
+The vault-wide sweep reads every note and looks up the backlinks of every attachment it meets, which takes minutes on a large vault; a progress notice reports where it is and lets you cancel. Nothing is deleted until the scan has finished and you have confirmed.
+
 It is deliberately careful, because it deletes your data:
 
 - It only ever touches files inside the note's own attachment folder.
 - An attachment that is still referenced by the note is kept.
 - An attachment that is still referenced by **another** note is kept - the same shared-attachment check the **Collect attachments** command uses (`excludePathsFromMultipleNotesCheck` applies here too).
-- Everything it will remove is listed in a confirmation dialog **before** anything happens, and files go to the **trash** (recoverable), honoring your Obsidian "Deleted files" setting.
+- A confirmation dialog **before** anything happens states **how many** attachments will go, then names them - the first 50, and a count of the rest, because vault-wide the list can run to thousands and a wall of paths is not something you can weigh.
+- Files go to the **trash** (recoverable), honoring your Obsidian "Deleted files" setting.
+- Notes under an ignored path are skipped, on both scopes.
 
 ## Try it
 
