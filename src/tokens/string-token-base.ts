@@ -3,10 +3,16 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import slugify_ from 'slugify';
 import { z } from 'zod';
 
+import {
+  collapseWhitespace,
+  toTitleCase
+} from '../title-case.ts';
+
 const slugify = extractDefaultExportInterop(slugify_);
 
 export const stringFormatSchema = z.strictObject({
-  case: z.enum(['lower', 'upper']).optional(),
+  case: z.enum(['lower', 'title', 'upper']).optional(),
+  collapseWhitespace: z.boolean().optional(),
   slugify: z.boolean().optional(),
   trim: z.strictObject({
     length: z.int().positive(),
@@ -17,6 +23,12 @@ export const stringFormatSchema = z.strictObject({
 type StringFormat = z.infer<typeof stringFormatSchema>;
 
 export function formatString(value: string, format: StringFormat): string {
+  // First, because it normalizes the raw value: truncating or converting to a slug a name whose whitespace has
+  // Not been collapsed yet would carry the ragged spacing into the result.
+  if (format.collapseWhitespace) {
+    value = collapseWhitespace(value);
+  }
+
   const trim = format.trim;
   switch (trim?.side) {
     case 'left': {
@@ -42,6 +54,9 @@ export function formatString(value: string, format: StringFormat): string {
   switch (format.case) {
     case 'lower': {
       return value.toLowerCase();
+    }
+    case 'title': {
+      return toTitleCase(value);
     }
     case undefined: {
       return value;

@@ -52,6 +52,23 @@ describe('formatString', () => {
     expect(formatString('Hello', { case: 'upper' })).toBe('HELLO');
   });
 
+  it('should title-case the value, leaving an acronym alone', () => {
+    expect(formatString('api TEST report', { case: 'title' })).toBe('Api TEST Report');
+  });
+
+  it('should collapse whitespace runs and strip the ends', () => {
+    expect(formatString('   alpha    bravo   ', { collapseWhitespace: true })).toBe('alpha bravo');
+  });
+
+  it('should collapse whitespace BEFORE truncating', () => {
+    // Truncating first would carry the ragged spacing into the result and cut at the wrong place.
+    expect(formatString('  alpha    bravo  ', { collapseWhitespace: true, trim: { length: 5, side: 'left' } })).toBe('alpha');
+  });
+
+  it('should apply the whole cleaning the reporter asked for in one format', () => {
+    expect(formatString('  my   REPORT about  api  ', { case: 'title', collapseWhitespace: true })).toBe('My REPORT About Api');
+  });
+
   it('should combine trim, slugify, and case', () => {
     expect(formatString('Hello World', { case: 'upper', slugify: true, trim: { length: 5, side: 'left' } })).toBe('HELLO');
   });
