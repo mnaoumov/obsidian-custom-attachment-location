@@ -30,6 +30,7 @@ describe('PluginSettings', () => {
       expect(settings.shouldHandleRenames).toBe(true);
       expect(settings.shouldRenameAttachmentFolder).toBe(true);
       expect(settings.shouldRenameAttachmentFiles).toBe(false);
+      expect(settings.shouldRescueSharedAttachments).toBe(false);
       expect(settings.shouldSetLinkDisplayTextToAttachmentFileName).toBe(false);
       expect(settings.shouldSkipCollectingAttachmentsReferencedByRawPath).toBe(false);
       expect(settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/`);

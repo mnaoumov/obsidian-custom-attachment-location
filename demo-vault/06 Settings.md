@@ -74,6 +74,8 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
   - keep links and attachment folders consistent when notes are renamed or moved.
 - `shouldDeleteOrphanAttachments`
   - delete an attachment when the note that owned it is deleted.
+- `shouldRescueSharedAttachments`
+  - when a note or its attachment folder is deleted while another note still references one of its attachments, move that attachment into the surviving note's attachment folder rather than leaving it behind in the deleted note's folder. It keeps its file name; only the folder is recomputed. It moves only when a single note is left referencing it, or when `notePriorities` names a clear winner among several — a tie, or no match, leaves it in place. Default off, and it only takes effect while `shouldDeleteOrphanAttachments` is on, since that is the setting which hands the delete path to the plugin at all.
 - `emptyFolderBehavior`
   - whether to keep or delete attachment folders that become empty.
 - `treatAsAttachmentExtensions`

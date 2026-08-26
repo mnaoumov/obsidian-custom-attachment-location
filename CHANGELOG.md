@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 11.7.0
+
+- chore: update libs
+- feat(attachment-rescue): rescue a still-referenced attachment from a deletion (#57)
+- chore: update libs
+- refactor(attachment-unit-folder): take the rule from obsidian-dev-utils
+- feat(jpeg): keep the image's metadata across the conversion, behind a setting (#55)
+- chore: update obsidian-dev-utils to 94.6.1
+- chore: update obsidian-dev-utils to 94.6.0
+- fix: override deepmerge-ts to clear GHSA-ggr8-5vv4-36mx
+- feat(plugin): expose collecting a specific note's attachments to other plugins
+- feat(collect): let a priority list decide which note owns a shared attachment (#57)
+- feat(collect): treat designated folders as one attachment so the whole tree travels (#56)
+- test: gate the demo vault by clicking every code button
+- chore: teach cspell the advisory wording
+- chore: update libs
+- docs(demo-vault): make the token patterns inspectable
+- docs: add store screenshots and surface them in the README
+
 ## 11.6.5
 
 - docs(demo-vault): use NATO placeholders instead of foo, bar and baz
