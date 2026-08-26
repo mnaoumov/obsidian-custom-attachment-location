@@ -21,6 +21,11 @@ export const id = {
       part2: 'dirujuk oleh beberapa catatan.'
     },
     heading: 'Mengumpulkan lampiran yang digunakan oleh beberapa catatan',
+    noPriorityWinnerReason: {
+      EmptyList: 'Lampiran tidak dipindahkan karena pengaturan {{settingName}} kosong, sehingga tidak ada yang menentukan catatan mana yang memilikinya.',
+      NoMatch: 'Lampiran tidak dipindahkan karena tidak ada catatan ini yang cocok dengan entri mana pun di pengaturan {{settingName}}.',
+      Tie: 'Lampiran tidak dipindahkan karena beberapa catatan ini sama-sama cocok dengan pengaturan {{settingName}}, sehingga tidak menunjuk satu pemilik.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Harus menggunakan tindakan yang sama untuk lampiran bermasalah lainnya'
   },
   commands: {

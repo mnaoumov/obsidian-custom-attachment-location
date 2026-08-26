@@ -21,6 +21,11 @@ export const hu = {
       part2: 'több jegyzet hivatkozik rá.'
     },
     heading: 'Több jegyzet által használt melléklet gyűjtése',
+    noPriorityWinnerReason: {
+      EmptyList: 'Nem került áthelyezésre, mert a(z) {{settingName}} beállítás üres, így semmi sem dönti el, hogy e jegyzetek közül melyikhez tartozik.',
+      NoMatch: 'Nem került áthelyezésre, mert e jegyzetek egyike sem felel meg a(z) {{settingName}} beállítás egyetlen bejegyzésének sem.',
+      Tie: 'Nem került áthelyezésre, mert e jegyzetek közül több is ugyanannyira megfelel a(z) {{settingName}} beállításnak, így az nem jelöl ki egyetlen tulajdonost.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Ugyanazt a műveletet kell használni más problémás mellékletek esetében'
   },
   commands: {

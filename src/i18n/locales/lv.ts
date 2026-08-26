@@ -21,6 +21,11 @@ export const lv = {
       part2: 'tiek atsaucēts no vairākām piezimēm.'
     },
     heading: 'Apkopoju pielikumu, kuru lieto vairākas piezimes',
+    noPriorityWinnerReason: {
+      EmptyList: 'Tas netika pārvietots, jo iestatījums {{settingName}} ir tukšs, tāpēc nekas nenosaka, kurai no šīm piezīmēm tas pieder.',
+      NoMatch: 'Tas netika pārvietots, jo neviena no šīm piezīmēm neatbilst nevienam ierakstam iestatījumā {{settingName}}.',
+      Tie: 'Tas netika pārvietots, jo vairākas no šīm piezīmēm vienlīdz labi atbilst iestatījumam {{settingName}}, tāpēc tas nenosauc vienu īpašnieku.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Izmantot to pašu darbību citiem problēmatiskajiem pielikumiem'
   },
   commands: {

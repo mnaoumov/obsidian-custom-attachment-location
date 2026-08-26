@@ -21,6 +21,11 @@ export const ca = {
       part2: 'és referenciat per múltiples notes.'
     },
     heading: 'Recollint adjunt utilitzat per múltiples notes',
+    noPriorityWinnerReason: {
+      EmptyList: 'No s\'ha mogut perquè el paràmetre {{settingName}} és buit, de manera que res no decideix quina d\'aquestes notes el posseeix.',
+      NoMatch: 'No s\'ha mogut perquè cap d\'aquestes notes no coincideix amb cap entrada del paràmetre {{settingName}}.',
+      Tie: 'No s\'ha mogut perquè diverses d\'aquestes notes coincideixen igual de bé amb el paràmetre {{settingName}}, de manera que no n\'anomena cap propietari únic.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Ha d\'utilitzar la mateixa acció per a altres adjunts problemàtics'
   },
   commands: {

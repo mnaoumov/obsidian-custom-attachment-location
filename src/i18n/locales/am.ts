@@ -21,6 +21,11 @@ export const am = {
       part2: 'በበርካታ ማስታወሻዎች ይጠቀሳል።'
     },
     heading: 'በበርካታ ማስታወሻዎች የሚጠቀም ተያያዥ መሰብሰብ',
+    noPriorityWinnerReason: {
+      EmptyList: 'የ{{settingName}} ቅንብር ባዶ ስለሆነ አልተዘዋወረም፤ ከእነዚህ ማስታወሻዎች የትኛው እንደሚይዘው የሚወስን ምንም ነገር የለም።',
+      NoMatch: 'ከእነዚህ ማስታወሻዎች መካከል አንዳቸውም በ{{settingName}} ቅንብር ውስጥ ካለ ማንኛውም ግቤት ጋር ስለማይዛመዱ አልተዘዋወረም።',
+      Tie: 'ከእነዚህ ማስታወሻዎች መካከል በርካቶቹ ከ{{settingName}} ቅንብር ጋር በእኩል ደረጃ ስለሚዛመዱ አንድም ባለቤት ስለማይሰይም አልተዘዋወረም።'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'ለሌሎች ችግር ያላቸው ተያያዦች ተመሳሳይ እርምጃ መጠቀም አለበት'
   },
   commands: {

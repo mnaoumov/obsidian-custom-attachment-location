@@ -21,6 +21,11 @@ export const ar = {
       part2: 'يتم الرجوع إليه من عدة ملاحظات.'
     },
     heading: 'جمع المرفق المستخدم من عدة ملاحظات',
+    noPriorityWinnerReason: {
+      EmptyList: 'لم يتم نقله لأن إعداد {{settingName}} فارغ، لذا لا شيء يحدد أي من هذه الملاحظات يملكه.',
+      NoMatch: 'لم يتم نقله لأن أياً من هذه الملاحظات لا يطابق أي إدخال في إعداد {{settingName}}.',
+      Tie: 'لم يتم نقله لأن عدة ملاحظات من هذه تطابق إعداد {{settingName}} بالقدر نفسه، لذا فهو لا يحدد مالكاً واحداً.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'يجب استخدام نفس الإجراء للمرفقات المشكوك فيها الأخرى'
   },
   commands: {

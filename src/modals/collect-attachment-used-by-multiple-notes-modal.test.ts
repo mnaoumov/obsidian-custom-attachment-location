@@ -9,6 +9,7 @@ import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   ButtonComponent as ButtonComponentClass,
+  Modal as ModalClass,
   Setting as SettingClass
 } from 'obsidian-test-mocks/obsidian';
 import {
@@ -22,6 +23,7 @@ import {
 } from 'vitest';
 
 import { translationsMap } from '../i18n/locales/translations-map.ts';
+import { NoPriorityWinnerReason } from '../note-priority.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from '../plugin-settings.ts';
 import { selectMode } from './collect-attachment-used-by-multiple-notes-modal.ts';
 
@@ -31,10 +33,12 @@ vi.mock('obsidian-dev-utils/obsidian/markdown', () => ({
 
 const captured = {
   buttons: [] as ButtonComponent[],
+  contentEl: null as HTMLElement | null,
   toggles: [] as ToggleComponent[]
 };
 
 const originalAddButton = SettingClass.prototype.addButton;
+const originalModalOpen = ModalClass.prototype.open;
 const originalAddToggle = SettingClass.prototype.addToggle;
 
 function clickButton(button: ButtonComponent | undefined): void {
@@ -58,6 +62,10 @@ function getButtonText(button: ButtonComponent): string {
   return ButtonComponentClass.fromOriginalType2__(button).buttonEl.textContent;
 }
 
+function getReasonText(): null | string {
+  return captured.contentEl?.querySelector('.custom-attachment-location-no-priority-winner-reason')?.textContent ?? null;
+}
+
 beforeAll(async () => {
   await initI18N(translationsMap);
 });
@@ -65,7 +73,14 @@ beforeAll(async () => {
 describe('selectMode', () => {
   beforeEach(() => {
     captured.buttons.length = 0;
+    captured.contentEl = null;
     captured.toggles.length = 0;
+
+    // The mocked Modal keeps its `contentEl` detached, so capture it as the modal opens.
+    vi.spyOn(ModalClass.prototype, 'open').mockImplementation(function capturingOpen(this: ModalClass): void {
+      captured.contentEl = this.contentEl;
+      originalModalOpen.call(this);
+    });
 
     // Capture the REAL test-mocks ButtonComponent/ToggleComponent instances created by the
     // REAL Setting so interactions can be driven through their real DOM/handlers.
@@ -163,5 +178,54 @@ describe('selectMode', () => {
     clickButton(captured.buttons[0]);
     const result = await promise;
     expect(result.mode).toBe(CollectAttachmentUsedByMultipleNotesMode.Cancel);
+  });
+  it('should explain an empty priority list as the reason the attachment stayed put', async () => {
+    const promise = selectMode({
+      app: createApp(),
+      attachmentPath: 'attachment.png',
+      backlinks: ['a.md', 'b.md'],
+      isCancelMode: true,
+      noPriorityWinnerReason: NoPriorityWinnerReason.EmptyList
+    });
+    await flushOnOpen();
+    expect(getReasonText()).toBe('It was not moved because the Note priorities setting is empty, so nothing decides which of these notes owns it.');
+    clickButton(captured.buttons[0]);
+    await promise;
+  });
+
+  it('should explain a list that matched nothing', async () => {
+    const promise = selectMode({
+      app: createApp(),
+      attachmentPath: 'attachment.png',
+      backlinks: ['a.md', 'b.md'],
+      noPriorityWinnerReason: NoPriorityWinnerReason.NoMatch
+    });
+    await flushOnOpen();
+    expect(getReasonText()).toBe('It was not moved because none of these notes matches any entry in the Note priorities setting.');
+    clickButton(captured.buttons[3]);
+    await promise;
+  });
+
+  it('should explain a tie', async () => {
+    const promise = selectMode({
+      app: createApp(),
+      attachmentPath: 'attachment.png',
+      backlinks: ['a.md', 'b.md'],
+      noPriorityWinnerReason: NoPriorityWinnerReason.Tie
+    });
+    await flushOnOpen();
+    expect(getReasonText()).toContain('several of these notes match the Note priorities setting equally well');
+    clickButton(captured.buttons[3]);
+    await promise;
+  });
+
+  it('should say nothing about priority when the list did name an owner', async () => {
+    // Reaching the modal WITH a winner means something else stopped the move; claiming a priority
+    // Failure there would be simply wrong.
+    const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md', 'b.md'] });
+    await flushOnOpen();
+    expect(getReasonText()).toBeNull();
+    clickButton(captured.buttons[3]);
+    await promise;
   });
 });

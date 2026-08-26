@@ -21,6 +21,11 @@ export const ptBR = {
       part2: 'é referenciado por múltiplas notas.'
     },
     heading: 'Coletando anexo usado por múltiplas notas',
+    noPriorityWinnerReason: {
+      EmptyList: 'Não foi movido porque a configuração {{settingName}} está vazia, então nada decide qual destas notas o possui.',
+      NoMatch: 'Não foi movido porque nenhuma destas notas corresponde a qualquer entrada da configuração {{settingName}}.',
+      Tie: 'Não foi movido porque várias destas notas correspondem igualmente bem à configuração {{settingName}}, então ela não indica um único proprietário.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Usar a mesma ação para outros anexos problemáticos'
   },
   commands: {

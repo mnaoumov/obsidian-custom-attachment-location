@@ -5,10 +5,17 @@ import {
 } from 'vitest';
 
 import {
+  findNoPriorityWinnerReason,
   findNotePriorityRank,
   NO_PRIORITY_MATCH,
+  NoPriorityWinnerReason,
   pickHighestPriorityNotePath
 } from './note-priority.ts';
+
+interface NonWinningCase {
+  notePaths: string[];
+  ranks: Record<string, number>;
+}
 
 function rankOf(notePath: string, entries: string[], frontmatter: null | Record<string, unknown> = null): number {
   return findNotePriorityRank({ entries, frontmatter, notePath });
@@ -158,5 +165,48 @@ describe('pickHighestPriorityNotePath', () => {
 
   it('should keep the first note when a later one ties with it', () => {
     expect(pick(['a.md', 'b.md', 'c.excalidraw.md'], { 'a.md': 0, 'b.md': 0, 'c.excalidraw.md': 1 })).toBeNull();
+  });
+});
+
+describe('findNoPriorityWinnerReason', () => {
+  function reason(entries: string[], notePaths: string[], ranks: Record<string, number>): NoPriorityWinnerReason {
+    return findNoPriorityWinnerReason({
+      entries,
+      notePaths,
+      rank: (notePath) => ranks[notePath] ?? NO_PRIORITY_MATCH
+    });
+  }
+
+  it('should report an empty list before ranking anything', () => {
+    expect(reason([], ['a.md', 'b.md'], {})).toBe(NoPriorityWinnerReason.EmptyList);
+  });
+
+  it('should report no match when every note matches nothing', () => {
+    expect(reason(['.md'], ['a.canvas', 'b.canvas'], {})).toBe(NoPriorityWinnerReason.NoMatch);
+  });
+
+  it('should report a tie when the best rank is shared', () => {
+    expect(reason(['.md'], ['a.md', 'b.md'], { 'a.md': 0, 'b.md': 0 })).toBe(NoPriorityWinnerReason.Tie);
+  });
+
+  it('should report a tie even when only some notes match', () => {
+    // A tie among the matching notes is still a tie: the unmatched one never competes.
+    expect(reason(['.md'], ['a.md', 'b.md', 'c.canvas'], { 'a.md': 0, 'b.md': 0 })).toBe(NoPriorityWinnerReason.Tie);
+  });
+
+  it('should agree with pickHighestPriorityNotePath on every non-winning case', () => {
+    const cases: NonWinningCase[] = [
+      { notePaths: ['a.canvas', 'b.canvas'], ranks: {} },
+      { notePaths: ['a.md', 'b.md'], ranks: { 'a.md': 0, 'b.md': 0 } }
+    ];
+
+    for (const testCase of cases) {
+      function rank(notePath: string): number {
+        return testCase.ranks[notePath] ?? NO_PRIORITY_MATCH;
+      }
+
+      expect(pickHighestPriorityNotePath({ notePaths: testCase.notePaths, rank })).toBeNull();
+      expect(findNoPriorityWinnerReason({ entries: ['.md'], notePaths: testCase.notePaths, rank })).not.toBe(NoPriorityWinnerReason.EmptyList);
+    }
   });
 });

@@ -21,6 +21,11 @@ export const vi = {
       part2: 'được tham chiếu bởi nhiều ghi chú.'
     },
     heading: 'Thu thập tệp đính kèm được sử dụng bởi nhiều ghi chú',
+    noPriorityWinnerReason: {
+      EmptyList: 'Tệp không được di chuyển vì cài đặt {{settingName}} trống, nên không có gì quyết định ghi chú nào trong số này sở hữu nó.',
+      NoMatch: 'Tệp không được di chuyển vì không ghi chú nào trong số này khớp với bất kỳ mục nào trong cài đặt {{settingName}}.',
+      Tie: 'Tệp không được di chuyển vì nhiều ghi chú trong số này khớp với cài đặt {{settingName}} như nhau, nên không xác định được một chủ sở hữu duy nhất.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Nên sử dụng cùng một hành động cho các tệp đính kèm có vấn đề khác'
   },
   commands: {

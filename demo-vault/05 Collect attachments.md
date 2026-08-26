@@ -68,7 +68,7 @@ When a note matches several entries, the **longest** one decides its rank. That 
 
 Two things worth knowing:
 
-- If no entry matches, or if the best entry matches several of the referencing notes, nothing is decided here and the mode setting handles it as before. A tie is never broken silently.
+- If no entry matches, or if the best entry matches several of the referencing notes, nothing is decided here and the mode setting handles it as before. A tie is never broken silently. **The dialog that then appears says which of the three it was** - the list is empty, nothing matched, or several notes matched equally - so you can tell a list you never configured from one that simply did not apply.
 - The winner does not have to be the note you ran the command on. Collecting from a drawing can hand the image to a markdown note that outranks it. That is the point of the setting, and why it is empty by default.
 
 ### Try it

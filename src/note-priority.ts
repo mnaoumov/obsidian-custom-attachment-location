@@ -21,6 +21,40 @@ const EXTENSION_PREFIX = '.';
 const PROPERTY_VALUE_SEPARATOR = '=';
 
 /**
+ * Why the priority list did not settle which note owns an attachment.
+ *
+ * The three values are exactly the three ways {@link pickHighestPriorityNotePath} (plus its empty-list
+ * guard) can fail to name a winner, so a caller can tell the user the real reason instead of only
+ * reporting that the attachment is referenced by several notes.
+ */
+export enum NoPriorityWinnerReason {
+  /**
+   * The priority list is empty — its default. Nothing was configured to decide between the notes.
+   */
+  EmptyList = 'EmptyList',
+
+  /**
+   * The list has entries, but none of the referencing notes matches any of them.
+   */
+  NoMatch = 'NoMatch',
+
+  /**
+   * Several referencing notes tie for the best rank, so the list names no single owner.
+   */
+  Tie = 'Tie'
+}
+
+/**
+ * Parameters for {@link findNoPriorityWinnerReason}.
+ */
+export interface FindNoPriorityWinnerReasonParams extends PickHighestPriorityNotePathParams {
+  /**
+   * The priority list, highest priority first.
+   */
+  readonly entries: readonly string[];
+}
+
+/**
  * Parameters for {@link findNotePriorityRank}.
  */
 export interface FindNotePriorityRankParams {
@@ -63,6 +97,32 @@ export interface PickHighestPriorityNotePathParams {
  * that matches nothing always loses to one that matches something.
  */
 export const NO_PRIORITY_MATCH = Infinity;
+
+/**
+ * Explains why the priority list named no owner for an attachment.
+ *
+ * Only meaningful once {@link pickHighestPriorityNotePath} has returned `null` (or the list was empty
+ * and was never consulted); it mirrors that function's own conditions rather than re-deciding
+ * anything, so the two can only ever agree.
+ *
+ * @param params - The priority list, the referencing notes, and how to rank one.
+ * @returns Which of the three ways the list failed to settle it.
+ */
+export function findNoPriorityWinnerReason(params: FindNoPriorityWinnerReasonParams): NoPriorityWinnerReason {
+  if (params.entries.length === 0) {
+    return NoPriorityWinnerReason.EmptyList;
+  }
+
+  let bestRank = NO_PRIORITY_MATCH;
+  for (const notePath of params.notePaths) {
+    const currentRank = params.rank(notePath);
+    if (currentRank < bestRank) {
+      bestRank = currentRank;
+    }
+  }
+
+  return bestRank === NO_PRIORITY_MATCH ? NoPriorityWinnerReason.NoMatch : NoPriorityWinnerReason.Tie;
+}
 
 /**
  * Finds how highly a note ranks in the priority list.

@@ -13,6 +13,8 @@ import {
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 
+import type { NoPriorityWinnerReason } from '../note-priority.ts';
+
 import { CollectAttachmentUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
 interface CollectAttachmentUsedByMultipleNotesModalConstructorParams {
@@ -20,6 +22,7 @@ interface CollectAttachmentUsedByMultipleNotesModalConstructorParams {
   readonly attachmentPath: string;
   readonly backlinks: string[];
   readonly isCancelMode: boolean;
+  readonly noPriorityWinnerReason: NoPriorityWinnerReason | null;
   readonly resolve: PromiseResolve<CollectAttachmentUsedByMultipleNotesModalResult>;
 }
 
@@ -33,6 +36,12 @@ interface SelectModeParams {
   readonly attachmentPath: string;
   readonly backlinks: string[];
   readonly isCancelMode?: boolean;
+
+  /**
+   * Why the note-priority list named no owner, or `null` when it did name one (and something else
+   * stopped the move). Shown to the user as the real reason the attachment stayed put.
+   */
+  readonly noPriorityWinnerReason?: NoPriorityWinnerReason | null;
 }
 
 class CollectAttachmentUsedByMultipleNotesModal extends Modal {
@@ -40,6 +49,7 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
   private readonly backlinks: string[];
   private readonly isCancelMode: boolean;
   private isSelected = false;
+  private readonly noPriorityWinnerReason: NoPriorityWinnerReason | null;
   private readonly resolve: PromiseResolve<CollectAttachmentUsedByMultipleNotesModalResult>;
 
   public constructor(params: CollectAttachmentUsedByMultipleNotesModalConstructorParams) {
@@ -47,6 +57,7 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
     this.attachmentPath = params.attachmentPath;
     this.backlinks = params.backlinks;
     this.isCancelMode = params.isCancelMode;
+    this.noPriorityWinnerReason = params.noPriorityWinnerReason;
     this.resolve = params.resolve;
   }
 
@@ -59,6 +70,27 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
   public override onOpen(): void {
     super.onOpen();
     invokeAsyncSafely(() => this.onOpenAsync());
+  }
+
+  /**
+   * States the real reason the attachment stayed put: the note-priority list did not name an owner.
+   *
+   * Without this the modal only reports that several notes reference the attachment, which is the
+   * symptom rather than the cause — the user cannot tell a priority list that was never configured
+   * from one that simply did not match, or from a tie.
+   */
+  private appendNoPriorityWinnerExplanation(): void {
+    if (this.noPriorityWinnerReason === null) {
+      return;
+    }
+
+    const reason = this.noPriorityWinnerReason;
+    this.contentEl.createEl('p', {
+      cls: 'custom-attachment-location-no-priority-winner-reason',
+      text: t(($) => $.collectAttachmentUsedByMultipleNotesModal.noPriorityWinnerReason[reason], {
+        settingName: t(($) => $.pluginSettingsTab.notePriorities.name)
+      })
+    });
   }
 
   private async onOpenAsync(): Promise<void> {
@@ -97,6 +129,8 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
         );
       })
     );
+
+    this.appendNoPriorityWinnerExplanation();
 
     let shouldUseSameActionForOtherProblematicAttachments = false;
 
@@ -155,7 +189,8 @@ export function selectMode(params: SelectModeParams): Promise<CollectAttachmentU
     app,
     attachmentPath,
     backlinks,
-    isCancelMode
+    isCancelMode,
+    noPriorityWinnerReason
   } = params;
   return new Promise((resolve) => {
     const modal = new CollectAttachmentUsedByMultipleNotesModal({
@@ -163,6 +198,7 @@ export function selectMode(params: SelectModeParams): Promise<CollectAttachmentU
       attachmentPath,
       backlinks,
       isCancelMode: isCancelMode ?? false,
+      noPriorityWinnerReason: noPriorityWinnerReason ?? null,
       resolve
     });
     modal.open();
