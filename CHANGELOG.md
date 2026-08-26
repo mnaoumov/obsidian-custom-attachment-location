@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 11.9.0
+
+- fix(test): reword a comment cspell rejects
+- fix(test): wait for the relocation to settle, not merely to start (#65)
+- fix(delete-unused-attachments): stop showing a progress bar for a single note
+- feat(commands): delete unused attachments across the entire vault (#64)
+- docs(demo-vault): explain why an image pasted into a drawing is left alone (#65)
+- feat(tokens): add title case and whitespace collapsing to the string format (#59)
+- docs(demo-vault): show what deleting a note or its folder does to a shared attachment (#67)
+- feat(collect): say why the priority list left a shared attachment behind (#66)
+- docs(demo-vault): unwrap the notes so Obsidian stops rendering a break per line
+- chore(cspell): teach the dictionary Obsidian's `offref`
+- docs(readme): render the same in Obsidian's plugin page as on GitHub
+- fix(rename): stop a concurrent edit orphaning a moved note's embeds
+- chore: lint
+
 ## 11.8.0
 
 - style: format the locale files T573 added
