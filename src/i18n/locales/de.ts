@@ -298,6 +298,15 @@ export const de = {
       description: 'Ob Anhang-Ordner umbenannt werden sollen, wenn eine Notiz umbenannt oder verschoben wird.',
       name: 'Soll Anhang-Ordner umbenennen'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Ob die Einstellungen für Anhang-Ordner und Dateiname auch auf Anhänge angewendet werden, die ANDERE Plugins erstellen.',
+        part2:
+          'Manche Plugins schreiben einen Anhang unter einem eigenen Namen direkt in den Tresor, ohne Obsidian zu fragen, wohin er gehört. Ist dies aktiviert, wird eine solche Datei unmittelbar nach ihrem Auftauchen verschoben und umbenannt.',
+        part3: 'Betroffen sind nur Dateien, die bei geöffneter Notiz entstehen — niemals Dateien aus einer Synchronisierung oder einem Tresor-Import.'
+      },
+      name: 'Von anderen Plugins erstellte Anhänge umbenennen'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Wenn aktiviert, werden Anhänge, die über',
@@ -342,6 +351,8 @@ export const de = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Anhang-Datei umbenennen',
+    folderTitle: 'Anhang-Ordner wählen',
     previewModal: {
       title: 'Anhang-Datei anzeigen \'{{fullFileName}}\''
     },

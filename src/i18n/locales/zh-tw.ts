@@ -294,6 +294,15 @@ export const zhTW = {
       description: '筆記被重新命名或移動時，是否重新命名附件資料夾。',
       name: '重新命名附件資料夾'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: '是否將附件資料夾與檔案名稱設定套用至其他外掛建立的附件。',
+        part2:
+          '有些外掛不詢問 Obsidian 附件該放在哪裡，逕自以自己的命名把附件寫入儲存庫。啟用此項後，這類檔案一出現就會被移動並重新命名。',
+        part3: '僅處理在筆記開啟時建立的檔案，絕不碰觸來自同步或儲存庫匯入的檔案。'
+      },
+      name: '重新命名其他外掛建立的附件'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: '啟用時，通過',
@@ -338,6 +347,8 @@ export const zhTW = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: '重新命名附件檔案',
+    folderTitle: '選擇附件資料夾',
     previewModal: {
       title: '預覽附件檔案 \'{{fullFileName}}\''
     },

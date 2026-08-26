@@ -25,6 +25,7 @@ import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { ImageSizeMap } from './image-size-map.ts';
 import type { MarkdownUrlMap } from './markdown-url-map.ts';
 
+import { ExternallyCreatedAttachmentHandlerComponent } from './externally-created-attachment-handler-component.ts';
 import { ClipboardManagerInsertFilesPatchComponent } from './patches/clipboard-manager-insert-files-patch-component.ts';
 import { FileArrayBufferPatchComponent } from './patches/file-array-buffer-patch-component.ts';
 import { FileManagerGenerateMarkdownLinkPatchComponent } from './patches/file-manager-generate-markdown-link-patch-component.ts';
@@ -110,6 +111,15 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       new VaultCreateBinaryEnsureFolderPatchComponent({
         app: this.app,
         vault: this.app.vault
+      })
+    );
+
+    this.addChild(
+      new ExternallyCreatedAttachmentHandlerComponent({
+        app: this.app,
+        attachmentPathManager: this.attachmentPathManager,
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        tokenValidator: this.tokenValidator
       })
     );
 

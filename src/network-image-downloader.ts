@@ -16,6 +16,7 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { selfWriteRegistry } from './self-write-registry.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 
 /**
@@ -175,6 +176,7 @@ export class NetworkImageDownloader {
       noteFilePath: noteFile.path
     });
 
+    selfWriteRegistry.register(savePath);
     return await this.app.vault.createBinary(savePath, arrayBuffer);
   }
 

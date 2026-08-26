@@ -294,6 +294,15 @@ export const no = {
       description: 'Om vedleggsmapper skal omdøpes når et notat omdøpes eller flyttes.',
       name: 'Skal omdøpe vedleggsmapper'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Om innstillingene for vedleggsmappe og filnavn skal brukes på vedlegg som ANDRE programtillegg oppretter.',
+        part2:
+          'Noen programtillegg skriver et vedlegg rett inn i hvelvet under sitt eget navn, uten å spørre Obsidian hvor det hører hjemme. Er dette slått på, blir en slik fil flyttet og gitt nytt navn straks den dukker opp.',
+        part3: 'Bare filer som opprettes mens et notat er åpent berøres, aldri filer som kommer fra en synkronisering eller et hvelvimport.'
+      },
+      name: 'Gi nytt navn til vedlegg opprettet av andre programtillegg'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Hvis aktivert, vedlegg behandlet via',
@@ -338,6 +347,8 @@ export const no = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Gi vedleggsfilen nytt navn',
+    folderTitle: 'Velg vedleggsmappe',
     previewModal: {
       title: 'Forhåndsvisning av vedleggsfil \'{{fullFileName}}\''
     },

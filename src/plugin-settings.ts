@@ -86,6 +86,7 @@ export class PluginSettings {
   public shouldPreserveImageMetadata = false;
   public shouldRenameAttachmentFiles = false;
   public shouldRenameAttachmentFolder = true;
+  public shouldRenameAttachmentsCreatedByOtherPlugins = false;
   public shouldRenameCollectedAttachments = false;
 
   /**

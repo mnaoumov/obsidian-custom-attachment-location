@@ -13,10 +13,14 @@ import {
 } from 'obsidian-dev-utils/async';
 import { CssClass } from 'obsidian-dev-utils/obsidian/css-class';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
+import { isSpellcheckEnabled } from 'obsidian-dev-utils/obsidian/obsidian-settings';
 import { addPluginCssClasses } from 'obsidian-dev-utils/obsidian/plugin/plugin-context';
 import { trashSafe } from 'obsidian-dev-utils/obsidian/vault';
 
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
+
+import { selfWriteRegistry } from './self-write-registry.ts';
+import { TemplatePart } from './token-evaluator-context.ts';
 
 interface PromptWithPreviewModalConstructorParams {
   readonly context: TokenEvaluatorContext;
@@ -68,6 +72,12 @@ class PreviewModal extends Modal {
     this.titleEl.setText(t(($) => $.promptWithPreviewModal.previewModal.title, { fullFileName }));
 
     const temporaryPath = `__temp${String(Date.now())}__${fullFileName}`;
+    /*
+     * Claimed so the externally-created-attachment handler does not treat this scratch file as an
+     * attachment some other plugin just added — which would rename it and, with a `${prompt}`
+     * template, open a second prompt on top of this one.
+     */
+    selfWriteRegistry.register(temporaryPath);
     this.temporaryFile = await this.app.vault.createBinary(temporaryPath, attachmentFileContent);
 
     const previewContainer = this.contentEl.createDiv('preview-container');
@@ -111,6 +121,26 @@ class PromptWithPreviewModal extends Modal {
     invokeAsyncSafely(this.onOpenAsync.bind(this));
   }
 
+  /**
+   * The heading (and input placeholder) names what the user is actually deciding. `${prompt}` is not
+   * only a rename token — the same modal appears for a `${prompt}` in the attachment folder template,
+   * where "Rename attachment file" would be plainly wrong (issue #59). Anything that is neither part
+   * (e.g. the Markdown URL format) keeps the generic wording.
+   */
+  private getHeading(): string {
+    switch (this.context.templatePart) {
+      case TemplatePart.FileName: {
+        return t(($) => $.promptWithPreviewModal.fileNameTitle);
+      }
+      case TemplatePart.Folder: {
+        return t(($) => $.promptWithPreviewModal.folderTitle);
+      }
+      default: {
+        return t(($) => $.promptWithPreviewModal.title);
+      }
+    }
+  }
+
   private handleOk(event: Event, textComponent: TextComponent): void {
     event.preventDefault();
     if (!textComponent.inputEl.checkValidity()) {
@@ -124,8 +154,10 @@ class PromptWithPreviewModal extends Modal {
   private async onOpenAsync(): Promise<void> {
     this.value = await this.context.fillTemplate(this.defaultValue);
 
+    const heading = this.getHeading();
+
     const title = createFragment((f) => {
-      f.appendText(t(($) => $.promptWithPreviewModal.title));
+      f.appendText(heading);
       f.createEl('br');
       f.appendText(this.context.fullTemplate.slice(0, this.context.tokenStartOffset));
       f.createSpan({ cls: 'highlighted-token', text: this.context.tokenWithFormat });
@@ -143,8 +175,14 @@ class PromptWithPreviewModal extends Modal {
     };
 
     textComponent.setValue(this.value);
-    textComponent.setPlaceholder(t(($) => $.promptWithPreviewModal.title));
+    textComponent.setPlaceholder(heading);
     inputEl.addClass(CssClass.TextBox);
+    /*
+     * `AbstractTextComponent` forces `spellcheck="false"` on every text component, so the vault
+     * setting has to be re-applied here. Obsidian's own file explorer reads the same config when it
+     * starts an inline rename.
+     */
+    inputEl.setAttribute('spellcheck', String(isSpellcheckEnabled(this.app)));
     textComponent.onChange((newValue) => {
       this.value = newValue;
     });
@@ -180,6 +218,18 @@ class PromptWithPreviewModal extends Modal {
     if (!attachmentFileContent || !embeddableCreator) {
       previewButton.setDisabled(true);
     }
+
+    /*
+     * Focus LAST, once the whole modal is built. The input does not exist when `Modal` focuses its
+     * first field — this modal fills its content in `onOpenAsync`, after `onOpen` has returned — so
+     * the focus has to be explicit, unlike the upstream `obsidian-dev-utils` prompt, which builds
+     * synchronously. It also has to come after the rest of the build: `reportValidity()` and the
+     * button construction above both drop the focus if they run afterwards. `select()` then
+     * pre-selects the default value, so typing replaces the name instead of appending to it
+     * (issue #59).
+     */
+    inputEl.focus();
+    inputEl.select();
   }
 
   private preview(): void {

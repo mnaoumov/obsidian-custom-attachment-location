@@ -202,6 +202,24 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           }),
           this.settingEx({
             desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentsCreatedByOtherPlugins.description.part1));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentsCreatedByOtherPlugins.description.part2));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentsCreatedByOtherPlugins.description.part3));
+            }),
+            name: t(($) => $.pluginSettingsTab.shouldRenameAttachmentsCreatedByOtherPlugins.name),
+            render: (setting) => {
+              setting.addToggle((toggle) => {
+                this.bind({
+                  propertyName: 'shouldRenameAttachmentsCreatedByOtherPlugins',
+                  valueComponent: toggle
+                });
+              });
+            }
+          }),
+          this.settingEx({
+            desc: createFragment((f) => {
               f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part1));
               f.createEl('br');
               f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part2));

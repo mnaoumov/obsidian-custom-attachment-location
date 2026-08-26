@@ -298,6 +298,15 @@ export const cs = {
       description: 'Zda přejmenovat složky příloh když je poznámka přejmenována nebo přesunuta.',
       name: 'Zda přejmenovat složky příloh'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Zda použít nastavení složky příloh a názvu souboru na přílohy, které vytvářejí JINÉ pluginy.',
+        part2:
+          'Některé pluginy zapíší přílohu do trezoru pod vlastním názvem, aniž by se Obsidianu zeptaly, kam patří. Je-li tato volba zapnutá, takový soubor se hned po vzniku přesune a přejmenuje.',
+        part3: 'Zpracují se jen soubory vzniklé při otevřené poznámce, nikdy soubory přicházející ze synchronizace nebo z importu trezoru.'
+      },
+      name: 'Přejmenovat přílohy vytvořené jinými pluginy'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Pokud je povoleno, přílohy zpracované přes',
@@ -342,6 +351,8 @@ export const cs = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Přejmenovat soubor přílohy',
+    folderTitle: 'Vyberte složku příloh',
     previewModal: {
       title: 'Náhled souboru přílohy \'{{fullFileName}}\''
     },

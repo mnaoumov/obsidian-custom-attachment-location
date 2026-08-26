@@ -298,6 +298,15 @@ export const it = {
       description: 'Se rinominare le cartelle allegati quando una nota viene rinominata o spostata.',
       name: 'Rinomina cartelle allegati'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Se applicare le impostazioni di cartella allegati e nome file agli allegati creati da ALTRI plugin.',
+        part2:
+          'Alcuni plugin scrivono un allegato nel vault con un nome proprio, senza chiedere a Obsidian dove debba andare. Con questa opzione attiva, un file simile viene spostato e rinominato non appena compare.',
+        part3: 'Vengono toccati solo i file creati mentre una nota è aperta, mai quelli provenienti da una sincronizzazione o da un\'importazione del vault.'
+      },
+      name: 'Rinomina gli allegati creati da altri plugin'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Se abilitato, gli allegati elaborati tramite',
@@ -342,6 +351,8 @@ export const it = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Rinomina file allegato',
+    folderTitle: 'Scegli cartella allegati',
     previewModal: {
       title: 'Anteprima file allegato \'{{fullFileName}}\''
     },

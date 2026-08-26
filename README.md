@@ -61,6 +61,11 @@ A copy of the vault ships with every release. You can access it via any of the f
   [03 Tokens and patterns](<./demo-vault/03 Tokens and patterns.md>) ·
   [04 Custom tokens](<./demo-vault/04 Custom tokens.md>) ·
   [09 Token reference](<./demo-vault/09 Token reference.md>)
+- **Catch attachments other plugins create** — some plugins write an attachment into the vault under a
+  name of their own instead of asking Obsidian where it belongs. Turn on
+  `shouldRenameAttachmentsCreatedByOtherPlugins` and those files are moved and renamed too, just after
+  they appear. Off by default.
+  [06 Settings](<./demo-vault/06 Settings.md>)
 - **Collect attachments** — take the attachments a note already has and move them into the folder your
   settings say they belong in, for one note, one folder, or the whole vault.
   [05 Collect attachments](<./demo-vault/05 Collect attachments.md>)

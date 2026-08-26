@@ -298,6 +298,15 @@ export const ja = {
       description: 'ノートがリネームまたは移動されたときに添付ファイルフォルダをリネームするかどうか。',
       name: '添付ファイルフォルダをリネームする'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: '他のプラグインが作成した添付ファイルにも、添付フォルダーとファイル名の設定を適用するかどうか。',
+        part2:
+          '一部のプラグインは、どこに置くべきかを Obsidian に尋ねることなく、独自の名前で添付ファイルを直接保管庫に書き込みます。これを有効にすると、そのようなファイルは出現した直後に移動され、名前が変更されます。',
+        part3: 'ノートを開いている間に作成されたファイルのみが対象で、同期や保管庫の取り込みで届いたファイルは決して変更されません。'
+      },
+      name: '他のプラグインが作成した添付ファイルの名前を変更'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: '有効にすると、',
@@ -342,6 +351,8 @@ export const ja = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: '添付ファイルの名前を変更',
+    folderTitle: '添付フォルダーを選択',
     previewModal: {
       title: '添付ファイルのプレビュー \'{{fullFileName}}\''
     },

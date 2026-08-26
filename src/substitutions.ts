@@ -16,7 +16,10 @@ import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 import type { TokenValidator } from './token-validator.ts';
 import type { TokenBase } from './tokens/token-base.ts';
 
-import { ActionContext } from './token-evaluator-context.ts';
+import {
+  ActionContext,
+  TemplatePart
+} from './token-evaluator-context.ts';
 import {
   parseFormatObject,
   scanTokens
@@ -171,7 +174,7 @@ export class Substitutions {
     this.registeredTokens.set(token.name.toLowerCase(), token);
   }
 
-  public async fillTemplate(template: string): Promise<string> {
+  public async fillTemplate(template: string, templatePart: TemplatePart = TemplatePart.Other): Promise<string> {
     const abortController = new AbortController();
     const abortSignal = abortController.signal;
 
@@ -204,7 +207,12 @@ export class Substitutions {
         app: this.app,
         attachmentFileStats: this.attachmentFileStats,
         cursorLine: this.cursorLine,
-        fillTemplate: this.fillTemplate.bind(this),
+        /*
+         * Bound to the enclosing `templatePart` so a nested fill (a custom token calling
+         * `ctx.fillTemplate`, or `${prompt}` resolving its `defaultValueTemplate`) inherits it. The
+         * exposed signature stays one-argument, as the custom-token API documents it.
+         */
+        fillTemplate: (nestedTemplate: string) => this.fillTemplate(nestedTemplate, templatePart),
         format,
         fullTemplate: template,
         generatedAttachmentFileName: this.generatedAttachmentFileName,
@@ -223,6 +231,7 @@ export class Substitutions {
         originalAttachmentFileName: this.originalAttachmentFileName,
         pluginSettingsComponent: this.pluginSettingsComponent,
         sequenceNumber: this.sequenceNumber ?? 0,
+        templatePart,
         token: scannedToken.token,
         tokenEndOffset: scannedToken.end,
         tokenStartOffset: scannedToken.start,

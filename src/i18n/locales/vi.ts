@@ -294,6 +294,15 @@ export const vi = {
       description: 'Có đổi tên các thư mục đính kèm khi ghi chú được đổi tên hoặc di chuyển không.',
       name: 'Đổi tên thư mục đính kèm'
     },
+    shouldRenameAttachmentsCreatedByOtherPlugins: {
+      description: {
+        part1: 'Có áp dụng các thiết lập thư mục đính kèm và tên tệp cho những tệp đính kèm do plugin KHÁC tạo hay không.',
+        part2:
+          'Một số plugin ghi thẳng tệp đính kèm vào kho với tên của riêng chúng, mà không hỏi Obsidian xem nó thuộc về đâu. Khi bật tùy chọn này, tệp như vậy sẽ được di chuyển và đổi tên ngay sau khi xuất hiện.',
+        part3: 'Chỉ những tệp được tạo khi đang mở một ghi chú mới bị tác động, không bao giờ đụng đến tệp đến từ đồng bộ hoặc nhập kho.'
+      },
+      name: 'Đổi tên tệp đính kèm do plugin khác tạo'
+    },
     shouldRenameCollectedAttachments: {
       description: {
         part1: 'Nếu bật, các tệp đính kèm được xử lý qua lệnh',
@@ -338,6 +347,8 @@ export const vi = {
     }
   },
   promptWithPreviewModal: {
+    fileNameTitle: 'Đổi tên tệp đính kèm',
+    folderTitle: 'Chọn thư mục đính kèm',
     previewModal: {
       title: 'Xem trước tệp đính kèm \'{{fullFileName}}\''
     },

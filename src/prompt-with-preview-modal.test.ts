@@ -28,6 +28,7 @@ import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
 
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { promptWithPreview } from './prompt-with-preview-modal.ts';
+import { TemplatePart } from './token-evaluator-context.ts';
 
 type EmbedByExtension = Partial<App['embedRegistry']['embedByExtension']>;
 
@@ -68,7 +69,9 @@ function createApp(overrides: StrictProxyPartial<App>): App {
   return strictProxy<App>({
     embedRegistry: createEmbedRegistry({}),
     vault: castTo<App['vault']>({
-      createBinary: vi.fn((path: string): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path })))
+      createBinary: vi.fn((path: string): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ path }))),
+      // Read by `isSpellcheckEnabled`, which re-applies the vault's spellcheck setting to the input.
+      getConfig: vi.fn((): boolean => true)
     }),
     ...overrides
   });
@@ -83,6 +86,7 @@ function createContext(overrides: StrictProxyPartial<TokenEvaluatorContext>): To
     getAttachmentFileContent: vi.fn((): Promise<ArrayBuffer | undefined> => Promise.resolve(undefined)),
     originalAttachmentFileExtension: 'png',
     originalAttachmentFileName: 'image',
+    templatePart: TemplatePart.Other,
     tokenEndOffset: 13,
     tokenStartOffset: 6,
     // eslint-disable-next-line no-template-curly-in-string -- This is a literal token template string, not a JS template literal.
@@ -174,6 +178,84 @@ describe('promptWithPreview', () => {
     await vi.advanceTimersByTimeAsync(0);
     const result = await promise;
     expect(result).toBeNull();
+  });
+
+  it('should focus the input and pre-select its value so typing replaces it', async () => {
+    // The mock modal never attaches its content to the document, so `activeElement` cannot move;
+    // The focus CALL is what is asserted here, and the real focus is covered by the integration test.
+    const focusSpy = vi.spyOn(HTMLInputElement.prototype, 'focus');
+
+    const promise = promptWithPreview({
+      context: createContext({}),
+      defaultValue: 'default-value',
+      valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
+    });
+    await flushOnOpen();
+
+    const inputEl = getInputEl(captured.textComponents[0]);
+    expect(focusSpy).toHaveBeenCalled();
+    expect(inputEl?.selectionStart).toBe(0);
+    expect(inputEl?.selectionEnd).toBe('default-value'.length);
+
+    await vi.advanceTimersByTimeAsync(0);
+    await promise;
+  });
+
+  it('should apply the vault spellcheck setting to the input', async () => {
+    const promise = promptWithPreview({
+      context: createContext({}),
+      defaultValue: 'default-value',
+      valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
+    });
+    await flushOnOpen();
+
+    // `AbstractTextComponent` hardcodes `spellcheck="false"`; the vault setting has to win.
+    expect(getInputEl(captured.textComponents[0])?.getAttribute('spellcheck')).toBe('true');
+
+    await vi.advanceTimersByTimeAsync(0);
+    await promise;
+  });
+
+  it('should name the file-name template a rename', async () => {
+    const promise = promptWithPreview({
+      context: createContext({ templatePart: TemplatePart.FileName }),
+      defaultValue: 'default-value',
+      valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
+    });
+    await flushOnOpen();
+
+    expect(getInputEl(captured.textComponents[0])?.placeholder).toBe('Rename attachment file');
+
+    await vi.advanceTimersByTimeAsync(0);
+    await promise;
+  });
+
+  it('should name the folder template a folder choice, not a rename', async () => {
+    const promise = promptWithPreview({
+      context: createContext({ templatePart: TemplatePart.Folder }),
+      defaultValue: 'default-value',
+      valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
+    });
+    await flushOnOpen();
+
+    expect(getInputEl(captured.textComponents[0])?.placeholder).toBe('Choose attachment folder');
+
+    await vi.advanceTimersByTimeAsync(0);
+    await promise;
+  });
+
+  it('should keep the generic wording for a template that is neither a file name nor a folder', async () => {
+    const promise = promptWithPreview({
+      context: createContext({ templatePart: TemplatePart.Other }),
+      defaultValue: 'default-value',
+      valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
+    });
+    await flushOnOpen();
+
+    expect(getInputEl(captured.textComponents[0])?.placeholder).toBe('Provide a value for the prompt token');
+
+    await vi.advanceTimersByTimeAsync(0);
+    await promise;
   });
 
   it('should render OK, Cancel and Preview buttons', async () => {
@@ -297,11 +379,15 @@ describe('promptWithPreview', () => {
   it('should open the preview modal and load the embed when the Preview button is clicked', async () => {
     const embeddableCreator = vi.fn<EmbedCreator>(() => castTo<ReturnType<EmbedCreator>>(hoisted.embedComponent));
     const createBinary = vi.fn((path: string): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ name: 'temp', path })));
+    const vault = castTo<App['vault']>({
+      createBinary,
+      getConfig: vi.fn((): boolean => true)
+    });
     const promise = promptWithPreview({
       context: createContext({
         app: createApp({
           embedRegistry: createEmbedRegistry({ png: embeddableCreator }),
-          vault: castTo<App['vault']>({ createBinary })
+          vault
         }),
         getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(new ArrayBuffer(8))
       }),
