@@ -117,31 +117,44 @@ export class UnusedAttachmentsRemover {
     // Modal lists exactly what will be removed.
     const unusedAttachments = new Set<TFile>();
 
+    const scanNote = async (noteFile: TFile): Promise<void> => {
+      abortSignal.throwIfAborted();
+      if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
+        console.warn(`Cannot delete unused attachments as note path is ignored: ${noteFile.path}.`);
+        return;
+      }
+
+      for (const attachment of await this.findUnusedAttachments(noteFile, abortSignal)) {
+        unusedAttachments.add(attachment);
+      }
+    };
+
     /*
      * The scan is the slow half, and vault-wide it walks every note in the vault while looking up the
      * backlinks of every attachment it meets — minutes on a large vault, with nothing on screen. The
      * progress notice is what makes that survivable, and what gives the user somewhere to cancel.
+     *
+     * ONLY for a bulk scope, though. `loop` keeps its notice up for a minimum of two seconds
+     * (`noticeMinTimeoutInMilliseconds`, awaited before it hides), so running it for a single note
+     * would turn an instant command into a ~2.5 s one with a progress bar counting to 1. The scope the
+     * user chose is exactly the right signal: one note is never worth reporting progress on.
      */
-    await loop({
-      abortSignal,
-      buildNoticeMessage: ({ item, iterationString }) => t(($) => $.deleteUnusedAttachments.progressBar.message, { iterationString, noteFilePath: item.path }),
-      items: noteFiles,
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      processItem: async (noteFile) => {
-        abortSignal.throwIfAborted();
-        if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
-          console.warn(`Cannot delete unused attachments as note path is ignored: ${noteFile.path}.`);
-          return;
-        }
-
-        for (const attachment of await this.findUnusedAttachments(noteFile, abortSignal)) {
-          unusedAttachments.add(attachment);
-        }
-      },
-      progressBarTitle: `${this.pluginName}: ${t(($) => $.deleteUnusedAttachments.progressBar.title)}`,
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
-    });
+    if (noteFiles.length > 1) {
+      await loop({
+        abortSignal,
+        buildNoticeMessage: ({ item, iterationString }) => t(($) => $.deleteUnusedAttachments.progressBar.message, { iterationString, noteFilePath: item.path }),
+        items: noteFiles,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        processItem: scanNote,
+        progressBarTitle: `${this.pluginName}: ${t(($) => $.deleteUnusedAttachments.progressBar.title)}`,
+        shouldContinueOnError: true,
+        shouldShowProgressBar: true
+      });
+    } else {
+      for (const noteFile of noteFiles) {
+        await scanNote(noteFile);
+      }
+    }
 
     if (unusedAttachments.size === 0) {
       this.pluginNoticeComponent.showNotice(t(($) => $.notice.noUnusedAttachments));

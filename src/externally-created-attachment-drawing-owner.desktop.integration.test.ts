@@ -23,6 +23,7 @@ import {
  */
 
 const PLUGIN_ID = 'obsidian-custom-attachment-location';
+const WAIT_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 interface ProbeResult {
   readonly attachmentPathAfterDrawing: string;
@@ -33,7 +34,7 @@ interface ProbeResult {
 describe('An attachment written by another plugin while a drawing is open is left alone (issue #65)', () => {
   it('renames it for a normal note but not for a file treated as an attachment', async () => {
     const result = await evalInObsidian({
-      async callback({ app, pluginId }): Promise<ProbeResult> {
+      async callback({ app, lib: { waitUntil }, pluginId, waitTimeoutInMilliseconds }): Promise<ProbeResult> {
         // Module-scope constants are not captured by the serialized closure, so it lives here.
         const SETTLE_DELAY_IN_MILLISECONDS = 3000;
 
@@ -113,7 +114,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
          * Writes an attachment the way a third-party plugin does -- straight to disk, never through
          * `app.saveAttachment` -- while `ownerPath` is the open file, then reports where it ended up.
          */
-        async function writeForeignAttachment(ownerPath: string, imageName: string): Promise<string> {
+        async function writeForeignAttachment(ownerPath: string, imageName: string, shouldExpectRelocation: boolean): Promise<string> {
           const owner = app.vault.getFileByPath(ownerPath);
           if (owner) {
             await app.workspace.getLeaf(false).openFile(owner);
@@ -125,7 +126,24 @@ describe('An attachment written by another plugin while a drawing is open is lef
           const pathsBefore = new Set(app.vault.getFiles().map((file) => file.path));
           await app.vault.createBinary(imageName, new ArrayBuffer(4));
           createdPaths.push(imageName);
-          await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+
+          if (shouldExpectRelocation) {
+            /*
+             * POLL, never a fixed settle. Under the full suite's load the handler can take noticeably
+             * longer than it does when this file runs alone, and a fixed wait then snapshots the vault
+             * mid-move -- which is how this test passed in isolation and failed inside the release
+             * preflight.
+             */
+            await waitUntil({
+              message: `the foreign attachment ${imageName} was never relocated`,
+              predicate: () => app.vault.getFiles().some((file) => !pathsBefore.has(file.path) && file.path !== imageName),
+              timeoutInMilliseconds: waitTimeoutInMilliseconds
+            });
+          } else {
+            // Nothing should happen here, and absence cannot be polled for -- give the handler its
+            // Whole freshness window to act, then assert that it did not.
+            await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+          }
 
           const added = app.vault.getFiles().map((file) => file.path).filter((path) => !pathsBefore.has(path));
           createdPaths.push(...added);
@@ -143,8 +161,8 @@ describe('An attachment written by another plugin while a drawing is open is lef
           await app.vault.create(drawingPath, 'drawing\n');
           createdPaths.push(drawingPath);
 
-          const attachmentPathAfterNote = await writeForeignAttachment(notePath, `eco-a-${stamp}.png`);
-          const attachmentPathAfterDrawing = await writeForeignAttachment(drawingPath, `eco-b-${stamp}.png`);
+          const attachmentPathAfterNote = await writeForeignAttachment(notePath, `eco-a-${stamp}.png`, true);
+          const attachmentPathAfterDrawing = await writeForeignAttachment(drawingPath, `eco-b-${stamp}.png`, false);
 
           return { attachmentPathAfterDrawing, attachmentPathAfterNote, settingsFound: true };
         } finally {
@@ -157,7 +175,8 @@ describe('An attachment written by another plugin while a drawing is open is lef
         }
       },
       input: {
-        pluginId: PLUGIN_ID
+        pluginId: PLUGIN_ID,
+        waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
       },
       vaultPath: getTemporaryVault().path
     });
