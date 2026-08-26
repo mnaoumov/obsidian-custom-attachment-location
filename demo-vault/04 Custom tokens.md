@@ -25,8 +25,7 @@ After registering them, you can use `${alpha}` and `${bravo:{formatKey:'charlie'
 2. Set **Generated attachment file name** to a pattern using your token, e.g. `${alpha}`.
 3. Paste an image (you supply the file) and watch the generated name.
 
-The `ctx` argument exposes the note, the attachment, the app, and a `ctx.fillTemplate(...)` helper that
-resolves a pattern of its own from inside your token:
+The `ctx` argument exposes the note, the attachment, the app, and a `ctx.fillTemplate(...)` helper that resolves a pattern of its own from inside your token:
 
 ```javascript
 registerCustomToken('bravo', async (ctx) => {
@@ -39,10 +38,7 @@ Its full shape is documented in the plugin's [`token-evaluator-context.ts`](http
 
 ## Reading the attachment's bytes
 
-`ctx.attachmentFileContent` (synchronous) was replaced by the lazy async
-`ctx.getAttachmentFileContent()`. Reading an attachment's bytes costs more the larger the file is, so
-they are now read on demand, only when a token actually asks for them, and never for the built-in
-tokens. Migrate a token that needs the content like this:
+`ctx.attachmentFileContent` (synchronous) was replaced by the lazy async `ctx.getAttachmentFileContent()`. Reading an attachment's bytes costs more the larger the file is, so they are now read on demand, only when a token actually asks for them, and never for the built-in tokens. Migrate a token that needs the content like this:
 
 ```javascript
 // Before
