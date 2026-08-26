@@ -34,7 +34,7 @@ interface ProbeResult {
 describe('An attachment written by another plugin while a drawing is open is left alone (issue #65)', () => {
   it('renames it for a normal note but not for a file treated as an attachment', async () => {
     const result = await evalInObsidian({
-      async callback({ app, lib: { waitUntil }, pluginId, waitTimeoutInMilliseconds }): Promise<ProbeResult> {
+      async callback({ app, pluginId, waitTimeoutInMilliseconds }): Promise<ProbeResult> {
         // Module-scope constants are not captured by the serialized closure, so it lives here.
         const SETTLE_DELAY_IN_MILLISECONDS = 3000;
 
@@ -129,16 +129,35 @@ describe('An attachment written by another plugin while a drawing is open is lef
 
           if (shouldExpectRelocation) {
             /*
-             * POLL, never a fixed settle. Under the full suite's load the handler can take noticeably
-             * longer than it does when this file runs alone, and a fixed wait then snapshots the vault
-             * mid-move -- which is how this test passed in isolation and failed inside the release
-             * preflight.
+             * Wait for the additions to STOP CHANGING, not merely to appear. The handler moves the file
+             * and then renames it, so a poll that fires on "something new exists" catches an
+             * intermediate path -- and the final one then materializes during the NEXT phase, where it
+             * is counted as that phase's addition. That is not hypothetical: it is exactly how this
+             * test reported the first phase's file as the second phase's result.
+             *
+             * Quiescing here also makes the two phases independent, which is what the fixed settle
+             * below relies on.
              */
-            await waitUntil({
-              message: `the foreign attachment ${imageName} was never relocated`,
-              predicate: () => app.vault.getFiles().some((file) => !pathsBefore.has(file.path) && file.path !== imageName),
-              timeoutInMilliseconds: waitTimeoutInMilliseconds
-            });
+            const STABLE_POLL_INTERVAL_IN_MILLISECONDS = 300;
+            const REQUIRED_STABLE_POLLS = 3;
+            let previousKey = '';
+            let stablePolls = 0;
+            const deadline = Date.now() + waitTimeoutInMilliseconds;
+            while (Date.now() < deadline) {
+              const current = app.vault.getFiles().map((file) => file.path).filter((path) => !pathsBefore.has(path)).sort();
+              const key = current.join('|');
+              const hasRelocated = current.length > 0 && !current.includes(imageName);
+              if (key === previousKey && hasRelocated) {
+                stablePolls++;
+                if (stablePolls >= REQUIRED_STABLE_POLLS) {
+                  break;
+                }
+              } else {
+                stablePolls = 0;
+                previousKey = key;
+              }
+              await sleep(STABLE_POLL_INTERVAL_IN_MILLISECONDS);
+            }
           } else {
             // Nothing should happen here, and absence cannot be polled for -- give the handler its
             // Whole freshness window to act, then assert that it did not.
