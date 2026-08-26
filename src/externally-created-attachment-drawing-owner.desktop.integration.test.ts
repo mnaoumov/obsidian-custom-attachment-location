@@ -1,0 +1,178 @@
+import { evalInObsidian } from 'obsidian-integration-testing';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import {
+  describe,
+  expect,
+  it
+} from 'vitest';
+
+/*
+ * Issue #65 asks for a paste into an Excalidraw drawing to spawn the `${prompt}` box. This test pins
+ * the boundary that answers it: `shouldRenameAttachmentsCreatedByOtherPlugins` -- the opt-in added for
+ * issue #59 -- deliberately does NOTHING when the file in front of the user is one the user has listed
+ * in `treatAsAttachmentExtensions`, which by default is exactly `.excalidraw.md`.
+ *
+ * That is not an oversight to be fixed by widening the gate. Excalidraw ships `compress: true`, so a
+ * drawing's reference to a pasted image lives inside a `compressed-json` block: Obsidian never indexes
+ * it, and neither `fileManager.renameFile` nor this plugin can rewrite it. Renaming such an image would
+ * leave the drawing pointing at a path that no longer exists, silently. The handler declining is the
+ * safe answer, and this test exists so a later change cannot quietly turn it into an unsafe one.
+ *
+ * Excalidraw itself is NOT installed here, and does not need to be: the gate under test is the plugin's
+ * own `treatAsAttachmentExtensions` / `isNoteEx` pair, reached with a plain `.excalidraw.md` file open.
+ */
+
+const PLUGIN_ID = 'obsidian-custom-attachment-location';
+
+interface ProbeResult {
+  readonly attachmentPathAfterDrawing: string;
+  readonly attachmentPathAfterNote: string;
+  readonly settingsFound: boolean;
+}
+
+describe('An attachment written by another plugin while a drawing is open is left alone (issue #65)', () => {
+  it('renames it for a normal note but not for a file treated as an attachment', async () => {
+    const result = await evalInObsidian({
+      async callback({ app, pluginId }): Promise<ProbeResult> {
+        // Module-scope constants are not captured by the serialized closure, so it lives here.
+        const SETTLE_DELAY_IN_MILLISECONDS = 3000;
+
+        interface OtherPluginSettings {
+          attachmentFolderPath: string;
+          shouldRenameAttachmentsCreatedByOtherPlugins: boolean;
+          treatAsAttachmentExtensions: readonly string[];
+        }
+
+        function isOtherPluginSettings(value: unknown): value is OtherPluginSettings {
+          return typeof value === 'object' && value !== null
+            && typeof (value as Record<string, unknown>)['shouldRenameAttachmentsCreatedByOtherPlugins'] === 'boolean'
+            && Array.isArray((value as Record<string, unknown>)['treatAsAttachmentExtensions']);
+        }
+
+        // The plugin does not expose its settings publicly, so locate the live settings object by
+        // Walking the plugin's component tree.
+        function findSettings(): null | OtherPluginSettings {
+          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
+          const seen = new Set<unknown>();
+          const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
+          let budget = 12_000;
+          while (queue.length > 0 && budget-- > 0) {
+            const current = queue.shift();
+            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
+              continue;
+            }
+            seen.add(current);
+            const record = current as Record<string, unknown>;
+            if (isOtherPluginSettings(record['settings'])) {
+              return record['settings'];
+            }
+            let values: unknown[] = [];
+            if (Array.isArray(current)) {
+              values = current;
+            } else if (current instanceof Map) {
+              values = [...current.values()];
+            } else {
+              for (const [key, value] of Object.entries(record)) {
+                if (!block.has(key)) {
+                  values.push(value);
+                }
+              }
+            }
+            for (const value of values) {
+              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
+                queue.push(value);
+              }
+            }
+          }
+          return null;
+        }
+
+        const foundSettings = findSettings();
+        if (!foundSettings) {
+          return { attachmentPathAfterDrawing: '', attachmentPathAfterNote: '', settingsFound: false };
+        }
+        const settings: OtherPluginSettings = foundSettings;
+
+        const priorFolderPath = settings.attachmentFolderPath;
+        const wasRenamingOtherPlugins = settings.shouldRenameAttachmentsCreatedByOtherPlugins;
+        const priorTreatAsAttachment = settings.treatAsAttachmentExtensions;
+
+        const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
+        const notePath = `eco-note-${stamp}.md`;
+        const drawingPath = `eco-drawing-${stamp}.excalidraw.md`;
+        const createdPaths: string[] = [];
+
+        async function trashIfExists(path: string): Promise<void> {
+          const existing = app.vault.getAbstractFileByPath(path);
+          if (existing) {
+            await app.fileManager.trashFile(existing);
+          }
+        }
+
+        /*
+         * Writes an attachment the way a third-party plugin does -- straight to disk, never through
+         * `app.saveAttachment` -- while `ownerPath` is the open file, then reports where it ended up.
+         */
+        async function writeForeignAttachment(ownerPath: string, imageName: string): Promise<string> {
+          const owner = app.vault.getFileByPath(ownerPath);
+          if (owner) {
+            await app.workspace.getLeaf(false).openFile(owner);
+          }
+          await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+
+          // The handler renames as well as moves, so the file cannot be found again by its original
+          // Name. Snapshot the vault instead and report whichever path appeared.
+          const pathsBefore = new Set(app.vault.getFiles().map((file) => file.path));
+          await app.vault.createBinary(imageName, new ArrayBuffer(4));
+          createdPaths.push(imageName);
+          await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+
+          const added = app.vault.getFiles().map((file) => file.path).filter((path) => !pathsBefore.has(path));
+          createdPaths.push(...added);
+          return added.length === 1 ? added[0] ?? '' : `UNEXPECTED:${added.join(',')}`;
+        }
+
+        try {
+          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
+          settings.attachmentFolderPath = './eco-assets/${noteFileName}';
+          settings.shouldRenameAttachmentsCreatedByOtherPlugins = true;
+          settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
+
+          await app.vault.create(notePath, 'body\n');
+          createdPaths.push(notePath);
+          await app.vault.create(drawingPath, 'drawing\n');
+          createdPaths.push(drawingPath);
+
+          const attachmentPathAfterNote = await writeForeignAttachment(notePath, `eco-a-${stamp}.png`);
+          const attachmentPathAfterDrawing = await writeForeignAttachment(drawingPath, `eco-b-${stamp}.png`);
+
+          return { attachmentPathAfterDrawing, attachmentPathAfterNote, settingsFound: true };
+        } finally {
+          settings.attachmentFolderPath = priorFolderPath;
+          settings.shouldRenameAttachmentsCreatedByOtherPlugins = wasRenamingOtherPlugins;
+          settings.treatAsAttachmentExtensions = priorTreatAsAttachment;
+          for (const path of createdPaths.reverse()) {
+            await trashIfExists(path);
+          }
+        }
+      },
+      input: {
+        pluginId: PLUGIN_ID
+      },
+      vaultPath: getTemporaryVault().path
+    });
+
+    expect(result.settingsFound).toBe(true);
+
+    // With a normal note open, the opt-in does its job: the foreign write is filed under the note.
+    // Moved AND renamed: the file name is the plugin's `generatedAttachmentFileName`, not the one the
+    // Foreign plugin wrote, which is exactly what the reporter wants for a drawing.
+    expect(result.attachmentPathAfterNote).toMatch(/^eco-assets\/eco-note-[^/]+\/[^/]+\.png$/);
+    expect(result.attachmentPathAfterNote).not.toContain('eco-a-');
+
+    // With a file the user treats as an attachment open, it declines and leaves the file at the root.
+    // This is the answer to #65: not an oversight, but the only safe outcome while the drawing's own
+    // Reference is unreachable.
+    expect(result.attachmentPathAfterDrawing).toMatch(/^eco-b-.*\.png$/);
+  }, 180_000);
+});

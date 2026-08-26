@@ -58,4 +58,8 @@ Manual equivalent: edit **Generated attachment file name** in **Settings -> Comm
 
 These patterns apply to attachments saved through Obsidian itself — a paste, a drop, an import. A plugin that writes an attachment into the vault under a name of its own instead bypasses them; turn on `shouldRenameAttachmentsCreatedByOtherPlugins` to have those files moved and renamed too, just after they appear.
 
+**One case it deliberately declines: a file you have listed in `treatAsAttachmentExtensions`.** By default that is `.excalidraw.md`, so an image pasted into an Excalidraw drawing is left exactly where the drawing put it. This is a safety limit, not an oversight. Excalidraw stores the drawing's reference to that image inside a `compressed-json` block, and ships with compression on — so Obsidian never indexes the reference, and neither Obsidian's rename machinery nor this plugin can rewrite it. Moving or renaming the image would leave the drawing pointing at a path that no longer exists, without saying so.
+
+The same reasoning applies to any tool that keeps its own references in a form Obsidian cannot read. Where a tool records them as ordinary `[[wikilinks]]` — which Excalidraw does when its **Compress Excalidraw JSON** setting is off — they are indexed like any other link and the usual renaming applies.
+
 Related settings you can explore: `renamedAttachmentFileName`, `shouldRenameAttachmentFiles`, `attachmentRenameMode`, `shouldRenameAttachmentsCreatedByOtherPlugins`, `duplicateNameSeparator`, and `collectedAttachmentFileName`. Every key is described in [06 Settings](<./06 Settings.md>). The tokens themselves live in [03 Tokens and patterns](<./03 Tokens and patterns.md>).
