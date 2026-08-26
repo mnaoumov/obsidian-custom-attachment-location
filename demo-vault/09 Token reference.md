@@ -114,7 +114,8 @@ The generated file name of the attachment (available only inside [`markdownUrlFo
 
 ```ts
 {
-  case?: 'lower' | 'upper';
+  case?: 'lower' | 'title' | 'upper';
+  collapseWhitespace?: boolean; // default: false
   slugify?: boolean; // default: false
   trim?: {
     length: number;
@@ -230,7 +231,8 @@ Current note file name.
 
 ```ts
 {
-  case?: 'lower' | 'upper';
+  case?: 'lower' | 'title' | 'upper';
+  collapseWhitespace?: boolean; // default: false
   slugify?: boolean; // default: false
   trim?: {
     length: number;
@@ -276,7 +278,8 @@ Current note's folder name.
 
 ```ts
 {
-  case?: 'lower' | 'upper';
+  case?: 'lower' | 'title' | 'upper';
+  collapseWhitespace?: boolean; // default: false
   pick?: {
     from: 'start' | 'end';
     index?: number; // default: 0
@@ -392,7 +395,8 @@ File name of the original attachment file.
 
 ```ts
 {
-  case?: 'lower' | 'upper';
+  case?: 'lower' | 'title' | 'upper';
+  collapseWhitespace?: boolean; // default: false
   slugify?: boolean; // default: false
   trim?: {
     length: number;
@@ -428,7 +432,8 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 
 ```ts
 {
-  case?: 'lower' | 'upper';
+  case?: 'lower' | 'title' | 'upper';
+  collapseWhitespace?: boolean; // default: false
   defaultValueTemplate?: string; // default: ${originalAttachmentFileName}
   slugify?: boolean; // default: false
   trim?: {
@@ -446,7 +451,10 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 
 - `${prompt}`: `alpha -> alpha`.
 - `${prompt:{case:'lower'}}`: `ALPHA -> alpha`.
+- `${prompt:{case:'title'}}`: `my REPORT about api -> My REPORT About Api` - the first letter of each word, except a word that is already entirely upper case, which is left alone so an acronym survives.
 - `${prompt:{case:'upper'}}`: `alpha -> ALPHA`.
+- `${prompt:{collapseWhitespace:true}}`: `[   alpha    bravo   ] -> [alpha bravo]` (brackets shown only to make the spaces visible) - every run of whitespace becomes one space, and the ends are stripped.
+- `${prompt:{case:'title',collapseWhitespace:true}}`: `[  my   REPORT about  api  ] -> [My REPORT About Api]` - the two compose, which is the whole cleaning together.
 - `${prompt:{defaultValueTemplate:'${uuid}'}}`: shows prompt with default value as generated `${uuid}`.
 - `${prompt:{slugify:true}}`: `alpha bravo -> alpha-bravo`.
 - `${prompt:{trim:{side:'left',length:2}}}`: `alpha -> al`.
