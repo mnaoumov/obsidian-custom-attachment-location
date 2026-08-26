@@ -51,4 +51,55 @@ Then:
 
 If you add `![[orphan.png]]` to another note first and run the command again, `orphan.png` is kept - a shared attachment is never deleted.
 
+## When you delete the note itself, or its folder
+
+The command above is one half of the story. The other half is what happens to an attachment when you delete the **note** that owns it, or the whole **folder** that note lives in.
+
+By default nothing special happens: the attachment goes wherever the deletion takes it, even if another note still embeds it. Two settings change that, and **both are off by default**:
+
+- `shouldDeleteOrphanAttachments` - hands the delete path to the plugin at all. Nothing below works without it.
+- `shouldRescueSharedAttachments` - with the first one on, an attachment another note still references is **moved into that surviving note's attachment folder** instead of being left behind or going down with the folder. It keeps its file name; only the folder is recomputed.
+
+If exactly one note is left referencing the attachment, it wins outright. If several are, `notePriorities` (see [05 Collect attachments](<./05 Collect attachments.md>)) decides; a tie, or no match, leaves the attachment where it is rather than guessing.
+
+### Try it
+
+Click the button below. It creates `Shared A/` holding a note and `Shared A/attachments/shared.png`, plus `Shared B/` whose note embeds that same image.
+
+```code-button
+---
+caption: Set up the shared-attachment deletion demo
+---
+const folderA = 'Shared A';
+const folderB = 'Shared B';
+const imagePath = `${folderA}/attachments/shared.png`;
+
+for (const path of [folderA, `${folderA}/attachments`, folderB]) {
+  if (!app.vault.getFolderByPath(path)) {
+    await app.vault.createFolder(path);
+  }
+}
+
+// A tiny valid PNG header is enough for the demo.
+if (!app.vault.getFileByPath(imagePath)) {
+  await app.vault.createBinary(imagePath, new Uint8Array([0x89, 0x50, 0x4E, 0x47]).buffer);
+}
+
+for (const notePath of [`${folderA}/Note A.md`, `${folderB}/Note B.md`]) {
+  if (!app.vault.getFileByPath(notePath)) {
+    await app.vault.create(notePath, `![[${imagePath}]]\n`);
+  }
+}
+
+const noteB = app.vault.getFileByPath(`${folderB}/Note B.md`);
+if (noteB) {
+  await app.workspace.getLeaf(false).openFile(noteB);
+}
+```
+
+Then:
+
+1. With both settings **off**, delete the `Shared A` folder. The image goes with it, and `Note B` is left with a broken embed - this is the default.
+2. Undo the deletion (restore from trash), turn **both** settings on, and delete `Shared A` again. The image lands in `Shared B/attachments/` and `Note B` still renders it.
+
 Related: [05 Collect attachments](<./05 Collect attachments.md>) reorganizes the attachments a note *does* use; this command removes the ones it no longer uses. All settings are explained in [06 Settings](<./06 Settings.md>).
