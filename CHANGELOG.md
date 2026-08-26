@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 11.8.0
+
+- style: format the locale files T573 added
+- feat(prompt): focus the input, name the heading, and catch foreign attachments (#59)
+
 ## 11.7.0
 
 - chore: update libs
