@@ -301,8 +301,7 @@ export const de = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Ob die Einstellungen für Anhang-Ordner und Dateiname auch auf Anhänge angewendet werden, die ANDERE Plugins erstellen.',
-        part2:
-          'Manche Plugins schreiben einen Anhang unter einem eigenen Namen direkt in den Tresor, ohne Obsidian zu fragen, wohin er gehört. Ist dies aktiviert, wird eine solche Datei unmittelbar nach ihrem Auftauchen verschoben und umbenannt.',
+        part2: 'Manche Plugins schreiben einen Anhang unter einem eigenen Namen direkt in den Tresor, ohne Obsidian zu fragen, wohin er gehört. Ist dies aktiviert, wird eine solche Datei unmittelbar nach ihrem Auftauchen verschoben und umbenannt.',
         part3: 'Betroffen sind nur Dateien, die bei geöffneter Notiz entstehen — niemals Dateien aus einer Synchronisierung oder einem Tresor-Import.'
       },
       name: 'Von anderen Plugins erstellte Anhänge umbenennen'

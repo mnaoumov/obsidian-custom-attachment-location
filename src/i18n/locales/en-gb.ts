@@ -301,8 +301,7 @@ export const enGB = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Whether to apply the attachment folder and file name settings to attachments that OTHER plugins create.',
-        part2:
-          'Some plugins write an attachment into the vault under a name of their own, without asking Obsidian where it belongs. With this enabled, such a file is moved and renamed right after it appears.',
+        part2: 'Some plugins write an attachment into the vault under a name of their own, without asking Obsidian where it belongs. With this enabled, such a file is moved and renamed right after it appears.',
         part3: 'Only files created while a note is open are touched, never files arriving from a sync or a vault import.'
       },
       name: 'Rename attachments created by other plugins'

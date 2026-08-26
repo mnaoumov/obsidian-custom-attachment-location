@@ -297,8 +297,7 @@ export const pt = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Se as definições de pasta de anexos e de nome de ficheiro devem ser aplicadas a anexos criados por OUTROS plugins.',
-        part2:
-          'Alguns plugins escrevem um anexo no cofre com um nome próprio, sem perguntar ao Obsidian onde deve ficar. Com esta opção ativada, esse ficheiro é movido e renomeado assim que aparece.',
+        part2: 'Alguns plugins escrevem um anexo no cofre com um nome próprio, sem perguntar ao Obsidian onde deve ficar. Com esta opção ativada, esse ficheiro é movido e renomeado assim que aparece.',
         part3: 'Só são tocados os ficheiros criados com uma nota aberta, nunca os que chegam de uma sincronização ou de uma importação de cofre.'
       },
       name: 'Renomear anexos criados por outros plugins'

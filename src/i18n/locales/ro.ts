@@ -297,8 +297,7 @@ export const ro = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Dacă setările pentru folderul de atașamente și numele fișierului se aplică și atașamentelor create de ALTE pluginuri.',
-        part2:
-          'Unele pluginuri scriu un atașament direct în seif sub un nume propriu, fără să întrebe Obsidian unde ar trebui să ajungă. Cu această opțiune activată, un astfel de fișier este mutat și redenumit imediat ce apare.',
+        part2: 'Unele pluginuri scriu un atașament direct în seif sub un nume propriu, fără să întrebe Obsidian unde ar trebui să ajungă. Cu această opțiune activată, un astfel de fișier este mutat și redenumit imediat ce apare.',
         part3: 'Sunt afectate doar fișierele create cât timp o notiță este deschisă, niciodată cele venite dintr-o sincronizare sau dintr-un import de seif.'
       },
       name: 'Redenumește atașamentele create de alte pluginuri'

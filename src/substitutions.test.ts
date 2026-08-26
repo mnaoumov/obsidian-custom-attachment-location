@@ -205,7 +205,7 @@ describe('Substitutions', () => {
       // This is the path `${prompt}` takes when it resolves its own `defaultValueTemplate`.
       Substitutions.registerCustomTokens(
         'registerCustomToken("part", (ctx) => ctx.templatePart);'
-        + `registerCustomToken("nested", (ctx) => ctx.fillTemplate('${tk('part')}'));`
+          + `registerCustomToken("nested", (ctx) => ctx.fillTemplate('${tk('part')}'));`
       );
       expect(await createSubstitutions().fillTemplate(tk('nested'), TemplatePart.FileName)).toBe(TemplatePart.FileName);
     });

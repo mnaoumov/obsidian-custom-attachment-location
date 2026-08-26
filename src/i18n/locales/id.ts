@@ -301,8 +301,7 @@ export const id = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Apakah pengaturan folder lampiran dan nama berkas diterapkan pada lampiran yang dibuat plugin LAIN.',
-        part2:
-          'Sebagian plugin menulis lampiran langsung ke vault dengan nama pilihannya sendiri, tanpa menanyakan Obsidian di mana tempatnya. Bila ini diaktifkan, berkas seperti itu dipindahkan dan diganti namanya begitu muncul.',
+        part2: 'Sebagian plugin menulis lampiran langsung ke vault dengan nama pilihannya sendiri, tanpa menanyakan Obsidian di mana tempatnya. Bila ini diaktifkan, berkas seperti itu dipindahkan dan diganti namanya begitu muncul.',
         part3: 'Hanya berkas yang dibuat saat sebuah catatan terbuka yang disentuh, tidak pernah berkas dari sinkronisasi atau impor vault.'
       },
       name: 'Ganti nama lampiran yang dibuat plugin lain'

@@ -297,8 +297,7 @@ export const ms = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Sama ada tetapan folder lampiran dan nama fail dikenakan pada lampiran yang dicipta oleh pemalam LAIN.',
-        part2:
-          'Sesetengah pemalam menulis lampiran terus ke dalam bilik kebal dengan nama pilihan sendiri, tanpa bertanya kepada Obsidian di mana tempatnya. Dengan ini dihidupkan, fail sebegitu dipindahkan dan dinamakan semula sebaik ia muncul.',
+        part2: 'Sesetengah pemalam menulis lampiran terus ke dalam bilik kebal dengan nama pilihan sendiri, tanpa bertanya kepada Obsidian di mana tempatnya. Dengan ini dihidupkan, fail sebegitu dipindahkan dan dinamakan semula sebaik ia muncul.',
         part3: 'Hanya fail yang dicipta semasa sesuatu nota dibuka disentuh, bukan fail yang tiba daripada penyegerakan atau import bilik kebal.'
       },
       name: 'Namakan semula lampiran yang dicipta pemalam lain'

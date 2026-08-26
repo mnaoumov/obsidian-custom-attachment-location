@@ -297,8 +297,7 @@ export const tr = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Ek klasörü ve dosya adı ayarlarının, BAŞKA eklentilerin oluşturduğu eklere de uygulanıp uygulanmayacağı.',
-        part2:
-          'Bazı eklentiler, nereye ait olduğunu Obsidian\'a sormadan eki kendi seçtikleri bir adla doğrudan kasaya yazar. Bu seçenek açıkken böyle bir dosya, ortaya çıkar çıkmaz taşınır ve yeniden adlandırılır.',
+        part2: 'Bazı eklentiler, nereye ait olduğunu Obsidian\'a sormadan eki kendi seçtikleri bir adla doğrudan kasaya yazar. Bu seçenek açıkken böyle bir dosya, ortaya çıkar çıkmaz taşınır ve yeniden adlandırılır.',
         part3: 'Yalnızca bir not açıkken oluşturulan dosyalara dokunulur; eşitlemeden veya kasa içe aktarımından gelen dosyalara asla dokunulmaz.'
       },
       name: 'Diğer eklentilerin oluşturduğu ekleri yeniden adlandır'

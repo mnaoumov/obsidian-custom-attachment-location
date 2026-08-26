@@ -301,8 +301,7 @@ export const fr = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Appliquer ou non les réglages de dossier de pièces jointes et de nom de fichier aux pièces jointes créées par D\'AUTRES modules.',
-        part2:
-          'Certains modules écrivent une pièce jointe dans le coffre sous un nom de leur choix, sans demander à Obsidian où elle doit aller. Avec cette option, un tel fichier est déplacé et renommé dès son apparition.',
+        part2: 'Certains modules écrivent une pièce jointe dans le coffre sous un nom de leur choix, sans demander à Obsidian où elle doit aller. Avec cette option, un tel fichier est déplacé et renommé dès son apparition.',
         part3: 'Seuls les fichiers créés pendant qu\'une note est ouverte sont concernés, jamais ceux provenant d\'une synchronisation ou d\'un import de coffre.'
       },
       name: 'Renommer les pièces jointes créées par d\'autres modules'

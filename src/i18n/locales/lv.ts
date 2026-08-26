@@ -297,8 +297,7 @@ export const lv = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Vai pielikumu mapes un faila nosaukuma iestatījumus piemērot pielikumiem, ko izveido CITI spraudņi.',
-        part2:
-          'Daži spraudņi ieraksta pielikumu glabātavā ar savu nosaukumu, nejautājot Obsidian, kur tam būtu jāatrodas. Ja šis ir ieslēgts, šāds fails tiek pārvietots un pārdēvēts uzreiz pēc parādīšanās.',
+        part2: 'Daži spraudņi ieraksta pielikumu glabātavā ar savu nosaukumu, nejautājot Obsidian, kur tam būtu jāatrodas. Ja šis ir ieslēgts, šāds fails tiek pārvietots un pārdēvēts uzreiz pēc parādīšanās.',
         part3: 'Tiek apstrādāti tikai faili, kas radīti, kamēr piezīme ir atvērta, nekad faili, kas nāk no sinhronizācijas vai glabātavas importa.'
       },
       name: 'Pārdēvēt pielikumus, ko izveido citi spraudņi'

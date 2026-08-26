@@ -301,8 +301,7 @@ export const ca = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Si cal aplicar la configuració de carpeta d\'adjunts i de nom de fitxer als adjunts que creen ALTRES connectors.',
-        part2:
-          'Alguns connectors escriuen un adjunt al magatzem amb un nom propi, sense preguntar a Obsidian on correspon. Amb això activat, aquest fitxer es mou i es reanomena tot just apareix.',
+        part2: 'Alguns connectors escriuen un adjunt al magatzem amb un nom propi, sense preguntar a Obsidian on correspon. Amb això activat, aquest fitxer es mou i es reanomena tot just apareix.',
         part3: 'Només s\'afecten els fitxers creats amb una nota oberta, mai els que arriben d\'una sincronització o d\'una importació de magatzem.'
       },
       name: 'Reanomena els adjunts creats per altres connectors'

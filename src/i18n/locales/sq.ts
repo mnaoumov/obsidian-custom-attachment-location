@@ -297,8 +297,7 @@ export const sq = {
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Nëse cilësimet e dosjes së bashkëngjitjeve dhe të emrit të skedarit zbatohen edhe për bashkëngjitjet që krijojnë shtojca të TJERA.',
-        part2:
-          'Disa shtojca e shkruajnë bashkëngjitjen drejt e në kasafortë me një emër të tyrin, pa e pyetur Obsidian se ku i takon. Me këtë të aktivizuar, një skedar i tillë zhvendoset dhe riemërtohet sapo shfaqet.',
+        part2: 'Disa shtojca e shkruajnë bashkëngjitjen drejt e në kasafortë me një emër të tyrin, pa e pyetur Obsidian se ku i takon. Me këtë të aktivizuar, një skedar i tillë zhvendoset dhe riemërtohet sapo shfaqet.',
         part3: 'Preken vetëm skedarët e krijuar ndërsa një shënim është i hapur, kurrë skedarët që vijnë nga një sinkronizim ose nga një import kasaforte.'
       },
       name: 'Riemërto bashkëngjitjet e krijuara nga shtojca të tjera'
