@@ -21,6 +21,11 @@ export const zhTW = {
       part2: '被多個筆記引用。'
     },
     heading: '正在收集被多個筆記使用的附件',
+    noPriorityWinnerReason: {
+      EmptyList: '未移動，因為 {{settingName}} 設定為空，沒有依據判斷這些筆記中哪一個擁有它。',
+      NoMatch: '未移動，因為這些筆記均不符合 {{settingName}} 設定中的任何項目。',
+      Tie: '未移動，因為這些筆記中有多個與 {{settingName}} 設定的符合程度相同，無法確定唯一的擁有者。'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: '應該對其他有問題的附件使用相同操作'
   },
   commands: {

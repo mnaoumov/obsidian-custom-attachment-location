@@ -21,6 +21,11 @@ export const ja = {
       part2: 'が複数のノートで参照されています。'
     },
     heading: '複数のノートで使用されている添付ファイルの収集',
+    noPriorityWinnerReason: {
+      EmptyList: '{{settingName}} 設定が空のため移動されませんでした。これらのノートのどれが所有するかを決めるものがありません。',
+      NoMatch: 'これらのノートのいずれも {{settingName}} 設定のどの項目にも一致しないため、移動されませんでした。',
+      Tie: 'これらのノートのうち複数が {{settingName}} 設定に同程度に一致するため、単一の所有者が決まらず、移動されませんでした。'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: '他の問題のある添付ファイルにも同じアクションを使用すべき'
   },
   commands: {

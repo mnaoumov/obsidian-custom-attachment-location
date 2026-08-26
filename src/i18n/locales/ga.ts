@@ -21,6 +21,11 @@ export const ga = {
       part2: 'in úsáid ag nótaí iomadúla.'
     },
     heading: 'Ag bailiú ceangaltáin atá in úsáid ag nótaí iomadúla',
+    noPriorityWinnerReason: {
+      EmptyList: 'Níor bogadh é toisc go bhfuil an socrú {{settingName}} folamh, mar sin níl aon rud a chinneann cé acu de na nótaí seo ar leis é.',
+      NoMatch: 'Níor bogadh é toisc nach bhfuil aon cheann de na nótaí seo ag teacht le hiontráil ar bith sa socrú {{settingName}}.',
+      Tie: 'Níor bogadh é toisc go bhfuil roinnt de na nótaí seo ag teacht leis an socrú {{settingName}} chomh maith céanna, mar sin ní ainmníonn sé aon úinéir amháin.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Ba chóir an gníomh céanna a úsáid do cheangaltáin fhadhbach eile'
   },
   commands: {

@@ -21,6 +21,11 @@ export const tr = {
       part2: 'birden fazla not tarafından referans alınıyor.'
     },
     heading: 'Birden fazla not tarafından kullanılan ek toplama',
+    noPriorityWinnerReason: {
+      EmptyList: '{{settingName}} ayarı boş olduğu için taşınmadı; bu notlardan hangisinin sahibi olduğuna karar veren bir şey yok.',
+      NoMatch: 'Bu notların hiçbiri {{settingName}} ayarındaki hiçbir girdiyle eşleşmediği için taşınmadı.',
+      Tie: 'Bu notların birkaçı {{settingName}} ayarıyla eşit derecede eşleştiği ve tek bir sahip belirlenemediği için taşınmadı.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Diğer sorunlu ekler için aynı eylemi kullanılmalı'
   },
   commands: {

@@ -21,6 +21,11 @@ export const ko = {
       part2: '이 여러 노트에서 참조되고 있습니다.'
     },
     heading: '여러 노트에서 사용되는 첨부 파일 수집',
+    noPriorityWinnerReason: {
+      EmptyList: '{{settingName}} 설정이 비어 있어 이 노트 중 어느 것이 소유하는지 결정할 수 없으므로 이동되지 않았습니다.',
+      NoMatch: '이 노트 중 어느 것도 {{settingName}} 설정의 항목과 일치하지 않으므로 이동되지 않았습니다.',
+      Tie: '이 노트 중 여러 개가 {{settingName}} 설정과 똑같이 일치하여 단일 소유자를 정할 수 없으므로 이동되지 않았습니다.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: '다른 문제가 있는 첨부 파일에 대해서도 같은 동작을 사용해야 합니다'
   },
   commands: {

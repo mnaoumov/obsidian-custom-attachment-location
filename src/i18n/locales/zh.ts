@@ -21,6 +21,11 @@ export const zh = {
       part2: '被多个笔记引用。'
     },
     heading: '正在收集被多个笔记使用的附件',
+    noPriorityWinnerReason: {
+      EmptyList: '未移动，因为 {{settingName}} 设置为空，没有依据判断这些笔记中哪一个拥有它。',
+      NoMatch: '未移动，因为这些笔记均不匹配 {{settingName}} 设置中的任何条目。',
+      Tie: '未移动，因为这些笔记中有多个与 {{settingName}} 设置匹配程度相同，无法确定唯一的所有者。'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: '是否对其他有问题的附件使用相同操作'
   },
   commands: {

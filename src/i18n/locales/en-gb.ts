@@ -21,6 +21,11 @@ export const enGB = {
       part2: 'is referenced by multiple notes.'
     },
     heading: 'Collecting attachment used by multiple notes',
+    noPriorityWinnerReason: {
+      EmptyList: 'It was not moved because the {{settingName}} setting is empty, so nothing decides which of these notes owns it.',
+      NoMatch: 'It was not moved because none of these notes matches any entry in the {{settingName}} setting.',
+      Tie: 'It was not moved because several of these notes match the {{settingName}} setting equally well, so it names no single owner.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Should use the same action for other problematic attachments'
   },
   commands: {

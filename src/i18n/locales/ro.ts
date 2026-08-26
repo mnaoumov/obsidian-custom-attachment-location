@@ -21,6 +21,11 @@ export const ro = {
       part2: 'este folosit de mai multe notițe.'
     },
     heading: 'Colectez atașamentul folosit de multiple notițe',
+    noPriorityWinnerReason: {
+      EmptyList: 'Nu a fost mutat deoarece setarea {{settingName}} este goală, așa că nimic nu stabilește căreia dintre aceste note îi aparține.',
+      NoMatch: 'Nu a fost mutat deoarece niciuna dintre aceste note nu corespunde vreunei intrări din setarea {{settingName}}.',
+      Tie: 'Nu a fost mutat deoarece mai multe dintre aceste note corespund la fel de bine setării {{settingName}}, astfel încât aceasta nu desemnează un singur proprietar.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Folosește aceeași acțiune pentru alte atașamente problematice'
   },
   commands: {

@@ -21,6 +21,11 @@ export const es = {
       part2: 'es referenciado por múltiples notas.'
     },
     heading: 'Recopilando archivo adjunto usado por múltiples notas',
+    noPriorityWinnerReason: {
+      EmptyList: 'No se movió porque la opción {{settingName}} está vacía, por lo que nada decide cuál de estas notas lo posee.',
+      NoMatch: 'No se movió porque ninguna de estas notas coincide con ninguna entrada de la opción {{settingName}}.',
+      Tie: 'No se movió porque varias de estas notas coinciden igual de bien con la opción {{settingName}}, por lo que no designa un único propietario.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Debería usar la misma acción para otros archivos adjuntos problemáticos'
   },
   commands: {

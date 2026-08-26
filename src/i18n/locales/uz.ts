@@ -21,6 +21,11 @@ export const uz = {
       part2: 'bir nechta eslatmalar tomonidan havola qilingan.'
     },
     heading: 'Bir nechta eslatmalar tomonidan ishlatiladigan qo\'shimchani yig\'moqdaman',
+    noPriorityWinnerReason: {
+      EmptyList: '{{settingName}} sozlamasi boʻsh boʻlgani uchun koʻchirilmadi, shu sababli bu eslatmalardan qaysi biri unga egalik qilishini hech narsa hal qilmaydi.',
+      NoMatch: 'Bu eslatmalarning hech biri {{settingName}} sozlamasidagi biror yozuvga mos kelmagani uchun koʻchirilmadi.',
+      Tie: 'Bu eslatmalarning bir nechtasi {{settingName}} sozlamasiga bir xilda mos kelgani uchun yagona egasi aniqlanmadi va u koʻchirilmadi.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Boshqa muammoli qo\'shimchalar uchun bir xil harakatni ishlatish kerak'
   },
   commands: {

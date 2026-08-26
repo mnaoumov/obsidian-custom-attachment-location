@@ -21,6 +21,11 @@ export const da = {
       part2: 'refereres af flere noter.'
     },
     heading: 'Samler vedhæftning brugt af flere noter',
+    noPriorityWinnerReason: {
+      EmptyList: 'Den blev ikke flyttet, fordi indstillingen {{settingName}} er tom, så intet afgør, hvilken af disse noter der ejer den.',
+      NoMatch: 'Den blev ikke flyttet, fordi ingen af disse noter matcher nogen post i indstillingen {{settingName}}.',
+      Tie: 'Den blev ikke flyttet, fordi flere af disse noter matcher indstillingen {{settingName}} lige godt, så den udpeger ingen enkelt ejer.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Skal bruge samme handling for andre problematiske vedhæftninger'
   },
   commands: {

@@ -21,6 +21,11 @@ export const nl = {
       part2: 'wordt gebruikt door meerdere notities.'
     },
     heading: 'Bijlage verzamelen die door meerdere notities wordt gebruikt',
+    noPriorityWinnerReason: {
+      EmptyList: 'Het is niet verplaatst omdat de instelling {{settingName}} leeg is, dus niets bepaalt welke van deze notities het bezit.',
+      NoMatch: 'Het is niet verplaatst omdat geen van deze notities overeenkomt met een vermelding in de instelling {{settingName}}.',
+      Tie: 'Het is niet verplaatst omdat meerdere van deze notities even goed overeenkomen met de instelling {{settingName}}, waardoor die geen enkele eigenaar aanwijst.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Dezelfde actie gebruiken voor andere problematische bijlagen'
   },
   commands: {

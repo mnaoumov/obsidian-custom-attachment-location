@@ -21,6 +21,11 @@ export const ms = {
       part2: 'dirujuk oleh beberapa nota.'
     },
     heading: 'Mengumpul lampiran yang digunakan oleh beberapa nota',
+    noPriorityWinnerReason: {
+      EmptyList: 'Ia tidak dipindahkan kerana tetapan {{settingName}} kosong, jadi tiada apa-apa yang menentukan nota mana yang memilikinya.',
+      NoMatch: 'Ia tidak dipindahkan kerana tiada satu pun daripada nota ini sepadan dengan mana-mana entri dalam tetapan {{settingName}}.',
+      Tie: 'Ia tidak dipindahkan kerana beberapa daripada nota ini sepadan dengan tetapan {{settingName}} sama baiknya, jadi ia tidak menamakan satu pemilik.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Patut menggunakan tindakan yang sama untuk lampiran bermasalah lain'
   },
   commands: {

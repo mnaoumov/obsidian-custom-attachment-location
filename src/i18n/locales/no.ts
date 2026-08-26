@@ -21,6 +21,11 @@ export const no = {
       part2: 'refereres av flere notater.'
     },
     heading: 'Samler vedlegg brukt av flere notater',
+    noPriorityWinnerReason: {
+      EmptyList: 'Det ble ikke flyttet fordi innstillingen {{settingName}} er tom, så ingenting avgjør hvilket av disse notatene som eier det.',
+      NoMatch: 'Det ble ikke flyttet fordi ingen av disse notatene samsvarer med noen oppføring i innstillingen {{settingName}}.',
+      Tie: 'Det ble ikke flyttet fordi flere av disse notatene samsvarer like godt med innstillingen {{settingName}}, så den utpeker ingen enkelt eier.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Bør bruke samme handling for andre problematiske vedlegg'
   },
   commands: {

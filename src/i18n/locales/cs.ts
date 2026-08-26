@@ -21,6 +21,11 @@ export const cs = {
       part2: 'je odkazována více poznámkami.'
     },
     heading: 'Shromažďování přílohy používané více poznámkami',
+    noPriorityWinnerReason: {
+      EmptyList: 'Nebyla přesunuta, protože nastavení {{settingName}} je prázdné, takže nic nerozhoduje, které z těchto poznámek patří.',
+      NoMatch: 'Nebyla přesunuta, protože žádná z těchto poznámek neodpovídá žádné položce v nastavení {{settingName}}.',
+      Tie: 'Nebyla přesunuta, protože několik z těchto poznámek odpovídá nastavení {{settingName}} stejně dobře, takže neurčuje jediného vlastníka.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Měla by se použít stejná akce pro jiné problematické přílohy'
   },
   commands: {

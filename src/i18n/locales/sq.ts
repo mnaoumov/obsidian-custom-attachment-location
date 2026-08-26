@@ -21,6 +21,11 @@ export const sq = {
       part2: 'është e referuar nga disa shënime.'
     },
     heading: 'Duke mbledhur bashkëngjitjen e përdorur nga disa shënime',
+    noPriorityWinnerReason: {
+      EmptyList: 'Nuk u zhvendos sepse cilësimi {{settingName}} është bosh, prandaj asgjë nuk vendos se cili prej këtyre shënimeve e zotëron.',
+      NoMatch: 'Nuk u zhvendos sepse asnjë prej këtyre shënimeve nuk përputhet me ndonjë zë në cilësimin {{settingName}}.',
+      Tie: 'Nuk u zhvendos sepse disa prej këtyre shënimeve përputhen njësoj mirë me cilësimin {{settingName}}, prandaj ai nuk cakton një zotërues të vetëm.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Përdor të njëjtin veprim për bashkëngjitje të tjera problematike'
   },
   commands: {

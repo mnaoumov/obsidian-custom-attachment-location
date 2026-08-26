@@ -21,6 +21,11 @@ export const it = {
       part2: 'è referenziato da più note.'
     },
     heading: 'Raccolta allegato usato da più note',
+    noPriorityWinnerReason: {
+      EmptyList: 'Non è stato spostato perché l\'impostazione {{settingName}} è vuota, quindi nulla decide a quale di queste note appartenga.',
+      NoMatch: 'Non è stato spostato perché nessuna di queste note corrisponde ad alcuna voce dell\'impostazione {{settingName}}.',
+      Tie: 'Non è stato spostato perché diverse di queste note corrispondono all\'impostazione {{settingName}} allo stesso modo, quindi non indica un unico proprietario.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Dovresti usare la stessa azione per altri allegati problematici'
   },
   commands: {

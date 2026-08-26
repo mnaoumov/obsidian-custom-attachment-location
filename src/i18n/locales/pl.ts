@@ -21,6 +21,11 @@ export const pl = {
       part2: 'jest używany przez wiele notatek.'
     },
     heading: 'Zbieranie załącznika używanego przez wiele notatek',
+    noPriorityWinnerReason: {
+      EmptyList: 'Nie został przeniesiony, ponieważ ustawienie {{settingName}} jest puste, więc nic nie rozstrzyga, do której z tych notatek należy.',
+      NoMatch: 'Nie został przeniesiony, ponieważ żadna z tych notatek nie pasuje do jakiegokolwiek wpisu w ustawieniu {{settingName}}.',
+      Tie: 'Nie został przeniesiony, ponieważ kilka z tych notatek pasuje do ustawienia {{settingName}} równie dobrze, więc nie wskazuje ono jednego właściciela.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Użyj tej samej akcji dla innych problematycznych załączników'
   },
   commands: {

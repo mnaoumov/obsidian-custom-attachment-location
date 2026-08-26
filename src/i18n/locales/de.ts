@@ -21,6 +21,11 @@ export const de = {
       part2: 'wird von mehreren Notizen referenziert.'
     },
     heading: 'Sammle Anhang, der von mehreren Notizen verwendet wird',
+    noPriorityWinnerReason: {
+      EmptyList: 'Er wurde nicht verschoben, weil die Einstellung {{settingName}} leer ist, sodass nichts entscheidet, welcher dieser Notizen er gehört.',
+      NoMatch: 'Er wurde nicht verschoben, weil keine dieser Notizen zu einem Eintrag in der Einstellung {{settingName}} passt.',
+      Tie: 'Er wurde nicht verschoben, weil mehrere dieser Notizen gleich gut zur Einstellung {{settingName}} passen, sodass sie keinen einzelnen Eigentümer benennt.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Sollte dieselbe Aktion für andere problematische Anhänge verwenden'
   },
   commands: {

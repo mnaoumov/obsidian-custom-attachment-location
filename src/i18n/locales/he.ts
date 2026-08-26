@@ -21,6 +21,11 @@ export const he = {
       part2: 'משומש על ידי מספר רשימות.'
     },
     heading: 'איסוף קובץ מצורף המשומש על ידי מספר רשימות',
+    noPriorityWinnerReason: {
+      EmptyList: 'הוא לא הועבר משום שההגדרה {{settingName}} ריקה, ולכן דבר אינו קובע לאיזו מהפתקים הללו הוא שייך.',
+      NoMatch: 'הוא לא הועבר משום שאף אחד מהפתקים הללו אינו תואם לאף רשומה בהגדרה {{settingName}}.',
+      Tie: 'הוא לא הועבר משום שכמה מהפתקים הללו תואמים להגדרה {{settingName}} במידה שווה, ולכן היא אינה קובעת בעלים יחיד.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'יש להשתמש באותה פעולה עבור קבצים מצורפים בעייתיים אחרים'
   },
   commands: {

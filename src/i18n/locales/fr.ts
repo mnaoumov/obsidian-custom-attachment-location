@@ -21,6 +21,11 @@ export const fr = {
       part2: 'est référencée par plusieurs notes.'
     },
     heading: 'Collecte de pièce jointe utilisée par plusieurs notes',
+    noPriorityWinnerReason: {
+      EmptyList: 'Elle n\'a pas été déplacée car le paramètre {{settingName}} est vide, donc rien ne décide à laquelle de ces notes elle appartient.',
+      NoMatch: 'Elle n\'a pas été déplacée car aucune de ces notes ne correspond à une entrée du paramètre {{settingName}}.',
+      Tie: 'Elle n\'a pas été déplacée car plusieurs de ces notes correspondent aussi bien au paramètre {{settingName}}, qui ne désigne donc aucun propriétaire unique.'
+    },
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Utiliser la même action pour les autres pièces jointes problématiques'
   },
   commands: {

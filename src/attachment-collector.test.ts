@@ -74,6 +74,7 @@ import type { PluginSettings } from './plugin-settings.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
+import { NoPriorityWinnerReason } from './note-priority.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 
 interface ApplyFileChangesParamsLike {
@@ -717,7 +718,13 @@ describe('AttachmentCollector', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         await runSingleFile(note);
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
-        expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'], isCancelMode: true });
+        expect(mockSelectMode).toHaveBeenCalledWith({
+          app,
+          attachmentPath: 'img.png',
+          backlinks: ['note.md', 'other.md'],
+          isCancelMode: true,
+          noPriorityWinnerReason: NoPriorityWinnerReason.EmptyList
+        });
       });
 
       it('should not re-invoke selectMode in Cancel mode when the setting is not Cancel', async () => {
@@ -807,7 +814,12 @@ describe('AttachmentCollector', () => {
         });
         mockRenameSafe.mockResolvedValue('attachments/img.png');
         await runSingleFile(note);
-        expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'] });
+        expect(mockSelectMode).toHaveBeenCalledWith({
+          app,
+          attachmentPath: 'img.png',
+          backlinks: ['note.md', 'other.md'],
+          noPriorityWinnerReason: NoPriorityWinnerReason.EmptyList
+        });
         expect(mockRenameSafe).toHaveBeenCalled();
       });
 
@@ -880,7 +892,13 @@ describe('AttachmentCollector', () => {
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md', 'drawing.excalidraw.md']));
         vi.mocked(settings.isExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'drawing.excalidraw.md');
         await runSingleFile(note);
-        expect(mockSelectMode).toHaveBeenCalledWith({ app, attachmentPath: 'img.png', backlinks: ['note.md', 'other.md'], isCancelMode: true });
+        expect(mockSelectMode).toHaveBeenCalledWith({
+          app,
+          attachmentPath: 'img.png',
+          backlinks: ['note.md', 'other.md'],
+          isCancelMode: true,
+          noPriorityWinnerReason: NoPriorityWinnerReason.EmptyList
+        });
       });
     });
 
