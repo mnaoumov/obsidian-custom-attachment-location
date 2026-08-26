@@ -135,7 +135,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
              * is counted as that phase's addition. That is not hypothetical: it is exactly how this
              * test reported the first phase's file as the second phase's result.
              *
-             * Quiescing here also makes the two phases independent, which is what the fixed settle
+             * Settling here also makes the two phases independent, which is what the fixed settle
              * below relies on.
              */
             const STABLE_POLL_INTERVAL_IN_MILLISECONDS = 300;
