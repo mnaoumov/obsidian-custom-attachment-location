@@ -395,7 +395,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.appendText(' ');
           f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part6));
           f.appendText(' ');
-          f.createEl('a', { href: 'https://github.com/polyipseity/obsidian-show-hidden-files/', text: 'Show Hidden Files' });
+          f.createEl('a', { href: 'https://community.obsidian.md/plugins/unhide', text: 'Unhide' });
           f.appendText(' ');
           f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part7));
         }),
