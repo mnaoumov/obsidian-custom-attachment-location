@@ -408,6 +408,32 @@ export const defaultTranslations = {
       },
       name: 'Note priorities'
     },
+    pages: {
+      advanced: {
+        description: 'Link format, display text, and the operation timeout.'
+      },
+      collectedAttachments: {
+        description: 'How attachments are gathered into a note\'s folder, including network images and shared attachments.'
+      },
+      customTokens: {
+        description: 'JavaScript tokens you define yourself for use in the path and file name templates.'
+      },
+      deletion: {
+        description: 'What happens to orphan attachments and folders left empty.'
+      },
+      images: {
+        description: 'Default size, JPEG conversion, and metadata handling for images.'
+      },
+      moveRenames: {
+        description: 'How attachments follow their note when it is renamed or moved.'
+      },
+      path: {
+        description: 'Which notes and folders the plugin acts on, and which extensions count as attachments.'
+      },
+      specialCharacters: {
+        description: 'Characters stripped from generated names, and what replaces them.'
+      }
+    },
     renameAttachmentsToLowerCase: 'Rename attachments to lower case',
     renamedAttachmentFileName: {
       description: {
