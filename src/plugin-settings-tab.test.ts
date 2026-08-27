@@ -3,6 +3,9 @@ import type {
   ButtonComponent,
   DropdownComponent,
   SettingDefinition,
+  SettingDefinitionGroup,
+  SettingDefinitionItem,
+  SettingDefinitionPage,
   SettingDefinitionRender,
   SettingGroup,
   ToggleComponent
@@ -68,6 +71,9 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 // This test renders the whole settings tab and drains the debounced revalidation under fake timers.
 // Under coverage instrumentation that work exceeds the default 5-second test timeout.
 const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
+
+// Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
+const EXPECTED_ROW_COUNT = 37;
 
 interface CapturedMultipleTextComponent {
   name: string;
@@ -268,15 +274,35 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
  * @returns The row.
  */
 function findRow(tab: PluginSettingsTab, name: string): SettingDefinitionRender {
-  for (const item of tab.getSettingDefinitions()) {
-    const rows = 'items' in item ? castTo<SettingDefinition[]>(item.items ?? []) : [castTo<SettingDefinition>(item)];
-    const row = rows.find((candidate) => 'name' in candidate && candidate.name === name);
-    if (row) {
-      return castTo<SettingDefinitionRender>(row);
-    }
+  const row = flattenRows(tab.getSettingDefinitions()).find((candidate) => 'name' in candidate && candidate.name === name);
+  if (row) {
+    return castTo<SettingDefinitionRender>(row);
   }
 
   throw new Error(`Row not found: ${name}`);
+}
+
+/**
+ * Flattens declared items into leaf rows, descending into groups and sub-pages alike.
+ *
+ * Both a group and a page carry their children in `items`, so the walk has to recurse: a page's rows sit one
+ * level deeper than a top-level group's.
+ *
+ * @param items - The declared items.
+ * @returns The leaf rows.
+ */
+function flattenRows(items: SettingDefinitionItem[]): SettingDefinition[] {
+  const rows: SettingDefinition[] = [];
+  for (const item of items) {
+    if ('items' in item) {
+      rows.push(...flattenRows(castTo<SettingDefinitionItem[]>(item.items ?? [])));
+      continue;
+    }
+
+    rows.push(castTo<SettingDefinition>(item));
+  }
+
+  return rows;
 }
 
 /**
@@ -287,12 +313,9 @@ function findRow(tab: PluginSettingsTab, name: string): SettingDefinitionRender 
  * @returns Whether the row is disabled.
  */
 function isRowDisabled(tab: PluginSettingsTab, name: string): boolean {
-  for (const item of tab.getSettingDefinitions()) {
-    const rows = 'items' in item ? castTo<SettingDefinition[]>(item.items ?? []) : [castTo<SettingDefinition>(item)];
-    const row = rows.find((candidate) => 'name' in candidate && candidate.name === name);
-    if (row) {
-      return checkPredicate(castTo<DeclaredRow>(row).disabled, false);
-    }
+  const row = flattenRows(tab.getSettingDefinitions()).find((candidate) => 'name' in candidate && candidate.name === name);
+  if (row) {
+    return checkPredicate(castTo<DeclaredRow>(row).disabled, false);
   }
 
   throw new Error(`Row not found: ${name}`);
@@ -306,27 +329,24 @@ function isRowDisabled(tab: PluginSettingsTab, name: string): boolean {
  * @param tab - The settings tab.
  */
 function renderRows(tab: PluginSettingsTab): void {
-  for (const item of tab.getSettingDefinitions()) {
-    const rows = 'items' in item ? castTo<SettingDefinition[]>(item.items ?? []) : [castTo<SettingDefinition>(item)];
-    for (const row of rows) {
-      if (!('render' in row)) {
-        continue;
-      }
-
-      const rowExtension = castTo<DeclaredRow>(row);
-      if (!checkPredicate(rowExtension.visible, true)) {
-        continue;
-      }
-
-      const setting = new SettingEx(tab.containerEl);
-      setting.setName(row.name);
-      if (row.desc) {
-        setting.setDesc(row.desc);
-      }
-
-      row.render(setting, castTo<SettingGroup>(null));
-      setting.setDisabled(checkPredicate(rowExtension.disabled, false));
+  for (const row of flattenRows(tab.getSettingDefinitions())) {
+    if (!('render' in row)) {
+      continue;
     }
+
+    const rowExtension = castTo<DeclaredRow>(row);
+    if (!checkPredicate(rowExtension.visible, true)) {
+      continue;
+    }
+
+    const setting = new SettingEx(tab.containerEl);
+    setting.setName(row.name);
+    if (row.desc) {
+      setting.setDesc(row.desc);
+    }
+
+    row.render(setting, castTo<SettingGroup>(null));
+    setting.setDisabled(checkPredicate(rowExtension.disabled, false));
   }
 }
 
@@ -393,6 +413,39 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Custom tokens');
     expect(names).toContain('Markdown URL format');
     expect(names).toContain('Timeout in seconds');
+  });
+
+  it('should keep Core inline and expose every other group as a navigable sub-page', async () => {
+    const { tab } = await createTab();
+    const [coreGroup, ...pages] = tab.getSettingDefinitions();
+
+    const core = castTo<SettingDefinitionGroup>(coreGroup);
+    expect(core.type).toBe('group');
+    expect(core.heading).toBe('Core');
+
+    expect(pages.map((page) => castTo<SettingDefinitionPage>(page).name)).toEqual([
+      'Move/renames',
+      'Deletion',
+      'Special characters',
+      'Collected attachments',
+      'Images',
+      'Path',
+      'Custom tokens',
+      'Advanced'
+    ]);
+
+    for (const page of pages) {
+      const settingPage = castTo<SettingDefinitionPage>(page);
+      expect(settingPage.type).toBe('page');
+      // A page entry with no description reads as a bare label on the parent tab, which is the scrolling problem again.
+      expect(settingPage.desc).toBeTypeOf('string');
+      expect(settingPage.desc).not.toBe('');
+    }
+  });
+
+  it('should keep every declared row reachable after the split into sub-pages', async () => {
+    const { tab } = await createTab();
+    expect(flattenRows(tab.getSettingDefinitions())).toHaveLength(EXPECTED_ROW_COUNT);
   });
 
   it('should enable debouncing of custom token validation while displayed', async () => {
