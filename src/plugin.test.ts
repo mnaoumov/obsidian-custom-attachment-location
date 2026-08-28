@@ -1,18 +1,25 @@
 import type {
   App as AppOriginal,
   PluginManifest,
+  Plugin as PluginOriginal,
   TFile
 } from 'obsidian';
 import type { DisposableEx } from 'obsidian-dev-utils/disposable';
 import type { CommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler';
+import type { NotebookNavigatorMenuDispose } from 'obsidian-dev-utils/obsidian/notebook-navigator';
+import type { Mock } from 'vitest';
 
 import { Component } from 'obsidian';
-import { noopAsync } from 'obsidian-dev-utils/function';
+import {
+  noop,
+  noopAsync
+} from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { CommandHandlerComponent } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler-component';
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
 import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { NOTEBOOK_NAVIGATOR_PLUGIN_ID } from 'obsidian-dev-utils/obsidian/notebook-navigator';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
@@ -230,6 +237,7 @@ const manifest = castTo<PluginManifest>({
 });
 
 let app: AppOriginal;
+let getPluginMock: Mock<(pluginId: string) => null | PluginOriginal>;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -246,6 +254,10 @@ beforeEach(() => {
 
   // The onloadImpl binds vault.getAvailablePathForAttachments to pass it to AttachmentPathManager; seed it on the raw target so the strict-proxy does not throw.
   seedOnRawTarget(app.vault, 'getAvailablePathForAttachments', vi.fn((): Promise<string> => Promise.resolve('attachments/file.png')));
+
+  // The base's Notebook Navigator registrar reads `app.plugins.getPlugin` once the layout is ready; seed it on the raw target so the strict proxy does not throw. `null` is the "Notebook Navigator is not installed" default.
+  getPluginMock = vi.fn((_pluginId: string): null | PluginOriginal => null);
+  seedOnRawTarget(app, 'plugins', { getPlugin: getPluginMock });
 
   // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument read/write the same seeded holder.
   castTo<AppGlobal>(window).app = app;
@@ -391,6 +403,46 @@ describe('Plugin', () => {
     const settings = getSettingsBuilder()();
     expect(settings.isPathIgnored('ignored.md')).toBe(true);
     expect(hoisted.isPathIgnored).toHaveBeenCalledWith('ignored.md');
+  });
+
+  // Notebook Navigator draws its own file tree, so it never raises Obsidian's `file-menu` / `files-menu` events.
+  // The base binds to its extension API instead, and defers that binding to layout-ready.
+  // Each test below therefore has to flush the `LayoutReadyComponent` timer before it can assert.
+  describe('Notebook Navigator menu integration', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should stay dormant when Notebook Navigator is not installed', async () => {
+      vi.useFakeTimers();
+      const plugin = new Plugin(app, manifest);
+      await plugin.onload();
+      await vi.runAllTimersAsync();
+
+      expect(getPluginMock).toHaveBeenCalledExactlyOnceWith(NOTEBOOK_NAVIGATOR_PLUGIN_ID);
+    });
+
+    it('should register the file and folder menus when Notebook Navigator is installed', async () => {
+      const registerFileMenu = vi.fn((): NotebookNavigatorMenuDispose => noop);
+      const registerFolderMenu = vi.fn((): NotebookNavigatorMenuDispose => noop);
+      // `api` is not part of Obsidian's `Plugin`, so the API carrier can only be handed back through a cast.
+      getPluginMock.mockReturnValue(castTo<PluginOriginal>({
+        api: {
+          menus: {
+            registerFileMenu,
+            registerFolderMenu
+          }
+        }
+      }));
+
+      vi.useFakeTimers();
+      const plugin = new Plugin(app, manifest);
+      await plugin.onload();
+      await vi.runAllTimersAsync();
+
+      expect(registerFileMenu).toHaveBeenCalledOnce();
+      expect(registerFolderMenu).toHaveBeenCalledOnce();
+    });
   });
 
   it('should fall back to an empty plugin directory when the manifest has none', async () => {
