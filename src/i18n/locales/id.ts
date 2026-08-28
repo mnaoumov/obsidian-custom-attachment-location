@@ -170,8 +170,7 @@ export const id = {
       description: {
         part1: 'Lihat',
         part2: 'token yang tersedia',
-        part3: 'Biarkan kosong untuk menggunakan',
-        part4: 'pengaturan sebagai gantinya.'
+        part3: 'Biarkan kosong untuk mempertahankan nama file lampiran asli.'
       },
       name: 'Nama file lampiran yang dikumpulkan'
     },
@@ -275,8 +274,7 @@ export const id = {
       description: {
         part1: 'Lihat',
         part2: 'token yang tersedia',
-        part3: 'Biarkan kosong untuk menggunakan',
-        part4: 'pengaturan sebagai gantinya.'
+        part3: 'Biarkan kosong untuk mempertahankan nama file lampiran asli.'
       },
       name: 'Nama file lampiran yang diubah namanya'
     },

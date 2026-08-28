@@ -170,8 +170,7 @@ export const cs = {
       description: {
         part1: 'Viz dostupné',
         part2: 'tokeny',
-        part3: 'Ponechte prázdné, chcete-li použít',
-        part4: 'nastavení místo toho.'
+        part3: 'Ponechte prázdné, chcete-li zachovat původní jméno souboru přílohy.'
       },
       name: 'Jméno souboru shromážděné přílohy'
     },
@@ -275,8 +274,7 @@ export const cs = {
       description: {
         part1: 'Viz dostupné',
         part2: 'tokeny',
-        part3: 'Ponechte prázdné, chcete-li použít',
-        part4: 'nastavení místo toho.'
+        part3: 'Ponechte prázdné, chcete-li zachovat původní jméno souboru přílohy.'
       },
       name: 'Jméno souboru přejmenované přílohy'
     },

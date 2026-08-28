@@ -256,9 +256,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.appendText('.');
           f.createEl('br');
           f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part3));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name));
-          f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part4));
         }),
         name: t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name),
         render: (setting) => {
@@ -870,9 +867,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.appendText('.');
           f.createEl('br');
           f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part3));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name));
-          f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part4));
         }),
         name: t(($) => $.pluginSettingsTab.renamedAttachmentFileName.name),
         render: (setting) => {

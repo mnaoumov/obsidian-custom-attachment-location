@@ -170,8 +170,7 @@ export const es = {
       description: {
         part1: 'Ver',
         part2: 'tokens disponibles',
-        part3: 'Dejar en blanco para usar',
-        part4: 'configuración en su lugar.'
+        part3: 'Dejar en blanco para mantener el nombre de archivo adjunto original.'
       },
       name: 'Nombre de archivo adjunto recopilado'
     },
@@ -275,8 +274,7 @@ export const es = {
       description: {
         part1: 'Ver',
         part2: 'tokens disponibles',
-        part3: 'Dejar en blanco para usar',
-        part4: 'configuración en su lugar.'
+        part3: 'Dejar en blanco para mantener el nombre de archivo adjunto original.'
       },
       name: 'Nombre de archivo adjunto renombrado'
     },

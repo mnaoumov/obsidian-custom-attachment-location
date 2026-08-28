@@ -170,8 +170,7 @@ export const ga = {
       description: {
         part1: 'Féach ar na',
         part2: 'comharthaí atá ar fáil',
-        part3: 'Fág folamh chun',
-        part4: 'a úsáid ina ionad.'
+        part3: 'Fág folamh chun ainm comhad ceangaltán bunaidh a choinneáil.'
       },
       name: 'Ainm comhad ceangaltán bailithe'
     },
@@ -275,8 +274,7 @@ export const ga = {
       description: {
         part1: 'Féach ar na',
         part2: 'comharthaí atá ar fáil',
-        part3: 'Fág folamh chun',
-        part4: 'a úsáid ina ionad.'
+        part3: 'Fág folamh chun ainm comhad ceangaltán bunaidh a choinneáil.'
       },
       name: 'Ainm comhad ceangaltán athainmnithe'
     },

@@ -170,8 +170,7 @@ export const da = {
       description: {
         part1: 'Se tilgængelige',
         part2: 'tokens',
-        part3: 'Lad stå tomt for at bruge',
-        part4: 'indstillingen i stedet.'
+        part3: 'Lad stå tomt for at beholde det oprindelige vedhæftningsfilnavn.'
       },
       name: 'Samlet vedhæftningsfilnavn'
     },
@@ -275,8 +274,7 @@ export const da = {
       description: {
         part1: 'Se tilgængelige',
         part2: 'tokens',
-        part3: 'Lad stå tomt for at bruge',
-        part4: 'indstillingen i stedet.'
+        part3: 'Lad stå tomt for at beholde det oprindelige vedhæftningsfilnavn.'
       },
       name: 'Omdøbt vedhæftningsfilnavn'
     },
