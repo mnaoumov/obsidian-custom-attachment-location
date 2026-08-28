@@ -185,9 +185,9 @@ describe('Rescuing a shared attachment from a deletion (issue #57)', () => {
           const expectedNoteCount = params.shouldAddTyingNote ? 3 : 2;
 
           /*
-         * The ELEMENTS are collected, not their text: Obsidian appends a `.notice` and fills its
-         * content afterwards, so reading `textContent` inside the observer callback can capture the
-         * notice while it is still empty. Reading it at the end sees the finished message.
+           * The ELEMENTS are collected, not their text: Obsidian appends a `.notice` and fills its
+           * content afterwards, so reading `textContent` inside the observer callback can capture the
+           * notice while it is still empty. Reading it at the end sees the finished message.
            */
           const noticeEls: HTMLElement[] = [];
           const observer = new MutationObserver((mutations) => {
