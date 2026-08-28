@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 11.10.0
+
+- style(test): fix comment indentation in the attachment-rescue suite
+- fix(test): make the desktop integration suite deterministic
+- docs(test): repoint the bottleneck suite at T8-P4
+- fix(vitest): restore the performance project's global setup and CDP timeout
+- fix: re mnaoumov/obsidian-advanced-note-composer#259
+- fix(settings): point plugin-directory links at community.obsidian.md
+- feat: re #68
+
 ## 11.9.0
 
 - fix(test): reword a comment cspell rejects
