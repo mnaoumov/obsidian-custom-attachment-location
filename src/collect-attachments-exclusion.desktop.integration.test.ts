@@ -120,6 +120,17 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
           }
 
           await app.workspace.getLeaf(false).openFile(realNote);
+
+          /*
+           * The collect command reads the ACTIVE file, and `openFile` resolves before the workspace has
+           * Finished switching to it. Firing the command too early collects nothing, which surfaces
+           * Much later as `movedOut: false` — indistinguishable from the exclusion not working.
+           */
+          const activeDeadline = Date.now() + 8000;
+          while (Date.now() < activeDeadline && app.workspace.getActiveFile()?.path !== realNote.path) {
+            await sleep(100);
+          }
+
           app.commands.executeCommandById(collectCommandId);
 
           // The collect runs on an internal queue; poll until the attachment leaves its original path.

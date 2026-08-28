@@ -19,7 +19,13 @@ import {
 
 const PLUGIN_ID = 'obsidian-custom-attachment-location';
 const DELETE_COMMAND_ID = 'obsidian-custom-attachment-location:delete-unused-attachments-entire-vault';
-const WAIT_TIMEOUT_IN_MILLISECONDS = 30_000;
+/*
+ * THREE of these run in sequence inside a single `evalInObsidian` callback, so their sum has to fit the
+ * test's own 180s budget with room to spare. Sized generously: the trash step runs on the plugin's
+ * internal queue behind whatever else is in flight, and cutting it too fine just converts a slow-but-
+ * correct pass into "the orphan was never trashed".
+ */
+const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
 
 interface ProbeResult {
   readonly confirmText: string;
@@ -102,10 +108,20 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
         const keptPath = `${farFolder}/kept.png`;
         const createdPaths = [orphanPath, keptPath, farNotePath, openNotePath];
 
+        /*
+         * Best-effort cleanup, so it must tolerate an entry that is already gone: the sweep trashes
+         * entries on its own queue, and trashing one a second time throws `ENOENT` from the rename
+         * into `.trash`.
+         */
         async function trashIfExists(path: string): Promise<void> {
           const existing = app.vault.getAbstractFileByPath(path);
-          if (existing) {
+          if (!existing) {
+            return;
+          }
+          try {
             await app.fileManager.trashFile(existing);
+          } catch {
+            // Removed between the lookup and the trash, which is the outcome this wanted anyway.
           }
         }
 

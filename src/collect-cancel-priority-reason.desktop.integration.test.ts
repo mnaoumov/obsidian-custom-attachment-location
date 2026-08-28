@@ -99,10 +99,20 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
         const priorPriorities = settings.notePriorities;
         const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
 
+        /*
+         * Best-effort cleanup, so it must tolerate an entry that is already gone: the collect pass
+         * moves and removes entries on its own queue, and trashing one a second time throws `ENOENT`
+         * from the rename into `.trash`.
+         */
         async function trashIfExists(path: string): Promise<void> {
           const existing = app.vault.getAbstractFileByPath(path);
-          if (existing) {
+          if (!existing) {
+            return;
+          }
+          try {
             await app.fileManager.trashFile(existing);
+          } catch {
+            // Removed between the lookup and the trash, which is the outcome this wanted anyway.
           }
         }
 
@@ -151,6 +161,19 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
             });
 
             await app.workspace.getLeaf(false).openFile(firstNote);
+
+            /*
+             * The collect command reads the ACTIVE file, and `openFile` resolves before the workspace
+             * Has finished switching to it. Firing the command too early collects nothing, opens no
+             * Dialog, and surfaces 20s later as "the cancel dialog never explained why" — a message
+             * About the dialog's content when the dialog was never asked for in the first place.
+             */
+            await waitUntil({
+              message: 'the staged note never became the active file',
+              predicate: () => app.workspace.getActiveFile()?.path === firstNote.path,
+              timeoutInMilliseconds: waitTimeoutInMilliseconds
+            });
+
             app.commands.executeCommandById(collectCommandId);
 
             await waitUntil({
@@ -161,6 +184,7 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
 
             return activeDocument.querySelector(reasonSelector)?.textContent ?? '';
           } finally {
+            // The dialog MUST still be dismissed: leaving it open keeps its queue entry pending.
             await closeOpenModals();
             for (const path of [secondNotePath, firstNotePath, imagePath]) {
               await trashIfExists(path);

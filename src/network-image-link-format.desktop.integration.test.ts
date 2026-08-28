@@ -62,7 +62,11 @@ afterAll(async () => {
 describe('Network image link format (issue #50)', () => {
   it('should link a downloaded network image through Obsidian link generation', async () => {
     const result = await evalInObsidian({
-      async callback({ app, imageUrl: url }): Promise<ProbeResult> {
+      async callback({
+        app,
+        imageUrl: url,
+        lib: { waitUntil }
+      }): Promise<ProbeResult> {
         interface NetworkImageSettings {
           attachmentFolderPath: string;
           downloadNetworkImages: boolean;
@@ -141,9 +145,22 @@ describe('Network image link format (issue #50)', () => {
           const note = await app.vault.create(notePath, `![Diagram](${url})`);
 
           await app.workspace.getLeaf(false).openFile(note);
+
+          /*
+           * The collect command reads the ACTIVE file, and `openFile` resolves before the workspace has
+           * Finished switching. Firing it too early collects nothing, and the poll below then simply
+           * Runs out — burning the entire test budget for a command that never ran.
+           */
+          await waitUntil({
+            message: 'the staged note never became the active file',
+            predicate: () => app.workspace.getActiveFile()?.path === note.path,
+            timeoutInMilliseconds: 10_000
+          });
+
           app.commands.executeCommandById('obsidian-custom-attachment-location:collect-attachments-in-file');
 
-          // The download and rewrite run on an internal queue; poll until the note no longer holds the network URL.
+          // The download and rewrite run on an internal queue; poll until the note no longer holds the
+          // Network URL. Comfortably inside this suite's own 120s budget.
           const deadline = Date.now() + 30_000;
           let content = await app.vault.read(note);
           while (Date.now() < deadline && content.includes(url)) {

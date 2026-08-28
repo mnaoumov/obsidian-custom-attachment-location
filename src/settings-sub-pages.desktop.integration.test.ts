@@ -111,13 +111,25 @@ describe('Settings sub-pages (issue #68)', () => {
         setting.searchComponent.onChanged();
         await sleep(searchSettleTimeoutInMilliseconds);
 
+        const searchResultText = text(setting.searchResultsEl);
+
+        /*
+         * Close what this opened. Everything above is read off a LIVE settings dialog, and this suite
+         * shares one Obsidian instance with every other one — leaving the dialog up leaks it for the
+         * rest of the run. Measured: with this suite running immediately before
+         * `link-update-progress`, that suite failed 3/3 (its rename produced no progress notice at
+         * all), against 0/3 when run on its own. Closing here is what makes the two independent.
+         */
+        setting.close();
+        await sleep(settleTimeoutInMilliseconds);
+
         return {
           navigableEntries,
           pageStackDepthAfterBack,
           pageStackDepthOnSubPage,
           parentTabNames,
           parentTabNamesAfterBack,
-          searchResultText: text(setting.searchResultsEl),
+          searchResultText,
           subPageNames,
           subPageTitle
         };
