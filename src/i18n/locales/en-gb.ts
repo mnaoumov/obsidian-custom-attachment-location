@@ -170,8 +170,7 @@ export const enGB = {
       description: {
         part1: 'See available',
         part2: 'tokens',
-        part3: 'Leave blank to use',
-        part4: 'setting instead.'
+        part3: 'Leave blank to keep the original attachment file name.'
       },
       name: 'Collected attachment file name'
     },
@@ -275,8 +274,7 @@ export const enGB = {
       description: {
         part1: 'See available',
         part2: 'tokens',
-        part3: 'Leave blank to use',
-        part4: 'setting instead.'
+        part3: 'Leave blank to keep the original attachment file name.'
       },
       name: 'Renamed attachment file name'
     },

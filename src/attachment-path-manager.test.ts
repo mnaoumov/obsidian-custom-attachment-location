@@ -49,6 +49,7 @@ import type { TokenValidator } from './token-validator.ts';
 import { AttachmentPathManager } from './attachment-path-manager.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { IMPORT_FILES_PREFIX } from './patches/share-receiver-import-files-patch-component.ts';
+import { promptWithPreview } from './prompt-with-preview-modal.ts';
 import { Substitutions } from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 import { TokenValidationMode } from './token-validator.ts';
@@ -98,6 +99,11 @@ vi.mock('obsidian-dev-utils/obsidian/vault', async (importOriginal) => ({
   createFolderSafe: vi.fn<typeof createFolderSafe>()
 }));
 
+vi.mock('./prompt-with-preview-modal.ts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./prompt-with-preview-modal.ts')>(),
+  promptWithPreview: vi.fn<typeof promptWithPreview>()
+}));
+
 const mockGetAvailablePathForAttachments = vi.mocked(getAvailablePathForAttachments);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const mockGetPath = vi.mocked(getPath);
@@ -106,6 +112,7 @@ const mockExtractLinkFile = vi.mocked(extractLinkFile);
 const mockGetLinks = vi.mocked(getLinks);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockCreateFolderSafe = vi.mocked(createFolderSafe);
+const mockPromptWithPreview = vi.mocked(promptWithPreview);
 
 interface TestContext {
   create: ReturnType<typeof vi.fn<Vault['create']>>;
@@ -134,6 +141,7 @@ function createManager(): TestContext {
     generatedAttachmentFileName: 'generated',
     isPathIgnored,
     renamedAttachmentFileName: '',
+    shouldRenameAttachmentFiles: false,
     shouldRenameCollectedAttachments: false,
     specialCharacters: '',
     specialCharactersReplacement: '-'
@@ -226,6 +234,7 @@ beforeEach(() => {
   mockGetCacheSafe.mockResolvedValue(null);
   mockExtractLinkFile.mockReturnValue(null);
   mockCreateFolderSafe.mockResolvedValue(CreateFolderSafeResult.Created);
+  mockPromptWithPreview.mockResolvedValue('prompted');
   context = createManager();
 });
 
@@ -274,11 +283,20 @@ describe('AttachmentPathManager', () => {
       expect(result).toBe('generated');
     });
 
-    it('should fall back to the generated template when the chosen template is empty', async () => {
+    it('should keep the original file name when the collected template is empty', async () => {
       context.settings.collectedAttachmentFileName = '';
       context.settings.generatedAttachmentFileName = 'generated';
       const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.CollectAttachments));
-      expect(result).toBe('generated');
+      expect(result).toBe('img');
+    });
+
+    it('should keep the original file name when the renamed template is empty', async () => {
+      context.settings.renamedAttachmentFileName = '';
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      context.settings.generatedAttachmentFileName = '${prompt}';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.RenameNote));
+      expect(result).toBe('img');
+      expect(mockPromptWithPreview).not.toHaveBeenCalled();
     });
 
     it('should validate the file name part of the resolved path', async () => {
@@ -421,7 +439,7 @@ describe('AttachmentPathManager', () => {
       context.settings.generatedAttachmentFileName = 'generated';
       context.exists.mockResolvedValue(true);
       const result = await context.manager.getDownloadedImagePath({
-        actionContext: ActionContext.CollectAttachments,
+        actionContext: ActionContext.SaveAttachment,
         downloadedContent: new ArrayBuffer(4),
         fileExtension: 'png',
         fileName: 'my-image',
@@ -436,7 +454,7 @@ describe('AttachmentPathManager', () => {
       context.settings.generatedAttachmentFileName = 'generated';
       context.exists.mockResolvedValue(false);
       const result = await context.manager.getDownloadedImagePath({
-        actionContext: ActionContext.CollectAttachments,
+        actionContext: ActionContext.SaveAttachment,
         downloadedContent: new ArrayBuffer(4),
         fileExtension: 'png',
         fileName: 'my-image',
@@ -450,7 +468,7 @@ describe('AttachmentPathManager', () => {
       context.settings.attachmentFolderPath = 'assets';
       context.settings.generatedAttachmentFileName = 'generated';
       const result = await context.manager.getDownloadedImagePath({
-        actionContext: ActionContext.CollectAttachments,
+        actionContext: ActionContext.SaveAttachment,
         downloadedContent: new ArrayBuffer(4),
         fileExtension: '',
         fileName: 'my-image',
@@ -636,6 +654,54 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: true
       });
       expect(result).toBe('assets/img.png');
+    });
+
+    it('should keep the attachment file name on a note rename when renaming attachment files is off', async () => {
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.renamedAttachmentFileName = '';
+      context.settings.shouldRenameAttachmentFiles = false;
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      context.settings.generatedAttachmentFileName = '${prompt}';
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockReturnValue(noteFile);
+      mockIsNote.mockReturnValue(true);
+      const result = await context.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'img',
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.RenameNote,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        oldNotePathOrFile: 'old.md',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      expect(result).toBe('assets/img.png');
+      expect(mockPromptWithPreview).not.toHaveBeenCalled();
+    });
+
+    it('should keep the attachment file name on a note rename when the renamed template is empty', async () => {
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.renamedAttachmentFileName = '';
+      context.settings.shouldRenameAttachmentFiles = true;
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      context.settings.generatedAttachmentFileName = '${prompt}';
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockReturnValue(noteFile);
+      mockIsNote.mockReturnValue(true);
+      const result = await context.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'img',
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.RenameNote,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        oldNotePathOrFile: 'old.md',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      expect(result).toBe('assets/img.png');
+      expect(mockPromptWithPreview).not.toHaveBeenCalled();
     });
 
     it('should delegate to the original function when the note path is ignored', async () => {

@@ -170,8 +170,7 @@ export const ca = {
       description: {
         part1: 'Vegeu els',
         part2: 'tokens disponibles',
-        part3: 'Deixeu buit per utilitzar la',
-        part4: 'configuració en lloc d\'això.'
+        part3: 'Deixeu buit per mantenir el nom de fitxer adjunt original.'
       },
       name: 'Nom de fitxer adjunt recollit'
     },
@@ -275,8 +274,7 @@ export const ca = {
       description: {
         part1: 'Vegeu els',
         part2: 'tokens disponibles',
-        part3: 'Deixeu buit per utilitzar la',
-        part4: 'configuració en lloc d\'això.'
+        part3: 'Deixeu buit per mantenir el nom de fitxer adjunt original.'
       },
       name: 'Nom de fitxer adjunt reanomenat'
     },

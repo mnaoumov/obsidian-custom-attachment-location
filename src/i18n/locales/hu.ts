@@ -170,8 +170,7 @@ export const hu = {
       description: {
         part1: 'Lásd az elérhető',
         part2: 'tokeneket',
-        part3: 'Hagyd üresen, hogy a',
-        part4: 'beállítást használd helyette.'
+        part3: 'Hagyd üresen az eredeti melléklet fájlnév megtartásához.'
       },
       name: 'Gyűjtött melléklet fájlnév'
     },
@@ -275,8 +274,7 @@ export const hu = {
       description: {
         part1: 'Lásd az elérhető',
         part2: 'tokeneket',
-        part3: 'Hagyd üresen, hogy a',
-        part4: 'beállítást használd helyette.'
+        part3: 'Hagyd üresen az eredeti melléklet fájlnév megtartásához.'
       },
       name: 'Átnevezett melléklet fájlnév'
     },

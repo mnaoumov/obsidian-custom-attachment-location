@@ -170,8 +170,7 @@ export const de = {
       description: {
         part1: 'Siehe verfügbare',
         part2: 'Tokens',
-        part3: 'Leer lassen, um',
-        part4: 'Einstellung zu verwenden.'
+        part3: 'Leer lassen, um den ursprünglichen Anhang-Dateinamen beizubehalten.'
       },
       name: 'Gesammelter Anhang-Dateiname'
     },
@@ -275,8 +274,7 @@ export const de = {
       description: {
         part1: 'Siehe verfügbare',
         part2: 'Tokens',
-        part3: 'Leer lassen, um',
-        part4: 'Einstellung zu verwenden.'
+        part3: 'Leer lassen, um den ursprünglichen Anhang-Dateinamen beizubehalten.'
       },
       name: 'Umbenannter Anhang-Dateiname'
     },

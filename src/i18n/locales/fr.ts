@@ -170,8 +170,7 @@ export const fr = {
       description: {
         part1: 'Voir les',
         part2: 'jetons disponibles',
-        part3: 'Laisser vide pour utiliser le paramètre',
-        part4: 'à la place.'
+        part3: 'Laisser vide pour conserver le nom de fichier de pièce jointe d\'origine.'
       },
       name: 'Nom de fichier de pièce jointe collectée'
     },
@@ -275,8 +274,7 @@ export const fr = {
       description: {
         part1: 'Voir les',
         part2: 'jetons disponibles',
-        part3: 'Laisser vide pour utiliser le paramètre',
-        part4: 'à la place.'
+        part3: 'Laisser vide pour conserver le nom de fichier de pièce jointe d\'origine.'
       },
       name: 'Nom de fichier de pièce jointe renommée'
     },

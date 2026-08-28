@@ -168,8 +168,14 @@ export class NetworkImageDownloader {
     let baseName = link.alt.trim() || basename(urlPath, extname(urlPath)) || 'image';
     baseName = this.sanitizeFileName(baseName);
 
+    /*
+     * `SaveAttachment`, not `CollectAttachments`, even though the download runs inside a collect: the file
+     * being named is brand new, and its base name is scraped from the URL or the alt text. That is the
+     * `Generated attachment file name` case. `CollectAttachments` now means "keep the name this attachment
+     * already has in the vault", which a downloaded image does not have.
+     */
     const savePath = await this.attachmentPathManager.getDownloadedImagePath({
-      actionContext: ActionContext.CollectAttachments,
+      actionContext: ActionContext.SaveAttachment,
       downloadedContent: arrayBuffer,
       fileExtension: extension,
       fileName: baseName,

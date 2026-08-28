@@ -170,8 +170,7 @@ export const it = {
       description: {
         part1: 'Vedi',
         part2: 'token disponibili',
-        part3: 'Lascia vuoto per usare l\'impostazione',
-        part4: 'al suo posto.'
+        part3: 'Lascia vuoto per mantenere il nome file allegato originale.'
       },
       name: 'Nome file allegato raccolto'
     },
@@ -275,8 +274,7 @@ export const it = {
       description: {
         part1: 'Vedi',
         part2: 'token disponibili',
-        part3: 'Lascia vuoto per usare l\'impostazione',
-        part4: 'al suo posto.'
+        part3: 'Lascia vuoto per mantenere il nome file allegato originale.'
       },
       name: 'Nome file allegato rinominato'
     },

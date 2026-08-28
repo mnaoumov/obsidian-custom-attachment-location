@@ -57,6 +57,9 @@ import {
   TokenValidator
 } from './token-validator.ts';
 
+// eslint-disable-next-line no-template-curly-in-string -- Valid token.
+const ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE = '${originalAttachmentFileName}';
+
 interface AttachmentPathManagerConstructorParams {
   readonly app: App;
   readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFunction;
@@ -158,7 +161,7 @@ export class AttachmentPathManager {
   public async getAvailablePathForAttachments(params: AttachmentPathManagerGetAvailablePathForAttachmentsParams): Promise<string> {
     let attachmentFileBaseName = params.attachmentFileBaseName;
     let attachmentFileStats = params.attachmentFileStats;
-    let shouldSkipGeneratedAttachmentFileName = params.shouldSkipGeneratedAttachmentFileName;
+    let shouldSkipGeneratedAttachmentFileName = this.isGeneratedAttachmentFileNameSkipped(params.context, params.shouldSkipGeneratedAttachmentFileName);
     const isDummy = attachmentFileBaseName === DUMMY_PATH;
 
     if (isDummy) {
@@ -339,12 +342,18 @@ export class AttachmentPathManager {
   public async getGeneratedAttachmentFileBaseName(substitutions: Substitutions): Promise<string> {
     let baseTemplate: string;
     switch (substitutions.actionContext) {
+      /*
+       * An empty template for an attachment that already exists means "keep the name it has", NOT "fall
+       * back to the generated-name template" — that template names a NEWLY CREATED attachment, and running
+       * it here renames files the user never asked to rename (and prompts, when it holds a `${prompt}`
+       * token). Both of these settings ship empty, so the fallback fired by default.
+       */
       case ActionContext.CollectAttachments: {
-        baseTemplate = this.pluginSettingsComponent.settings.collectedAttachmentFileName;
+        baseTemplate = this.pluginSettingsComponent.settings.collectedAttachmentFileName || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
       case ActionContext.RenameNote: {
-        baseTemplate = this.pluginSettingsComponent.settings.renamedAttachmentFileName;
+        baseTemplate = this.pluginSettingsComponent.settings.renamedAttachmentFileName || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
       default: {
@@ -352,8 +361,6 @@ export class AttachmentPathManager {
         break;
       }
     }
-
-    baseTemplate ||= this.pluginSettingsComponent.settings.generatedAttachmentFileName;
 
     const path = await this.resolvePathTemplate({ isFileNamePart: true, substitutions, template: baseTemplate });
     let validationMessage = await this.tokenValidator.validatePath({
@@ -466,6 +473,21 @@ export class AttachmentPathManager {
       cursorLine,
       sequenceNumber: sequenceNumberByAttachmentPath.get(oldAttachmentFile.path) ?? 0
     };
+  }
+
+  private isGeneratedAttachmentFileNameSkipped(context: AttachmentPathContext, shouldSkipGeneratedAttachmentFileName: boolean | undefined): boolean {
+    if (shouldSkipGeneratedAttachmentFileName) {
+      return true;
+    }
+
+    /*
+     * A note rename must not rename the attachment when the user turned that off. The setting reaches
+     * dev-utils' `RenameDeleteHandlerComponent` only, so a plugin calling `getAttachmentFilePath` directly
+     * would otherwise resolve a brand-new name here — and, with a `${prompt}` template, open a modal per
+     * renamed note (issue #259 in Advanced Note Composer). Skipping the generated name leaves the file
+     * named as it is and moves only its folder.
+     */
+    return context === AttachmentPathContext.RenameNote && !this.pluginSettingsComponent.settings.shouldRenameAttachmentFiles;
   }
 
   private async resolvePathTemplate(params: AttachmentPathManagerResolvePathTemplateParams): Promise<string> {
