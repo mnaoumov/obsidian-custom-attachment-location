@@ -54,6 +54,51 @@ const DEMO_VAULT_TEST_FILES = 'src/**/*.demo-vault.integration.test.ts';
  */
 const DEMO_VAULT_TIMEOUT_IN_MILLISECONDS = 600_000;
 
+/**
+ * Empties the shared vault after each `integration-tests:desktop` file, so a late file does not inherit
+ * everything the ~30 before it created. See the file's own header for why that matters.
+ */
+const DESKTOP_VAULT_CLEANUP_SETUP_FILE = './scripts/vitest-setup-desktop-vault-cleanup.ts';
+
+/**
+ * The desktop transport's per-command budget.
+ *
+ * A whole `evalInObsidian` callback is ONE `Runtime.evaluate`, so this bounds the entire staging +
+ * waiting + assertion sequence a suite performs inside Obsidian — not a single round trip. The default
+ * is the project's own 30s test budget, which silently truncates the suites that raise their per-test
+ * timeout (`it(..., 180_000)`) to do real work: they were killed at 30s by the transport while vitest
+ * was still happily waiting, and reported as `CDP command timed out ... Runtime.evaluate`, naming
+ * neither the suite's `waitUntil` message nor the assertion.
+ *
+ * Set above the largest per-test budget in the suite so vitest — which knows what was being awaited —
+ * always reports the overrun. Nothing hangs longer as a result: vitest's own timeout is the backstop.
+ */
+const CDP_COMMAND_TIMEOUT_IN_MILLISECONDS = 240_000;
+
+/**
+ * The desktop project's `setupFiles` without the vault cleanup.
+ *
+ * `editContext` runs BEFORE `customProjects`, and the projects below spread the very same
+ * `context.desktop` object — without dropping it again they would inherit a cleanup that empties the
+ * vault whose contents are their fixture.
+ *
+ * @param context - The context the library hands over.
+ * @returns The setup files with the cleanup removed.
+ */
+function setupFilesWithoutVaultCleanup(context: ObsidianPluginVitestConfigContext): string[] {
+  return toSetupFileList(context.desktop.setupFiles).filter((setupFile) => setupFile !== DESKTOP_VAULT_CLEANUP_SETUP_FILE);
+}
+
+/**
+ * Normalizes `setupFiles`, which is `string | string[] | undefined` in vitest's own type.
+ *
+ * @param setupFiles - The value to normalize.
+ * @returns The value as an array.
+ */
+function toSetupFileList(setupFiles: string | string[] | undefined): string[] {
+  return [setupFiles ?? []].flat();
+}
+
 export const config = defineObsidianPluginVitestConfig({
   customProjects(context: ObsidianPluginVitestConfigContext): TestProjectConfiguration[] {
     return [
@@ -61,7 +106,8 @@ export const config = defineObsidianPluginVitestConfig({
         test: {
           ...context.desktop,
           include: [DESKTOP_CAPTURE_TEST_FILES],
-          name: 'capture-screenshots:desktop'
+          name: 'capture-screenshots:desktop',
+          setupFiles: setupFilesWithoutVaultCleanup(context)
         }
       },
       {
@@ -85,12 +131,22 @@ export const config = defineObsidianPluginVitestConfig({
           globalSetup: ['./scripts/demo-vault-global-setup.ts'],
           include: [DEMO_VAULT_TEST_FILES],
           name: 'integration-tests:demo-vault',
+          setupFiles: setupFilesWithoutVaultCleanup(context),
           testTimeout: DEMO_VAULT_TIMEOUT_IN_MILLISECONDS
         }
       }
     ];
   },
   editContext(context: ObsidianPluginVitestConfigContext): void {
+    context.desktop.setupFiles = [...toSetupFileList(context.desktop.setupFiles), DESKTOP_VAULT_CLEANUP_SETUP_FILE];
+
+    context.desktop.environmentOptions = {
+      obsidianTransport: {
+        commandTimeoutInMilliseconds: CDP_COMMAND_TIMEOUT_IN_MILLISECONDS,
+        type: 'obsidian-cdp'
+      }
+    };
+
     context.desktopPerformance.environmentOptions = {
       /*
        * The bottleneck closure holds a single `Runtime.evaluate` open for the whole

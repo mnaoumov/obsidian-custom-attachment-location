@@ -6,6 +6,24 @@ import {
   it
 } from 'vitest';
 
+interface ObsidianDevUtilsGlobal {
+  readonly __obsidianDevUtils?: Record<string, OperationQueueWrapper | undefined>;
+}
+
+/**
+ * The obsidian-dev-utils global operation queue, as seen from outside the library.
+ *
+ * Only the shape read here is modeled; the library does not export the type. Declared at module scope
+ * because types are erased before the callback is serialized into Obsidian.
+ */
+interface OperationQueueState {
+  readonly items?: readonly unknown[];
+}
+
+interface OperationQueueWrapper {
+  readonly value?: OperationQueueState;
+}
+
 /*
  * End-to-end coverage for the first and third halves of issue #59 (G97): the `${prompt}` modal must
  * open with its input already focused and its default value pre-selected, so typing replaces the name
@@ -21,6 +39,10 @@ import {
  */
 
 interface PromptFocusResult {
+  /**
+   * What held the focus when the modal opened, for the assertion message.
+   */
+  readonly activeElementDescription: string;
   readonly heading: string;
   readonly isInputFocused: boolean;
   readonly savedPaths: readonly string[];
@@ -39,7 +61,13 @@ describe('The prompt token modal (issue #59)', () => {
           generatedAttachmentFileName: string;
         }
 
+        // How long a cancelled `saveAttachment` is given to unwind before this gives up on it.
+        const ABANDON_TIMEOUT_IN_MILLISECONDS = 5000;
+        const QUEUE_DRAIN_POLL_IN_MILLISECONDS = 100;
+        const QUEUE_DRAIN_TIMEOUT_IN_MILLISECONDS = 15_000;
+
         const EMPTY_RESULT = {
+          activeElementDescription: '',
           heading: '',
           isInputFocused: false,
           savedPaths: [],
@@ -97,23 +125,33 @@ describe('The prompt token modal (issue #59)', () => {
             // `.modal-container`, not on a descendant of it.
             const modalEl = document.querySelector<HTMLElement>('.modal-container.prompt-modal');
             /*
-             * The OK button is built after the input, and the focus is applied last of all, so waiting
-             * on the button (plus a settle) is what makes reading `activeElement` meaningful rather
-             * than a race against the modal still assembling itself.
+             * The OK button is built after the input, and the focus and selection are applied last of
+             * all. Waiting for the focus ITSELF — rather than for the markup plus a fixed settle — is
+             * what makes reading `activeElement` meaningful: a fixed sleep is a race that a loaded
+             * machine loses, while this only ever returns early, never late. The assertion still holds
+             * its meaning, because a modal that never focuses its input runs out the deadline below
+             * and is reported exactly as the unfocused modal issue #59 is about.
              */
-            if (modalEl?.querySelector('input') && modalEl.querySelector('.ok-button')) {
-              await sleep(300);
-              return modalEl;
+            const inputEl = modalEl?.querySelector('input');
+            if (inputEl && modalEl?.querySelector('.ok-button')) {
+              const isFocusedAndSelected = document.activeElement === inputEl
+                && (inputEl.selectionEnd ?? 0) > (inputEl.selectionStart ?? 0);
+              if (isFocusedAndSelected || Date.now() >= deadline - 100) {
+                return modalEl;
+              }
             }
             await sleep(100);
           }
           return null;
         }
 
-        const settings = findSettings();
-        if (!settings) {
+        const foundSettings = findSettings();
+        if (!foundSettings) {
           return { ...EMPTY_RESULT, settingsFound: false };
         }
+
+        // A narrowed `const` does not stay narrowed inside a function declaration below it.
+        const settings: PromptSettings = foundSettings;
 
         /*
          * These tests share one Obsidian instance with every other integration file, and the settings
@@ -143,6 +181,22 @@ describe('The prompt token modal (issue #59)', () => {
         await app.workspace.revealLeaf(leaf);
         await sleep(500);
 
+        /*
+         * Creating and opening the note above queues the plugin's own create/open handling on
+         * obsidian-dev-utils' GLOBAL operation queue, which runs one entry at a time. `saveAttachment`
+         * below lands BEHIND those entries, and the prompt modal only opens once its entry starts —
+         * so triggering while the queue is busy is what made the modal miss the wait below entirely,
+         * reported (misleadingly) as the input not being focused.
+         */
+        async function waitForQueueToDrain(): Promise<void> {
+          const queueState = (window as ObsidianDevUtilsGlobal).__obsidianDevUtils?.['queue']?.value;
+          const queueDeadline = Date.now() + QUEUE_DRAIN_TIMEOUT_IN_MILLISECONDS;
+          while ((queueState?.items?.length ?? 0) > 0 && Date.now() < queueDeadline) {
+            await sleep(QUEUE_DRAIN_POLL_IN_MILLISECONDS);
+          }
+        }
+        await waitForQueueToDrain();
+
         const originalBaseName = `original-${stamp}`;
         /*
          * `saveAttachment` is the sink the plugin patches; it reaches the same `${prompt}` evaluation
@@ -150,20 +204,40 @@ describe('The prompt token modal (issue #59)', () => {
          */
         const savePromise = app.saveAttachment(originalBaseName, 'png', new ArrayBuffer(8));
 
+        /*
+         * Whatever happens from here on, the modal has to be ANSWERED and `savePromise` awaited before
+         * this returns. `saveAttachment` is queued inside the plugin, and a modal left standing keeps
+         * that queue entry pending forever — every later attachment operation, in this file and in
+         * every file sharing this Obsidian instance, then waits behind it and times out. A whole run's
+         * worth of unrelated suites failing in a row traces back to exactly this kind of early return.
+         */
+        async function abandon(): Promise<void> {
+          // Its own close affordance, not its content buttons: cancelling is what resolves the queued
+          // Save, while clicking blindly would activate whatever the dialog happens to offer.
+          for (const closeEl of document.querySelectorAll<HTMLElement>('.modal-container .modal-close-button')) {
+            closeEl.click();
+          }
+          await Promise.race([savePromise.catch(() => undefined), sleep(ABANDON_TIMEOUT_IN_MILLISECONDS)]);
+          restoreSettings(settings);
+        }
+
         const modalEl = await waitForPromptModal();
         if (!modalEl) {
-          restoreSettings(settings);
+          await abandon();
           return { ...EMPTY_RESULT, settingsFound: true };
         }
 
         const inputEl = modalEl.querySelector('input');
         if (!inputEl) {
-          restoreSettings(settings);
+          await abandon();
           return { ...EMPTY_RESULT, settingsFound: true };
         }
 
         // Issue #59 part 1: the caret must already be in the box, with the existing name selected.
         const isInputFocused = document.activeElement === inputEl;
+        // What holds the focus instead, for the assertion message. A bare `false` cannot distinguish
+        // "focus never applied" from "something else took it back".
+        const activeElementDescription = `${document.activeElement?.tagName ?? 'none'}.${document.activeElement?.className ?? ''}`;
 
         const selectedText = inputEl.value.slice(inputEl.selectionStart ?? 0, inputEl.selectionEnd ?? 0);
         const value = inputEl.value;
@@ -190,6 +264,7 @@ describe('The prompt token modal (issue #59)', () => {
         restoreSettings(settings);
 
         return {
+          activeElementDescription,
           heading,
           isInputFocused,
           savedPaths,
@@ -203,7 +278,7 @@ describe('The prompt token modal (issue #59)', () => {
     });
 
     expect(result.settingsFound).toBe(true);
-    expect(result.isInputFocused).toBe(true);
+    expect(result.isInputFocused, `focus was on ${result.activeElementDescription}`).toBe(true);
     // The whole default value is selected, so the first keystroke replaces it.
     expect(result.selectedText).toBe(result.value);
     expect(result.value).toMatch(/^original-/);

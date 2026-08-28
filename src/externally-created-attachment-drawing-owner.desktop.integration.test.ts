@@ -142,6 +142,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
             const REQUIRED_STABLE_POLLS = 3;
             let previousKey = '';
             let stablePolls = 0;
+            let isSettled = false;
             const deadline = Date.now() + waitTimeoutInMilliseconds;
             while (Date.now() < deadline) {
               const current = app.vault.getFiles().map((file) => file.path).filter((path) => !pathsBefore.has(path)).sort();
@@ -150,6 +151,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
               if (key === previousKey && hasRelocated) {
                 stablePolls++;
                 if (stablePolls >= REQUIRED_STABLE_POLLS) {
+                  isSettled = true;
                   break;
                 }
               } else {
@@ -157,6 +159,16 @@ describe('An attachment written by another plugin while a drawing is open is lef
                 previousKey = key;
               }
               await sleep(STABLE_POLL_INTERVAL_IN_MILLISECONDS);
+            }
+
+            /*
+             * Falling out of the loop unsettled used to be silent, and that silence is precisely the
+             * Cross-phase leak the comment above warns about: this phase's file materializes during the
+             * NEXT phase and is counted as its addition, which the next phase then reports as a moved
+             * File where it asserts nothing moved. Say so here instead, naming the phase that stalled.
+             */
+            if (!isSettled) {
+              throw new Error(`the relocation of ${imageName} never settled within ${String(waitTimeoutInMilliseconds)}ms`);
             }
           } else {
             // Nothing should happen here, and absence cannot be polled for -- give the handler its

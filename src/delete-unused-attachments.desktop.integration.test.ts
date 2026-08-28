@@ -25,7 +25,16 @@ import {
  */
 
 interface ProbeResult {
+  readonly commandDispatched: boolean;
   readonly modalShown: boolean;
+  /**
+   * Whatever the plugin put on screen while the confirmation modal was being waited for.
+   *
+   * `modalShown: false` on its own says only that nothing appeared, which is the least useful form of
+   * this failure. The plugin reports "nothing to delete" as a notice rather than a dialog, so carrying
+   * the notices into the assertion distinguishes "the command declined" from "the command never ran".
+   */
+  readonly noticeTexts: readonly string[];
   readonly orphanTrashed: boolean;
   readonly refBacklinkCount: number;
   readonly referencedSurvived: boolean;
@@ -71,7 +80,33 @@ describe('Delete unused attachments (issue #23)', () => {
 
         // The command targets the active file, mirroring what the note context-menu item does.
         await app.workspace.getLeaf(false).openFile(note);
-        app.commands.executeCommandById('obsidian-custom-attachment-location:delete-unused-attachments-in-file');
+
+        /*
+         * Two preconditions the command silently no-ops on, each of which shows up as "the confirmation
+         * modal never appeared" rather than as anything nameable:
+         *
+         * - The active file is not this note yet. `openFile` resolves before the workspace has finished
+         *   Switching, and the command reads `getActiveFile()`.
+         * - The metadata cache still has work queued. Until the three attachments are indexed the plugin
+         *   Sees nothing unused, reports "nothing to delete" and never opens a modal.
+         */
+        const activeDeadline = Date.now() + 8000;
+        while (Date.now() < activeDeadline && app.workspace.getActiveFile()?.path !== note.path) {
+          await sleep(100);
+        }
+        await new Promise<void>((resolve) => {
+          app.metadataCache.onCleanCache(resolve);
+        });
+
+        const noticeTexts = new Set<string>();
+        const noticeObserver = new MutationObserver(() => {
+          for (const noticeEl of document.querySelectorAll('.notice')) {
+            noticeTexts.add(noticeEl.textContent);
+          }
+        });
+        noticeObserver.observe(document.body, { characterData: true, childList: true, subtree: true });
+
+        const isCommandDispatched = app.commands.executeCommandById('obsidian-custom-attachment-location:delete-unused-attachments-in-file');
 
         // Drive the real confirmation modal: wait for it, then click its OK button.
         let isModalShown = false;
@@ -95,8 +130,12 @@ describe('Delete unused attachments (issue #23)', () => {
           await sleep(200);
         }
 
+        noticeObserver.disconnect();
+
         return {
+          commandDispatched: isCommandDispatched,
           modalShown: isModalShown,
+          noticeTexts: [...noticeTexts],
           orphanTrashed: !app.vault.getFileByPath(orphanPath),
           refBacklinkCount,
           referencedSurvived: Boolean(app.vault.getFileByPath(refPath)),
@@ -112,8 +151,12 @@ describe('Delete unused attachments (issue #23)', () => {
     expect(result.refBacklinkCount).toBe(1);
     expect(result.sharedBacklinkCount).toBe(1);
 
-    // The confirmation modal was really shown and driven through the DOM.
-    expect(result.modalShown).toBe(true);
+    // The confirmation modal was really shown and driven through the DOM. On failure the message
+    // Carries what the plugin did instead, which a bare `false` never could.
+    expect(
+      result.modalShown,
+      `no confirmation modal; command dispatched: ${String(result.commandDispatched)}; notices: ${JSON.stringify(result.noticeTexts)}`
+    ).toBe(true);
 
     // Only the genuinely-unused attachment is trashed; the referenced and shared ones survive.
     expect(result.orphanTrashed).toBe(true);

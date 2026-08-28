@@ -112,10 +112,21 @@ describe('Deleting a folder hands its shared attachment to the surviving note (i
         const wasDeletingOrphans = settings.shouldDeleteOrphanAttachments;
         const wasRescuingShared = settings.shouldRescueSharedAttachments;
 
+        /*
+         * Best-effort cleanup, so it must tolerate an entry that is already gone. `folderA` is trashed
+         * by the phase itself and the index can still hand it back here for a moment afterwards, and
+         * the rescue removes emptied folders on its own queue — trashing either one a second time
+         * throws `ENOENT` from the rename into `.trash` and fails the phase that already passed.
+         */
         async function trashIfExists(path: string): Promise<void> {
           const existing = app.vault.getAbstractFileByPath(path);
-          if (existing) {
+          if (!existing) {
+            return;
+          }
+          try {
             await app.fileManager.trashFile(existing);
+          } catch {
+            // Removed between the lookup and the trash, which is the outcome this wanted anyway.
           }
         }
 

@@ -6,6 +6,36 @@ import {
   it
 } from 'vitest';
 
+interface LinkUpdateProgressResult {
+  /**
+   * Every notice text seen during the rename, not just the progress ones.
+   *
+   * An empty `capturedMessages` says only that no progress notice was observed. Knowing whether ANY
+   * notice reached the DOM separates "the reporter never fired" from "the capture missed it".
+   */
+  readonly allNoticeTexts: readonly string[];
+  readonly capturedMessages: readonly string[];
+  readonly lingeringProgressNoticeCount: number;
+  readonly settingsFound: boolean;
+  readonly sourceCount: number;
+  readonly sourceRewritten: boolean;
+  readonly targetRenamed: boolean;
+}
+
+interface ObsidianDevUtilsGlobal {
+  readonly __obsidianDevUtils?: Record<string, OperationQueueWrapper | undefined>;
+}
+
+/**
+ * The obsidian-dev-utils global operation queue, as seen from outside the library.
+ *
+ * Only the shape read here is modeled; the library does not export the type. Declared at module scope
+ * because types are erased before the callback is serialized into Obsidian.
+ */
+interface OperationQueueState {
+  readonly items?: readonly unknown[];
+}
+
 /*
  * End-to-end coverage for issue #25 ("A better links update notification"): when the plugin's
  * `RenameDeleteHandlerComponent` updates links across the backlink source notes of a renamed file, the
@@ -23,13 +53,8 @@ import {
  * hang the test.
  */
 
-interface LinkUpdateProgressResult {
-  readonly capturedMessages: readonly string[];
-  readonly lingeringProgressNoticeCount: number;
-  readonly settingsFound: boolean;
-  readonly sourceCount: number;
-  readonly sourceRewritten: boolean;
-  readonly targetRenamed: boolean;
+interface OperationQueueWrapper {
+  readonly value?: OperationQueueState;
 }
 
 /*
@@ -43,6 +68,9 @@ describe('Link-update progress notification (issue #25)', () => {
     const SOURCE_COUNT = 3;
     const result = await evalInObsidian({
       async callback({ app, lib: { waitUntil }, sourceCount }): Promise<LinkUpdateProgressResult> {
+        const QUEUE_DRAIN_POLL_IN_MILLISECONDS = 100;
+        const QUEUE_DRAIN_TIMEOUT_IN_MILLISECONDS = 15_000;
+
         interface RenameSettings {
           attachmentFolderPath: string;
           shouldHandleRenames: boolean;
@@ -94,7 +122,7 @@ describe('Link-update progress notification (issue #25)', () => {
 
         const settings = findSettings();
         if (!settings) {
-          return { capturedMessages: [], lingeringProgressNoticeCount: 0, settingsFound: false, sourceCount, sourceRewritten: false, targetRenamed: false };
+          return { allNoticeTexts: [], capturedMessages: [], lingeringProgressNoticeCount: 0, settingsFound: false, sourceCount, sourceRewritten: false, targetRenamed: false };
         }
 
         settings.shouldHandleRenames = true;
@@ -118,21 +146,52 @@ describe('Link-update progress notification (issue #25)', () => {
 
         const [firstSource] = sources;
         if (!firstSource) {
-          return { capturedMessages: [], lingeringProgressNoticeCount: 0, settingsFound: true, sourceCount, sourceRewritten: false, targetRenamed: false };
+          return { allNoticeTexts: [], capturedMessages: [], lingeringProgressNoticeCount: 0, settingsFound: true, sourceCount, sourceRewritten: false, targetRenamed: false };
         }
         const before = await app.vault.read(firstSource);
 
         // Collect every "Updating links: N/M" notice text mutated into the DOM during the rename.
         const captured = new Set<string>();
+        const allNotices = new Set<string>();
         function collect(): void {
           for (const el of document.querySelectorAll('.notice')) {
             const text = el.textContent;
+            allNotices.add(text);
             if (text.includes('Updating links:')) {
               captured.add(text);
             }
           }
         }
-        const observer = new MutationObserver(() => {
+        /*
+         * `collect` re-queries the LIVE DOM, so it only ever sees notices that are still on screen.
+         * With three backlinks the pass can finish inside one observer batch — the notice is added and
+         * dismissed before the callback runs — and the live DOM is then already empty, which is how
+         * this suite intermittently captured nothing at all. The mutation records still hold the node,
+         * so reading them catches a notice that has since been removed.
+         */
+        function considerText(text: string): void {
+          if (text !== '') {
+            allNotices.add(text);
+          }
+          if (text.includes('Updating links:')) {
+            captured.add(text);
+          }
+        }
+        function collectFromNode(node: Node): void {
+          const el = node.instanceOf(HTMLElement) ? node : node.parentElement;
+          considerText(el?.closest('.notice')?.textContent ?? '');
+          // The notice can also arrive inside a freshly appended container rather than as the node.
+          for (const noticeEl of el?.querySelectorAll('.notice') ?? []) {
+            considerText(noticeEl.textContent);
+          }
+        }
+        const observer = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+              collectFromNode(node);
+            }
+            collectFromNode(mutation.target);
+          }
           collect();
         });
         observer.observe(document.body, { characterData: true, childList: true, subtree: true });
@@ -150,6 +209,23 @@ describe('Link-update progress notification (issue #25)', () => {
           }
           return true;
         }
+
+        /*
+         * Creating the target and its source notes queues the plugin's own create handling on
+         * obsidian-dev-utils' GLOBAL operation queue, which runs one entry at a time. Renaming while
+         * those are still draining means the plugin's rename handling — and with it the progress
+         * reporter this suite exists to observe — starts late or not at all, while Obsidian's own
+         * `alwaysUpdateLinks` rewrites the links anyway. That combination is exactly the observed
+         * failure: every link correctly updated, and not a single notice on screen.
+         */
+        async function waitForQueueToDrain(): Promise<void> {
+          const queueState = (window as ObsidianDevUtilsGlobal).__obsidianDevUtils?.['queue']?.value;
+          const queueDeadline = Date.now() + QUEUE_DRAIN_TIMEOUT_IN_MILLISECONDS;
+          while ((queueState?.items?.length ?? 0) > 0 && Date.now() < queueDeadline) {
+            await sleep(QUEUE_DRAIN_POLL_IN_MILLISECONDS);
+          }
+        }
+        await waitForQueueToDrain();
 
         try {
           // `renameFile`'s promise can linger on `metadataCache.onCleanCache`; bound it and poll the
@@ -189,7 +265,7 @@ describe('Link-update progress notification (issue #25)', () => {
         const isSourceRewritten = (await app.vault.read(firstSource)) !== before;
         const lingeringProgressNoticeCount = countLingeringProgressNotices();
 
-        return { capturedMessages: [...captured], lingeringProgressNoticeCount, settingsFound: true, sourceCount, sourceRewritten: isSourceRewritten, targetRenamed: isTargetRenamed };
+        return { allNoticeTexts: [...allNotices], capturedMessages: [...captured], lingeringProgressNoticeCount, settingsFound: true, sourceCount, sourceRewritten: isSourceRewritten, targetRenamed: isTargetRenamed };
       },
       input: { sourceCount: SOURCE_COUNT },
       vaultPath: getTemporaryVault().path
@@ -199,8 +275,12 @@ describe('Link-update progress notification (issue #25)', () => {
     expect(result.targetRenamed).toBe(true);
     expect(result.sourceRewritten).toBe(true);
 
-    // The progress reporter fired: at least one "Updating links: N/M" notice reached the DOM.
-    expect(result.capturedMessages.length).toBeGreaterThan(0);
+    // The progress reporter fired: at least one "Updating links: N/M" notice reached the DOM. The
+    // Message carries every notice seen, so a miss says whether ANYTHING was shown.
+    expect(
+      result.capturedMessages.length,
+      `no "Updating links:" notice; all notices seen: ${JSON.stringify(result.allNoticeTexts)}`
+    ).toBeGreaterThan(0);
 
     const progressPairs = result.capturedMessages
       .map((message) => /Updating links: (?<processed>\d+)\/(?<total>\d+)/.exec(message))

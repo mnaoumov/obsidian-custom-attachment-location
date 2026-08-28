@@ -142,10 +142,20 @@ describe('Rescuing a shared attachment from a deletion (issue #57)', () => {
         const shouldDeleteOrphanAttachmentsPrior = settings.shouldDeleteOrphanAttachments;
         const shouldRescueSharedAttachmentsPrior = settings.shouldRescueSharedAttachments;
 
+        /*
+         * Best-effort cleanup, so it must tolerate an entry that is already gone: the rescue removes
+         * emptied folders on its own queue, and trashing one a second time throws `ENOENT` from the
+         * rename into `.trash` and fails a phase that already passed.
+         */
         async function trashIfExists(path: string): Promise<void> {
           const existing = app.vault.getAbstractFileByPath(path);
-          if (existing) {
+          if (!existing) {
+            return;
+          }
+          try {
             await app.fileManager.trashFile(existing);
+          } catch {
+            // Removed between the lookup and the trash, which is the outcome this wanted anyway.
           }
         }
 
@@ -174,16 +184,34 @@ describe('Rescuing a shared attachment from a deletion (issue #57)', () => {
           const expectedPath = `assets/ar-note-b-${stamp}/${imageName}`;
           const expectedNoteCount = params.shouldAddTyingNote ? 3 : 2;
 
-          const noticeTexts: string[] = [];
+          /*
+         * The ELEMENTS are collected, not their text: Obsidian appends a `.notice` and fills its
+         * content afterwards, so reading `textContent` inside the observer callback can capture the
+         * notice while it is still empty. Reading it at the end sees the finished message.
+           */
+          const noticeEls: HTMLElement[] = [];
           const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
               for (const node of mutation.addedNodes) {
-                if (node.instanceOf(HTMLElement) && node.classList.contains('notice')) {
-                  noticeTexts.push(node.textContent);
+                if (!node.instanceOf(HTMLElement)) {
+                  continue;
                 }
+                /*
+                 * The notice is not always the added node itself: the first one of a session arrives
+                 * Inside a freshly appended `.notice-container`, and matching only the node's own class
+                 * Silently drops it. Its descendants are searched for that reason.
+                 */
+                if (node.classList.contains('notice')) {
+                  noticeEls.push(node);
+                }
+                noticeEls.push(...node.querySelectorAll<HTMLElement>('.notice'));
               }
             }
           });
+
+          function findNoticeText(): string {
+            return noticeEls.map((noticeEl) => noticeEl.textContent).find((text) => text.includes(imageName)) ?? '';
+          }
 
           try {
             settings.notePriorities = params.notePriorities;
@@ -216,6 +244,17 @@ describe('Rescuing a shared attachment from a deletion (issue #57)', () => {
               await waitUntil({
                 message: `the attachment was not rescued to ${expectedPath}`,
                 predicate: () => app.vault.getAbstractFileByPath(expectedPath) !== null,
+                timeoutInMilliseconds: waitTimeoutInMilliseconds
+              });
+
+              /*
+               * The notice announcing the move is shown around the move, not strictly before the moved
+               * File is observable, so sampling it the moment the file appears is a race. Waiting for
+               * It keeps the assertion intact — a rescue that never announces itself still fails here.
+               */
+              await waitUntil({
+                message: 'the rescue was not announced by a notice',
+                predicate: () => findNoticeText() !== '',
                 timeoutInMilliseconds: waitTimeoutInMilliseconds
               });
             } else {
@@ -252,7 +291,7 @@ describe('Rescuing a shared attachment from a deletion (issue #57)', () => {
             return {
               attachmentPath,
               isResolvedFromSurvivingNote,
-              noticeText: noticeTexts.find((text) => text.includes(imageName)) ?? ''
+              noticeText: findNoticeText()
             };
           } finally {
             observer.disconnect();
