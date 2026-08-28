@@ -26,8 +26,8 @@ import {
 } from '../scripts/helpers/generate-performance-vault.ts';
 
 /*
- * Localizes the bulk-deletion bottleneck described in CLAUDE.md "Known Issues". The
- * consumer (`consistent-attachments-and-links`) calls the dev-utils core
+ * Localizes the bulk-deletion bottleneck of [[T8-P4]]. The consumer
+ * (`consistent-attachments-and-links`) calls the dev-utils core
  * `getAttachmentFilePath` once per attachment link per file; that core reads the WHOLE
  * binary of each attachment (`await app.vault.readBinary(...)`) before dispatching to this
  * plugin's patched `Vault.getAvailablePathForAttachments.extended` handler. This test
