@@ -1,9 +1,11 @@
+/* eslint-disable perfectionist/sort-named-imports -- dprint orders these members by their ORIGINAL name (`Plugin` before `PluginManifest`) while perfectionist orders them by the LOCAL alias (`PluginManifest` before `PluginOriginal`). For an aliased import the two orders conflict, and satisfying one re-breaks the other. */
 import type {
   App as AppOriginal,
   Plugin as PluginOriginal,
   PluginManifest,
   TFile
 } from 'obsidian';
+/* eslint-enable perfectionist/sort-named-imports -- Only the aliased import above is exempt. */
 import type { DisposableEx } from 'obsidian-dev-utils/disposable';
 import type { CommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler';
 import type { NotebookNavigatorMenuDispose } from 'obsidian-dev-utils/obsidian/notebook-navigator';
