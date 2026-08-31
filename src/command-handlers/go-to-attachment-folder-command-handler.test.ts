@@ -213,8 +213,8 @@ describe('GoToAttachmentFolderCommandHandler', () => {
       });
 
       it('should reveal nothing when the folder is still absent after creating it', async () => {
-        // createFolderSafe can leave nothing behind - the path may be occupied by a file, or the
-        // create may have been rejected - so the lookup after it is allowed to come back null.
+        // The lookup after createFolderSafe is allowed to come back null.
+        // Nothing guarantees a folder: the path may be occupied by a file, or the create refused.
         getFolderByPath.mockReturnValue(null);
         fragment.querySelector('button')?.click();
         await vi.waitFor(() => {

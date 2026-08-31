@@ -148,8 +148,8 @@ describe('NoteOwnerResolver', () => {
     });
 
     it('should answer the unit-folder probe from the settings', async () => {
-      // `findAttachmentUnitFolderPath` is mocked, so the predicate it is handed is never called by the
-      // real implementation. Drive it directly - it is the only thing that binds the probe to settings.
+      // `findAttachmentUnitFolderPath` is mocked, so the real implementation never calls the predicate.
+      // Drive it directly - it is the only thing binding the unit-folder probe to the settings.
       mockFindAttachmentUnitFolderPath.mockReturnValue(null);
       await resolver.findCandidateNotePaths(createFile('page_files/style.css'));
 

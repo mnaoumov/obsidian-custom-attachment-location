@@ -166,9 +166,9 @@ describe('GoToOwningNoteCommandHandler', () => {
       expect(mockSelectItem).toHaveBeenCalledOnce();
       expect(selectItemParams?.items).toEqual(['notes/a.md', 'notes/b.md']);
       expect(selectItemParams?.placeholder).toContain('match the Note priorities setting equally well');
-      // `selectItem` is mocked, so it never renders; drive the row renderer directly. Rows are shown as
-      // the bare note path.
-      expect(selectItemParams?.itemTextFunction?.('notes/a.md')).toBe('notes/a.md');
+      // `selectItem` is mocked, so it never renders; drive the row renderer directly.
+      // Rows are shown as the bare note path.
+      expect(selectItemParams?.itemTextFunction('notes/a.md')).toBe('notes/a.md');
       expect(openFile).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ path: 'notes/a.md' }));
     });
 
