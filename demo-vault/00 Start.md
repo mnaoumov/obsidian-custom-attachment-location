@@ -17,3 +17,4 @@ Most of this vault is driven by you supplying a file, so there is little to clic
 - [07 Link display text](<./07 Link display text.md>)
 - [08 Delete unused attachments](<./08 Delete unused attachments.md>)
 - [09 Token reference](<./09 Token reference.md>)
+- [10 Navigation](<./10 Navigation.md>)

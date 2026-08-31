@@ -1,7 +1,7 @@
 import type {
   App as AppOriginal,
-  PluginManifest,
   Plugin as PluginOriginal,
+  PluginManifest,
   TFile
 } from 'obsidian';
 import type { DisposableEx } from 'obsidian-dev-utils/disposable';
@@ -40,6 +40,8 @@ import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handl
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
 import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './command-handlers/delete-unused-attachments-entire-vault-command-handler.ts';
 import { DeleteUnusedAttachmentsInFileCommandHandler } from './command-handlers/delete-unused-attachments-in-file-command-handler.ts';
+import { GoToAttachmentFolderCommandHandler } from './command-handlers/go-to-attachment-folder-command-handler.ts';
+import { GoToOwningNoteCommandHandler } from './command-handlers/go-to-owning-note-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import { ImageManager } from './image-manager.ts';
@@ -134,6 +136,14 @@ vi.mock('./command-handlers/collect-attachments-in-file-command-handler.ts', () 
 
 vi.mock('./command-handlers/delete-unused-attachments-in-file-command-handler.ts', () => ({
   DeleteUnusedAttachmentsInFileCommandHandler: vi.fn()
+}));
+
+vi.mock('./command-handlers/go-to-attachment-folder-command-handler.ts', () => ({
+  GoToAttachmentFolderCommandHandler: vi.fn()
+}));
+
+vi.mock('./command-handlers/go-to-owning-note-command-handler.ts', () => ({
+  GoToOwningNoteCommandHandler: vi.fn()
 }));
 
 vi.mock('./command-handlers/move-attachment-to-proper-folder-command-handler.ts', () => ({
@@ -307,6 +317,8 @@ describe('Plugin', () => {
       expect.any(CollectAttachmentsEntireVaultCommandHandler),
       expect.any(DeleteUnusedAttachmentsEntireVaultCommandHandler),
       expect.any(MoveAttachmentToProperFolderCommandHandler),
+      expect.any(GoToAttachmentFolderCommandHandler),
+      expect.any(GoToOwningNoteCommandHandler),
       expect.any(OpenDemoVaultCommandHandler)
     ]);
     expect(AppSaveAttachmentPatchComponent).toHaveBeenCalledOnce();

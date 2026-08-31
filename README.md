@@ -49,6 +49,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Delete unused attachments** — move an attachment no note references any more to the trash, after a confirmation dialog. [08 Delete unused attachments](<./demo-vault/08 Delete unused attachments.md>)
 - **Keep it true over time** — attachments follow their note when it is renamed or moved, and can be deleted with it. An attachment another note still references is not deleted along with its note, and can be moved into that surviving note's folder instead of being left behind. [06 Settings](<./demo-vault/06 Settings.md>)
 - **Link display text** — give an inserted attachment link the attachment's own name as its text, which plugins that render captions can then use. [07 Link display text](<./demo-vault/07 Link display text.md>)
+- **Jump between a note and its attachments** — reveal the folder a note's attachments are saved into, and go from an attachment back to the note that owns it. [10 Navigation](<./demo-vault/10 Navigation.md>)
 
 ## Tokens
 
