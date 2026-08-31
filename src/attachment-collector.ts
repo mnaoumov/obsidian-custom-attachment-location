@@ -62,15 +62,10 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { NetworkImageDownloader } from './network-image-downloader.ts';
-import type { NoPriorityWinnerReason } from './note-priority.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
-import {
-  findNoPriorityWinnerReason,
-  findNotePriorityRank,
-  pickHighestPriorityNotePath
-} from './note-priority.ts';
+import { NoteOwnerResolver } from './note-owner-resolver.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 import { isReferencedByRawPath } from './raw-path-reference.ts';
 import { ActionContext } from './token-evaluator-context.ts';
@@ -153,6 +148,7 @@ export class AttachmentCollector {
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
   private readonly networkImageDownloader: NetworkImageDownloader;
+  private readonly noteOwnerResolver: NoteOwnerResolver;
   private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -168,6 +164,10 @@ export class AttachmentCollector {
     this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
+    this.noteOwnerResolver = new NoteOwnerResolver({
+      app: params.app,
+      pluginSettingsComponent: params.pluginSettingsComponent
+    });
   }
 
   public collectAttachmentsEntireVault(): void {
@@ -310,7 +310,7 @@ export class AttachmentCollector {
            * dispatch below never runs. Note this can move the attachment into a note OTHER than the
            * one being collected — that is the point of the setting, and why it is empty by default.
            */
-          const priorityWinnerNotePath = this.pickPriorityWinnerNotePath(backlinksSorted);
+          const priorityWinnerNotePath = this.noteOwnerResolver.pickOwnerNotePath(backlinksSorted);
           if (priorityWinnerNotePath) {
             const priorityResult = await this.prepareAttachmentToMoveForNote({
               attachmentMoveResult,
@@ -335,7 +335,7 @@ export class AttachmentCollector {
            * Only when the list named nobody. Reaching here WITH a winner means the move could not be
            * prepared, which is a different story and must not be reported as a priority failure.
            */
-          const noPriorityWinnerReason = priorityWinnerNotePath ? null : this.findNoPriorityWinnerReason(backlinksSorted);
+          const noPriorityWinnerReason = priorityWinnerNotePath ? null : this.noteOwnerResolver.findNoPriorityWinnerReason(backlinksSorted);
 
           async function shouldCollectWithMode(
             collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode
@@ -642,36 +642,6 @@ export class AttachmentCollector {
     });
   }
 
-  /**
-   * Explains why the priority list named no owner, so the modal can report the real reason instead of
-   * only listing the notes. Called only once {@link pickPriorityWinnerNotePath} has returned `null`.
-   */
-  private findNoPriorityWinnerReason(notePaths: readonly string[]): NoPriorityWinnerReason {
-    const entries = this.pluginSettingsComponent.settings.notePriorities;
-    return findNoPriorityWinnerReason({
-      entries,
-      notePaths,
-      rank: (notePath) => this.rankNote(entries, notePath)
-    });
-  }
-
-  /**
-   * Picks the note that owns an attachment several notes reference, or `null` when the priority list
-   * does not settle it — no entry matched, or the best rank is shared. Both are left to the
-   * multiple-notes mode, which is the setting that already exists for exactly this ambiguity.
-   */
-  private pickPriorityWinnerNotePath(notePaths: readonly string[]): null | string {
-    const entries = this.pluginSettingsComponent.settings.notePriorities;
-    if (entries.length === 0) {
-      return null;
-    }
-
-    return pickHighestPriorityNotePath({
-      notePaths,
-      rank: (notePath) => this.rankNote(entries, notePath)
-    });
-  }
-
   private async prepareAttachmentToMove(params: AttachmentCollectorPrepareAttachmentToMoveParams): Promise<AttachmentMoveResult | null> {
     const oldAttachmentFile = extractLinkFile({
       app: this.app,
@@ -752,15 +722,6 @@ export class AttachmentCollector {
       ...params.attachmentMoveResult,
       newAttachmentPath
     };
-  }
-
-  private rankNote(entries: readonly string[], notePath: string): number {
-    const noteFile = this.app.vault.getFileByPath(notePath);
-    return findNotePriorityRank({
-      entries,
-      frontmatter: noteFile ? this.app.metadataCache.getFileCache(noteFile)?.frontmatter ?? null : null,
-      notePath
-    });
   }
 
   private async rewriteMovedCanvasReferences(params: AttachmentCollectorRewriteMovedCanvasReferencesParams): Promise<void> {
