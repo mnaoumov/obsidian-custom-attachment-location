@@ -23,6 +23,19 @@ describe('defaultTranslations', () => {
 
   it('should expose the command labels', () => {
     expect(defaultTranslations.commands.moveAttachmentToProperFolder).toBe('Move attachment to proper folder');
+    expect(defaultTranslations.commands.goToAttachmentFolder).toBe('Go to attachment folder');
+    expect(defaultTranslations.commands.goToOwningNote).toBe('Go to owning note');
+  });
+
+  it('should expose the navigation menu items', () => {
+    expect(defaultTranslations.menuItems.goToAttachmentFolder).toBe('Go to attachment folder');
+    expect(defaultTranslations.menuItems.goToOwningNote).toBe('Go to owning note');
+  });
+
+  it('should explain every reason the owning note could not be named', () => {
+    expect(defaultTranslations.goToOwningNote.noPriorityWinnerReason.EmptyList).toContain('{{settingName}}');
+    expect(defaultTranslations.goToOwningNote.noPriorityWinnerReason.NoMatch).toContain('{{settingName}}');
+    expect(defaultTranslations.goToOwningNote.noPriorityWinnerReason.Tie).toContain('{{settingName}}');
   });
 
   it('should merge the obsidian-dev-utils translations', () => {

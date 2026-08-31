@@ -20,6 +20,8 @@ import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handl
 import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
 import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './command-handlers/delete-unused-attachments-entire-vault-command-handler.ts';
 import { DeleteUnusedAttachmentsInFileCommandHandler } from './command-handlers/delete-unused-attachments-in-file-command-handler.ts';
+import { GoToAttachmentFolderCommandHandler } from './command-handlers/go-to-attachment-folder-command-handler.ts';
+import { GoToOwningNoteCommandHandler } from './command-handlers/go-to-owning-note-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
@@ -28,6 +30,7 @@ import { ImageSizeMap } from './image-size-map.ts';
 import { createLinkUpdateProgressReporter } from './link-update-progress-reporter.ts';
 import { MarkdownUrlMap } from './markdown-url-map.ts';
 import { NetworkImageDownloader } from './network-image-downloader.ts';
+import { NoteOwnerResolver } from './note-owner-resolver.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -198,6 +201,11 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
+    const noteOwnerResolver = new NoteOwnerResolver({
+      app: this.app,
+      pluginSettingsComponent
+    });
+
     await this.commandHandlerComponent.registerCommandHandlers(() => [
       new CollectAttachmentsInFileCommandHandler({
         attachmentCollector
@@ -221,6 +229,18 @@ export class Plugin extends PluginBase {
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent,
         resourceLockComponent: this.resourceLockComponent
+      }),
+      new GoToAttachmentFolderCommandHandler({
+        app: this.app,
+        attachmentPathManager,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        pluginSettingsComponent
+      }),
+      new GoToOwningNoteCommandHandler({
+        app: this.app,
+        noteOwnerResolver,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        pluginSettingsComponent
       }),
       new OpenDemoVaultCommandHandler({
         app: this.app,

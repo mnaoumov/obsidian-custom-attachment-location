@@ -17,6 +17,7 @@ export const defaultTranslations = {
   buttons: {
     copy: 'Copy',
     copyAll: 'Copy all',
+    create: 'Create',
     move: 'Move',
     previewAttachmentFile: 'Preview attachment file',
     select: 'Select',
@@ -41,6 +42,8 @@ export const defaultTranslations = {
     collectAttachmentsEntireVault: 'Collect attachments in entire vault',
     deleteUnusedAttachmentsCurrentNote: 'Delete unused attachments in current note',
     deleteUnusedAttachmentsEntireVault: 'Delete unused attachments in entire vault',
+    goToAttachmentFolder: 'Go to attachment folder',
+    goToOwningNote: 'Go to owning note',
     moveAttachmentToProperFolder: 'Move attachment to proper folder'
   },
   deleteUnusedAttachments: {
@@ -55,11 +58,27 @@ export const defaultTranslations = {
       title: 'Scanning for unused attachments...'
     }
   },
+  goToAttachmentFolder: {
+    doesNotExist: {
+      part1: 'The attachment folder',
+      part2: 'does not exist yet.'
+    }
+  },
+  goToOwningNote: {
+    noPriorityWinnerReason: {
+      EmptyList: 'The {{settingName}} setting is empty, so nothing decides which of them owns it.',
+      NoMatch: 'None of them matches any entry in the {{settingName}} setting.',
+      Tie: 'Several of them match the {{settingName}} setting equally well, so it names no single owner.'
+    },
+    selectPlaceholder: 'Which note owns \'{{attachmentPath}}\'?'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Collect attachments in file',
     collectAttachmentsInFiles: 'Collect attachments in files',
     deleteUnusedAttachmentsInFile: 'Delete unused attachments in file',
-    deleteUnusedAttachmentsInFiles: 'Delete unused attachments in files'
+    deleteUnusedAttachmentsInFiles: 'Delete unused attachments in files',
+    goToAttachmentFolder: 'Go to attachment folder',
+    goToOwningNote: 'Go to owning note'
   },
   moveAttachmentToProperFolder: {
     progressBar: {
@@ -78,15 +97,18 @@ export const defaultTranslations = {
     shouldUseSameActionForOtherProblematicAttachmentsToggle: 'Should use the same action for other problematic attachments'
   },
   notice: {
+    attachmentFolderDependsOnAttachment: 'The attachment folder for \'{{notePath}}\' depends on the attachment being saved, so there is no single folder to navigate to.',
     attachmentReferencedByRawPath: 'Skipping collecting attachment \'{{attachmentPath}}\' because it is referenced by a raw path in \'{{noteFilePath}}\'.',
     attachmentUnitFolderUsedByMultipleNotes: 'Skipping collecting attachment \'{{attachmentPath}}\' because its attachment unit folder \'{{unitFolderPath}}\' is referenced by multiple notes.',
     collectingAttachments: 'Collecting attachments for \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Collecting attachments cancelled. See console for details.',
     couldNotResolveTemplatePath: 'Could not resolve template path \'{{template}}\'. See console for details.',
+    fileExplorerDisabled: 'Cannot reveal \'{{path}}\' because the File explorer core plugin is disabled.',
     generatedAttachmentFileNameIsInvalid: {
       part1: 'Generated attachment file name \'{{path}}\' is invalid.\n{{validationMessage}}\nCheck your',
       part2: 'setting.'
     },
+    noOwningNote: 'No note references the attachment \'{{attachmentPath}}\'.',
     notePathIsIgnored: 'Note path is ignored',
     noUnusedAttachments: 'No unused attachments found.',
     updatingLinks: 'Updating links: {{processed}}/{{total}} - \'{{currentPath}}\''
