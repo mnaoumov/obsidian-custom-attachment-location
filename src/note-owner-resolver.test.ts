@@ -147,6 +147,20 @@ describe('NoteOwnerResolver', () => {
       expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(2);
     });
 
+    it('should answer the unit-folder probe from the settings', async () => {
+      // `findAttachmentUnitFolderPath` is mocked, so the predicate it is handed is never called by the
+      // real implementation. Drive it directly - it is the only thing that binds the probe to settings.
+      mockFindAttachmentUnitFolderPath.mockReturnValue(null);
+      await resolver.findCandidateNotePaths(createFile('page_files/style.css'));
+
+      const probeParams = mockFindAttachmentUnitFolderPath.mock.calls[0]?.[0];
+      expect(probeParams?.attachmentPath).toBe('page_files/style.css');
+
+      settings.isAttachmentUnitFolder.mockReturnValue(true);
+      expect(probeParams?.checkIsAttachmentUnitFolder('page_files')).toBe(true);
+      expect(settings.isAttachmentUnitFolder).toHaveBeenCalledExactlyOnceWith('page_files');
+    });
+
     it('should ignore a unit folder that does not exist', async () => {
       mockFindAttachmentUnitFolderPath.mockReturnValue('page_files');
       getFolderByPath.mockReturnValue(null);

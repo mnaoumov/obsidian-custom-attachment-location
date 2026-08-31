@@ -211,6 +211,18 @@ describe('GoToAttachmentFolderCommandHandler', () => {
         expect(mockCreateFolderSafe).toHaveBeenCalledExactlyOnceWith(app, ATTACHMENT_FOLDER_PATH);
         expect(hide).toHaveBeenCalledOnce();
       });
+
+      it('should reveal nothing when the folder is still absent after creating it', async () => {
+        // createFolderSafe can leave nothing behind - the path may be occupied by a file, or the
+        // create may have been rejected - so the lookup after it is allowed to come back null.
+        getFolderByPath.mockReturnValue(null);
+        fragment.querySelector('button')?.click();
+        await vi.waitFor(() => {
+          expect(mockCreateFolderSafe).toHaveBeenCalledExactlyOnceWith(app, ATTACHMENT_FOLDER_PATH);
+        });
+        expect(revealInFolder).not.toHaveBeenCalled();
+        expect(hide).toHaveBeenCalledOnce();
+      });
     });
   });
 });
