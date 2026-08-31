@@ -1,7 +1,0 @@
-{
-  "name": "brace-expansion",
-  "version": "1.1.17",
-  "description": "Callable CommonJS wrapper around the patched brace-expansion 5.x, for legacy minimatch 3.x consumers. Resolves the implementation through the repo's `brace-expansion-upstream` alias; npm does not install dependencies declared by a `file:` override target, so it is not listed here.",
-  "license": "MIT",
-  "main": "index.js"
-}
