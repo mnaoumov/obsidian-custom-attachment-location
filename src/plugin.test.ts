@@ -1,7 +1,7 @@
 import type {
   App as AppOriginal,
-  Plugin as PluginOriginal,
   PluginManifest,
+  Plugin as PluginOriginal,
   TFile
 } from 'obsidian';
 import type { DisposableEx } from 'obsidian-dev-utils/disposable';
