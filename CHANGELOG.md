@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 11.11.0
+
+- style: satisfy capitalized-comments in the new tests
+- test(navigation): cover the three gaps blocking the coverage gate
+- style: exempt an aliased import from perfectionist sorting
+- style: reformat after the dprint bump
+- chore(deps): sweep caret-ranged dependencies to latest
+- fix(deps): move to obsidian-integration-testing 11 and obsidian-dev-utils 96.5.2
+- fix(deps): drop the brace-expansion file: override that breaks a clean install
+- feat(navigation): add commands to jump between a note and its attachments
+- test(plugin): cover the Notebook Navigator layout-ready path
+
 ## 11.10.0
 
 - style(test): fix comment indentation in the attachment-rescue suite
