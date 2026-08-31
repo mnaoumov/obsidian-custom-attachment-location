@@ -11,7 +11,7 @@ import {
   hasWikilinkSyntax,
   LinkStyle
 } from 'obsidian-dev-utils/obsidian/link';
-import { encodeUrl } from 'obsidian-dev-utils/obsidian/parse-link';
+import { encodeUrl } from 'obsidian-dev-utils/url';
 
 import type { ImageSizeMap } from '../image-size-map.ts';
 import type { MarkdownUrlMap } from '../markdown-url-map.ts';
