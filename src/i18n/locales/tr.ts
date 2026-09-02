@@ -100,20 +100,6 @@ export const tr = {
     defaultImageSizeDimension: {
       height: 'Yükseklik',
       width: 'Genişlik'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'Boş eki klasörünü silecek.',
-        displayText: 'Sil'
-      },
-      deleteWithEmptyParents: {
-        description: 'Boş eki klasörü ve boş üst klasörlerini silecek.',
-        displayText: 'Boş ebeveynlerle sil'
-      },
-      keep: {
-        description: 'Boş eki klasörünü koruyacak.',
-        displayText: 'Koru'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const tr = {
       },
       name: 'Yinelenen ad ayırıcı'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Ek klasörü boş olduğunda:'
-      },
-      name: 'Boş ek klasörü davranışı'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Aşağıdaki yollardaki notları hariç tut.',
-        part2: 'Her yolu yeni satıra yazın.',
-        part3: 'Yol dizisi veya',
-        part4: 'Eğer ayar boşsa, hiç bir not hariç tutulmaz.'
-      },
-      name: 'Hariç tutulan yollar'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Aşağıdaki yollardan ekler hariç tutulur,',
@@ -233,15 +204,6 @@ export const tr = {
         part2: 'tokenlara bakınız'
       },
       name: 'Oluşturulan ek dosya adı'
-    },
-    includePaths: {
-      description: {
-        part1: 'Aşağıdaki yollardan notlar dahil edilir.',
-        part2: 'Her yolu yeni satıra yazın.',
-        part3: 'Yol dizisi veya',
-        part4: 'Eğer ayar boşsa, tüm notlar dahil edilir.'
-      },
-      name: 'Dahil edilen yollar'
     },
     jpegQuality: {
       description: 'Kalite ne kadar düşükse, sıkıştırma oranı o kadar yüksek olur.',
@@ -284,21 +246,6 @@ export const tr = {
       description: 'Yapıştırılan görüntülerin JPEG\'e dönüştürülüp dönüştürülmeyeceği. Sadece PNG içeriği direkt olarak pano’dan yapıştırıldığında geçerlidir. Genellikle ekran görüntüleri için.',
       name: 'Yapıştırılan görüntüleri JPEG\'e dönüştür'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Etkinleştirilirse, not silindiğinde yetim ekler de silinir.',
-      name: 'Yetim ekleri sil'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Etkinleştirilirse, bir not yeniden adlandırıldığında veya taşındığında ekleri',
-        part2: 'ayarına göre yeniden adlandırılacaktır.'
-      },
-      name: 'Ek dosyalarını yeniden adlandır'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Bir not yeniden adlandırıldığında veya taşındığında ek klasörleri yeniden adlandırılsın mı?',
-      name: 'Ek klasörlerini yeniden adlandır'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Ek klasörü ve dosya adı ayarlarının, BAŞKA eklentilerin oluşturduğu eklere de uygulanıp uygulanmayacağı.',
@@ -337,17 +284,6 @@ export const tr = {
         part3: 'ayarlanırsa, zaman aşımı devre dışı bırakılır.'
       },
       name: 'Zaman aşımı (saniye)'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Bu uzantılara sahip dosyalar ek olarak kabul edilir.',
-        part2: 'Varsayılan olarak',
-        part3: 've',
-        part4: 'bağlı dosyalar ek olarak kabul edilmez ve not ile taşınmaz.',
-        part5: 'Özel uzantılar ekleyebilirsiniz, örn.',
-        part6: ', bu davranışı değiştirmek için.'
-      },
-      name: 'Ek uzantıları olarak işle'
     }
   },
   promptWithPreviewModal: {

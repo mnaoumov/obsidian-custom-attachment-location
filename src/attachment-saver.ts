@@ -15,6 +15,7 @@ import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { ArrayBufferMap } from './array-buffer-map.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { ImageManager } from './image-manager.ts';
 import type { ImageSizeMap } from './image-size-map.ts';
 import type { MarkdownUrlMap } from './markdown-url-map.ts';
@@ -32,6 +33,7 @@ interface AttachmentSaverConstructorParams {
   readonly app: App;
   readonly arrayBufferMap: ArrayBufferMap;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly imageManager: ImageManager;
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
@@ -61,6 +63,7 @@ export class AttachmentSaver {
   private readonly arrayBufferMap: ArrayBufferMap;
   private readonly attachmentPathManager: AttachmentPathManager;
 
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly imageManager: ImageManager;
   private readonly imageSizeMap: ImageSizeMap;
   private readonly markdownUrlMap: MarkdownUrlMap;
@@ -71,6 +74,7 @@ export class AttachmentSaver {
     this.app = params.app;
     this.arrayBufferMap = params.arrayBufferMap;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.imageManager = params.imageManager;
     this.imageSizeMap = params.imageSizeMap;
     this.markdownUrlMap = params.markdownUrlMap;
@@ -84,7 +88,7 @@ export class AttachmentSaver {
     let attachmentFileExtension = params.attachmentFileExtension;
 
     const activeNoteFile = this.app.workspace.getActiveFile();
-    if (!activeNoteFile || this.pluginSettingsComponent.settings.isPathIgnored(activeNoteFile.path)) {
+    if (!activeNoteFile || this.handedOverSettingsComponent.isPathIgnored(activeNoteFile.path)) {
       return await this.saveAttachmentCore({
         attachmentFileBaseName,
         attachmentFileContent,

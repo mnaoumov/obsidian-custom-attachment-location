@@ -100,20 +100,6 @@ export const am = {
     defaultImageSizeDimension: {
       height: 'እርዝመት',
       width: 'ስፋት'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'ባዶውን ተያያዥ ፎልደር ይሰርዛል።',
-        displayText: 'መሰረዝ'
-      },
-      deleteWithEmptyParents: {
-        description: 'ባዶውን ተያያዥ ፎልደር እና ባዶዎቹን የወላጅ ፎልደሮች ይሰርዛል።',
-        displayText: 'ባዶ ወላጆች ጋር መሰረዝ'
-      },
-      keep: {
-        description: 'ባዶውን ተያያዥ ፎልደር ይጠብቃል።',
-        displayText: 'መጠበቅ'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const am = {
       },
       name: 'የተደጋጋሚ ስም መለያያ'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'ተያያዥ ፎልደር ባዶ ሲሆን:'
-      },
-      name: 'ባዶ ተያያዥ ፎልደር አሰራር'
-    },
-    excludePaths: {
-      description: {
-        part1: 'ከሚከተሉት መንገዶች ማስታወሻዎችን አስወግድ።',
-        part2: 'እያንዳንዱን መንገድ በአዲስ መስመር ያስገቡ።',
-        part3: 'የመንገድ ሕብረቁምፊ ወይም',
-        part4: 'ቅንብሩ ባዶ ከሆነ፣ ምንም ማስታወሻ አይገለልም።'
-      },
-      name: 'መንገዶችን ማስወገድ'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'ከሚከተሉት መንገዶች ተያያዦችን አስወግድ የሚሆነው',
@@ -234,15 +205,6 @@ export const am = {
         part2: 'ቶከኖችን ይመልከቱ'
       },
       name: 'የተፈጠረ ተያያዥ ፋይል ስም'
-    },
-    includePaths: {
-      description: {
-        part1: 'ከሚከተሉት መንገዶች ማስታወሻዎችን ያካተቱ።',
-        part2: 'እያንዳንዱን መንገድ በአዲስ መስመር ያስገቡ።',
-        part3: 'የመንገድ ሕብረቁምፊ ወይም',
-        part4: 'ቅንብሩ ባዶ ከሆነ፣ ሁሉም ማስታወሻዎች ይካተታሉ።'
-      },
-      name: 'መንገዶችን ማካተት'
     },
     jpegQuality: {
       description: 'ጥራቱ ያነሰ፣ የመጨመቂያ ጥምርታ ይበልጣል።',
@@ -286,21 +248,6 @@ export const am = {
       description: 'የተጣበቁ ምስሎችን ወደ JPEG መቀየር አለበት እንደሆነ። የ PNG ምስል ይዘት ከክሊፕቦርድ በቀጥታ ሲጣበቅ ብቻ ይተገበራል። በተለምዶ፣ ስክሪንሾችን ለመጣበቅ።',
       name: 'የተጣበቁ ምስሎችን ወደ JPEG መቀየር አለበት'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'ከተንቃ፣ ማስታወሻ ሲሰረዝ፣ የራሱ የሆኑ ተያያዦችም ይሰረዛሉ።',
-      name: 'የራሱ የሆኑ ተያያዦችን መሰረዝ አለበት'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'ከተንቃ፣ ማስታወሻ ሲሰየም ወይም ሲወሰድ፣ ተያያዦቹ በ',
-        part2: 'ቅንብር መሰረት ይሰየማሉ።'
-      },
-      name: 'ተያያዥ ፋይሎችን መሰየም አለበት'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'ማስታወሻ ሲሰየም ወይም ሲወሰድ፣ ተያያዥ ፎልደሮችን መሰየም አለበት።',
-      name: 'ተያያዥ ፎልደሮችን መሰየም አለበት'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'የተያያዥ አቃፊ እና የፋይል ስም ቅንብሮች ሌሎች ተሰኪዎች በሚፈጥሯቸው ተያያዥ ፋይሎች ላይ ይተግበሩ እንደሆነ።',
@@ -339,17 +286,6 @@ export const am = {
         part3: 'ተዋቀረ፣ የስራዎች አፈጻጸም ጊዜ ይሰረዛል።'
       },
       name: 'በሰከንድ የሚቆይ ጊዜ'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'ከነዚህ ማስፋፊያዎች ጋር ያሉ ፋይሎችን እንደ ተያያዦች አስቡ።',
-        part2: 'በመሰረቱ',
-        part3: 'እና',
-        part4: 'የተገናኙ ፋይሎች እንደ ተያያዦች አይቆጠሩም እና ከማስታወሻ ጋር አይወሰዱም።',
-        part5: 'የተለመዱ ማስፋፊያዎች ማከል ይችላሉ፣ ለምሳሌ',
-        part6: '፣ ይህንን አሰራር ለማስወገድ።'
-      },
-      name: 'እንደ ተያያዥ ማስፋፊያዎች አስቡ'
     }
   },
   promptWithPreviewModal: {

@@ -20,6 +20,7 @@ import { castTo } from 'obsidian-dev-utils/object-utils';
 import { CommandHandlerComponent } from 'obsidian-dev-utils/obsidian/command-handlers/command-handler-component';
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
+import { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { NOTEBOOK_NAVIGATOR_PLUGIN_ID } from 'obsidian-dev-utils/obsidian/notebook-navigator';
 import { App } from 'obsidian-test-mocks/obsidian';
@@ -35,7 +36,6 @@ import {
 import { ArrayBufferMap } from './array-buffer-map.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
 import { AttachmentPathManager } from './attachment-path-manager.ts';
-import { AttachmentRescuer } from './attachment-rescue.ts';
 import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
@@ -46,12 +46,14 @@ import { GoToAttachmentFolderCommandHandler } from './command-handlers/go-to-att
 import { GoToOwningNoteCommandHandler } from './command-handlers/go-to-owning-note-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
+import { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import { ImageManager } from './image-manager.ts';
 import { ImageSizeMap } from './image-size-map.ts';
 import { MarkdownUrlMap } from './markdown-url-map.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
+import { RenameDeleteHandlerMigrationComponent } from './rename-delete-handler-migration-component.ts';
 import { TokenValidator } from './token-validator.ts';
 import { TokenizedStringLanguageComponent } from './tokenized-string-language-component.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
@@ -59,16 +61,10 @@ import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 // --- Hoisted shared state ---
 
 const hoisted = vi.hoisted(() => ({
-  getRescuePath: vi.fn((_params: unknown): Promise<null | string> => Promise.resolve('assets/note-b/shared.png')),
   isNoteEx: vi.fn((_path: string): boolean => true),
-  isPathIgnored: vi.fn((_path: string): boolean => false),
   settings: {
-    emptyFolderBehavior: 'Keep',
-    isPathIgnored: (path: string): boolean => hoisted.isPathIgnored(path),
-    shouldDeleteOrphanAttachments: true,
-    shouldHandleRenames: true,
-    shouldRenameAttachmentFiles: false,
-    shouldRenameAttachmentFolder: false
+    isAdvancedRenameAndDeleteHandlerSuggestionDeclined: false,
+    proposedRenameDeleteSettings: null
   }
 }));
 
@@ -99,6 +95,31 @@ vi.mock('obsidian-dev-utils/obsidian/components/rename-delete-handler-component'
 // `pluginEventSource.on`, so a bare `vi.fn()` double makes the base throw before `onloadImpl` runs (G49).
 // --- The plugin's OWN sibling modules: collaborators added as children return a real Component; the rest are bare constructor spies. ---
 
+vi.mock('obsidian-dev-utils/obsidian/components/plugin-suggestion-component', async (importOriginal) => {
+  const original = await importOriginal<typeof import('obsidian-dev-utils/obsidian/components/plugin-suggestion-component')>();
+  return {
+    ...original,
+    // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
+    PluginSuggestionComponent: vi.fn(function pluginSuggestionComponentStub() {
+      return new Component();
+    })
+  };
+});
+
+vi.mock('./handed-over-settings-component.ts', () => ({
+  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
+  HandedOverSettingsComponent: vi.fn(function handedOverSettingsComponentStub() {
+    return new Component();
+  })
+}));
+
+vi.mock('./rename-delete-handler-migration-component.ts', () => ({
+  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
+  RenameDeleteHandlerMigrationComponent: vi.fn(function renameDeleteHandlerMigrationComponentStub() {
+    return new Component();
+  })
+}));
+
 vi.mock('./array-buffer-map.ts', () => ({
   ArrayBufferMap: vi.fn()
 }));
@@ -109,15 +130,6 @@ vi.mock('./attachment-collector.ts', () => ({
 
 vi.mock('./attachment-path-manager.ts', () => ({
   AttachmentPathManager: vi.fn()
-}));
-
-vi.mock('./attachment-rescue.ts', () => ({
-  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works.
-  AttachmentRescuer: vi.fn(function attachmentRescuerStub() {
-    return {
-      getRescuePath: (params: unknown): Promise<null | string> => hoisted.getRescuePath(params)
-    };
-  })
 }));
 
 vi.mock('./attachment-saver.ts', () => ({
@@ -223,18 +235,6 @@ interface CustomAttachmentLocationParamsProbe {
   pluginDirectory: string;
 }
 
-interface RenameDeleteHandlerParamsProbe {
-  settingsBuilder(): SettingsBuilderProbe;
-}
-
-interface SettingsBuilderProbe {
-  emptyFolderBehavior: string;
-  getRescuePath(params: unknown): Promise<null | string>;
-  isNote(path: string): boolean;
-  isPathIgnored(path: string): boolean;
-  shouldUpdateFileNameAliases: boolean;
-}
-
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
 const manifest = castTo<PluginManifest>({
@@ -254,7 +254,6 @@ let getPluginMock: Mock<(pluginId: string) => null | PluginOriginal>;
 beforeEach(() => {
   vi.clearAllMocks();
   hoisted.isNoteEx.mockReturnValue(true);
-  hoisted.isPathIgnored.mockReturnValue(false);
   const appMock = App.createConfigured__();
   appMock.workspace.onLayoutReady = vi.fn((callback: () => void) => {
     callback();
@@ -275,15 +274,6 @@ beforeEach(() => {
   castTo<AppGlobal>(window).app = app;
 });
 
-function getSettingsBuilder(): () => SettingsBuilderProbe {
-  const call = vi.mocked(RenameDeleteHandlerComponent).mock.calls[0];
-  if (!call) {
-    throw new Error('RenameDeleteHandlerComponent was not constructed.');
-  }
-  const params = castTo<RenameDeleteHandlerParamsProbe>(call[0]);
-  return params.settingsBuilder.bind(params);
-}
-
 function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknown): void {
   const proxyWithTarget = castTo<Partial<Record<symbol, object>>>(strictProxiedObject);
   const rawTarget = proxyWithTarget[STRICT_PROXY_TARGET_SYMBOL] ?? strictProxiedObject;
@@ -299,7 +289,6 @@ describe('Plugin', () => {
     expect(PluginSettingsComponent).toHaveBeenCalledOnce();
     expect(TokenValidator).toHaveBeenCalledOnce();
     expect(AttachmentPathManager).toHaveBeenCalledOnce();
-    expect(AttachmentRescuer).toHaveBeenCalledOnce();
     expect(ArrayBufferMap).toHaveBeenCalledOnce();
     expect(ImageSizeMap).toHaveBeenCalledOnce();
     expect(MarkdownUrlMap).toHaveBeenCalledOnce();
@@ -308,7 +297,12 @@ describe('Plugin', () => {
     expect(CustomAttachmentLocationComponent).toHaveBeenCalledOnce();
     expect(PluginSettingsTabComponent).toHaveBeenCalledOnce();
     expect(PluginSettingsTab).toHaveBeenCalledOnce();
-    expect(RenameDeleteHandlerComponent).toHaveBeenCalledOnce();
+    // The whole point of 12.0.0: rename/delete belongs to Advanced Rename and Delete Handler, and two
+    // Handlers acting on one rename corrupt links. This plugin must register NONE.
+    expect(RenameDeleteHandlerComponent).not.toHaveBeenCalled();
+    expect(HandedOverSettingsComponent).toHaveBeenCalledOnce();
+    expect(PluginSuggestionComponent).toHaveBeenCalledOnce();
+    expect(RenameDeleteHandlerMigrationComponent).toHaveBeenCalledOnce();
     expect(AttachmentCollector).toHaveBeenCalledOnce();
     expect(UnusedAttachmentsRemover).toHaveBeenCalledOnce();
     // The base separately auto-registers its own handler (e.g. UnlockActiveNoteCommandHandler), so assert the plugin's own registration by its handlers rather than the total call count.
@@ -375,48 +369,6 @@ describe('Plugin', () => {
     expect(CollectAttachmentsInCurrentFolderCommandHandler).toHaveBeenCalledOnce();
     expect(CollectAttachmentsEntireVaultCommandHandler).toHaveBeenCalledOnce();
     expect(MoveAttachmentToProperFolderCommandHandler).toHaveBeenCalledOnce();
-  });
-
-  it('should build rename/delete settings reflecting the plugin settings component', async () => {
-    const plugin = new Plugin(app, manifest);
-    await plugin.onload();
-
-    const settings = getSettingsBuilder()();
-    expect(settings.emptyFolderBehavior).toBe('Keep');
-    expect(settings.shouldUpdateFileNameAliases).toBe(true);
-  });
-
-  it('should delegate isNote in the settings builder to the plugin settings component', async () => {
-    const plugin = new Plugin(app, manifest);
-    await plugin.onload();
-    hoisted.isNoteEx.mockReturnValue(false);
-
-    const settings = getSettingsBuilder()();
-    expect(settings.isNote('note.md')).toBe(false);
-    expect(hoisted.isNoteEx).toHaveBeenCalledWith('note.md');
-  });
-
-  it('should delegate getRescuePath in the settings builder to the attachment rescuer', async () => {
-    const plugin = new Plugin(app, manifest);
-    await plugin.onload();
-
-    const rescueParams = {
-      attachmentPath: 'assets/note-a/shared.png',
-      survivingNotePaths: ['note-b.md']
-    };
-    const settings = getSettingsBuilder()();
-    await expect(settings.getRescuePath(rescueParams)).resolves.toBe('assets/note-b/shared.png');
-    expect(hoisted.getRescuePath).toHaveBeenCalledWith(rescueParams);
-  });
-
-  it('should delegate isPathIgnored in the settings builder to the plugin settings', async () => {
-    const plugin = new Plugin(app, manifest);
-    await plugin.onload();
-    hoisted.isPathIgnored.mockReturnValue(true);
-
-    const settings = getSettingsBuilder()();
-    expect(settings.isPathIgnored('ignored.md')).toBe(true);
-    expect(hoisted.isPathIgnored).toHaveBeenCalledWith('ignored.md');
   });
 
   // Notebook Navigator draws its own file tree, so it never raises Obsidian's `file-menu` / `files-menu` events.

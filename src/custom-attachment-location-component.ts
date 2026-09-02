@@ -22,6 +22,7 @@ import { compare } from 'semver';
 
 import type { ArrayBufferMap } from './array-buffer-map.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { ImageSizeMap } from './image-size-map.ts';
 import type { MarkdownUrlMap } from './markdown-url-map.ts';
 
@@ -44,6 +45,7 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly app: App;
   readonly arrayBufferMap: ArrayBufferMap;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
   readonly pluginDirectory: string;
@@ -63,6 +65,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
 
   private readonly attachmentPathManager: AttachmentPathManager;
 
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly imageSizeMap: ImageSizeMap;
 
   private isMarkdownViewPatched = false;
@@ -78,6 +81,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   public constructor(params: CustomAttachmentLocationComponentConstructorParams) {
     super(params.app);
     this.arrayBufferMap = params.arrayBufferMap;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.pluginVersion = params.pluginVersion;
     this.pluginDirectory = params.pluginDirectory;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -118,6 +122,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       new ExternallyCreatedAttachmentHandlerComponent({
         app: this.app,
         attachmentPathManager: this.attachmentPathManager,
+        handedOverSettingsComponent: this.handedOverSettingsComponent,
         pluginSettingsComponent: this.pluginSettingsComponent,
         tokenValidator: this.tokenValidator
       })
@@ -210,7 +215,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   }
 
   private async handleFileOpen(file: null | TFile): Promise<void> {
-    if (file === null || this.pluginSettingsComponent.settings.isPathIgnored(file.path)) {
+    if (file === null || this.handedOverSettingsComponent.isPathIgnored(file.path)) {
       this._currentAttachmentFolderPath = null;
       this.lastOpenFilePath = null;
       return;

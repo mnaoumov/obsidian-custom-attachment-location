@@ -25,6 +25,7 @@ import {
 } from 'vitest';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 import type { TokenValidator } from './token-validator.ts';
@@ -93,7 +94,6 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
 
   function createSettings(overrides?: SettingsOverrides): PluginSettings {
     const partial: StrictProxyPartial<PluginSettings> = {
-      isPathIgnored: overrides?.isPathIgnored ?? ((): boolean => false),
       shouldRenameAttachmentsCreatedByOtherPlugins: overrides?.shouldRenameAttachmentsCreatedByOtherPlugins ?? true
     };
     return strictProxy<PluginSettings>(partial);
@@ -123,6 +123,9 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
     component = new ExternallyCreatedAttachmentHandlerComponent({
       app: getApp(),
       attachmentPathManager,
+      handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
+        isPathIgnored: overrides?.settings?.isPathIgnored ?? ((): boolean => false)
+      }),
       pluginSettingsComponent,
       tokenValidator: strictProxy<TokenValidator>({})
     });

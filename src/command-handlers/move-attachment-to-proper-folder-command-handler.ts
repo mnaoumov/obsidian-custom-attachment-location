@@ -28,6 +28,7 @@ import { deleteIfNotUsed } from 'obsidian-dev-utils/obsidian/vault-delete';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from '../attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from '../handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
 import { selectMode } from '../modals/move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
@@ -38,6 +39,7 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly resourceLockComponent: null | ResourceLockComponent;
@@ -51,6 +53,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly resourceLockComponent: null | ResourceLockComponent;
@@ -65,6 +68,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.resourceLockComponent = params.resourceLockComponent;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -119,7 +123,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (attachmentFile) => {
         combinedAbortSignal.throwIfAborted();
-        if (this.pluginSettingsComponent.settings.isPathIgnored(attachmentFile.path)) {
+        if (this.handedOverSettingsComponent.isPathIgnored(attachmentFile.path)) {
           console.warn(`Cannot move attachment to proper folder as attachment path is ignored: ${attachmentFile.path}.`);
           return;
         }

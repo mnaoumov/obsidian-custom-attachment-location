@@ -1,5 +1,4 @@
 import { INFINITE_TIMEOUT } from 'obsidian-dev-utils/abort-controller';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
   describe,
   expect,
@@ -23,27 +22,20 @@ describe('PluginSettings', () => {
       expect(settings.collectAttachmentUsedByMultipleNotesMode).toBe(CollectAttachmentUsedByMultipleNotesMode.Skip);
       expect(settings.convertImagesToJpegMode).toBe(ConvertImagesToJpegMode.None);
       expect(settings.defaultImageSizeDimension).toBe(DefaultImageSizeDimension.Width);
-      expect(settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.DeleteWithEmptyParents);
       expect(settings.moveAttachmentToProperFolderUsedByMultipleNotesMode).toBe(MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll);
       expect(settings.duplicateNameSeparator).toBe(' ');
       expect(settings.jpegQuality).toBe(0.8);
-      expect(settings.shouldHandleRenames).toBe(true);
-      expect(settings.shouldRenameAttachmentFolder).toBe(true);
-      expect(settings.shouldRenameAttachmentFiles).toBe(false);
-      expect(settings.shouldRescueSharedAttachments).toBe(false);
       expect(settings.shouldSetLinkDisplayTextToAttachmentFileName).toBe(false);
       expect(settings.shouldSkipCollectingAttachmentsReferencedByRawPath).toBe(false);
       expect(settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/`);
       expect(settings.specialCharactersReplacement).toBe('-');
+      expect(settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined).toBe(false);
+      expect(settings.proposedRenameDeleteSettings).toBeNull();
       expect(settings.timeoutInSeconds).toBe(5);
-      expect(settings.treatAsAttachmentExtensions).toStrictEqual(['.excalidraw.md']);
       expect(settings.customTokensStr).toBe('');
-      expect(settings.includePaths).toStrictEqual([]);
-      expect(settings.excludePaths).toStrictEqual([]);
       expect(settings.excludePathsFromAttachmentCollecting).toStrictEqual([]);
       expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual([]);
       expect(settings.attachmentUnitFolderPaths).toStrictEqual([]);
-      expect(settings.notePriorities).toStrictEqual([]);
     });
   });
 
@@ -54,24 +46,6 @@ describe('PluginSettings', () => {
       // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       settings.customTokensStr = 'foo';
       expect(settings.customTokensStr).toBe('foo');
-    });
-  });
-
-  describe('includePaths', () => {
-    it('should get and set the include paths', () => {
-      const settings = new PluginSettings();
-      expect(settings.includePaths).toStrictEqual([]);
-      settings.includePaths = ['x'];
-      expect(settings.includePaths).toStrictEqual(['x']);
-    });
-  });
-
-  describe('excludePaths', () => {
-    it('should get and set the exclude paths', () => {
-      const settings = new PluginSettings();
-      expect(settings.excludePaths).toStrictEqual([]);
-      settings.excludePaths = ['a', 'b'];
-      expect(settings.excludePaths).toStrictEqual(['a', 'b']);
     });
   });
 
@@ -155,15 +129,6 @@ describe('PluginSettings', () => {
       const settings = new PluginSettings();
       settings.networkImageDownloadTimeoutInSeconds = 7;
       expect(settings.getNetworkImageDownloadTimeoutInMilliseconds()).toBe(7000);
-    });
-  });
-
-  describe('isPathIgnored', () => {
-    it('should ignore paths matching the exclude paths', () => {
-      const settings = new PluginSettings();
-      settings.excludePaths = ['ignored'];
-      expect(settings.isPathIgnored('ignored/note.md')).toBe(true);
-      expect(settings.isPathIgnored('kept/note.md')).toBe(false);
     });
   });
 

@@ -100,20 +100,6 @@ export const zh = {
     defaultImageSizeDimension: {
       height: '高度',
       width: '宽度'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: '将删除空的附件文件夹。',
-        displayText: '删除'
-      },
-      deleteWithEmptyParents: {
-        description: '将删除空的附件文件夹及其空的父文件夹。',
-        displayText: '删除并删除空父文件夹'
-      },
-      keep: {
-        description: '将保留空的附件文件夹。',
-        displayText: '保留'
-      }
     }
   },
   pluginSettingsManager: {
@@ -205,21 +191,6 @@ export const zh = {
       },
       name: '重复文件名分隔符'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: '当附件文件夹变为空时：'
-      },
-      name: '空附件文件夹处理'
-    },
-    excludePaths: {
-      description: {
-        part1: '排除以下路径中的笔记。',
-        part2: '每行输入一个路径。',
-        part3: '你可以使用路径字符串或',
-        part4: '如果设置为空，则不排除任何笔记。'
-      },
-      name: '排除路径'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: '当执行',
@@ -237,15 +208,6 @@ export const zh = {
         part2: '令牌'
       },
       name: '生成的附件文件名'
-    },
-    includePaths: {
-      description: {
-        part1: '包含以下路径中的笔记。',
-        part2: '每行输入一个路径。',
-        part3: '你可以使用路径字符串或',
-        part4: '如果设置为空，则包含所有笔记。'
-      },
-      name: '包含路径'
     },
     jpegQuality: {
       description: '质量越低，压缩率越高。',
@@ -292,21 +254,6 @@ export const zh = {
       description: '是否将粘贴的图片转换为 JPEG。仅当 PNG 图像内容直接从剪贴板粘贴时适用。通常用于粘贴屏幕截图。',
       name: '是否将粘贴的图片转换为 JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: '如果启用，当笔记被删除时，其孤立的附件也会被删除。',
-      name: '是否删除孤立附件'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: '如果启用，当笔记被重命名或移动时，其附件将根据',
-        part2: '设置进行重命名。'
-      },
-      name: '是否重命名附件文件'
-    },
-    shouldRenameAttachmentFolders: {
-      description: '当笔记被重命名或移动时，是否重命名附件文件夹。',
-      name: '是否重命名附件文件夹'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: '是否将附件文件夹和文件名设置应用于其他插件创建的附件。',
@@ -345,17 +292,6 @@ export const zh = {
         part3: '已设置，则禁用操作执行超时。'
       },
       name: '超时时间（秒）'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: '将这些扩展名的文件视为附件。',
-        part2: '默认情况下',
-        part3: '和',
-        part4: '链接文件不会被视为附件，也不会随笔记移动。',
-        part5: '你可以添加自定义扩展名，例如',
-        part6: '，以覆盖此行为。'
-      },
-      name: '视为附件的扩展名'
     }
   },
   promptWithPreviewModal: {

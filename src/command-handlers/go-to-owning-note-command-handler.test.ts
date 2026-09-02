@@ -10,6 +10,7 @@ import type { Mock } from 'vitest';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { selectItem } from 'obsidian-dev-utils/obsidian/modals/select-item';
+import { NoPriorityWinnerReason } from 'obsidian-dev-utils/obsidian/note-priority';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeAll,
@@ -24,7 +25,6 @@ import type { NoteOwnerResolver } from '../note-owner-resolver.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
 import { translationsMap } from '../i18n/locales/translations-map.ts';
-import { NoPriorityWinnerReason } from '../note-priority.ts';
 import { GoToOwningNoteCommandHandler } from './go-to-owning-note-command-handler.ts';
 
 interface ActiveFileProviderHolder {
@@ -165,7 +165,7 @@ describe('GoToOwningNoteCommandHandler', () => {
       const selectItemParams = mockSelectItem.mock.calls[0]?.[0];
       expect(mockSelectItem).toHaveBeenCalledOnce();
       expect(selectItemParams?.items).toEqual(['notes/a.md', 'notes/b.md']);
-      expect(selectItemParams?.placeholder).toContain('match the Note priorities setting equally well');
+      expect(selectItemParams?.placeholder).toContain('match the Advanced Rename and Delete Handler → Note priorities setting equally well');
       // `selectItem` is mocked, so it never renders; drive the row renderer directly.
       // Rows are shown as the bare note path.
       expect(selectItemParams?.itemTextFunction('notes/a.md')).toBe('notes/a.md');

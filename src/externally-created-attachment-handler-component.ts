@@ -22,6 +22,7 @@ import {
 } from 'obsidian-dev-utils/path';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { TokenValidator } from './token-validator.ts';
 
@@ -34,6 +35,7 @@ const FRESHLY_CREATED_THRESHOLD_IN_MILLISECONDS = 10_000;
 interface ExternallyCreatedAttachmentHandlerComponentConstructorParams {
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly tokenValidator: TokenValidator;
 }
@@ -56,6 +58,7 @@ interface ExternallyCreatedAttachmentHandlerComponentConstructorParams {
 export class ExternallyCreatedAttachmentHandlerComponent extends Component {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly tokenValidator: TokenValidator;
 
@@ -63,6 +66,7 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
     super();
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.tokenValidator = params.tokenValidator;
   }
@@ -144,7 +148,7 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
       return;
     }
 
-    if (this.pluginSettingsComponent.settings.isPathIgnored(attachmentFile.path)) {
+    if (this.handedOverSettingsComponent.isPathIgnored(attachmentFile.path)) {
       return;
     }
 
@@ -154,7 +158,7 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
       return;
     }
 
-    if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
+    if (this.handedOverSettingsComponent.isPathIgnored(noteFile.path)) {
       return;
     }
 

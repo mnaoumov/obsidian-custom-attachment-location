@@ -100,20 +100,6 @@ export const ga = {
     defaultImageSizeDimension: {
       height: 'Airde',
       width: 'Leithead'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'scriosfaidh an fhillteán ceangaltán folamh.',
-        displayText: 'Scrios'
-      },
-      deleteWithEmptyParents: {
-        description: 'scriosfaidh an fhillteán ceangaltán folamh agus a chuid fhillteán tuismitheora folamh.',
-        displayText: 'Scrios le tuismitheoirí folamh'
-      },
-      keep: {
-        description: 'coimeádfaidh an fhillteán ceangaltán folamh.',
-        displayText: 'Coimeád'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const ga = {
       },
       name: 'Deighilteoir ainm dúbailte'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Nuair a bhíonn an fhillteán ceangaltán folamh:'
-      },
-      name: 'Iompar fhillteán ceangaltán folamh'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Eisigh nótaí ó na conairí seo a leanas.',
-        part2: 'Cuir isteach gach conair ar líne nua.',
-        part3: 'Is féidir leat teaghrán conair nó',
-        part4: 'a úsáid. Má tá an socrú folamh, ní eisítear aon nótaí.'
-      },
-      name: 'Conairí a eisíomh'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Eisigh ceangaltáin ó na conairí seo a leanas nuair a',
@@ -234,15 +205,6 @@ export const ga = {
         part2: 'comharthaí atá ar fáil'
       },
       name: 'Ainm comhad ceangaltán ginte'
-    },
-    includePaths: {
-      description: {
-        part1: 'Cuir nótaí ó na conairí seo a leanas san áireamh.',
-        part2: 'Cuir isteach gach conair ar líne nua.',
-        part3: 'Is féidir leat teaghrán conair nó',
-        part4: 'a úsáid. Má tá an socrú folamh, cuirtear gach nóta san áireamh.'
-      },
-      name: 'Conairí a chur san áireamh'
     },
     jpegQuality: {
       description: 'Dá laghad an cáilíocht, is mó an cóimheas comhbhrú.',
@@ -286,21 +248,6 @@ export const ga = {
       description: 'Cibé an gcaithfear íomhánna greamaithe a thiontú go JPEG. Baineann seo leis nuair a ghreamaitear ábhair íomhá PNG ón ghearrtáisce go díreach. Go típúl, chun grênghrafaí a ghreamadh.',
       name: 'An gcaithfear íomhánna greamaithe a thiontú go JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Má tá sé cumasaithe, nuair a scriostar an nóta, scriostar a cheangaltáin dílleachta freisin.',
-      name: 'An gcaithfear ceangaltáin dílleachta a scriosadh'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Má tá sé cumasaithe, nuair a athainmnítear nó a aistrítear nóta, athainmneofar a chomhaid ceangaltán de réir an',
-        part2: 'socraithe.'
-      },
-      name: 'An gcaithfear comhaid ceangaltán a athainmniú'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Cibé an gcaithfear fhillteáin ceangaltán a athainmniú nuair a athainmnítear nó a aistrítear nóta.',
-      name: 'An gcaithfear fhillteáin ceangaltán a athainmniú'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Cé acu na socruithe fillteáin ceangaltán agus ainm comhaid a chur i bhfeidhm ar cheangaltáin a chruthaíonn breiseáin EILE.',
@@ -339,17 +286,6 @@ export const ga = {
         part3: 'socraithe, tá t-am amach fhorghníomhaithe oibríochtaí díchumasaithe.'
       },
       name: 'T-am amach i soicindí'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Déileáil le comhaid leis na síntí seo mar cheangaltáin.',
-        part2: 'De réir réamhshocraithe, ní dhéantar',
-        part3: 'agus',
-        part4: 'comhaid nasctha a thabhairt mar cheangaltáin agus ní aistrítear iad leis an nóta.',
-        part5: 'Is féidir leat síntí saincheaptha a chur leis, m.sh.',
-        part6: ', chun an t-iompar seo a shárú.'
-      },
-      name: 'Déileáil mar shíntí ceangaltán'
     }
   },
   promptWithPreviewModal: {

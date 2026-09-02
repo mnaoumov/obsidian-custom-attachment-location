@@ -13,6 +13,7 @@ import { castTo } from 'obsidian-dev-utils/object-utils';
 import { findAttachmentUnitFolderPath } from 'obsidian-dev-utils/obsidian/attachment-unit-folder';
 import { isFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { NoPriorityWinnerReason } from 'obsidian-dev-utils/obsidian/note-priority';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeEach,
@@ -22,11 +23,12 @@ import {
   vi
 } from 'vitest';
 
+import type { HandedOverSettings } from './advanced-rename-and-delete-handler.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
 import { NoteOwnerResolver } from './note-owner-resolver.ts';
-import { NoPriorityWinnerReason } from './note-priority.ts';
 
 interface SettingsLike {
   isAttachmentUnitFolder: Mock<(path: string) => boolean>;
@@ -101,7 +103,10 @@ describe('NoteOwnerResolver', () => {
     });
     mockFindAttachmentUnitFolderPath.mockReturnValue(null);
     mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
-    resolver = new NoteOwnerResolver({ app, pluginSettingsComponent });
+    const handedOverSettingsComponent = strictProxy<HandedOverSettingsComponent>({
+      settings: castTo<HandedOverSettings>(settings)
+    });
+    resolver = new NoteOwnerResolver({ app, handedOverSettingsComponent, pluginSettingsComponent });
   });
 
   describe('findCandidateNotePaths', () => {

@@ -100,20 +100,6 @@ export const ja = {
     defaultImageSizeDimension: {
       height: '高さ',
       width: '幅'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: '空の添付ファイルフォルダを削除します。',
-        displayText: '削除'
-      },
-      deleteWithEmptyParents: {
-        description: '空の添付ファイルフォルダとその空の親フォルダを削除します。',
-        displayText: '空の親フォルダと一緒に削除'
-      },
-      keep: {
-        description: '空の添付ファイルフォルダを保持します。',
-        displayText: '保持'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const ja = {
       },
       name: '重複名区切り文字'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: '添付ファイルフォルダが空になったとき:'
-      },
-      name: '空の添付ファイルフォルダの動作'
-    },
-    excludePaths: {
-      description: {
-        part1: '以下のパスからノートを除外します。',
-        part2: '各パスを新しい行に挿入してください。',
-        part3: 'パス文字列または',
-        part4: 'を使用できます。設定が空の場合、ノートは除外されません。'
-      },
-      name: '除外パス'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: '以下のパスから添付ファイルを除外します',
@@ -234,15 +205,6 @@ export const ja = {
         part2: 'トークンを参照'
       },
       name: '生成された添付ファイル名'
-    },
-    includePaths: {
-      description: {
-        part1: '以下のパスからノートを含めます。',
-        part2: '各パスを新しい行に挿入してください。',
-        part3: 'パス文字列または',
-        part4: 'を使用できます。設定が空の場合、すべてのノートが含まれます。'
-      },
-      name: '含めるパス'
     },
     jpegQuality: {
       description: '品質が低いほど、圧縮率が高くなります。',
@@ -286,21 +248,6 @@ export const ja = {
       description: '貼り付けた画像をJPEGに変換するかどうか。PNG画像の内容がクリップボードから直接貼り付けられた場合にのみ適用されます。通常、スクリーンショットの貼り付けに使用されます。',
       name: '貼り付けた画像をJPEGに変換する'
     },
-    shouldDeleteOrphanAttachments: {
-      description: '有効にすると、ノートが削除されたとき、その孤立した添付ファイルも削除されます。',
-      name: '孤立した添付ファイルを削除する'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: '有効にすると、ノートがリネームまたは移動されたときに、その添付ファイルは',
-        part2: '設定に従ってリネームされます。'
-      },
-      name: '添付ファイルをリネームする'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'ノートがリネームまたは移動されたときに添付ファイルフォルダをリネームするかどうか。',
-      name: '添付ファイルフォルダをリネームする'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: '他のプラグインが作成した添付ファイルにも、添付フォルダーとファイル名の設定を適用するかどうか。',
@@ -339,17 +286,6 @@ export const ja = {
         part3: 'が設定されている場合、操作の実行タイムアウトは無効になります。'
       },
       name: 'タイムアウト（秒）'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'これらの拡張子を持つファイルを添付ファイルとして扱います。',
-        part2: 'デフォルトでは',
-        part3: 'と',
-        part4: 'リンクされたファイルは添付ファイルとして扱われず、ノートと一緒に移動されません。',
-        part5: 'この動作をオーバーライドするために、カスタム拡張子（例：',
-        part6: '）を追加できます。'
-      },
-      name: '添付ファイル拡張子として扱う'
     }
   },
   promptWithPreviewModal: {

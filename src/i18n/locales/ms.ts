@@ -100,20 +100,6 @@ export const ms = {
     defaultImageSizeDimension: {
       height: 'Ketinggian',
       width: 'Kelebaran'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'akan memadamkan folder lampiran kosong.',
-        displayText: 'Padam'
-      },
-      deleteWithEmptyParents: {
-        description: 'akan memadamkan folder lampiran kosong dan folder induk kosongnya.',
-        displayText: 'Padam dengan induk kosong'
-      },
-      keep: {
-        description: 'akan menyimpan folder lampiran kosong.',
-        displayText: 'Simpan'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const ms = {
       },
       name: 'Pemisah nama pendua'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Apabila folder lampiran menjadi kosong:'
-      },
-      name: 'Kelakuan folder lampiran kosong'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Kecualikan nota dari laluan berikut.',
-        part2: 'Masukkan setiap laluan pada baris baru.',
-        part3: 'Anda boleh menggunakan rentetan laluan atau',
-        part4: 'Jika tetapan kosong, tiada nota dikecualikan.'
-      },
-      name: 'Kecualikan laluan'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Kecualikan lampiran dari laluan berikut apabila',
@@ -233,15 +204,6 @@ export const ms = {
         part2: 'yang tersedia'
       },
       name: 'Nama fail lampiran yang dijana'
-    },
-    includePaths: {
-      description: {
-        part1: 'Termasuk nota dari laluan berikut.',
-        part2: 'Masukkan setiap laluan pada baris baru.',
-        part3: 'Anda boleh menggunakan rentetan laluan atau',
-        part4: 'Jika tetapan kosong, semua nota disertakan.'
-      },
-      name: 'Termasuk laluan'
     },
     jpegQuality: {
       description: 'Semakin kecil kualiti, semakin besar nisbah mampatan.',
@@ -284,21 +246,6 @@ export const ms = {
       description: 'Sama ada untuk menukar imej yang ditampal kepada JPEG. Berlaku hanya apabila kandungan imej PNG ditampal terus dari papan keratan. Biasanya, untuk menampal tangkapan skrin.',
       name: 'Sama ada menukar imej yang ditampal kepada JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Jika diaktifkan, apabila nota dipadamkan, lampiran yatimnya juga dipadamkan.',
-      name: 'Sama ada memadamkan lampiran yatim'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Jika diaktifkan, apabila nota dinamakan semula atau dipindahkan, lampirannya akan dinamakan semula mengikut',
-        part2: 'tetapan.'
-      },
-      name: 'Sama ada menamakan semula fail lampiran'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Sama ada untuk menamakan semula folder lampiran apabila nota dinamakan semula atau dipindahkan.',
-      name: 'Sama ada menamakan semula folder lampiran'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Sama ada tetapan folder lampiran dan nama fail dikenakan pada lampiran yang dicipta oleh pemalam LAIN.',
@@ -337,17 +284,6 @@ export const ms = {
         part3: 'ditetapkan, masa tamat pelaksanaan operasi dilumpuhkan.'
       },
       name: 'Masa tamat dalam saat'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Anggap fail dengan sambungan ini sebagai lampiran.',
-        part2: 'Secara lalai',
-        part3: 'dan',
-        part4: 'fail yang dipautkan tidak dianggap sebagai lampiran dan tidak dipindahkan dengan nota.',
-        part5: 'Anda boleh menambah sambungan kustom, contohnya',
-        part6: ', untuk mengatasi kelakuan ini.'
-      },
-      name: 'Anggap sebagai sambungan lampiran'
     }
   },
   promptWithPreviewModal: {

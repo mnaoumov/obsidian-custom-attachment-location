@@ -100,20 +100,6 @@ export const es = {
     defaultImageSizeDimension: {
       height: 'Altura',
       width: 'Ancho'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'eliminará la carpeta de archivos adjuntos vacía.',
-        displayText: 'Eliminar'
-      },
-      deleteWithEmptyParents: {
-        description: 'eliminará la carpeta de archivos adjuntos vacía y sus carpetas padre vacías.',
-        displayText: 'Eliminar con padres vacíos'
-      },
-      keep: {
-        description: 'mantendrá la carpeta de archivos adjuntos vacía.',
-        displayText: 'Mantener'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const es = {
       },
       name: 'Separador de nombres duplicados'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Cuando la carpeta de archivos adjuntos se vacía:'
-      },
-      name: 'Comportamiento de carpeta de archivos adjuntos vacía'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Excluir notas de las siguientes rutas.',
-        part2: 'Inserta cada ruta en una nueva línea.',
-        part3: 'Puedes usar cadena de ruta o',
-        part4: 'Si la configuración está vacía, no se excluyen notas.'
-      },
-      name: 'Excluir rutas'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Excluir archivos adjuntos de las siguientes rutas cuando',
@@ -234,15 +205,6 @@ export const es = {
         part2: 'tokens disponibles'
       },
       name: 'Nombre de archivo adjunto generado'
-    },
-    includePaths: {
-      description: {
-        part1: 'Incluir notas de las siguientes rutas.',
-        part2: 'Inserta cada ruta en una nueva línea.',
-        part3: 'Puedes usar cadena de ruta o',
-        part4: 'Si la configuración está vacía, todas las notas están incluidas.'
-      },
-      name: 'Incluir rutas'
     },
     jpegQuality: {
       description: 'Cuanto menor la calidad, mayor la relación de compresión.',
@@ -286,21 +248,6 @@ export const es = {
       description: 'Si convertir imágenes pegadas a JPEG. Se aplica solo cuando el contenido de imagen PNG se pega directamente desde el portapapeles. Típicamente, para pegar capturas de pantalla.',
       name: 'Si convertir imágenes pegadas a JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Si está habilitado, cuando la nota es eliminada, sus archivos adjuntos huérfanos también son eliminados.',
-      name: 'Si eliminar archivos adjuntos huérfanos'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Si está habilitado, cuando una nota es renombrada o movida, sus archivos adjuntos serán renombrados según la',
-        part2: 'configuración.'
-      },
-      name: 'Si renombrar archivos adjuntos'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Si renombrar carpetas de archivos adjuntos cuando una nota es renombrada o movida.',
-      name: 'Si renombrar carpetas de archivos adjuntos'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Si se deben aplicar los ajustes de carpeta de adjuntos y nombre de archivo a los adjuntos que crean OTROS complementos.',
@@ -339,17 +286,6 @@ export const es = {
         part3: 'está establecido, el timeout de ejecución de operaciones está deshabilitado.'
       },
       name: 'Timeout en segundos'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Tratar archivos con estas extensiones como archivos adjuntos.',
-        part2: 'Por defecto',
-        part3: 'y',
-        part4: 'archivos enlazados no son tratados como archivos adjuntos y no son movidos con la nota.',
-        part5: 'Puedes añadir extensiones personalizadas, ej.',
-        part6: ', para sobrescribir este comportamiento.'
-      },
-      name: 'Tratar como extensiones de archivos adjuntos'
     }
   },
   promptWithPreviewModal: {

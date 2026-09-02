@@ -100,20 +100,6 @@ export const de = {
     defaultImageSizeDimension: {
       height: 'Höhe',
       width: 'Breite'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'wird den leeren Anhang-Ordner löschen.',
-        displayText: 'Löschen'
-      },
-      deleteWithEmptyParents: {
-        description: 'wird den leeren Anhang-Ordner und seine leeren übergeordneten Ordner löschen.',
-        displayText: 'Mit leeren übergeordneten löschen'
-      },
-      keep: {
-        description: 'wird den leeren Anhang-Ordner behalten.',
-        displayText: 'Behalten'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const de = {
       },
       name: 'Duplikat-Namen-Separator'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Wenn der Anhang-Ordner leer wird:'
-      },
-      name: 'Verhalten bei leerem Anhang-Ordner'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Notizen von den folgenden Pfaden ausschließen.',
-        part2: 'Jeden Pfad in eine neue Zeile einfügen.',
-        part3: 'Sie können Pfad-String oder',
-        part4: 'Wenn die Einstellung leer ist, werden keine Notizen ausgeschlossen.'
-      },
-      name: 'Pfade ausschließen'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Anhänge von den folgenden Pfaden ausschließen, wenn',
@@ -234,15 +205,6 @@ export const de = {
         part2: 'Tokens'
       },
       name: 'Generierter Anhang-Dateiname'
-    },
-    includePaths: {
-      description: {
-        part1: 'Notizen von den folgenden Pfaden einschließen.',
-        part2: 'Jeden Pfad in eine neue Zeile einfügen.',
-        part3: 'Sie können Pfad-String oder',
-        part4: 'Wenn die Einstellung leer ist, werden alle Notizen eingeschlossen.'
-      },
-      name: 'Pfade einschließen'
     },
     jpegQuality: {
       description: 'Je kleiner die Qualität, desto größer das Kompressionsverhältnis.',
@@ -286,21 +248,6 @@ export const de = {
       description: 'Ob eingefügte Bilder in JPEG konvertiert werden sollen. Gilt nur, wenn der PNG-Bildinhalt direkt aus der Zwischenablage eingefügt wird. Typischerweise für das Einfügen von Screenshots.',
       name: 'Soll eingefügte Bilder in JPEG konvertieren'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Wenn aktiviert, werden beim Löschen der Notiz auch ihre verwaisten Anhänge gelöscht.',
-      name: 'Soll verwaiste Anhänge löschen'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Wenn aktiviert, werden beim Umbenennen oder Verschieben einer Notiz ihre Anhänge entsprechend der',
-        part2: 'Einstellung umbenannt.'
-      },
-      name: 'Soll Anhang-Dateien umbenennen'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Ob Anhang-Ordner umbenannt werden sollen, wenn eine Notiz umbenannt oder verschoben wird.',
-      name: 'Soll Anhang-Ordner umbenennen'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Ob die Einstellungen für Anhang-Ordner und Dateiname auch auf Anhänge angewendet werden, die ANDERE Plugins erstellen.',
@@ -339,17 +286,6 @@ export const de = {
         part3: 'gesetzt ist, ist das Ausführungs-Timeout für Operationen deaktiviert.'
       },
       name: 'Timeout in Sekunden'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Dateien mit diesen Erweiterungen als Anhänge behandeln.',
-        part2: 'Standardmäßig',
-        part3: 'und',
-        part4: 'verknüpfte Dateien werden nicht als Anhänge behandelt und nicht mit der Notiz verschoben.',
-        part5: 'Sie können benutzerdefinierte Erweiterungen hinzufügen, z.B.',
-        part6: ', um dieses Verhalten zu überschreiben.'
-      },
-      name: 'Als Anhang-Erweiterungen behandeln'
     }
   },
   promptWithPreviewModal: {

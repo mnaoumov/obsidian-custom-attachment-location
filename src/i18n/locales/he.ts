@@ -100,20 +100,6 @@ export const he = {
     defaultImageSizeDimension: {
       height: 'גובה',
       width: 'רוחב'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'ימחק את תיקיית הקבצים המצורפים הריקה.',
-        displayText: 'מחיקה'
-      },
-      deleteWithEmptyParents: {
-        description: 'ימחק את תיקיית הקבצים המצורפים הריקה ואת תיקיות האב הריקות שלה.',
-        displayText: 'מחיקה עם אבות ריקים'
-      },
-      keep: {
-        description: 'ישמור את תיקיית הקבצים המצורפים הריקה.',
-        displayText: 'שמירה'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const he = {
       },
       name: 'מפריד שמות כפולים'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'כאשר תיקיית הקבצים המצורפים הופכת ריקה:'
-      },
-      name: 'התנהגות תיקיית קבצים מצורפים ריקה'
-    },
-    excludePaths: {
-      description: {
-        part1: 'הדר רשימות מהנתיבים הבאים.',
-        part2: 'הכנס כל נתיב בשורה חדשה.',
-        part3: 'אתה יכול להשתמש במחרוזת נתיב או',
-        part4: 'אם ההגדרה ריקה, אף רשימה לא מודרת.'
-      },
-      name: 'הדר נתיבים'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'הדר קבצים מצורפים מהנתיבים הבאים כאשר',
@@ -234,15 +205,6 @@ export const he = {
         part2: 'טוקנים זמינים'
       },
       name: 'שם קובץ מצורף שנוצר'
-    },
-    includePaths: {
-      description: {
-        part1: 'כלול רשימות מהנתיבים הבאים.',
-        part2: 'הכנס כל נתיב בשורה חדשה.',
-        part3: 'אתה יכול להשתמש במחרוזת נתיב או',
-        part4: 'אם ההגדרה ריקה, כל הרשימות כלולות.'
-      },
-      name: 'כלול נתיבים'
     },
     jpegQuality: {
       description: 'ככל שהאיכות קטנה יותר, יחס הדחיסה גדול יותר.',
@@ -286,21 +248,6 @@ export const he = {
       description: 'האם להמיר תמונות שהודבקו ל-JPEG. חל רק כאשר תוכן תמונת PNG מודבק ישירות מהלוח. בדרך כלל, להדבקת צילומי מסך.',
       name: 'האם להמיר תמונות שהודבקו ל-JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'אם מופעל, כאשר הרשימה נמחקת, הקבצים המצורפים היתומים שלה נמחקים גם כן.',
-      name: 'האם למחוק קבצים מצורפים יתומים'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'אם מופעל, כאשר רשימה מקבלת שם חדש או מועברת, קבצי המצורפים שלה יקבלו שמות חדשים לפי הגדרת',
-        part2: '.'
-      },
-      name: 'האם לשנות שמות קבצים מצורפים'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'האם לשנות שמות תיקיות קבצים מצורפים כאשר רשימה מקבלת שם חדש או מועברת.',
-      name: 'האם לשנות שמות תיקיות קבצים מצורפים'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'האם להחיל את הגדרות תיקיית הקבצים המצורפים ושם הקובץ על קבצים מצורפים שתוספים אחרים יוצרים.',
@@ -339,17 +286,6 @@ export const he = {
         part3: 'מוגדר, זמן הקצוב לביצוע פעולות מבוטל.'
       },
       name: 'זמן קצוב בשניות'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'התייחס לקבצים עם הסיומות האלה כקבצים מצורפים.',
-        part2: 'ברירת מחדל',
-        part3: 'ו',
-        part4: 'קבצים מקושרים לא מטופלים כקבצים מצורפים ולא מועברים עם הרשימה.',
-        part5: 'אתה יכול להוסיף סיומות מותאמות אישית, למשל',
-        part6: ', כדי לעקוף התנהגות זו.'
-      },
-      name: 'התייחס כסיומות קבצים מצורפים'
     }
   },
   promptWithPreviewModal: {

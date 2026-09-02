@@ -27,7 +27,6 @@ import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { getCanvasReferences } from 'obsidian-dev-utils/obsidian/canvas';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
   isCanvasFile,
@@ -48,11 +47,13 @@ import {
   getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
+import { NoPriorityWinnerReason } from 'obsidian-dev-utils/obsidian/note-priority';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import { ResourceLockComponent } from 'obsidian-dev-utils/obsidian/resource-lock';
 import {
   cleanupEmptyFolders,
   copySafe,
+  EmptyFolderBehavior,
   renameSafe
 } from 'obsidian-dev-utils/obsidian/vault';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
@@ -66,7 +67,9 @@ import {
   vi
 } from 'vitest';
 
+import type { HandedOverSettings } from './advanced-rename-and-delete-handler.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
@@ -74,7 +77,6 @@ import type { PluginSettings } from './plugin-settings.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
-import { NoPriorityWinnerReason } from './note-priority.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
 
 interface ApplyFileChangesParamsLike {
@@ -338,11 +340,16 @@ describe('AttachmentCollector', () => {
     });
     pluginNoticeComponent = new PluginNoticeComponent({ app, pluginName: PLUGIN_NAME });
     resourceLockComponent = strictProxy<ResourceLockComponent>({});
+    const handedOverSettingsComponent = strictProxy<HandedOverSettingsComponent>({
+      isPathIgnored: (path) => settings.isPathIgnored(path),
+      settings: castTo<HandedOverSettings>(settings)
+    });
     collector = new AttachmentCollector({
       abortSignalComponent,
       app,
       attachmentPathManager,
       consoleDebugComponent,
+      handedOverSettingsComponent,
       networkImageDownloader,
       pluginName: PLUGIN_NAME,
       pluginNoticeComponent,

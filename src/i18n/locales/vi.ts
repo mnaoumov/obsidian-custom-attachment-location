@@ -100,20 +100,6 @@ export const vi = {
     defaultImageSizeDimension: {
       height: 'Сhiều cao',
       width: 'Сhiều rộng'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'Sẽ xóa thư mục tệp đính kèm trống.',
-        displayText: 'Xóa'
-      },
-      deleteWithEmptyParents: {
-        description: 'Sẽ xóa thư mục tệp đính kèm trống và các thư mục cha trống của nó.',
-        displayText: 'Xóa với thư mục cha rỗng'
-      },
-      keep: {
-        description: 'Sẽ giữ nguyên thư mục tệp đính kèm trống.',
-        displayText: 'Giữ lại'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const vi = {
       },
       name: 'Bộ phân cách tên trùng'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Khi thư mục tệp đính kèm trở nên trống:'
-      },
-      name: 'Hành vi thư mục tệp đính kèm trống'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Loại trừ ghi chú khỏi các đường dẫn sau.',
-        part2: 'Nhập mỗi đường dẫn trên một dòng mới.',
-        part3: 'Bạn có thể sử dụng chuỗi đường dẫn hoặc',
-        part4: 'Nếu cài đặt để trống, không ghi chú nào bị loại trừ.'
-      },
-      name: 'Loại trừ đường dẫn'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Loại trừ tệp đính kèm khỏi các đường dẫn sau khi',
@@ -233,15 +204,6 @@ export const vi = {
         part2: 'token có thể sử dụng'
       },
       name: 'Tên tệp đính kèm được tạo'
-    },
-    includePaths: {
-      description: {
-        part1: 'Bao gồm các ghi chú từ các đường dẫn sau.',
-        part2: 'Nhập mỗi đường dẫn trên một dòng mới.',
-        part3: 'Bạn có thể sử dụng chuỗi đường dẫn hoặc',
-        part4: 'Nếu cài đặt để trống, tất cả ghi chú được bao gồm.'
-      },
-      name: 'Bao gồm đường dẫn'
     },
     jpegQuality: {
       description: 'Chất lượng càng thấp, tỷ lệ nén càng cao.',
@@ -284,21 +246,6 @@ export const vi = {
       description: 'Có nên chuyển đổi hình ảnh dán sang định dạng JPEG không. Chỉ áp dụng khi nội dung ảnh PNG được dán trực tiếp từ clipboard. Thường dùng cho ảnh chụp màn hình.',
       name: 'Chuyển hình ảnh dán sang JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Nếu bật, khi xóa ghi chú, các tệp đính kèm mồ côi cũng sẽ bị xóa.',
-      name: 'Xóa tệp đính kèm mồ côi'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Nếu bật, khi ghi chú được đổi tên hoặc di chuyển, các tệp đính kèm sẽ được đổi tên theo',
-        part2: 'cài đặt.'
-      },
-      name: 'Đổi tên tệp đính kèm'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Có đổi tên các thư mục đính kèm khi ghi chú được đổi tên hoặc di chuyển không.',
-      name: 'Đổi tên thư mục đính kèm'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Có áp dụng các thiết lập thư mục đính kèm và tên tệp cho những tệp đính kèm do plugin KHÁC tạo hay không.',
@@ -337,17 +284,6 @@ export const vi = {
         part3: 'được đặt, thời gian chờ thao tác sẽ bị vô hiệu hóa.'
       },
       name: 'Thời gian chờ (giây)'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Xem các tệp có phần mở rộng này là tệp đính kèm.',
-        part2: 'Theo mặc định',
-        part3: 'và',
-        part4: 'các tệp liên kết không được xem là tệp đính kèm và không được di chuyển cùng ghi chú.',
-        part5: 'Bạn có thể thêm các phần mở rộng tùy chỉnh, ví dụ,',
-        part6: ', để ghi đè hành vi này.'
-      },
-      name: 'Xử lý như phần mở rộng tệp đính kèm'
     }
   },
   promptWithPreviewModal: {

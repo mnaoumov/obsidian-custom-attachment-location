@@ -1,5 +1,6 @@
 import type { App } from 'obsidian';
 import type { PromiseResolve } from 'obsidian-dev-utils/async';
+import type { NoPriorityWinnerReason } from 'obsidian-dev-utils/obsidian/note-priority';
 
 import {
   Modal,
@@ -13,8 +14,7 @@ import {
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 
-import type { NoPriorityWinnerReason } from '../note-priority.ts';
-
+import { ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME } from '../advanced-rename-and-delete-handler.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from '../plugin-settings.ts';
 
 interface CollectAttachmentUsedByMultipleNotesModalConstructorParams {
@@ -88,7 +88,10 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
     this.contentEl.createEl('p', {
       cls: 'custom-attachment-location-no-priority-winner-reason',
       text: t(($) => $.collectAttachmentUsedByMultipleNotesModal.noPriorityWinnerReason[reason], {
-        settingName: t(($) => $.pluginSettingsTab.notePriorities.name)
+        // Qualified with the owning plugin since 12.0.0: the setting lives in Advanced Rename and Delete
+        // Handler now, so naming it alone would send the user looking through this plugin's tab for a row
+        // That is not there. An arrow rather than a possessive, which reads the same in every locale.
+        settingName: `${ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME} → ${t(($) => $.pluginSettingsTab.notePriorities.name)}`
       })
     });
   }

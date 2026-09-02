@@ -17,7 +17,6 @@ import { Vault } from 'obsidian';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { getCanvasReferences } from 'obsidian-dev-utils/obsidian/canvas';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
   isCanvasFile,
   isFile,
@@ -35,6 +34,7 @@ import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import {
   cleanupEmptyFolders,
+  EmptyFolderBehavior,
   trashSafe
 } from 'obsidian-dev-utils/obsidian/vault';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
@@ -48,7 +48,9 @@ import {
   vi
 } from 'vitest';
 
+import type { HandedOverSettings } from './advanced-rename-and-delete-handler.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
@@ -211,10 +213,15 @@ describe('UnusedAttachmentsRemover', () => {
     pluginNoticeComponent = new PluginNoticeComponent({ app, pluginName: PLUGIN_NAME });
     showNoticeSpy = vi.fn();
     vi.spyOn(pluginNoticeComponent, 'showNotice').mockImplementation((...$arguments) => castTo<PluginNoticeComponent['showNotice']>(showNoticeSpy)(...$arguments));
+    const handedOverSettingsComponent = strictProxy<HandedOverSettingsComponent>({
+      isPathIgnored: (path) => settings.isPathIgnored(path),
+      settings: castTo<HandedOverSettings>(settings)
+    });
     remover = new UnusedAttachmentsRemover({
       abortSignalComponent,
       app,
       attachmentPathManager,
+      handedOverSettingsComponent,
       pluginName: PLUGIN_NAME,
       pluginNoticeComponent,
       pluginSettingsComponent

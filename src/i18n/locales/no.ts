@@ -100,20 +100,6 @@ export const no = {
     defaultImageSizeDimension: {
       height: 'Høyde',
       width: 'Bredde'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'vil slette den tomme vedleggsmappen.',
-        displayText: 'Slett'
-      },
-      deleteWithEmptyParents: {
-        description: 'vil slette den tomme vedleggsmappen og dens tomme overordnede mapper.',
-        displayText: 'Slett med tomme overordnede'
-      },
-      keep: {
-        description: 'vil beholde den tomme vedleggsmappen.',
-        displayText: 'Behold'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const no = {
       },
       name: 'Duplikat navn separator'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Når vedleggsmappen blir tom:'
-      },
-      name: 'Tom vedleggsmappe oppførsel'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Ekskluder notater fra følgende stier.',
-        part2: 'Sett inn hver sti på en ny linje.',
-        part3: 'Du kan bruke stistreng eller',
-        part4: 'Hvis innstillingen er tom, ekskluderes ingen notater.'
-      },
-      name: 'Ekskluderte stier'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Ekskluder vedlegg fra følgende stier når',
@@ -233,15 +204,6 @@ export const no = {
         part2: 'tokens'
       },
       name: 'Generert vedleggsfilnavn'
-    },
-    includePaths: {
-      description: {
-        part1: 'Inkluder notater fra følgende stier.',
-        part2: 'Sett inn hver sti på en ny linje.',
-        part3: 'Du kan bruke stistreng eller',
-        part4: 'Hvis innstillingen er tom, inkluderes alle notater.'
-      },
-      name: 'Inkluderte stier'
     },
     jpegQuality: {
       description: 'Jo mindre kvalitet, jo større komprimeringsforhold.',
@@ -284,21 +246,6 @@ export const no = {
       description: 'Om innlimte bilder skal konverteres til JPEG. Gjelder bare når PNG-bildeinnhold limes inn fra utklippstavlen direkte. Vanligvis for å lime inn skjermbilder.',
       name: 'Skal konvertere innlimte bilder til JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Hvis aktivert, når notatet slettes, slettes også dets forældreløse vedlegg.',
-      name: 'Skal slette forældreløse vedlegg'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Hvis aktivert, når et notat omdøpes eller flyttes, vil vedleggene bli omdøpt i henhold til',
-        part2: 'innstillingen.'
-      },
-      name: 'Skal omdøpe vedleggsfiler'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Om vedleggsmapper skal omdøpes når et notat omdøpes eller flyttes.',
-      name: 'Skal omdøpe vedleggsmapper'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Om innstillingene for vedleggsmappe og filnavn skal brukes på vedlegg som ANDRE programtillegg oppretter.',
@@ -337,17 +284,6 @@ export const no = {
         part3: 'er satt, er tidsavbrudd for operasjonsutførelse deaktivert.'
       },
       name: 'Tidsavbrudd i sekunder'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Behandle filer med disse utvidelsene som vedlegg.',
-        part2: 'Som standard',
-        part3: 'og',
-        part4: 'lenkede filer behandles ikke som vedlegg og flyttes ikke med notatet.',
-        part5: 'Du kan legge til tilpassede utvidelser, f.eks.',
-        part6: ', for å overstyre denne oppførselen.'
-      },
-      name: 'Behandle som vedleggsutvidelser'
     }
   },
   promptWithPreviewModal: {

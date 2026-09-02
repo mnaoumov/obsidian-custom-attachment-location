@@ -100,20 +100,6 @@ export const ar = {
     defaultImageSizeDimension: {
       height: 'الارتفاع',
       width: 'العرض'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'سيحذف مجلد المرفقات الفارغ.',
-        displayText: 'حذف'
-      },
-      deleteWithEmptyParents: {
-        description: 'سيحذف مجلد المرفقات الفارغ ومجلداته الأصلية الفارغة.',
-        displayText: 'حذف مع المجلدات الأصلية الفارغة'
-      },
-      keep: {
-        description: 'سيحتفظ بمجلد المرفقات الفارغ.',
-        displayText: 'الاحتفاظ'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const ar = {
       },
       name: 'فاصل الأسماء المكررة'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'عندما يصبح مجلد المرفقات فارغاً:'
-      },
-      name: 'سلوك مجلد المرفقات الفارغ'
-    },
-    excludePaths: {
-      description: {
-        part1: 'استبعاد الملاحظات من المسارات التالية.',
-        part2: 'أدخل كل مسار في سطر جديد.',
-        part3: 'يمكنك استخدام سلسلة المسار أو',
-        part4: 'إذا كان الإعداد فارغاً، لن يتم استبعاد أي ملاحظات.'
-      },
-      name: 'استبعاد المسارات'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'استبعاد المرفقات من المسارات التالية عند',
@@ -234,15 +205,6 @@ export const ar = {
         part2: 'الرموز المتاحة'
       },
       name: 'اسم ملف المرفق المُولد'
-    },
-    includePaths: {
-      description: {
-        part1: 'تضمين الملاحظات من المسارات التالية.',
-        part2: 'أدخل كل مسار في سطر جديد.',
-        part3: 'يمكنك استخدام سلسلة المسار أو',
-        part4: 'إذا كان الإعداد فارغاً، ستتم تضمين جميع الملاحظات.'
-      },
-      name: 'تضمين المسارات'
     },
     jpegQuality: {
       description: 'كلما قل الجودة، زادت نسبة الضغط.',
@@ -286,21 +248,6 @@ export const ar = {
       description: 'ما إذا كان يجب تحويل الصور المُلصقة إلى JPEG. ينطبق فقط عند لصق محتوى صورة PNG مباشرة من الحافظة. عادة، للصق لقطات الشاشة.',
       name: 'يجب تحويل الصور المُلصقة إلى JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'إذا تم تفعيله، عند حذف الملاحظة، سيتم حذف مرفقاتها اليتيمة أيضاً.',
-      name: 'يجب حذف المرفقات اليتيمة'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'إذا تم تفعيله، عند إعادة تسمية أو نقل الملاحظة، سيتم إعادة تسمية مرفقاتها وفقاً لـ',
-        part2: 'الإعداد.'
-      },
-      name: 'يجب إعادة تسمية ملفات المرفقات'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'ما إذا كان يجب إعادة تسمية مجلدات المرفقات عند إعادة تسمية أو نقل الملاحظة.',
-      name: 'يجب إعادة تسمية مجلدات المرفقات'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'ما إذا كان سيتم تطبيق إعدادات مجلد المرفقات واسم الملف على المرفقات التي تنشئها إضافات أخرى.',
@@ -339,17 +286,6 @@ export const ar = {
         part3: '، يتم تعطيل مهلة تنفيذ العمليات.'
       },
       name: 'مهلة الوقت بالثواني'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'اعتبر الملفات بهذه الامتدادات كمرفقات.',
-        part2: 'افتراضياً',
-        part3: 'و',
-        part4: 'الملفات المرتبطة لا تُعتبر مرفقات ولا يتم نقلها مع الملاحظة.',
-        part5: 'يمكنك إضافة امتدادات مخصصة، مثلاً',
-        part6: '، لتجاوز هذا السلوك.'
-      },
-      name: 'اعتبار كامتدادات مرفقات'
     }
   },
   promptWithPreviewModal: {

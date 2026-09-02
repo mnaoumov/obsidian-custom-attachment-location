@@ -100,20 +100,6 @@ export const pl = {
     defaultImageSizeDimension: {
       height: 'Wysokość',
       width: 'Szerokość'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'usunie pusty folder załączników.',
-        displayText: 'Usuń'
-      },
-      deleteWithEmptyParents: {
-        description: 'usunie pusty folder załączników i jego puste foldery nadrzędne.',
-        displayText: 'Usuń z pustymi rodzicami'
-      },
-      keep: {
-        description: 'zachowa pusty folder załączników.',
-        displayText: 'Zachowaj'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const pl = {
       },
       name: 'Separator duplikowanych nazw'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Gdy folder załączników stanie się pusty:'
-      },
-      name: 'Zachowanie pustego folderu załączników'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Wyklucz notatki z następujących ścieżek.',
-        part2: 'Wstaw każdą ścieżkę w nowej linii.',
-        part3: 'Możesz użyć ciągu ścieżki lub wyrażenia regularnego.',
-        part4: 'Jeśli ustawienie jest puste, żadna notatka nie jest wykluczana.'
-      },
-      name: 'Wyklucz ścieżki'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Wyklucz załączniki z następujących ścieżek, gdy wykonywane jest polecenie',
@@ -233,15 +204,6 @@ export const pl = {
         part2: 'tokeny'
       },
       name: 'Wygenerowana nazwa pliku załącznika'
-    },
-    includePaths: {
-      description: {
-        part1: 'Uwzględnij notatki z następujących ścieżek.',
-        part2: 'Wstaw każdą ścieżkę w nowej linii.',
-        part3: 'Możesz użyć ciągu ścieżki lub wyrażenia regularnego.',
-        part4: 'Jeśli ustawienie jest puste, wszystkie notatki są uwzględniane.'
-      },
-      name: 'Uwzględnij ścieżki'
     },
     jpegQuality: {
       description: 'Im mniejsza jakość, tym większy współczynnik kompresji.',
@@ -284,21 +246,6 @@ export const pl = {
       description: 'Czy konwertować wklejone obrazy do JPEG. Dotyczy tylko sytuacji, gdy zawartość obrazu PNG jest wklejana bezpośrednio ze schowka (zazwyczaj przy wklejaniu zrzutów ekranu).',
       name: 'Czy konwertować wklejone obrazy do JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Jeśli włączone, po usunięciu notatki jej osierocone załączniki zostaną również usunięte.',
-      name: 'Czy usuwać osierocone załączniki'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Jeśli włączone, gdy notatka jest przemianowana lub przeniesiona, jej załączniki będą przemianowane zgodnie z',
-        part2: 'ustawieniem.'
-      },
-      name: 'Czy przemianować pliki załączników'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Czy przemianowywać foldery załączników, gdy notatka jest przemianowana lub przeniesiona.',
-      name: 'Czy przemianować foldery załączników'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Czy stosować ustawienia folderu załączników i nazwy pliku do załączników tworzonych przez INNE wtyczki.',
@@ -337,17 +284,6 @@ export const pl = {
         part3: 'na 0, limit czasu zostanie wyłączony.'
       },
       name: 'Limit czasu w sekundach'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Traktuj pliki z tymi rozszerzeniami jako załączniki.',
-        part2: 'Domyślnie',
-        part3: 'i',
-        part4: 'połączone pliki nie są traktowane jako załączniki i nie są przenoszone wraz z notatką.',
-        part5: 'Możesz dodać niestandardowe rozszerzenia, np.',
-        part6: ', aby zastąpić to zachowanie.'
-      },
-      name: 'Traktuj jako rozszerzenia załączników'
     }
   },
   promptWithPreviewModal: {

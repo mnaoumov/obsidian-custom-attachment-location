@@ -27,6 +27,7 @@ import {
 
 import type { ArrayBufferMap } from './array-buffer-map.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { ImageSizeMap } from './image-size-map.ts';
 import type { MarkdownUrlMap } from './markdown-url-map.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -156,6 +157,8 @@ interface ComponentContext {
   getActiveViewOfTypeMock: ReturnType<typeof vi.fn>;
   getAttachmentFolderFullPathForPathMock: ReturnType<typeof vi.fn>;
   getLeavesOfTypeMock: ReturnType<typeof vi.fn>;
+  handedOverSettingsComponent: HandedOverSettingsComponent;
+  isPathIgnoredMock: ReturnType<typeof vi.fn>;
   loadFromFileMock: ReturnType<typeof vi.fn>;
   pluginSettingsComponent: PluginSettingsComponent;
   settings: PluginSettings;
@@ -180,7 +183,6 @@ describe('CustomAttachmentLocationComponent', () => {
     const settings = strictProxy<PluginSettings>({
       // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       customTokensStr: 'custom-tokens',
-      isPathIgnored: vi.fn((_path: string): boolean => false),
       version: ''
     });
 
@@ -210,6 +212,9 @@ describe('CustomAttachmentLocationComponent', () => {
     castTo<Pick<Workspace, 'getLeavesOfType'>>(app.workspace).getLeavesOfType = getLeavesOfTypeMock;
     castTo<ShareReceiverHolder>(app).shareReceiver = {};
 
+    const isPathIgnoredMock = vi.fn((_path: string): boolean => false);
+    const handedOverSettingsComponent = strictProxy<HandedOverSettingsComponent>({ isPathIgnored: isPathIgnoredMock });
+
     context = {
       app,
       attachmentPathManager,
@@ -218,6 +223,8 @@ describe('CustomAttachmentLocationComponent', () => {
       getActiveViewOfTypeMock,
       getAttachmentFolderFullPathForPathMock,
       getLeavesOfTypeMock,
+      handedOverSettingsComponent,
+      isPathIgnoredMock,
       loadFromFileMock,
       pluginSettingsComponent,
       settings
@@ -314,7 +321,7 @@ describe('CustomAttachmentLocationComponent', () => {
 
     it('should clear the state when the path is ignored', async () => {
       const component = createComponent();
-      castTo<ReturnType<typeof vi.fn>>(context.settings.isPathIgnored).mockReturnValue(true);
+      context.isPathIgnoredMock.mockReturnValue(true);
       const handler = loadAndGetWorkspaceHandler(component, 'file-open');
       handler(strictProxy<TFile>({ path: 'ignored.md' }));
       await vi.runAllTimersAsync();
@@ -533,6 +540,7 @@ function createComponent(): CustomAttachmentLocationComponent {
     app: context.app,
     arrayBufferMap: strictProxy<ArrayBufferMap>({}),
     attachmentPathManager: context.attachmentPathManager,
+    handedOverSettingsComponent: context.handedOverSettingsComponent,
     imageSizeMap: strictProxy<ImageSizeMap>({}),
     markdownUrlMap: strictProxy<MarkdownUrlMap>({}),
     pluginDirectory: 'plugins/custom-attachment-location',

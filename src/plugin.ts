@@ -1,19 +1,22 @@
 import type { TAbstractFile } from 'obsidian';
-import type { RenameDeleteHandlerSettings } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import type { TranslationsMap } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 
 import { OpenDemoVaultCommandHandler } from 'obsidian-dev-utils/obsidian/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
-import { RenameDeleteHandlerComponent } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
+import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import { ValueWrapper } from 'obsidian-dev-utils/value-wrapper';
 
+import {
+  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
+} from './advanced-rename-and-delete-handler.ts';
 import { ArrayBufferMap } from './array-buffer-map.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
 import { AttachmentPathManager } from './attachment-path-manager.ts';
-import { AttachmentRescuer } from './attachment-rescue.ts';
 import { AttachmentSaver } from './attachment-saver.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
@@ -24,16 +27,17 @@ import { GoToAttachmentFolderCommandHandler } from './command-handlers/go-to-att
 import { GoToOwningNoteCommandHandler } from './command-handlers/go-to-owning-note-command-handler.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
 import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
+import { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { ImageManager } from './image-manager.ts';
 import { ImageSizeMap } from './image-size-map.ts';
-import { createLinkUpdateProgressReporter } from './link-update-progress-reporter.ts';
 import { MarkdownUrlMap } from './markdown-url-map.ts';
 import { NetworkImageDownloader } from './network-image-downloader.ts';
 import { NoteOwnerResolver } from './note-owner-resolver.ts';
 import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
+import { RenameDeleteHandlerMigrationComponent } from './rename-delete-handler-migration-component.ts';
 import { TokenValidator } from './token-validator.ts';
 import { TokenizedStringLanguageComponent } from './tokenized-string-language-component.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
@@ -70,15 +74,50 @@ export class Plugin extends PluginBase {
   protected override async onloadImpl(): Promise<void> {
     const validatorWrapper = ValueWrapper.unset<TokenValidator>();
 
+    // Before the settings component, which reads back through it: `isNoteEx` consults the attachment-extension
+    // List that Advanced Rename and Delete Handler owns since 12.0.0.
+    const handedOverSettingsComponent = this.addChild(
+      new HandedOverSettingsComponent({
+        app: this.app
+      })
+    );
+
     const pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
         app: this.app,
         dataHandler: new PluginDataHandler(this),
+        handedOverSettingsComponent,
         pluginEventSource: new PluginEventSourceImpl(this),
         validatorWrapper
       })
     );
     this.pluginSettingsComponent = pluginSettingsComponent;
+
+    const pluginSuggestionComponent = this.addChild(
+      new PluginSuggestionComponent({
+        app: this.app,
+        isSuggestionDeclined: (): boolean => pluginSettingsComponent.settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        reason: t(($) => $.pluginSuggestion.reason),
+        // `editAndSave`, not `setProperty`: a decline has to outlive a reload, and `setProperty` only edits
+        // The in-memory state, so the suggestion would come back forever.
+        setSuggestionDeclined: async (isDeclined): Promise<void> => {
+          await pluginSettingsComponent.editAndSave((settings) => {
+            settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined = isDeclined;
+          });
+        },
+        suggestedPluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+        suggestedPluginName: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
+      })
+    );
+
+    this.addChild(
+      new RenameDeleteHandlerMigrationComponent({
+        app: this.app,
+        pluginSettingsComponent,
+        sourcePluginId: this.manifest.id
+      })
+    );
 
     const validator = new TokenValidator({
       app: this.app,
@@ -92,6 +131,7 @@ export class Plugin extends PluginBase {
     const attachmentPathManager = new AttachmentPathManager({
       app: this.app,
       getAvailablePathForAttachmentsOriginal,
+      handedOverSettingsComponent,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent,
       tokenValidator: validator
@@ -111,6 +151,7 @@ export class Plugin extends PluginBase {
       app: this.app,
       arrayBufferMap,
       attachmentPathManager,
+      handedOverSettingsComponent,
       imageManager,
       imageSizeMap,
       markdownUrlMap,
@@ -123,6 +164,7 @@ export class Plugin extends PluginBase {
         app: this.app,
         arrayBufferMap,
         attachmentPathManager,
+        handedOverSettingsComponent,
         imageSizeMap,
         markdownUrlMap,
         pluginDirectory: this.manifest.dir ?? '',
@@ -137,37 +179,8 @@ export class Plugin extends PluginBase {
         plugin: this,
         pluginSettingsTab: new PluginSettingsTab({
           plugin: this,
-          pluginSettingsComponent
-        })
-      })
-    );
-
-    const attachmentRescuer = new AttachmentRescuer({
-      app: this.app,
-      attachmentPathManager,
-      pluginSettingsComponent
-    });
-
-    this.addChild(
-      new RenameDeleteHandlerComponent({
-        abortSignalComponent: this.abortSignalComponent,
-        app: this.app,
-        linkUpdateProgressReporter: createLinkUpdateProgressReporter({
-          pluginNoticeComponent: this.pluginNoticeComponent
-        }),
-        pluginId: this.manifest.id,
-        pluginNoticeComponent: this.pluginNoticeComponent,
-        resourceLockComponent: this.resourceLockComponent,
-        settingsBuilder: (): Partial<RenameDeleteHandlerSettings> => ({
-          emptyFolderBehavior: pluginSettingsComponent.settings.emptyFolderBehavior,
-          getRescuePath: async (params) => await attachmentRescuer.getRescuePath(params),
-          isNote: (path: string): boolean => pluginSettingsComponent.isNoteEx(path),
-          isPathIgnored: (path: string): boolean => pluginSettingsComponent.settings.isPathIgnored(path),
-          shouldHandleDeletions: pluginSettingsComponent.settings.shouldDeleteOrphanAttachments,
-          shouldHandleRenames: pluginSettingsComponent.settings.shouldHandleRenames,
-          shouldRenameAttachmentFiles: pluginSettingsComponent.settings.shouldRenameAttachmentFiles,
-          shouldRenameAttachmentFolder: pluginSettingsComponent.settings.shouldRenameAttachmentFolder,
-          shouldUpdateFileNameAliases: true
+          pluginSettingsComponent,
+          pluginSuggestionComponent
         })
       })
     );
@@ -184,6 +197,7 @@ export class Plugin extends PluginBase {
       app: this.app,
       attachmentPathManager,
       consoleDebugComponent: this.consoleDebugComponent,
+      handedOverSettingsComponent,
       networkImageDownloader,
       pluginName: this.manifest.name,
       pluginNoticeComponent: this.pluginNoticeComponent,
@@ -196,6 +210,7 @@ export class Plugin extends PluginBase {
       abortSignalComponent: this.abortSignalComponent,
       app: this.app,
       attachmentPathManager,
+      handedOverSettingsComponent,
       pluginName: this.manifest.name,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent
@@ -203,6 +218,7 @@ export class Plugin extends PluginBase {
 
     const noteOwnerResolver = new NoteOwnerResolver({
       app: this.app,
+      handedOverSettingsComponent,
       pluginSettingsComponent
     });
 
@@ -226,6 +242,7 @@ export class Plugin extends PluginBase {
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
         attachmentPathManager,
+        handedOverSettingsComponent,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent,
         resourceLockComponent: this.resourceLockComponent
@@ -233,6 +250,7 @@ export class Plugin extends PluginBase {
       new GoToAttachmentFolderCommandHandler({
         app: this.app,
         attachmentPathManager,
+        handedOverSettingsComponent,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent
       }),

@@ -100,20 +100,6 @@ export const enGB = {
     defaultImageSizeDimension: {
       height: 'Height',
       width: 'Width'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'will delete the empty attachment folder.',
-        displayText: 'Delete'
-      },
-      deleteWithEmptyParents: {
-        description: 'will delete the empty attachment folder and its empty parent folders.',
-        displayText: 'Delete with empty parents'
-      },
-      keep: {
-        description: 'will keep the empty attachment folder.',
-        displayText: 'Keep'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const enGB = {
       },
       name: 'Duplicate name separator'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'When the attachment folder becomes empty:'
-      },
-      name: 'Empty attachment folder behaviour'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Exclude notes from the following paths.',
-        part2: 'Insert each path on a new line.',
-        part3: 'You can use path string or',
-        part4: 'If the setting is empty, no notes are excluded.'
-      },
-      name: 'Exclude paths'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Exclude attachments from the following paths when',
@@ -234,15 +205,6 @@ export const enGB = {
         part2: 'tokens'
       },
       name: 'Generated attachment file name'
-    },
-    includePaths: {
-      description: {
-        part1: 'Include notes from the following paths.',
-        part2: 'Insert each path on a new line.',
-        part3: 'You can use path string or',
-        part4: 'If the setting is empty, all notes are included.'
-      },
-      name: 'Include paths'
     },
     jpegQuality: {
       description: 'The smaller the quality, the greater the compression ratio.',
@@ -286,21 +248,6 @@ export const enGB = {
       description: 'Whether to convert pasted images to JPEG. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
       name: 'Should convert pasted images to JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'If enabled, when the note is deleted, its orphan attachments are deleted as well.',
-      name: 'Should delete orphan attachments'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'If enabled, when a note is renamed or moved, its attachments will be renamed according to the',
-        part2: 'setting.'
-      },
-      name: 'Should rename attachment files'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Whether to rename attachment folders when a note is renamed or moved.',
-      name: 'Should rename attachment folders'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Whether to apply the attachment folder and file name settings to attachments that OTHER plugins create.',
@@ -339,17 +286,6 @@ export const enGB = {
         part3: 'is set, the operations execution timeout is disabled.'
       },
       name: 'Timeout in seconds'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Treat files with these extensions as attachments.',
-        part2: 'By default',
-        part3: 'and',
-        part4: 'linked files are not treated as attachments and are not moved with the note.',
-        part5: 'You can add custom extensions, e.g.',
-        part6: ', to override this behavior.'
-      },
-      name: 'Treat as attachment extensions'
     }
   },
   promptWithPreviewModal: {

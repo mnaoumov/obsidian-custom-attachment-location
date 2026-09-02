@@ -15,6 +15,7 @@ import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 
 import type { AttachmentPathManager } from '../attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from '../handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
 import { ActionContext } from '../token-evaluator-context.ts';
@@ -22,6 +23,7 @@ import { ActionContext } from '../token-evaluator-context.ts';
 interface GoToAttachmentFolderCommandHandlerConstructorParams {
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -35,6 +37,7 @@ interface GoToAttachmentFolderCommandHandlerConstructorParams {
 export class GoToAttachmentFolderCommandHandler extends FileCommandHandler {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
@@ -48,12 +51,13 @@ export class GoToAttachmentFolderCommandHandler extends FileCommandHandler {
 
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
   protected override canExecuteFile(file: TFile): boolean {
-    return this.pluginSettingsComponent.isNoteEx(file) && !this.pluginSettingsComponent.settings.isPathIgnored(file.path);
+    return this.pluginSettingsComponent.isNoteEx(file) && !this.handedOverSettingsComponent.isPathIgnored(file.path);
   }
 
   protected override async executeFile(file: TFile): Promise<void> {

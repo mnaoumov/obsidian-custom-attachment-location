@@ -3,6 +3,7 @@ import type {
   SettingDefinitionRender,
   TextComponent
 } from 'obsidian';
+import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import type {
   BindOptionsExtended,
   PluginSettingsTabBaseConstructorParams
@@ -17,7 +18,7 @@ import {
   convertAsyncToSync,
   invokeAsyncSafely
 } from 'obsidian-dev-utils/async';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
+import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
@@ -54,14 +55,17 @@ const bindOptionsWithTrim: BindOptionsExtended<PluginSettings, string, Condition
 
 interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly pluginSuggestionComponent: PluginSuggestionComponent;
 }
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   private readonly pluginSettingsComponent2: PluginSettingsComponent;
+  private readonly pluginSuggestionComponent: PluginSuggestionComponent;
 
   public constructor(params: PluginSettingsTabConstructorParams) {
     super(params);
     this.pluginSettingsComponent2 = params.pluginSettingsComponent;
+    this.pluginSuggestionComponent = params.pluginSuggestionComponent;
   }
 
   public override hide(): void {
@@ -71,6 +75,18 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
 
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     return [
+      // The suggestion banner has to travel as a ROW: Obsidian renders the declarative definitions and never
+      // Calls `display()` once `getSettingDefinitions()` is non-empty, so there is no container to write into
+      // Otherwise. The row body is emptied first, leaving the Setting element as a bare host for the banner.
+      this.settingEx({
+        name: '',
+        render: (setting) => {
+          setting.settingEl.empty();
+          this.pluginSuggestionComponent.renderBanner(setting.settingEl);
+        },
+        searchable: false,
+        visible: () => this.pluginSuggestionComponent.getSuggestedPluginState() !== SuggestedPluginState.Enabled
+      }),
       this.settingGroupEx({
         heading: t(($) => $.pluginSettingsTab.groups.core),
         items: this.getCoreItems()
@@ -79,12 +95,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         desc: t(($) => $.pluginSettingsTab.pages.moveRenames.description),
         items: this.getMoveRenamesItems(),
         name: t(($) => $.pluginSettingsTab.groups.moveRenames),
-        type: 'page'
-      },
-      {
-        desc: t(($) => $.pluginSettingsTab.pages.deletion.description),
-        items: this.getDeletionItems(),
-        name: t(($) => $.pluginSettingsTab.groups.deletion),
         type: 'page'
       },
       {
@@ -314,47 +324,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       }),
       this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part1));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part2));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part3));
-          f.appendText(' ');
-          appendCodeBlock(f, '.md');
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part4));
-          f.appendText(' ');
-          appendCodeBlock(f, 'property:');
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part5));
-          f.appendText(' ');
-          appendCodeBlock(f, 'property:excalidraw-plugin');
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part6));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.regularExpression));
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part7));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part8));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.notePriorities.description.part9));
-        }),
-        name: t(($) => $.pluginSettingsTab.notePriorities.name),
-        render: (setting) => {
-          setting.addMultipleText((multipleText) => {
-            this.bind({
-              propertyName: 'notePriorities',
-              valueComponent: multipleText
-            });
-          });
-        }
-      }),
-      this.settingEx({
         desc: t(($) => $.pluginSettingsTab.shouldSkipCollectingAttachmentsReferencedByRawPath.description),
         name: t(($) => $.pluginSettingsTab.shouldSkipCollectingAttachmentsReferencedByRawPath.name),
         render: (setting) => {
@@ -515,83 +484,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         },
         // The row is a bare action button with no name, so there is nothing to match on.
         searchable: false
-      })
-    ];
-  }
-
-  private getDeletionItems(): SettingDefinitionRender[] {
-    return [
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.emptyFolderBehavior.description.part1));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.keep.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.keep.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.delete.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.delete.description));
-          f.createEl('br');
-          appendCodeBlock(f, t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText));
-          f.appendText(' - ');
-          f.appendText(t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.description));
-        }),
-        name: t(($) => $.pluginSettingsTab.emptyFolderBehavior.name),
-        render: (setting) => {
-          setting.addDropdown((dropdown) => {
-            dropdown.addOptions({
-              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
-              [EmptyFolderBehavior.Keep]: t(($) => $.pluginSettings.emptyFolderBehavior.keep.displayText),
-              [EmptyFolderBehavior.Delete]: t(($) => $.pluginSettings.emptyFolderBehavior.delete.displayText),
-              [EmptyFolderBehavior.DeleteWithEmptyParents]: t(($) => $.pluginSettings.emptyFolderBehavior.deleteWithEmptyParents.displayText)
-              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
-            });
-            this.bind({
-              propertyName: 'emptyFolderBehavior',
-              valueComponent: dropdown
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: t(($) => $.pluginSettingsTab.shouldDeleteOrphanAttachments.description),
-        name: t(($) => $.pluginSettingsTab.shouldDeleteOrphanAttachments.name),
-        render: (setting) => {
-          setting.addToggle((toggle) => {
-            this.bind({
-              onChanged: () => {
-                // The row below only reads this value through its `disabled` predicate.
-                this.refreshDomState();
-              },
-              propertyName: 'shouldDeleteOrphanAttachments',
-              valueComponent: toggle
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.description.part1));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.description.part2));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.pluginSettingsTab.notePriorities.name));
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.description.part3));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.description.part4));
-        }),
-        disabled: () => !this.pluginSettingsComponent.settings.shouldDeleteOrphanAttachments,
-        name: t(($) => $.pluginSettingsTab.shouldRescueSharedAttachments.name),
-        render: (setting) => {
-          setting.addToggle((toggle) => {
-            this.bind({
-              propertyName: 'shouldRescueSharedAttachments',
-              valueComponent: toggle
-            });
-          });
-        }
       })
     ];
   }
@@ -799,65 +691,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part1));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part2));
-          f.appendText(' ');
-          f.createEl('a', {
-            href: 'obsidian://show-plugin?id=backlink-cache',
-            text: 'Backlink Cache'
-          });
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldHandleRenames.description.part3));
-        }),
-        name: t(($) => $.pluginSettingsTab.shouldHandleRenames.name),
-        render: (setting) => {
-          setting.addToggle((toggle) => {
-            this.bind({
-              onChanged: () => {
-                // The two rows below only read this value through their `disabled` predicates.
-                this.refreshDomState();
-              },
-              propertyName: 'shouldHandleRenames',
-              valueComponent: toggle
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.description),
-        disabled: () => !this.pluginSettingsComponent.settings.shouldHandleRenames,
-        name: t(($) => $.pluginSettingsTab.shouldRenameAttachmentFolders.name),
-        render: (setting) => {
-          setting.addToggle((toggle) => {
-            this.bind({
-              propertyName: 'shouldRenameAttachmentFolder',
-              valueComponent: toggle
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.description.part1));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.pluginSettingsTab.renamedAttachmentFileName.name));
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.description.part2));
-        }),
-        disabled: () => !this.pluginSettingsComponent.settings.shouldHandleRenames,
-        name: t(($) => $.pluginSettingsTab.shouldRenameAttachmentFiles.name),
-        render: (setting) => {
-          setting.addToggle((toggle) => {
-            this.bind({
-              propertyName: 'shouldRenameAttachmentFiles',
-              valueComponent: toggle
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
           f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part1));
           f.appendText(' ');
           f.createEl('a', {
@@ -924,52 +757,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
 
   private getPathItems(): SettingDefinitionRender[] {
     return [
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part1));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part2));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part3));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.regularExpression));
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.includePaths.description.part4));
-        }),
-        name: t(($) => $.pluginSettingsTab.includePaths.name),
-        render: (setting) => {
-          setting.addMultipleText((multipleText) => {
-            this.bind({
-              propertyName: 'includePaths',
-              valueComponent: multipleText
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part1));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part2));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part3));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.regularExpression));
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.excludePaths.description.part4));
-        }),
-        name: t(($) => $.pluginSettingsTab.excludePaths.name),
-        render: (setting) => {
-          setting.addMultipleText((multipleText) => {
-            this.bind({
-              propertyName: 'excludePaths',
-              valueComponent: multipleText
-            });
-          });
-        }
-      }),
       this.settingEx({
         desc: createFragment((f) => {
           f.appendText(t(($) => $.pluginSettingsTab.attachmentUnitFolderPaths.description.part1));
@@ -1054,43 +841,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           setting.addMultipleText((multipleText) => {
             this.bind({
               propertyName: 'excludePathsFromMultipleNotesCheck',
-              valueComponent: multipleText
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part1));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part2));
-          f.appendText(' ');
-          appendCodeBlock(f, '.md');
-          f.appendText(', ');
-          appendCodeBlock(f, '.canvas');
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part3));
-          f.appendText(' ');
-          appendCodeBlock(f, '.base');
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part4));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part5));
-          f.appendText(' ');
-          appendCodeBlock(f, '.foo.md');
-          f.appendText(', ');
-          appendCodeBlock(f, '.bar.canvas');
-          f.appendText(', ');
-          appendCodeBlock(f, '.baz.base');
-          f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part6));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.description.part7));
-        }),
-        name: t(($) => $.pluginSettingsTab.treatAsAttachmentExtensions.name),
-        render: (setting) => {
-          setting.addMultipleText((multipleText) => {
-            this.bind({
-              propertyName: 'treatAsAttachmentExtensions',
               valueComponent: multipleText
             });
           });
