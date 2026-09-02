@@ -28,7 +28,7 @@ const WAIT_TIMEOUT_IN_MILLISECONDS = 30_000;
 interface ProbeResult {
   readonly attachmentPathAfterDrawing: string;
   readonly attachmentPathAfterNote: string;
-  readonly settingsFound: boolean;
+  readonly probesFound: boolean;
 }
 
 describe('An attachment written by another plugin while a drawing is open is left alone (issue #65)', () => {
@@ -41,18 +41,46 @@ describe('An attachment written by another plugin while a drawing is open is lef
         interface OtherPluginSettings {
           attachmentFolderPath: string;
           shouldRenameAttachmentsCreatedByOtherPlugins: boolean;
-          treatAsAttachmentExtensions: readonly string[];
+        }
+
+        /*
+         * `treatAsAttachmentExtensions` belongs to Advanced Rename and Delete Handler since 12.0.0, and
+         * this plugin no longer reads the array at all — it asks `isTreatedAsAttachment(path)`, so the
+         * matching lives in one place across two bundled copies of the library. What this test pins is
+         * therefore the PREDICATE's answer, supplied by a stub parked on the read-back component's live
+         * ref rather than by installing the other plugin into the vault.
+         */
+        interface HandedOverProvider {
+          getSettings(): Record<string, unknown>;
+          isPathIgnored(path: string): boolean;
+          isTreatedAsAttachment(path: string): boolean;
+        }
+
+        interface HandedOverProviderRef {
+          value: HandedOverProvider | null;
+        }
+
+        interface HandedOverSettingsHolder {
+          apiRef: HandedOverProviderRef | null;
         }
 
         function isOtherPluginSettings(value: unknown): value is OtherPluginSettings {
           return typeof value === 'object' && value !== null
             && typeof (value as Record<string, unknown>)['shouldRenameAttachmentsCreatedByOtherPlugins'] === 'boolean'
-            && Array.isArray((value as Record<string, unknown>)['treatAsAttachmentExtensions']);
+            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object by
+        function isHandedOverSettingsHolder(value: unknown): value is HandedOverSettingsHolder {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null
+            && 'apiRef' in record
+            && typeof record['isPathIgnored'] === 'function'
+            && typeof record['isTreatedAsAttachment'] === 'function';
+        }
+
+        // Neither the settings nor the read-back component is exposed publicly, so both are located by
         // Walking the plugin's component tree.
-        function findSettings(): null | OtherPluginSettings {
+        function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
@@ -64,8 +92,9 @@ describe('An attachment written by another plugin while a drawing is open is lef
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isOtherPluginSettings(record['settings'])) {
-              return record['settings'];
+            const matched = match(record);
+            if (matched !== null) {
+              return matched;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -88,15 +117,17 @@ describe('An attachment written by another plugin while a drawing is open is lef
           return null;
         }
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
-          return { attachmentPathAfterDrawing: '', attachmentPathAfterNote: '', settingsFound: false };
+        const foundSettings = findInPluginTree((record) => isOtherPluginSettings(record['settings']) ? record['settings'] : null);
+        const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
+        if (!foundSettings || !foundHolder) {
+          return { attachmentPathAfterDrawing: '', attachmentPathAfterNote: '', probesFound: false };
         }
         const settings: OtherPluginSettings = foundSettings;
+        const holder: HandedOverSettingsHolder = foundHolder;
 
         const priorFolderPath = settings.attachmentFolderPath;
         const wasRenamingOtherPlugins = settings.shouldRenameAttachmentsCreatedByOtherPlugins;
-        const priorTreatAsAttachment = settings.treatAsAttachmentExtensions;
+        const priorApiRef = holder.apiRef;
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const notePath = `eco-note-${stamp}.md`;
@@ -185,7 +216,18 @@ describe('An attachment written by another plugin while a drawing is open is lef
           // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
           settings.attachmentFolderPath = './eco-assets/${noteFileName}';
           settings.shouldRenameAttachmentsCreatedByOtherPlugins = true;
-          settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
+          holder.apiRef = {
+            value: {
+              getSettings: (): Record<string, unknown> => ({
+                emptyFolderBehavior: 'DeleteWithEmptyParents',
+                notePriorities: [],
+                shouldRenameAttachmentFiles: false,
+                treatAsAttachmentExtensions: ['.excalidraw.md']
+              }),
+              isPathIgnored: (): boolean => false,
+              isTreatedAsAttachment: (path: string): boolean => path.endsWith('.excalidraw.md')
+            }
+          };
 
           await app.vault.create(notePath, 'body\n');
           createdPaths.push(notePath);
@@ -195,11 +237,11 @@ describe('An attachment written by another plugin while a drawing is open is lef
           const attachmentPathAfterNote = await writeForeignAttachment(notePath, `eco-a-${stamp}.png`, true);
           const attachmentPathAfterDrawing = await writeForeignAttachment(drawingPath, `eco-b-${stamp}.png`, false);
 
-          return { attachmentPathAfterDrawing, attachmentPathAfterNote, settingsFound: true };
+          return { attachmentPathAfterDrawing, attachmentPathAfterNote, probesFound: true };
         } finally {
           settings.attachmentFolderPath = priorFolderPath;
           settings.shouldRenameAttachmentsCreatedByOtherPlugins = wasRenamingOtherPlugins;
-          settings.treatAsAttachmentExtensions = priorTreatAsAttachment;
+          holder.apiRef = priorApiRef;
           for (const path of createdPaths.reverse()) {
             await trashIfExists(path);
           }
@@ -212,7 +254,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.settingsFound).toBe(true);
+    expect(result.probesFound).toBe(true);
 
     // With a normal note open, the opt-in does its job: the foreign write is filed under the note.
     // Moved AND renamed: the file name is the plugin's `generatedAttachmentFileName`, not the one the

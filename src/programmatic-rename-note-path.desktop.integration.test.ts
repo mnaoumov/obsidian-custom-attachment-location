@@ -31,7 +31,7 @@ interface ProgrammaticRenameResult {
   readonly errors: readonly string[];
   readonly pathWithRenamingOff: string;
   readonly pathWithRenamingOn: string;
-  readonly settingsFound: boolean;
+  readonly probesFound: boolean;
   readonly wasPromptShown: boolean;
 }
 
@@ -47,7 +47,26 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
           attachmentFolderPath: string;
           generatedAttachmentFileName: string;
           renamedAttachmentFileName: string;
-          shouldRenameAttachmentFiles: boolean;
+        }
+
+        /*
+         * `shouldRenameAttachmentFiles` belongs to Advanced Rename and Delete Handler since 12.0.0, and
+         * this plugin reads it back through that plugin's API. So the two phases below swap the
+         * PROVIDER rather than the setting, by parking a stub on the read-back component's live ref —
+         * which exercises the real read path without needing the other plugin installed in the vault.
+         */
+        interface HandedOverProvider {
+          getSettings(): Record<string, unknown>;
+          isPathIgnored(path: string): boolean;
+          isTreatedAsAttachment(path: string): boolean;
+        }
+
+        interface HandedOverProviderRef {
+          value: HandedOverProvider | null;
+        }
+
+        interface HandedOverSettingsHolder {
+          apiRef: HandedOverProviderRef | null;
         }
 
         interface ResolveParams {
@@ -78,15 +97,22 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
 
         function isRenameNoteSettings(value: unknown): value is RenameNoteSettings {
           return typeof value === 'object' && value !== null
-            && typeof (value as Record<string, unknown>)['shouldRenameAttachmentFiles'] === 'boolean'
             && typeof (value as Record<string, unknown>)['renamedAttachmentFileName'] === 'string'
             && typeof (value as Record<string, unknown>)['generatedAttachmentFileName'] === 'string'
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object by
+        function isHandedOverSettingsHolder(value: unknown): value is HandedOverSettingsHolder {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null
+            && 'apiRef' in record
+            && typeof record['isPathIgnored'] === 'function'
+            && typeof record['isTreatedAsAttachment'] === 'function';
+        }
+
+        // Neither the settings nor the read-back component is exposed publicly, so both are located by
         // Walking the plugin's component tree (same approach as the other OCAL integration tests).
-        function findSettings(): null | RenameNoteSettings {
+        function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
@@ -98,8 +124,9 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isRenameNoteSettings(record['settings'])) {
-              return record['settings'];
+            const matched = match(record);
+            if (matched !== null) {
+              return matched;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -122,10 +149,29 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
           return null;
         }
 
-        const settings = findSettings();
+        const settings = findInPluginTree((record) => isRenameNoteSettings(record['settings']) ? record['settings'] : null);
+        const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
         const resolver: unknown = app.vault.getAvailablePathForAttachments;
-        if (!settings || !hasExtendedResolver(resolver)) {
-          return { ...EMPTY_RESULT, settingsFound: false };
+        if (!settings || !foundHolder || !hasExtendedResolver(resolver)) {
+          return { ...EMPTY_RESULT, probesFound: false };
+        }
+        const holder: HandedOverSettingsHolder = foundHolder;
+
+        // Mirrors this plugin's own absent-provider defaults, so only the value under test differs
+        // Between the two phases.
+        function stubProvider(shouldRenameAttachmentFiles: boolean): void {
+          holder.apiRef = {
+            value: {
+              getSettings: (): Record<string, unknown> => ({
+                emptyFolderBehavior: 'DeleteWithEmptyParents',
+                notePriorities: [],
+                shouldRenameAttachmentFiles,
+                treatAsAttachmentExtensions: ['.excalidraw.md']
+              }),
+              isPathIgnored: (): boolean => false,
+              isTreatedAsAttachment: (path: string): boolean => path.endsWith('.excalidraw.md')
+            }
+          };
         }
 
         // The narrowing above does not reach into the `resolve` closure below, so pin it to a typed const.
@@ -139,14 +185,14 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
         const originalSettings = {
           attachmentFolderPath: settings.attachmentFolderPath,
           generatedAttachmentFileName: settings.generatedAttachmentFileName,
-          renamedAttachmentFileName: settings.renamedAttachmentFileName,
-          shouldRenameAttachmentFiles: settings.shouldRenameAttachmentFiles
+          renamedAttachmentFileName: settings.renamedAttachmentFileName
         };
+        const priorApiRef = holder.apiRef;
         function restoreSettings(currentSettings: RenameNoteSettings): void {
           currentSettings.attachmentFolderPath = originalSettings.attachmentFolderPath;
           currentSettings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
           currentSettings.renamedAttachmentFileName = originalSettings.renamedAttachmentFileName;
-          currentSettings.shouldRenameAttachmentFiles = originalSettings.shouldRenameAttachmentFiles;
+          holder.apiRef = priorApiRef;
         }
 
         // The reporter's configuration, and the shipped defaults for the two rename settings.
@@ -204,11 +250,11 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
         }
 
         // Fix B: the resolver honors "do not rename attachment files".
-        settings.shouldRenameAttachmentFiles = false;
+        stubProvider(false);
         const pathWithRenamingOff = await resolve();
 
         // Fix A: an empty `renamedAttachmentFileName` means "keep the original name", not "fall back".
-        settings.shouldRenameAttachmentFiles = true;
+        stubProvider(true);
         const pathWithRenamingOn = await resolve();
 
         await sleep(300);
@@ -219,7 +265,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
           errors,
           pathWithRenamingOff,
           pathWithRenamingOn,
-          settingsFound: true,
+          probesFound: true,
           wasPromptShown
         };
       },
@@ -227,7 +273,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.settingsFound).toBe(true);
+    expect(result.probesFound).toBe(true);
     expect(result.errors).toEqual([]);
     // The `${prompt}` modal is what the reporter saw once per created note. It must never open here.
     expect(result.wasPromptShown).toBe(false);

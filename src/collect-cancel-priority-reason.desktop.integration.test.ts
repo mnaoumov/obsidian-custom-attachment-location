@@ -23,7 +23,7 @@ const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
 
 interface ProbeResult {
   readonly emptyListReason: string;
-  readonly settingsFound: boolean;
+  readonly probesFound: boolean;
   readonly tieReason: string;
 }
 
@@ -41,18 +41,46 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
         interface PrioritySettings {
           attachmentFolderPath: string;
           collectAttachmentUsedByMultipleNotesMode: string;
-          notePriorities: readonly string[];
+        }
+
+        /*
+         * `notePriorities` belongs to Advanced Rename and Delete Handler since 12.0.0, and this plugin
+         * reads it back through that plugin's API. So the setting is no longer writable here — the
+         * PROVIDER is what the phases swap, by parking a stub on the read-back component's live ref.
+         * That exercises the real read path (`apiRef.value.getSettings()`) without needing the other
+         * plugin installed in the vault.
+         */
+        interface HandedOverProvider {
+          getSettings(): Record<string, unknown>;
+          isPathIgnored(path: string): boolean;
+          isTreatedAsAttachment(path: string): boolean;
+        }
+
+        interface HandedOverProviderRef {
+          value: HandedOverProvider | null;
+        }
+
+        interface HandedOverSettingsHolder {
+          apiRef: HandedOverProviderRef | null;
         }
 
         function isPrioritySettings(value: unknown): value is PrioritySettings {
           return typeof value === 'object' && value !== null
-            && Array.isArray((value as Record<string, unknown>)['notePriorities'])
-            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
+            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string'
+            && typeof (value as Record<string, unknown>)['collectAttachmentUsedByMultipleNotesMode'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): null | PrioritySettings {
+        function isHandedOverSettingsHolder(value: unknown): value is HandedOverSettingsHolder {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null
+            && 'apiRef' in record
+            && typeof record['isPathIgnored'] === 'function'
+            && typeof record['isTreatedAsAttachment'] === 'function';
+        }
+
+        // Neither the settings nor the read-back component is exposed publicly, so both are located by
+        // Walking the plugin's component tree.
+        function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
@@ -64,8 +92,9 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isPrioritySettings(record['settings'])) {
-              return record['settings'];
+            const matched = match(record);
+            if (matched !== null) {
+              return matched;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -88,16 +117,35 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
           return null;
         }
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
-          return { emptyListReason: '', settingsFound: false, tieReason: '' };
+        const foundSettings = findInPluginTree((record) => isPrioritySettings(record['settings']) ? record['settings'] : null);
+        const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
+        if (!foundSettings || !foundHolder) {
+          return { emptyListReason: '', probesFound: false, tieReason: '' };
         }
         // A narrowed `const` does not stay narrowed inside a function declaration below it.
         const settings: PrioritySettings = foundSettings;
+        const holder: HandedOverSettingsHolder = foundHolder;
 
         const priorFolderPath = settings.attachmentFolderPath;
-        const priorPriorities = settings.notePriorities;
+        const priorApiRef = holder.apiRef;
         const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
+
+        // Mirrors this plugin's own absent-provider defaults, so only the value under test differs
+        // Between the two phases.
+        function stubProvider(notePriorities: readonly string[]): void {
+          holder.apiRef = {
+            value: {
+              getSettings: (): Record<string, unknown> => ({
+                emptyFolderBehavior: 'DeleteWithEmptyParents',
+                notePriorities,
+                shouldRenameAttachmentFiles: false,
+                treatAsAttachmentExtensions: ['.excalidraw.md']
+              }),
+              isPathIgnored: (): boolean => false,
+              isTreatedAsAttachment: (path: string): boolean => path.endsWith('.excalidraw.md')
+            }
+          };
+        }
 
         /*
          * Best-effort cleanup, so it must tolerate an entry that is already gone: the collect pass
@@ -143,7 +191,7 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
           const secondNotePath = `cr-second-${stamp}.md`;
 
           try {
-            settings.notePriorities = notePriorities;
+            stubProvider(notePriorities);
 
             await app.vault.createBinary(imagePath, new ArrayBuffer(4));
             const firstNote = await app.vault.create(firstNotePath, `![[${imagePath}]]\n`);
@@ -200,11 +248,11 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
           const emptyListReason = await readReason([]);
           // Both notes are plain `.md`, so the one entry matches them equally well: a tie.
           const tieReason = await readReason(['.md']);
-          return { emptyListReason, settingsFound: true, tieReason };
+          return { emptyListReason, probesFound: true, tieReason };
         } finally {
           /* eslint-disable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
           settings.attachmentFolderPath = priorFolderPath;
-          settings.notePriorities = priorPriorities;
+          holder.apiRef = priorApiRef;
           settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
           /* eslint-enable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
         }
@@ -218,18 +266,19 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.settingsFound).toBe(true);
+    expect(result.probesFound).toBe(true);
 
     // The default: nothing was configured to decide, and the dialog says so rather than leaving the
-    // User to guess from a list of notes.
+    // User to guess from a list of notes. Since 12.0.0 the setting name is qualified by the plugin
+    // That owns it, because that is where the user has to go to change it.
     expect(result.emptyListReason).toBe(
-      'It was not moved because the Note priorities setting is empty, so nothing decides which of these notes owns it.'
+      'It was not moved because the Advanced Rename and Delete Handler → Note priorities setting is empty, so nothing decides which of these notes owns it.'
     );
 
     // A configured list that cannot separate the notes reads differently, which is the whole point:
     // The two situations need different fixes.
     expect(result.tieReason).toBe(
-      'It was not moved because several of these notes match the Note priorities setting equally well, so it names no single owner.'
+      'It was not moved because several of these notes match the Advanced Rename and Delete Handler → Note priorities setting equally well, so it names no single owner.'
     );
     expect(result.tieReason).not.toBe(result.emptyListReason);
   }, 180_000);
