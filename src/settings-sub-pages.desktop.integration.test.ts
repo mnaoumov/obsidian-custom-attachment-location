@@ -24,9 +24,10 @@ const PLUGIN_ID = 'obsidian-custom-attachment-location';
 const SETTLE_TIMEOUT_IN_MILLISECONDS = 600;
 const SEARCH_SETTLE_TIMEOUT_IN_MILLISECONDS = 1200;
 
+// No `Deletion` page since 12.0.0: every row it held belonged to the rename/delete handler this plugin
+// Stopped registering, so the page emptied and was dropped rather than left as a bare label.
 const EXPECTED_PAGE_NAMES = [
   'Move/renames',
-  'Deletion',
   'Special characters',
   'Collected attachments',
   'Images',
