@@ -580,6 +580,86 @@ describe('UnusedAttachmentsRemover', () => {
 
       expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unitFolder);
     });
+
+    it('should fall back to the per-file rule when the designated folder is not in the vault', async () => {
+      /*
+       * The designation is a published answer about a PATH, so it can outlive the folder it names —
+       * a stale designated path, or a folder deleted between the walk and the judging. There is no
+       * unit to judge then, and the members have to stay open to judgement rather than silently immortal.
+       */
+      getFolderByPath.mockImplementation((path) => path === UNIT_FOLDER_PATH ? null : attachmentFolder);
+      backlinksByPath.set(image.path, [drawing.path]);
+
+      await runOperation([note]);
+
+      // Per-file again: the image keeps the drawing's link, and the drawing itself has none.
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, drawing);
+    });
+
+    it('should skip a folder inside the unit when reading its members', async () => {
+      // The walk yields folders as well as files, and only the files are the unit's members.
+      const subFolder = createFolder(`${UNIT_FOLDER_PATH}/sub`);
+      unitMembers = [drawing, image, castTo<TFile>(subFolder)];
+      mockIsFile.mockImplementation((abstractFile) => abstractFile !== subFolder);
+      backlinksByPath.set(image.path, [drawing.path]);
+
+      await runOperation([note]);
+
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unitFolder);
+    });
+
+    it('should trash several unit folders in path order, ahead of the loose attachments', async () => {
+      const otherUnitFolderPath = `${ATTACHMENT_FOLDER_PATH}/other_files`;
+      const otherUnitFolder = createFolder(otherUnitFolderPath);
+      const otherImage = createFile(`${otherUnitFolderPath}/other.png`);
+      const loose = createFile(`${ATTACHMENT_FOLDER_PATH}/loose.png`);
+      const otherUnitMembers = [otherImage];
+
+      vi.mocked(settings.isAttachmentUnitFolder).mockImplementation((path) => path === UNIT_FOLDER_PATH || path === otherUnitFolderPath);
+      getFolderByPath.mockImplementation((path) => {
+        switch (path) {
+          case otherUnitFolderPath: {
+            return otherUnitFolder;
+          }
+          case UNIT_FOLDER_PATH: {
+            return unitFolder;
+          }
+          default: {
+            return attachmentFolder;
+          }
+        }
+      });
+
+      // Each unit's walk sees only its own members; the attachment folder's walk sees everything.
+      vi.spyOn(Vault, 'recurseChildren').mockImplementation((root, callback) => {
+        let children: TFile[];
+        if (root === unitFolder) {
+          children = unitMembers;
+        } else if (root === otherUnitFolder) {
+          children = otherUnitMembers;
+        } else {
+          children = [...unitMembers, ...otherUnitMembers, loose];
+        }
+        for (const child of children) {
+          callback(child);
+        }
+      });
+
+      backlinksByPath.set(image.path, [drawing.path]);
+
+      await runOperation([note]);
+
+      /*
+       * Folders first and in path order, then the attachment that belongs to no unit. The order is
+       * the point: a folder takes everything inside it, so anything below it must not be trashed
+       * again afterwards.
+       */
+      expect(mockTrashSafe.mock.calls.map((call) => castTo<TAbstractFile>(call[1]).path)).toStrictEqual([
+        otherUnitFolderPath,
+        UNIT_FOLDER_PATH,
+        loose.path
+      ]);
+    });
   });
 
   describe('confirmation and trashing', () => {
