@@ -142,9 +142,7 @@ export class UnusedAttachmentsRemover {
         timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
       });
 
-      const outsideBacklinks = backlinks.keys().filter((backlink) =>
-        !backlink.startsWith(insidePathPrefix) && !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink)
-      );
+      const outsideBacklinks = backlinks.keys().filter((backlink) => !backlink.startsWith(insidePathPrefix) && !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
       if (outsideBacklinks.length > 0) {
         return true;
       }
