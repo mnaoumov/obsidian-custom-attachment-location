@@ -60,7 +60,16 @@ import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 // --- Hoisted shared state ---
 
+interface StubbedSettings {
+  isAdvancedRenameAndDeleteHandlerSuggestionDeclined: boolean;
+  proposedRenameDeleteSettings: null;
+}
+
 const hoisted = vi.hoisted(() => ({
+  editAndSave: vi.fn((settingsEditor: (settings: StubbedSettings) => void): Promise<void> => {
+    settingsEditor(hoisted.settings);
+    return noopAsync();
+  }),
   isNoteEx: vi.fn((_path: string): boolean => true),
   settings: {
     isAdvancedRenameAndDeleteHandlerSuggestionDeclined: false,
@@ -195,6 +204,7 @@ vi.mock('./plugin-settings-component.ts', () => ({
   PluginSettingsComponent: vi.fn(function pluginSettingsComponentStub() {
     const component = new Component();
     Object.assign(component, {
+      editAndSave: (settingsEditor: (settings: typeof hoisted.settings) => void): Promise<void> => hoisted.editAndSave(settingsEditor),
       isNoteEx: (path: string): boolean => hoisted.isNoteEx(path),
       settings: hoisted.settings
     });
@@ -235,6 +245,19 @@ interface CustomAttachmentLocationParamsProbe {
   pluginDirectory: string;
 }
 
+interface SuggestionParamsProbe {
+  isSuggestionDeclined(): boolean;
+  setSuggestionDeclined(isDeclined: boolean): Promise<void>;
+}
+
+function getSuggestionParams(): SuggestionParamsProbe {
+  const call = vi.mocked(PluginSuggestionComponent).mock.calls[0];
+  if (!call) {
+    throw new Error('PluginSuggestionComponent was not constructed.');
+  }
+  return castTo<SuggestionParamsProbe>(call[0]);
+}
+
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
 const manifest = castTo<PluginManifest>({
@@ -254,6 +277,8 @@ let getPluginMock: Mock<(pluginId: string) => null | PluginOriginal>;
 beforeEach(() => {
   vi.clearAllMocks();
   hoisted.isNoteEx.mockReturnValue(true);
+  // A plain object, so `clearAllMocks` does not reset it and a test that flips the flag would leak.
+  hoisted.settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined = false;
   const appMock = App.createConfigured__();
   appMock.workspace.onLayoutReady = vi.fn((callback: () => void) => {
     callback();
@@ -356,6 +381,41 @@ describe('Plugin', () => {
         plugin.collectAttachmentsInAbstractFiles([castTo<TFile>({ path: 'note.md' })]);
       }).not.toThrow();
       await noopAsync();
+    });
+  });
+
+  describe('Advanced Rename and Delete Handler suggestion', () => {
+    it('should suggest the plugin that now owns rename/delete', async () => {
+      const plugin = new Plugin(app, manifest);
+      await plugin.onload();
+
+      expect(PluginSuggestionComponent).toHaveBeenCalledWith(expect.objectContaining({
+        suggestedPluginId: 'advanced-rename-and-delete-handler',
+        suggestedPluginName: 'Advanced Rename and Delete Handler'
+      }));
+    });
+
+    it('should report the declined flag from the settings', async () => {
+      const plugin = new Plugin(app, manifest);
+      await plugin.onload();
+
+      hoisted.settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined = true;
+      expect(getSuggestionParams().isSuggestionDeclined()).toBe(true);
+
+      hoisted.settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined = false;
+      expect(getSuggestionParams().isSuggestionDeclined()).toBe(false);
+    });
+
+    // `editAndSave`, not `setProperty`: a decline that only edits the in-memory state comes back on the next
+    // Reload, so the suggestion would be offered forever.
+    it('should persist a decline rather than only holding it in memory', async () => {
+      const plugin = new Plugin(app, manifest);
+      await plugin.onload();
+
+      await getSuggestionParams().setSuggestionDeclined(true);
+
+      expect(hoisted.editAndSave).toHaveBeenCalled();
+      expect(hoisted.settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined).toBe(true);
     });
   });
 

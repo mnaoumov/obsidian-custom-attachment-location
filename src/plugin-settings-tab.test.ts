@@ -79,6 +79,10 @@ const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 // 28 = 27 setting rows + the suggestion banner row that rides at the top.
 const EXPECTED_ROW_COUNT = 28;
 
+// The suggestion banner's two inputs, so a test can drive both the row's render and its visibility.
+const renderBannerMock = vi.fn<(containerEl: HTMLElement) => void>();
+let suggestedPluginState = SuggestedPluginState.Enabled;
+
 interface CapturedMultipleTextComponent {
   name: string;
   setValue(value: readonly string[]): unknown;
@@ -248,8 +252,8 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
     plugin: obsidianPlugin,
     pluginSettingsComponent,
     pluginSuggestionComponent: strictProxy<PluginSuggestionComponent>({
-      getSuggestedPluginState: () => SuggestedPluginState.Enabled,
-      renderBanner: () => undefined
+      getSuggestedPluginState: () => suggestedPluginState,
+      renderBanner: renderBannerMock
     })
   });
 
@@ -381,10 +385,44 @@ beforeAll(async () => {
 describe('PluginSettingsTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    suggestedPluginState = SuggestedPluginState.Enabled;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  describe('Advanced Rename and Delete Handler suggestion banner', () => {
+    it('should hand the row element to the suggestion component, emptied first', async () => {
+      const { tab } = await createTab();
+      const row = findRow(tab, '');
+      const setting = new SettingEx(tab.containerEl);
+      setting.setName('Leftover');
+
+      row.render(setting, castTo<SettingGroup>(null));
+
+      expect(renderBannerMock).toHaveBeenCalledWith(setting.settingEl);
+      // Emptied first, so the Setting is a bare host rather than a row with a name beside a banner.
+      expect(setting.settingEl.textContent).toBe('');
+    });
+
+    it('should hide itself once the suggested plugin is enabled', async () => {
+      suggestedPluginState = SuggestedPluginState.Enabled;
+      const { tab } = await createTab();
+      expect(findRow(tab, '').visible?.()).toBe(false);
+    });
+
+    it('should show itself while the suggested plugin is not enabled', async () => {
+      suggestedPluginState = SuggestedPluginState.NotInstalled;
+      const { tab } = await createTab();
+      expect(findRow(tab, '').visible?.()).toBe(true);
+    });
+
+    // It is not a setting, so it must not surface as one in Obsidian's settings search.
+    it('should stay out of the settings search', async () => {
+      const { tab } = await createTab();
+      expect(findRow(tab, '').searchable).toBe(false);
+    });
   });
 
   it('should be constructable', async () => {

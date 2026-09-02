@@ -161,6 +161,29 @@ describe('PluginSettingsComponent', () => {
       const result = await component.validate(settings);
       expect(result.generatedAttachmentFileName).toBeUndefined();
     });
+
+    it('should accept valid regular expressions and plain paths in the exclude lists', async () => {
+      const component = await createComponent();
+      const settings = createSettings();
+      // Both shapes in one list: a plain path, which the validator skips, and a regular expression, which
+      // It compiles.
+      settings.excludePathsFromMultipleNotesCheck = ['plain/path', String.raw`/\.excalidraw\.md$/`];
+      const result = await component.validate(settings);
+      expect(result.excludePathsFromMultipleNotesCheck).toBeUndefined();
+    });
+
+    it('should reject an invalid regular expression in an exclude list', async () => {
+      const component = await createComponent();
+      // The real PluginSettings setter eagerly compiles the regex and would throw, so the getter is
+      // Overridden to feed the validator an invalid pattern directly.
+      const settings = createSettings();
+      Object.defineProperty(settings, 'excludePathsFromMultipleNotesCheck', {
+        configurable: true,
+        get: (): string[] => ['/[/']
+      });
+      const result = await component.validate(settings);
+      expect(result.excludePathsFromMultipleNotesCheck).toBe('Invalid regular expression /[/');
+    });
   });
 
   describe('specialCharactersReplacement validator', () => {
