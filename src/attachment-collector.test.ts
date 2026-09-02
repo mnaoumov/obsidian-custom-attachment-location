@@ -633,6 +633,23 @@ describe('AttachmentCollector', () => {
         });
       });
 
+      it('should clean up the folder the unit folder vacated, not one carried away with it', async () => {
+        // The attachment's own parent is carried away inside the tree, so cleaning it up sweeps a path
+        // That no longer exists and leaves the folder the unit folder actually left behind (issue #69).
+        getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: UNIT_FOLDER_PATH }));
+        mockGetLinks.mockReturnValue([createReference()]);
+        mockExtractLinkFile.mockReturnValue(createFile(`${UNIT_FOLDER_PATH}/img/logo.png`));
+        mockRenameSafe.mockResolvedValue('attachments/page_files');
+
+        await runSingleFile(note);
+
+        expect(mockCleanupEmptyFolders).toHaveBeenCalledWith({
+          app,
+          emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
+          folderPaths: ['old-folder']
+        });
+      });
+
       it('should skip a second link that the first link already carried away inside the folder', async () => {
         // The link snapshot still names the old path, so without this the file reads as unresolvable
         // And would be reported as a broken link rather than as work already done.

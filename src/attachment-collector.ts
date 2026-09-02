@@ -478,7 +478,12 @@ export class AttachmentCollector {
             return;
           }
 
-          oldParentFolderPaths.add(dirname(attachmentMoveResult.oldAttachmentPath));
+          /*
+           * When the attachment travels inside its unit folder, the folder VACATED is the unit folder's
+           * own parent: the attachment's own parent is carried away with the tree and no longer exists
+           * to be cleaned up, so recording it leaves the real parent unswept (issue #69).
+           */
+          oldParentFolderPaths.add(dirname(attachmentMoveResult.unitFolderPath ?? attachmentMoveResult.oldAttachmentPath));
 
           const newAttachmentPath = attachmentMoveResult.unitFolderPath
             ? await moveUnitFolder(attachmentMoveResult.unitFolderPath, attachmentMoveResult.oldAttachmentPath, attachmentMoveResult.newAttachmentPath)
