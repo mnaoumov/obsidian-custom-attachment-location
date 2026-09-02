@@ -409,13 +409,13 @@ describe('PluginSettingsTab', () => {
     it('should hide itself once the suggested plugin is enabled', async () => {
       suggestedPluginState = SuggestedPluginState.Enabled;
       const { tab } = await createTab();
-      expect(findRow(tab, '').visible?.()).toBe(false);
+      expect(checkPredicate(findRow(tab, '').visible, true)).toBe(false);
     });
 
     it('should show itself while the suggested plugin is not enabled', async () => {
       suggestedPluginState = SuggestedPluginState.NotInstalled;
       const { tab } = await createTab();
-      expect(findRow(tab, '').visible?.()).toBe(true);
+      expect(checkPredicate(findRow(tab, '').visible, true)).toBe(true);
     });
 
     // It is not a setting, so it must not surface as one in Obsidian's settings search.
