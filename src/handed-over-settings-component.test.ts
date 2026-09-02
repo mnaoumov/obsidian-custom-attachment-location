@@ -29,7 +29,10 @@ vi.mock('obsidian-dev-utils/obsidian/plugin/plugin-api', async (importOriginal) 
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
-import { DEFAULT_HANDED_OVER_SETTINGS } from './advanced-rename-and-delete-handler.ts';
+import {
+  ADVANCED_RENAME_AND_DELETE_HANDLER_READ_BACK_API_CONTRACT,
+  DEFAULT_HANDED_OVER_SETTINGS
+} from './advanced-rename-and-delete-handler.ts';
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 
@@ -72,6 +75,27 @@ describe('HandedOverSettingsComponent', () => {
       apiVersionRange: '^1',
       pluginId: 'advanced-rename-and-delete-handler'
     }));
+  });
+
+  /*
+   * The consumer's own contract wins over the provider's, and here that is load-bearing rather than
+   * decorative. Advanced Rename and Delete Handler 1.1.1 publishes contract 1.0.0, which declares only
+   * `migrateSettings` — so it satisfies `^1`, and a shape check made against the PROVIDER's contract would
+   * pass and hand over an API with no `getSettings` for every read to throw on. Demanding the three
+   * read-back members is what makes that record fail the check and leaves the fallback in charge instead.
+   */
+  it('should demand the read-back members, so a provider that publishes only migrateSettings is refused', () => {
+    createComponent().load();
+
+    expect(mockWatchPluginApi).toHaveBeenCalledWith(expect.objectContaining({
+      contract: ADVANCED_RENAME_AND_DELETE_HANDLER_READ_BACK_API_CONTRACT
+    }));
+    expect(Object.keys(ADVANCED_RENAME_AND_DELETE_HANDLER_READ_BACK_API_CONTRACT)).toStrictEqual([
+      'getSettings',
+      'isPathIgnored',
+      'isTreatedAsAttachment'
+    ]);
+    expect(ADVANCED_RENAME_AND_DELETE_HANDLER_READ_BACK_API_CONTRACT).not.toHaveProperty('migrateSettings');
   });
 
   describe('while the provider is available', () => {

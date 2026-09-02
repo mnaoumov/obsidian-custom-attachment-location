@@ -22,6 +22,7 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_API_VERSION_RANGE,
+  ADVANCED_RENAME_AND_DELETE_HANDLER_MIGRATION_API_CONTRACT,
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID
 } from './advanced-rename-and-delete-handler.ts';
 
@@ -56,6 +57,10 @@ export class RenameDeleteHandlerMigrationComponent extends ComponentEx {
       apiVersionRange: ADVANCED_RENAME_AND_DELETE_HANDLER_API_VERSION_RANGE,
       app: this.app,
       component: this,
+      // Deliberately NARROWER than the read-back's contract: migrating needs only `migrateSettings`, which
+      // Has been published since contract `1.0.0`. Asking for more here would refuse to offer the migration
+      // To a user on an older provider — which is exactly the user who has settings to migrate.
+      contract: ADVANCED_RENAME_AND_DELETE_HANDLER_MIGRATION_API_CONTRACT,
       pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID
     });
 

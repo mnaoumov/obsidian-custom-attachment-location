@@ -29,6 +29,7 @@ import type {
 import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_API_VERSION_RANGE,
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+  ADVANCED_RENAME_AND_DELETE_HANDLER_READ_BACK_API_CONTRACT,
   DEFAULT_HANDED_OVER_SETTINGS
 } from './advanced-rename-and-delete-handler.ts';
 
@@ -87,6 +88,7 @@ export class HandedOverSettingsComponent extends ComponentEx {
       apiVersionRange: ADVANCED_RENAME_AND_DELETE_HANDLER_API_VERSION_RANGE,
       app: this.app,
       component: this,
+      contract: ADVANCED_RENAME_AND_DELETE_HANDLER_READ_BACK_API_CONTRACT,
       pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID
     });
   }

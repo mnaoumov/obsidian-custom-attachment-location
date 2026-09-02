@@ -13,6 +13,8 @@
  * and `watchPluginApi` negotiates the version at runtime.
  */
 
+import type { PluginApiContract } from 'obsidian-dev-utils/obsidian/plugin/plugin-api';
+
 import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/vault';
 
 /**
@@ -139,6 +141,33 @@ export const ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME = 'Advanced Rename a
  * The contract version range this plugin compiled against.
  */
 export const ADVANCED_RENAME_AND_DELETE_HANDLER_API_VERSION_RANGE = '^1';
+
+/**
+ * What the MIGRATION needs — a single method, published since contract `1.0.0`.
+ *
+ * Supplied to `watchPluginApi` as the consumer's own contract, which wins over the provider's. The two
+ * consumers here need different halves of the API and must be told apart: the migration works against
+ * every `^1` provider, while the read-back below does not.
+ */
+export const ADVANCED_RENAME_AND_DELETE_HANDLER_MIGRATION_API_CONTRACT: PluginApiContract = {
+  migrateSettings: {}
+};
+
+/**
+ * What the READ-BACK needs — the three members contract `1.1.0` added.
+ *
+ * This is load-bearing rather than decorative. Advanced Rename and Delete Handler `1.1.1` publishes
+ * contract `1.0.0`, whose own contract declares only `migrateSettings` — so it satisfies `^1` and passes a
+ * shape check made against the PROVIDER's contract. Without this one, a user on that released version would
+ * be handed an API with no `getSettings` and every read would throw. With it, the record fails the shape
+ * check, `PluginApiRef.value` stays `null`, and this plugin falls back to
+ * {@link DEFAULT_HANDED_OVER_SETTINGS} until the provider is new enough.
+ */
+export const ADVANCED_RENAME_AND_DELETE_HANDLER_READ_BACK_API_CONTRACT: PluginApiContract = {
+  getSettings: {},
+  isPathIgnored: {},
+  isTreatedAsAttachment: {}
+};
 
 /**
  * What this plugin uses while Advanced Rename and Delete Handler is not available — not installed, not

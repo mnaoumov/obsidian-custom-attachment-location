@@ -71,7 +71,7 @@ Five of those settings still matter to **this** plugin's own commands — Collec
 Two things follow, and are worth knowing before you decline the suggestion:
 
 - **`includePaths` / `excludePaths` now scope both plugins.** Excluding a folder from rename handling also excludes it from this plugin's Collect attachments and Delete unused attachments.
-- **Without Advanced Rename and Delete Handler installed, these fall back to this plugin's own defaults** — an empty path list, an empty priority list, `.excalidraw.md` as the one attachment extension, and `DeleteWithEmptyParents` for emptied folders. Nothing is lost: your values stay in `proposedRenameDeleteSettings` and are offered again the moment that plugin appears.
+- **Without Advanced Rename and Delete Handler installed, these fall back to this plugin's own defaults** — an empty path list, an empty priority list, `.excalidraw.md` as the one attachment extension, and `DeleteWithEmptyParents` for emptied folders. Nothing is lost: your values stay in `proposedRenameDeleteSettings` and are offered again the moment that plugin appears. The same fallback applies when it is installed but older than 1.2.0, which is the version that first offers these values back — the migration is still offered, so you can hand your settings over and then update.
 
 ## Image conversion and size
 

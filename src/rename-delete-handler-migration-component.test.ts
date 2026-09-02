@@ -32,6 +32,8 @@ vi.mock('obsidian-dev-utils/obsidian/plugin/plugin-api', async (importOriginal) 
 }));
 
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
+import { ADVANCED_RENAME_AND_DELETE_HANDLER_MIGRATION_API_CONTRACT } from './advanced-rename-and-delete-handler.ts';
+// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { PluginSettings } from './plugin-settings.ts';
 // eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
 import { RenameDeleteHandlerMigrationComponent } from './rename-delete-handler-migration-component.ts';
@@ -81,6 +83,20 @@ describe('RenameDeleteHandlerMigrationComponent', () => {
       apiVersionRange: '^1',
       pluginId: 'advanced-rename-and-delete-handler'
     }));
+  });
+
+  /*
+   * Deliberately narrower than the read-back's contract. `migrateSettings` has been published since
+   * contract 1.0.0, so demanding the 1.1.0 read-back members here would refuse to offer the migration to a
+   * user on an older provider — precisely the user who still has settings worth migrating.
+   */
+  it('should demand only migrateSettings, so an older provider can still be migrated to', () => {
+    createComponent().load();
+
+    expect(mockWatchPluginApi).toHaveBeenCalledWith(expect.objectContaining({
+      contract: ADVANCED_RENAME_AND_DELETE_HANDLER_MIGRATION_API_CONTRACT
+    }));
+    expect(Object.keys(ADVANCED_RENAME_AND_DELETE_HANDLER_MIGRATION_API_CONTRACT)).toStrictEqual(['migrateSettings']);
   });
 
   // The regression the live run of [[T711-P18]] caught. The settings component is a sibling whose own load is
