@@ -69,6 +69,7 @@ import {
 
 import type { HandedOverSettings } from './advanced-rename-and-delete-handler.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { AttachmentUnitFolderDesignation } from './attachment-unit-folder-designation.ts';
 import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -247,6 +248,22 @@ function createFile(path: string, isDeleted = false): TFile {
   });
 }
 
+/**
+ * Builds the patched vault method the collector reads the attachment-unit-folder designation off.
+ *
+ * The collector consults the published answer rather than the settings object directly, so the mock
+ * has to publish it the way the patch component does.
+ *
+ * @param settingsLike - The settings the designation answers from.
+ * @returns The patched method carrying the designation.
+ */
+function createGetAvailablePathForAttachments(settingsLike: SettingsLike): App['vault']['getAvailablePathForAttachments'] {
+  const designation: Required<AttachmentUnitFolderDesignation> = {
+    checkIsAttachmentUnitFolder: (folderPath) => settingsLike.isAttachmentUnitFolder(folderPath)
+  };
+  return castTo<App['vault']['getAvailablePathForAttachments']>(Object.assign(vi.fn(), designation));
+}
+
 function createReference(overrides: Partial<Reference> = {}): Reference {
   return strictProxy<Reference>({
     link: 'img.png',
@@ -309,6 +326,8 @@ describe('AttachmentCollector', () => {
       }),
       vault: strictProxy<App['vault']>({
         cachedRead: (file: TFile) => cachedRead(file),
+        // The collector reads the unit-folder designation off the patched method, not off the settings.
+        getAvailablePathForAttachments: createGetAvailablePathForAttachments(settings),
         getFileByPath: (path: string) => getFileByPath(path),
         getFolderByPath: (path: string) => getFolderByPath(path),
         getMarkdownFiles: () => getMarkdownFiles(),
@@ -637,6 +656,23 @@ describe('AttachmentCollector', () => {
           app,
           newPath: 'attachments/page_files',
           oldPathOrAbstractFile: unitFolder
+        });
+      });
+
+      it('should clean up the folder the unit folder vacated, not one carried away with it', async () => {
+        // The attachment's own parent is carried away inside the tree, so cleaning it up sweeps a path
+        // That no longer exists and leaves the folder the unit folder actually left behind (issue #69).
+        getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: UNIT_FOLDER_PATH }));
+        mockGetLinks.mockReturnValue([createReference()]);
+        mockExtractLinkFile.mockReturnValue(createFile(`${UNIT_FOLDER_PATH}/img/logo.png`));
+        mockRenameSafe.mockResolvedValue('attachments/page_files');
+
+        await runSingleFile(note);
+
+        expect(mockCleanupEmptyFolders).toHaveBeenCalledWith({
+          app,
+          emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
+          folderPaths: ['old-folder']
         });
       });
 

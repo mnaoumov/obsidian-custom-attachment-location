@@ -65,6 +65,7 @@ import type { HandedOverSettingsComponent } from './handed-over-settings-compone
 import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { checkIsAttachmentUnitFolder } from './attachment-unit-folder-designation.ts';
 import { selectMode } from './modals/collect-attachment-used-by-multiple-notes-modal.ts';
 import { NoteOwnerResolver } from './note-owner-resolver.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from './plugin-settings.ts';
@@ -483,7 +484,12 @@ export class AttachmentCollector {
             return;
           }
 
-          oldParentFolderPaths.add(dirname(attachmentMoveResult.oldAttachmentPath));
+          /*
+           * When the attachment travels inside its unit folder, the folder VACATED is the unit folder's
+           * own parent: the attachment's own parent is carried away with the tree and no longer exists
+           * to be cleaned up, so recording it leaves the real parent unswept (issue #69).
+           */
+          oldParentFolderPaths.add(dirname(attachmentMoveResult.unitFolderPath ?? attachmentMoveResult.oldAttachmentPath));
 
           const newAttachmentPath = attachmentMoveResult.unitFolderPath
             ? await moveUnitFolder(attachmentMoveResult.unitFolderPath, attachmentMoveResult.oldAttachmentPath, attachmentMoveResult.newAttachmentPath)
@@ -694,9 +700,19 @@ export class AttachmentCollector {
     return {
       newAttachmentPath,
       oldAttachmentPath: oldAttachmentFile.path,
+      /*
+       * Read back through the published designation rather than straight off the settings, so the
+       * collecting commands and the plugin that owns the delete interception decide from one answer.
+       * Two plugins deciding separately what a single attachment is would leave a folder kept whole
+       * by one and torn apart by the other.
+       */
       unitFolderPath: findAttachmentUnitFolderPath({
         attachmentPath: oldAttachmentFile.path,
-        checkIsAttachmentUnitFolder: (folderPath) => this.pluginSettingsComponent.settings.isAttachmentUnitFolder(folderPath)
+        checkIsAttachmentUnitFolder: (folderPath) =>
+          checkIsAttachmentUnitFolder({
+            folderPath,
+            vault: this.app.vault
+          })
       })
     };
   }
