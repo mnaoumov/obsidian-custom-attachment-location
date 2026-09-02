@@ -103,6 +103,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.addChild(
       new VaultGetAvailablePathForAttachmentsPatchComponent({
         attachmentPathManager: this.attachmentPathManager,
+        pluginSettingsComponent: this.pluginSettingsComponent,
         vault: this.app.vault
       })
     );

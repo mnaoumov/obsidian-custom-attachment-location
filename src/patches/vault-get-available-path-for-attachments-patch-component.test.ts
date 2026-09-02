@@ -13,17 +13,26 @@ import {
 } from 'vitest';
 
 import type { AttachmentPathManager } from '../attachment-path-manager.ts';
+import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
+import type { PluginSettings } from '../plugin-settings.ts';
 
+import { checkIsAttachmentUnitFolder } from '../attachment-unit-folder-designation.ts';
 import { VaultGetAvailablePathForAttachmentsPatchComponent } from './vault-get-available-path-for-attachments-patch-component.ts';
 
 interface PatchedMethodWithExtended {
   extended(): Promise<string>;
 }
 
+interface SettingsLike {
+  isAttachmentUnitFolder(path: string): boolean;
+}
+
 describe('VaultGetAvailablePathForAttachmentsPatchComponent', () => {
   let vault: VaultOriginal;
   let attachmentPathManager: AttachmentPathManager;
   let originalMethod: ReturnType<typeof vi.fn>;
+  let pluginSettingsComponent: PluginSettingsComponent;
+  let settings: SettingsLike;
 
   beforeEach(() => {
     const app = App.createConfigured__();
@@ -37,11 +46,18 @@ describe('VaultGetAvailablePathForAttachmentsPatchComponent', () => {
     attachmentPathManager = strictProxy<AttachmentPathManager>({
       getAvailablePathForAttachments: vi.fn().mockResolvedValue('/extended/attachment/path')
     });
+    settings = {
+      isAttachmentUnitFolder: vi.fn<(path: string) => boolean>().mockReturnValue(false)
+    };
+    pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
+      settings: castTo<PluginSettings>(settings)
+    });
   });
 
   function createComponent(): VaultGetAvailablePathForAttachmentsPatchComponent {
     return new VaultGetAvailablePathForAttachmentsPatchComponent({
       attachmentPathManager,
+      pluginSettingsComponent,
       vault
     });
   }
@@ -89,5 +105,31 @@ describe('VaultGetAvailablePathForAttachmentsPatchComponent', () => {
 
     expect(result).toBe('/extended/attachment/path');
     expect(vi.mocked(attachmentPathManager.getAvailablePathForAttachments)).toHaveBeenCalledTimes(1);
+  });
+
+  it('should publish the attachment unit folder designation read back from the vault', () => {
+    vi.mocked(settings.isAttachmentUnitFolder).mockImplementation((path) => path === 'Materials/page_files');
+    const component = createComponent();
+    component.load();
+
+    expect(checkIsAttachmentUnitFolder({
+      folderPath: 'Materials/page_files',
+      vault
+    })).toBe(true);
+    expect(checkIsAttachmentUnitFolder({
+      folderPath: 'Materials',
+      vault
+    })).toBe(false);
+  });
+
+  it('should answer no designation before the patch is installed', () => {
+    /*
+     * A reader that runs against a vault no attachment-location plugin has patched — the other plugin
+     * installed on its own, or this one still loading — gets `false`, not a crash.
+     */
+    expect(checkIsAttachmentUnitFolder({
+      folderPath: 'Materials/page_files',
+      vault
+    })).toBe(false);
   });
 });

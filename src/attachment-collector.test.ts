@@ -67,6 +67,7 @@ import {
 } from 'vitest';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { AttachmentUnitFolderDesignation } from './attachment-unit-folder-designation.ts';
 import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
@@ -245,6 +246,22 @@ function createFile(path: string, isDeleted = false): TFile {
   });
 }
 
+/**
+ * Builds the patched vault method the collector reads the attachment-unit-folder designation off.
+ *
+ * The collector consults the published answer rather than the settings object directly, so the mock
+ * has to publish it the way the patch component does.
+ *
+ * @param settingsLike - The settings the designation answers from.
+ * @returns The patched method carrying the designation.
+ */
+function createGetAvailablePathForAttachments(settingsLike: SettingsLike): App['vault']['getAvailablePathForAttachments'] {
+  const designation: Required<AttachmentUnitFolderDesignation> = {
+    checkIsAttachmentUnitFolder: (folderPath) => settingsLike.isAttachmentUnitFolder(folderPath)
+  };
+  return castTo<App['vault']['getAvailablePathForAttachments']>(Object.assign(vi.fn(), designation));
+}
+
 function createReference(overrides: Partial<Reference> = {}): Reference {
   return strictProxy<Reference>({
     link: 'img.png',
@@ -307,6 +324,8 @@ describe('AttachmentCollector', () => {
       }),
       vault: strictProxy<App['vault']>({
         cachedRead: (file: TFile) => cachedRead(file),
+        // The collector reads the unit-folder designation off the patched method, not off the settings.
+        getAvailablePathForAttachments: createGetAvailablePathForAttachments(settings),
         getFileByPath: (path: string) => getFileByPath(path),
         getFolderByPath: (path: string) => getFolderByPath(path),
         getMarkdownFiles: () => getMarkdownFiles(),
