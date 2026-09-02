@@ -49,6 +49,7 @@ import {
 } from 'vitest';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { AttachmentUnitFolderDesignation } from './attachment-unit-folder-designation.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
@@ -63,6 +64,7 @@ interface QueueParamsLike {
 interface SettingsLike {
   emptyFolderBehavior: EmptyFolderBehavior;
   getTimeoutInMilliseconds(): number;
+  isAttachmentUnitFolder(path: string): boolean;
   isExcludedFromMultipleNotesCheck(path: string): boolean;
   isPathIgnored(path: string): boolean;
 }
@@ -142,6 +144,22 @@ function createFile(path: string): TFile {
   });
 }
 
+/**
+ * Builds the patched vault method the remover reads the attachment-unit-folder designation off.
+ *
+ * The remover consults the published answer rather than the settings object directly, so the mock has
+ * to publish it the way the patch component does.
+ *
+ * @param settingsLike - The settings the designation answers from.
+ * @returns The patched method carrying the designation.
+ */
+function createGetAvailablePathForAttachments(settingsLike: SettingsLike): App['vault']['getAvailablePathForAttachments'] {
+  const designation: Required<AttachmentUnitFolderDesignation> = {
+    checkIsAttachmentUnitFolder: (folderPath) => settingsLike.isAttachmentUnitFolder(folderPath)
+  };
+  return castTo<App['vault']['getAvailablePathForAttachments']>(Object.assign(vi.fn(), designation));
+}
+
 let vaultRootFolder: TFolder;
 
 function createFolder(path: string): TFolder {
@@ -185,6 +203,7 @@ describe('UnusedAttachmentsRemover', () => {
     settings = {
       emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
       getTimeoutInMilliseconds: vi.fn<() => number>().mockReturnValue(1000),
+      isAttachmentUnitFolder: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isExcludedFromMultipleNotesCheck: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false)
     };
@@ -192,6 +211,7 @@ describe('UnusedAttachmentsRemover', () => {
     getFolderByPath = vi.fn<(path: string) => null | TFolder>().mockReturnValue(attachmentFolder);
     app = strictProxy<App>({
       vault: strictProxy<App['vault']>({
+        getAvailablePathForAttachments: createGetAvailablePathForAttachments(settings),
         getFolderByPath: (path: string) => getFolderByPath(path),
         getRoot: () => vaultRootFolder
       })
@@ -412,6 +432,146 @@ describe('UnusedAttachmentsRemover', () => {
         recurseSpy.mockRestore();
       }
       expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unused);
+    });
+  });
+
+  /*
+   * Issue #72. A designated attachment unit folder is ONE attachment, so the sweep judges the folder
+   * rather than its members: links from inside it do not keep it alive, and when nothing outside
+   * references anything inside, the whole folder goes.
+   */
+  describe('attachment unit folders', () => {
+    const UNIT_FOLDER_PATH = `${ATTACHMENT_FOLDER_PATH}/page_files`;
+
+    let backlinksByPath: Map<string, string[]>;
+    let drawing: TFile;
+    let image: TFile;
+    let note: TFile;
+    let unitFolder: TFolder;
+    let unitMembers: TFile[];
+
+    beforeEach(() => {
+      note = createFile('note.md');
+      /*
+       * A `.excalidraw.md` rather than a plain note on purpose: Obsidian indexes it, so it really does
+       * produce backlinks, while `treatAsAttachmentExtensions` keeps `isNoteEx` false. That is exactly
+       * the self-referencing unit the issue is about.
+       */
+      drawing = createFile(`${UNIT_FOLDER_PATH}/page.excalidraw.md`);
+      image = createFile(`${UNIT_FOLDER_PATH}/img.png`);
+      unitMembers = [drawing, image];
+      unitFolder = createFolder(UNIT_FOLDER_PATH);
+
+      mockIsFile.mockReturnValue(true);
+      mockIsNote.mockImplementation((f) => f === note);
+      mockIsFolder.mockReturnValue(false);
+      mockIsCanvasFile.mockReturnValue(false);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([]);
+      mockConfirm.mockResolvedValue(true);
+
+      vi.mocked(settings.isAttachmentUnitFolder).mockImplementation((path) => path === UNIT_FOLDER_PATH);
+      getFolderByPath.mockImplementation((path) => path === UNIT_FOLDER_PATH ? unitFolder : attachmentFolder);
+
+      // The attachment folder's walk finds the members; the unit's walk re-reads them as one unit.
+      vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        for (const member of unitMembers) {
+          callback(member);
+        }
+      });
+
+      backlinksByPath = new Map<string, string[]>();
+      mockGetBacklinksForFileSafe.mockImplementation((params) => {
+        const path = castTo<TFile>(params.pathOrFile).path;
+        return Promise.resolve(createBacklinks(backlinksByPath.get(path) ?? []));
+      });
+    });
+
+    it('should trash the whole unit folder when its members only reference each other', async () => {
+      // The drawing embeds its sibling image. That is the unit describing itself, so it must not count.
+      backlinksByPath.set(image.path, [drawing.path]);
+      await runOperation([note]);
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unitFolder);
+    });
+
+    it('should clean up the unit folder parent rather than the unit folder itself', async () => {
+      backlinksByPath.set(image.path, [drawing.path]);
+      await runOperation([note]);
+      expect(mockCleanupEmptyFolders).toHaveBeenCalledExactlyOnceWith({
+        app,
+        emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
+        folderPaths: [ATTACHMENT_FOLDER_PATH]
+      });
+    });
+
+    it('should keep the unit whole when another note references any member', async () => {
+      backlinksByPath.set(image.path, ['other.md']);
+      await runOperation([note]);
+      // The unreferenced drawing survives too: a unit that travels as one dies as one.
+      expect(mockTrashSafe).not.toHaveBeenCalled();
+      expect(showNoticeSpy).toHaveBeenCalledExactlyOnceWith('No unused attachments found.');
+    });
+
+    it('should keep the unit whole when the scanning note itself references a member', async () => {
+      /*
+       * The deliberate asymmetry with the per-file rule, which filters the scanning note out. The note
+       * sits OUTSIDE the unit, so its link in is a genuine outside reference.
+       */
+      backlinksByPath.set(image.path, [note.path]);
+      await runOperation([note]);
+      expect(mockTrashSafe).not.toHaveBeenCalled();
+    });
+
+    it('should keep the unit whole when a member is referenced from both inside and outside', async () => {
+      // Guards against the inside-the-unit filter swallowing the outside hit alongside it.
+      backlinksByPath.set(image.path, [drawing.path, 'other.md']);
+      await runOperation([note]);
+      expect(mockTrashSafe).not.toHaveBeenCalled();
+    });
+
+    it('should ignore an excluded note when deciding the unit is unreferenced', async () => {
+      backlinksByPath.set(image.path, ['excluded.md']);
+      vi.mocked(settings.isExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'excluded.md');
+      await runOperation([note]);
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unitFolder);
+    });
+
+    it('should fall back to the per-file rule when a real note lives inside the unit', async () => {
+      /*
+       * An attachment sweep never trashes a note on the user's behalf, so the whole folder comes off
+       * the table and its members are judged one at a time again.
+       */
+      const scratch = createFile(`${UNIT_FOLDER_PATH}/scratch.md`);
+      unitMembers = [drawing, image, scratch];
+      vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === scratch);
+      backlinksByPath.set(image.path, [drawing.path]);
+      await runOperation([note]);
+      // The folder survives; only the drawing, which nothing references at all, is trashed.
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, drawing);
+    });
+
+    it('should name the folder in the confirmation and say it goes whole', async () => {
+      backlinksByPath.set(image.path, [drawing.path]);
+      mockConfirm.mockResolvedValue(false);
+      await runOperation([note]);
+
+      const text = getConfirmMessageText();
+      expect(text).toContain('1 attachment unit folder(s) will be moved to the trash with everything inside them.');
+      expect(text).toContain(UNIT_FOLDER_PATH);
+      // No individual-file section at all, so the dialog cannot read as "0 attachments".
+      expect(text).not.toContain('attachment(s) will be moved to the trash.');
+    });
+
+    it('should trash a unit folder once when several notes reach it', async () => {
+      // Every note whose attachment folder holds the unit reports it, so it has to be deduplicated
+      // Before the trash loop: trashing the same folder twice throws on the second call.
+      const otherNote = createFile('other-note.md');
+      mockIsNote.mockImplementation((f) => f === note || f === otherNote);
+      backlinksByPath.set(image.path, [drawing.path]);
+
+      await runOperation([note, otherNote]);
+
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unitFolder);
     });
   });
 

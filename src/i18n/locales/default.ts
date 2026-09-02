@@ -51,7 +51,9 @@ export const defaultTranslations = {
       andMore: '... and {{count}} more.',
       count: '{{count}} attachment(s) will be moved to the trash.',
       part1: 'The following unused attachments will be moved to the trash:',
-      part2: 'This operation cannot be undone.'
+      part2: 'This operation cannot be undone.',
+      partUnitFolders: 'Nothing outside the following attachment unit folders references anything inside them, so each of them will be moved to the trash whole:',
+      unitFolderCount: '{{count}} attachment unit folder(s) will be moved to the trash with everything inside them.'
     },
     progressBar: {
       message: 'Scanning for unused attachments {{iterationString}} - \'{{noteFilePath}}\'.',
