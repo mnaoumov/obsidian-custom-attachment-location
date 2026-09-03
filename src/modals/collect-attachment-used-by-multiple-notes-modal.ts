@@ -112,7 +112,9 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
         f.appendText(' ');
         f.appendText(t(($) => $.collectAttachmentUsedByMultipleNotesModal.content.part2));
         f.append(
-          await createElAsync('ul', {}, async (ul) => {
+          // The class carries no styling; it is how an integration test addresses the list, as for
+          // `custom-attachment-location-no-priority-winner-reason` above.
+          await createElAsync('ul', { cls: 'custom-attachment-location-multiple-notes-list' }, async (ul) => {
             for (const backlink of this.backlinks) {
               ul.append(
                 await createElAsync('li', {}, async (li) => {

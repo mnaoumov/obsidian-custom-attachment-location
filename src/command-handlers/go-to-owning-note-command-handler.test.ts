@@ -67,6 +67,7 @@ beforeAll(async () => {
 
 describe('GoToOwningNoteCommandHandler', () => {
   let app: App;
+  let filterTopRankNotePaths: Mock<NoteOwnerResolver['filterTopRankNotePaths']>;
   let findCandidateNotePaths: Mock<NoteOwnerResolver['findCandidateNotePaths']>;
   let findNoPriorityWinnerReason: Mock<NoteOwnerResolver['findNoPriorityWinnerReason']>;
   let getFileByPath: Mock<(path: string) => null | TFile>;
@@ -92,6 +93,9 @@ describe('GoToOwningNoteCommandHandler', () => {
       })
     });
     findCandidateNotePaths = vi.fn<NoteOwnerResolver['findCandidateNotePaths']>().mockResolvedValue([]);
+    // The real resolver keeps every candidate whenever the list decides nothing, which is the default
+    // Every test here but the demotion one wants.
+    filterTopRankNotePaths = vi.fn<NoteOwnerResolver['filterTopRankNotePaths']>().mockImplementation((notePaths) => [...notePaths]);
     pickOwnerNotePath = vi.fn<NoteOwnerResolver['pickOwnerNotePath']>().mockReturnValue(null);
     findNoPriorityWinnerReason = vi.fn<NoteOwnerResolver['findNoPriorityWinnerReason']>()
       .mockReturnValue(NoPriorityWinnerReason.EmptyList);
@@ -100,6 +104,7 @@ describe('GoToOwningNoteCommandHandler', () => {
     handler = new GoToOwningNoteCommandHandler({
       app,
       noteOwnerResolver: strictProxy<NoteOwnerResolver>({
+        filterTopRankNotePaths: (notePaths) => filterTopRankNotePaths(notePaths),
         findCandidateNotePaths: (attachmentFile) => findCandidateNotePaths(attachmentFile),
         findNoPriorityWinnerReason: (notePaths) => findNoPriorityWinnerReason(notePaths),
         pickOwnerNotePath: (notePaths) => pickOwnerNotePath(notePaths)
@@ -170,6 +175,18 @@ describe('GoToOwningNoteCommandHandler', () => {
       // Rows are shown as the bare note path.
       expect(selectItemParams?.itemTextFunction('notes/a.md')).toBe('notes/a.md');
       expect(openFile).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ path: 'notes/a.md' }));
+    });
+
+    it('should offer only the notes tying for the best rank', async () => {
+      // Issue #74: the list has already ruled the demoted note out, so offering it would invite an
+      // Answer the plugin itself would never have given. The reason is still read off every candidate.
+      findCandidateNotePaths.mockResolvedValue(['notes/a.md', 'notes/b.md', 'notes/drawing.excalidraw.md']);
+      findNoPriorityWinnerReason.mockReturnValue(NoPriorityWinnerReason.Tie);
+      filterTopRankNotePaths.mockReturnValue(['notes/a.md', 'notes/b.md']);
+      mockSelectItem.mockResolvedValue(castTo<never>('notes/a.md'));
+      await toTestable(handler).executeFile(createFile(ATTACHMENT_PATH));
+      expect(findNoPriorityWinnerReason).toHaveBeenCalledExactlyOnceWith(['notes/a.md', 'notes/b.md', 'notes/drawing.excalidraw.md']);
+      expect(mockSelectItem.mock.calls[0]?.[0].items).toEqual(['notes/a.md', 'notes/b.md']);
     });
 
     it('should open nothing when the picker is dismissed', async () => {

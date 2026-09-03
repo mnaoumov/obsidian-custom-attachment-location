@@ -304,7 +304,6 @@ export class AttachmentCollector {
         const relevantBacklinks = backlinks.keys().filter((backlink) => !pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
         if (relevantBacklinks.length > 1) {
           const backlinksSorted = relevantBacklinks.sort((a, b) => a.localeCompare(b));
-          const backlinksString = backlinksSorted.map((backlink) => `- ${backlink}`).join('\n');
 
           /*
            * A configured priority answers "which of these notes owns it" outright, so the mode
@@ -346,6 +345,16 @@ export class AttachmentCollector {
           // Reaching here means the list named nobody, so there is always a reason to report.
           const noPriorityWinnerReason = this.noteOwnerResolver.findNoPriorityWinnerReason(backlinksSorted);
 
+          /*
+           * The DECISION above is made over every referencing note; only the REPORT below narrows.
+           * The notes tying for the best rank are the whole of the ambiguity, so a note the list
+           * ranked beneath them cannot resolve anything and is left out of both the dialog and the
+           * log (issue #74). When the list decides nothing — empty, or matching no note — every note
+           * ties and the list is unchanged.
+           */
+          const topRankBacklinks = this.noteOwnerResolver.filterTopRankNotePaths(backlinksSorted);
+          const backlinksString = topRankBacklinks.map((backlink) => `- ${backlink}`).join('\n');
+
           async function shouldCollectWithMode(
             collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode
           ): Promise<boolean> {
@@ -361,7 +370,7 @@ export class AttachmentCollector {
                   await selectMode({
                     app,
                     attachmentPath: result.oldAttachmentPath,
-                    backlinks: backlinksSorted,
+                    backlinks: topRankBacklinks,
                     isCancelMode: true,
                     noPriorityWinnerReason
                   });
@@ -441,7 +450,7 @@ export class AttachmentCollector {
                 const { mode, shouldUseSameActionForOtherProblematicAttachments } = await selectMode({
                   app,
                   attachmentPath: result.oldAttachmentPath,
-                  backlinks: backlinksSorted,
+                  backlinks: topRankBacklinks,
                   noPriorityWinnerReason
                 });
                 if (shouldUseSameActionForOtherProblematicAttachments) {

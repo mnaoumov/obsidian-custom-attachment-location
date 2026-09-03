@@ -28,6 +28,7 @@ import type { NoPriorityWinnerReason } from './note-priority.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import {
+  filterHighestPriorityNotePaths,
   findNoPriorityWinnerReason,
   findNotePriorityRank,
   pickHighestPriorityNotePath
@@ -45,6 +46,24 @@ export class NoteOwnerResolver {
   public constructor(params: NoteOwnerResolverConstructorParams) {
     this.app = params.app;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
+  }
+
+  /**
+   * Narrows candidate notes to the ones the priority list ranks equally best, for reporting an
+   * ambiguity {@link pickOwnerNotePath} could not settle.
+   *
+   * Only those notes can settle it, so a lower-ranked one is noise wherever the ambiguity is shown.
+   * A list that decides nothing keeps every candidate, which is the same list as before.
+   *
+   * @param notePaths - The candidate notes' vault-relative paths.
+   * @returns The candidates holding the best rank, in the order they were given.
+   */
+  public filterTopRankNotePaths(notePaths: readonly string[]): string[] {
+    const entries = this.pluginSettingsComponent.settings.notePriorities;
+    return filterHighestPriorityNotePaths({
+      notePaths,
+      rank: (notePath) => this.rankNote(entries, notePath)
+    });
   }
 
   /**

@@ -190,6 +190,36 @@ describe('NoteOwnerResolver', () => {
     });
   });
 
+  describe('filterTopRankNotePaths', () => {
+    it('should keep every note when the priority list is empty', () => {
+      expect(resolver.filterTopRankNotePaths(['a.md', 'b.excalidraw.md'])).toEqual(['a.md', 'b.excalidraw.md']);
+    });
+
+    it('should drop a note the list deliberately ranked lower', () => {
+      // The reporter's case: the drawing also ends with `.md`, but the longer entry demotes it, so it
+      // Has no say in the ambiguity and must not be offered as if it had.
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      expect(resolver.filterTopRankNotePaths(['a.md', 'b.md', 'drawing.excalidraw.md'])).toEqual(['a.md', 'b.md']);
+    });
+
+    it('should keep every note when none of them matches the list', () => {
+      settings.notePriorities = ['.canvas'];
+      expect(resolver.filterTopRankNotePaths(['a.md', 'b.md'])).toEqual(['a.md', 'b.md']);
+    });
+
+    it('should rank by frontmatter as pickOwnerNotePath does', () => {
+      settings.notePriorities = ['property:pinned', '.md'];
+      getFileCache.mockImplementation((file) => file.path === 'pinned.md' ? castTo<CachedMetadataEx>({ frontmatter: { pinned: true } }) : null);
+      expect(resolver.filterTopRankNotePaths(['pinned.md', 'plain.md'])).toEqual(['pinned.md']);
+    });
+
+    it('should return the sole winner whenever pickOwnerNotePath names one', () => {
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      const notePaths = ['drawing.excalidraw.md', 'note.md'];
+      expect(resolver.filterTopRankNotePaths(notePaths)).toEqual([resolver.pickOwnerNotePath(notePaths)]);
+    });
+  });
+
   describe('findNoPriorityWinnerReason', () => {
     it('should report an empty list', () => {
       expect(resolver.findNoPriorityWinnerReason(['a.md'])).toBe(NoPriorityWinnerReason.EmptyList);
