@@ -56,8 +56,6 @@ describe('Delete unused attachments in entire vault, for attachments no note own
       }): Promise<ProbeResult> {
         const SETTLE_DELAY_IN_MILLISECONDS = 1000;
 
-        let modeOffNoticeText = '';
-
         interface RemoverSettings {
           attachmentFolderPath: string;
           orphanAttachmentScanMode: string;
@@ -167,7 +165,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
          * @returns The text of every notice currently shown.
          */
         function readNoticeTexts(): string {
-          return [...activeDocument.querySelectorAll('.notice')].map((noticeEl) => noticeEl.textContent ?? '').join(' | ');
+          return [...activeDocument.querySelectorAll('.notice')].map((noticeEl) => noticeEl.textContent).join(' | ');
         }
 
         async function confirmTheDialog(): Promise<void> {
@@ -221,7 +219,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
              * the timeout, report what was on screen instead, and let the assertions speak.
              */
           }
-          modeOffNoticeText = readNoticeTexts();
+          const modeOffNoticeText = readNoticeTexts();
           if (findModalContentEl()) {
             // Should not happen; confirm it away rather than leaving a modal blocking the second sweep.
             await confirmTheDialog();
