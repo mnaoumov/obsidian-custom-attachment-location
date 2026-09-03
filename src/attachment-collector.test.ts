@@ -104,6 +104,10 @@ interface QueueParamsLike {
   operationName: string;
 }
 
+interface RenderInternalLinkParamsLike {
+  readonly pathOrAbstractFile: unknown;
+}
+
 interface SettingsLike {
   collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode;
   emptyFolderBehavior: EmptyFolderBehavior;
@@ -149,6 +153,16 @@ vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
 vi.mock('obsidian-dev-utils/obsidian/loop', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/loop')>(),
   loop: vi.fn()
+}));
+
+vi.mock('obsidian-dev-utils/obsidian/markdown', async (importOriginal) => ({
+  ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/markdown')>(),
+  // The real renderer needs a live workspace; the path is the whole of what the assertions read.
+  renderInternalLink: vi.fn((params: RenderInternalLinkParamsLike): Promise<HTMLElement> => {
+    const span = createSpan();
+    span.textContent = String(params.pathOrAbstractFile);
+    return Promise.resolve(span);
+  })
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/metadata-cache', async (importOriginal) => ({
@@ -201,6 +215,31 @@ const mockApplyFileChanges = vi.mocked(applyFileChanges);
 const mockSelectMode = vi.mocked(selectMode);
 
 const PLUGIN_NAME = 'Custom Attachment Location';
+
+/**
+ * Spies on `showNotice`, recording the text of every fragment notice as it is shown.
+ *
+ * The text has to be taken at call time rather than read back off `spy.mock.calls`: showing a
+ * fragment appends it into the notice, which MOVES its nodes, leaving the captured fragment empty by
+ * the time an assertion looks at it.
+ *
+ * Only fragment notices are recorded - the higher-priority report (issue #75) is the only one built
+ * that way, because it carries links - so the string notices on the same path are left out without
+ * having to filter them by wording.
+ *
+ * @param componentToSpyOn - The notice component to spy on.
+ * @returns The recorded texts, filled as notices are shown.
+ */
+function captureFragmentNoticeTexts(componentToSpyOn: PluginNoticeComponent): string[] {
+  const texts: string[] = [];
+  vi.spyOn(componentToSpyOn, 'showNotice').mockImplementation((message) => {
+    if (typeof message !== 'string') {
+      texts.push(message.textContent);
+    }
+    return castTo<Notice>({ hide: () => undefined });
+  });
+  return texts;
+}
 
 function createBacklinks(keys: string[]): CustomArrayDict<Reference> {
   return strictProxy<CustomArrayDict<Reference>>({
@@ -683,6 +722,84 @@ describe('AttachmentCollector', () => {
         expect(mockRenameSafe).not.toHaveBeenCalled();
         expect(mockSelectMode).not.toHaveBeenCalled();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('could not be resolved'));
+      });
+
+      it('should name the higher-priority note when the winner is not the collected note', async () => {
+        // Issue #75: the image is handed to the drawing, which outranks `note.md`. Doing that in
+        // Silence leaves the user unable to see who really owns it - "allows user to see the notes of
+        // Higher priority that are referencing the image".
+        settings.notePriorities = ['.excalidraw.md', '.md'];
+        const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
+
+        await runSingleFile(note);
+
+        expect(noticeTexts.join('\n')).toContain('drawing.excalidraw.md');
+      });
+
+      it('should name every note above the collected one, not only the winner', async () => {
+        // `a.md` wins, but `b.md` also outranks the drawing, and the question the report answers is
+        // "who outranks me?" rather than "who won?".
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md', 'drawing.excalidraw.md']));
+        settings.notePriorities = ['a.md', '.md', '.excalidraw.md'];
+        const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
+
+        await runSingleFile(createFile('drawing.excalidraw.md'));
+
+        const noticeText = noticeTexts.join('\n');
+        expect(noticeText).toContain('a.md');
+        expect(noticeText).toContain('b.md');
+      });
+
+      it('should report the higher-priority note when it already holds the attachment', async () => {
+        // The reporter's own screenshot: nothing moves, so without this the collect says nothing at
+        // All. Issue #73's silence was about the collected note BEING the winner, which is not this.
+        settings.notePriorities = ['.excalidraw.md', '.md'];
+        getProperAttachmentPath.mockResolvedValue(null);
+        const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
+
+        await runSingleFile(note);
+
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(noticeTexts.join('\n')).toContain('drawing.excalidraw.md');
+      });
+
+      it('should name the same notes in the log as in the higher-priority notice', async () => {
+        settings.notePriorities = ['.excalidraw.md', '.md'];
+
+        await runSingleFile(note);
+
+        expect(consoleDebug).toHaveBeenCalledWith(expect.stringContaining('- drawing.excalidraw.md'));
+      });
+
+      it('should stay quiet when the collected note is the winner', async () => {
+        // Issue #73's rule, which issue #75 must not undo: nothing outranks the collected note, so
+        // There is nobody to name.
+        settings.notePriorities = ['.md', '.excalidraw.md'];
+        const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
+
+        await runSingleFile(note);
+
+        expect(noticeTexts).toEqual([]);
+      });
+
+      it('should stay quiet outside a single-note run', async () => {
+        // A folder-wide or vault-wide collect visits notes the user never singled out, so the same
+        // Report there would be a box per attachment.
+        settings.notePriorities = ['.excalidraw.md', '.md'];
+        const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
+        mockIsFile.mockReturnValue(false);
+        mockIsFolder.mockReturnValue(false);
+        mockConfirm.mockResolvedValue(true);
+        mockAbortSignalAny.mockReturnValue(new AbortController().signal);
+        mockLoop.mockImplementation(async (options) => {
+          await castTo<LoopOptionsLike>(options).processItem(note);
+        });
+
+        collector.collectAttachmentsInAbstractFiles([strictProxy<TAbstractFile>({ path: 'folder' })]);
+        const queueParams = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+        await queueParams.operationFunction(new AbortController().signal);
+
+        expect(noticeTexts).toEqual([]);
       });
 
       it('should leave a singly-referenced attachment alone', async () => {

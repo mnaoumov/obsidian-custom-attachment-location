@@ -49,6 +49,31 @@ export class NoteOwnerResolver {
   }
 
   /**
+   * Narrows candidate notes to the ones the priority list ranks strictly above a reference note, for
+   * telling the user who really owns an attachment collected from a note that ranks below them
+   * (issue #75).
+   *
+   * The two degenerate cases need no special-casing, because a note matching nothing ranks
+   * `NO_PRIORITY_MATCH`, which is never strictly better than itself:
+   *
+   * - a list that decides nothing — empty, or matching no note — ranks every note the same, so
+   *   nothing outranks the reference and the result is empty. That is correct: nothing has ruled the
+   *   reference out, and that ambiguity is what the multiple-notes mode setting already handles.
+   * - the reference note is itself the winner, so nothing outranks it and the result is again empty.
+   *   {@link pickOwnerNotePath} having named it is reported by staying quiet, exactly as issue #73
+   *   asked.
+   *
+   * @param notePaths - The candidate notes' vault-relative paths.
+   * @param referenceNotePath - The note to rank the candidates against.
+   * @returns The candidates ranked strictly above it, in the order they were given.
+   */
+  public filterHigherPriorityNotePaths(notePaths: readonly string[], referenceNotePath: string): string[] {
+    const entries = this.pluginSettingsComponent.settings.notePriorities;
+    const referenceRank = this.rankNote(entries, referenceNotePath);
+    return notePaths.filter((notePath) => this.rankNote(entries, notePath) < referenceRank);
+  }
+
+  /**
    * Narrows candidate notes to the ones the priority list ranks equally best, for reporting an
    * ambiguity {@link pickOwnerNotePath} could not settle.
    *
