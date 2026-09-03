@@ -58,6 +58,10 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
   - paths ignored by the collecting commands.
 - `excludePathsFromMultipleNotesCheck`
   - notes on these paths are ignored when deciding whether a collected attachment is used by multiple notes, so a shared embed (e.g. an `.excalidraw` drawing) does not block collecting.
+- `orphanAttachmentScanMode`
+  - whether **Delete unused attachments in entire vault** also looks for attachments no note owns at all — the case where a note was deleted and its attachment folder was left behind, which nothing leads to any more. `None` (default), `Listed paths`, or `Entire vault`. Applies to the whole-vault command only. See [08 Delete unused attachments](<./08 Delete unused attachments.md>).
+- `orphanAttachmentScanPaths`
+  - the folders `Listed paths` looks in. Same vocabulary as `attachmentUnitFolderPaths`: a plain entry is matched from the vault root, and an entry wrapped in `/` is a regular expression, which is what matching a folder name wherever it appears needs.
 - `shouldSkipCollectingAttachmentsReferencedByRawPath`
   - a safety net for attachments referenced by other plugins' non-standard syntaxes. When on, before collecting an attachment the plugin also scans every note's raw text for the attachment's path or file name; if a note references it in a format Obsidian does not index, the attachment is treated as still used and left in place (it is not moved or renamed). Default off. See [05 Collect attachments](<./05 Collect attachments.md>).
 

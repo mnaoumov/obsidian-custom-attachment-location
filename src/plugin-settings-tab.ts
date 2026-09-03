@@ -33,6 +33,7 @@ import {
   ConvertImagesToJpegMode,
   DefaultImageSizeDimension,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode,
+  OrphanAttachmentScanMode,
   RenameAttachmentsCreatedByOtherPluginsMode,
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
@@ -897,6 +898,79 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             });
           });
         }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanMode.description.part1));
+          f.appendText(' ');
+          appendCodeBlock(f, t(($) => $.pluginSettingsTab.orphanAttachmentScanMode.description.part2));
+          f.appendText(' ');
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanMode.description.part3));
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanMode.description.part4));
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanMode.description.part5));
+          f.createEl('br');
+          appendCodeBlock(f, t(($) => $.pluginSettings.orphanAttachmentScanMode.none.displayText));
+          f.appendText(' - ');
+          f.appendText(t(($) => $.pluginSettings.orphanAttachmentScanMode.none.description));
+          f.createEl('br');
+          appendCodeBlock(f, t(($) => $.pluginSettings.orphanAttachmentScanMode.listedPaths.displayText));
+          f.appendText(' - ');
+          f.appendText(t(($) => $.pluginSettings.orphanAttachmentScanMode.listedPaths.description));
+          f.createEl('br');
+          appendCodeBlock(f, t(($) => $.pluginSettings.orphanAttachmentScanMode.entireVault.displayText));
+          f.appendText(' - ');
+          f.appendText(t(($) => $.pluginSettings.orphanAttachmentScanMode.entireVault.description));
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanMode.description.part6));
+        }),
+        name: t(($) => $.pluginSettingsTab.orphanAttachmentScanMode.name),
+        render: (setting) => {
+          setting.addDropdown((dropdown) => {
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+              [OrphanAttachmentScanMode.None]: t(($) => $.pluginSettings.orphanAttachmentScanMode.none.displayText),
+              [OrphanAttachmentScanMode.ListedPaths]: t(($) => $.pluginSettings.orphanAttachmentScanMode.listedPaths.displayText),
+              [OrphanAttachmentScanMode.EntireVault]: t(($) => $.pluginSettings.orphanAttachmentScanMode.entireVault.displayText)
+              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+            });
+            this.bind({
+              onChanged: () => {
+                // The path list below is only shown for the listed-paths mode, via its `visible` predicate.
+                this.refreshDomState();
+              },
+              propertyName: 'orphanAttachmentScanMode',
+              valueComponent: dropdown
+            });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanPaths.description.part1));
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanPaths.description.part2));
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanPaths.description.part3));
+          f.appendText(' ');
+          appendCodeBlock(f, t(($) => $.regularExpression));
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanPaths.description.part4));
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.orphanAttachmentScanPaths.description.part5));
+        }),
+        name: t(($) => $.pluginSettingsTab.orphanAttachmentScanPaths.name),
+        render: (setting) => {
+          setting.addMultipleText((multipleText) => {
+            this.bind({
+              propertyName: 'orphanAttachmentScanPaths',
+              valueComponent: multipleText
+            });
+          });
+        },
+        visible: () => this.pluginSettingsComponent.settings.needsOrphanAttachmentScanPaths()
       })
     ];
   }
