@@ -458,6 +458,10 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       return pathsValidator(value);
     });
 
+    this.registerValidator('orphanAttachmentScanPaths', (value): MaybeReturn<string> => {
+      return pathsValidator(value);
+    });
+
     this.registerValidator('customTokensStr', (value): MaybeReturn<string> => {
       return this.customTokensValidator(value);
     });
