@@ -2,6 +2,7 @@ import type { PrismModule } from '@obsidian-typings/obsidian-public-latest/imple
 import type {
   ButtonComponent,
   DropdownComponent,
+  PluginManifest,
   SettingDefinition,
   SettingDefinitionGroup,
   SettingDefinitionItem,
@@ -15,6 +16,7 @@ import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/comp
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { CodeHighlighterComponent } from 'obsidian-dev-utils/obsidian/setting-components/code-highlighter-component';
+import type { MultipleDropdownComponent } from 'obsidian-dev-utils/obsidian/setting-components/multiple-dropdown-component';
 import type { MultipleTextComponent } from 'obsidian-dev-utils/obsidian/setting-components/multiple-text-component';
 import type { NumberComponent } from 'obsidian-dev-utils/obsidian/setting-components/number-component';
 
@@ -54,6 +56,7 @@ import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import {
   AttachmentRenameMode,
   ConvertImagesToJpegMode,
+  RenameAttachmentsCreatedByOtherPluginsMode,
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
 import { TokenValidator } from './token-validator.ts';
@@ -76,14 +79,16 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 // Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
-// 28 = 27 setting rows + the suggestion banner row that rides at the top.
-const EXPECTED_ROW_COUNT = 28;
+// 29 = 28 setting rows + the suggestion banner row that rides at the top.
+const EXPECTED_ROW_COUNT = 29;
+
+const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
 // The suggestion banner's two inputs, so a test can drive both the row's render and its visibility.
 const renderBannerMock = vi.fn<(containerEl: HTMLElement) => void>();
 let suggestedPluginState = SuggestedPluginState.Enabled;
 
-interface CapturedMultipleTextComponent {
+interface CapturedMultipleValueComponent {
   name: string;
   setValue(value: readonly string[]): unknown;
 }
@@ -101,7 +106,8 @@ interface CapturedValueComponent {
 
 interface CreatedTab {
   buttons: ButtonComponentClass[];
-  multipleTextComponents: CapturedMultipleTextComponent[];
+  multipleDropdownComponents: CapturedMultipleValueComponent[];
+  multipleTextComponents: CapturedMultipleValueComponent[];
   names: string[];
   pluginSettingsComponent: PluginSettingsComponent;
   tab: PluginSettingsTab;
@@ -132,6 +138,7 @@ const originalAddCodeHighlighter = SettingEx.prototype.addCodeHighlighter;
 const originalAddDropdown = SettingEx.prototype.addDropdown;
 const originalAddNumber = SettingEx.prototype.addNumber;
 const originalAddMultipleText = SettingEx.prototype.addMultipleText;
+const originalAddMultipleDropdown = SettingEx.prototype.addMultipleDropdown;
 const originalSetName = SettingEx.prototype.setName;
 
 /**
@@ -152,6 +159,16 @@ function checkPredicate(predicate: (() => boolean) | boolean | undefined, should
 async function createTab(configure?: (settings: PluginSettings) => void): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const originalApp = app.asOriginalType__();
+
+  // The plugin picker builds its options from the installed manifests; the strict proxy throws on an
+  // Unassigned property, so seed them on the raw target the way the plugin suite does.
+  seedOnRawTarget(originalApp, 'plugins', {
+    manifests: {
+      // This plugin must never offer ITSELF as something that creates attachments for it to rename.
+      'custom-attachment-location': { id: 'custom-attachment-location', name: 'Custom Attachment Location' },
+      'excalidraw': { id: 'excalidraw', name: 'Excalidraw' }
+    }
+  });
   const validatorWrapper = ValueWrapper.unset<TokenValidator>();
   const pluginSettingsComponent = new PluginSettingsComponent({
     app: originalApp,
@@ -170,13 +187,18 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   });
   await pluginSettingsComponent.loadWithPromises();
 
-  const obsidianPlugin = strictProxy<Plugin>({ app: originalApp });
+  const obsidianPlugin = strictProxy<Plugin>({
+    app: originalApp,
+    // The tab reads its own id from here, so it can leave itself out of the plugin picker.
+    manifest: castTo<PluginManifest>({ id: 'custom-attachment-location' })
+  });
 
   const buttons: ButtonComponentClass[] = [];
   const toggles: CapturedToggle[] = [];
   const names: string[] = [];
   const textLikeComponents: CapturedValueComponent[] = [];
-  const multipleTextComponents: CapturedMultipleTextComponent[] = [];
+  const multipleTextComponents: CapturedMultipleValueComponent[] = [];
+  const multipleDropdownComponents: CapturedMultipleValueComponent[] = [];
 
   const addTextSpy = vi.spyOn(SettingEx.prototype, 'addText');
   addTextSpy.mockImplementation(function capturingAddText(this: SettingEx, callback): SettingEx {
@@ -219,6 +241,23 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
     const name = this.nameEl.textContent;
     return originalAddMultipleText.call(this, (component: MultipleTextComponent) => {
       multipleTextComponents.push({ name, setValue: (value) => component.setValue(value) });
+      callback(component);
+    });
+  });
+
+  const addMultipleDropdownSpy = vi.spyOn(SettingEx.prototype, 'addMultipleDropdown');
+  addMultipleDropdownSpy.mockImplementation(function capturingAddMultipleDropdown(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddMultipleDropdown.call(this, (component: MultipleDropdownComponent) => {
+      /*
+       * `bind` duck-types a text-based component by READING `setPlaceholderValue` and `isEmpty`. This
+       * component defines neither — in Obsidian that read is a plain `undefined` and the check fails, but
+       * the mock's strict proxy THROWS on an unassigned property. Seeding them as undefined restores the
+       * production answer rather than inventing methods the real component does not have.
+       */
+      seedOnRawTarget(component, 'setPlaceholderValue', undefined);
+      seedOnRawTarget(component, 'isEmpty', undefined);
+      multipleDropdownComponents.push({ name, setValue: (value) => component.setValue(value) });
       callback(component);
     });
   });
@@ -269,9 +308,11 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   addDropdownSpy.mockRestore();
   addNumberSpy.mockRestore();
   addMultipleTextSpy.mockRestore();
+  addMultipleDropdownSpy.mockRestore();
   setNameSpy.mockRestore();
   return {
     buttons,
+    multipleDropdownComponents,
     multipleTextComponents,
     names,
     pluginSettingsComponent,
@@ -337,6 +378,22 @@ function isRowDisabled(tab: PluginSettingsTab, name: string): boolean {
 }
 
 /**
+ * Resolves a declared row's `visible` predicate.
+ *
+ * @param tab - The settings tab.
+ * @param name - The row name.
+ * @returns Whether the row is visible.
+ */
+function isRowVisible(tab: PluginSettingsTab, name: string): boolean {
+  const row = flattenRows(tab.getSettingDefinitions()).find((candidate) => 'name' in candidate && candidate.name === name);
+  if (row) {
+    return checkPredicate(castTo<DeclaredRow>(row).visible, true);
+  }
+
+  throw new Error(`Row not found: ${name}`);
+}
+
+/**
  * Renders the declared rows the way Obsidian does when the tab is opened: it skips the rows whose `visible`
  * predicate is false, applies the name and description, runs the row's `render` callback, and finally applies
  * the `disabled` predicate (which `Setting.setDisabled` propagates to every component on the row).
@@ -363,6 +420,19 @@ function renderRows(tab: PluginSettingsTab): void {
     row.render(setting, castTo<SettingGroup>(null));
     setting.setDisabled(checkPredicate(rowExtension.disabled, false));
   }
+}
+
+/**
+ * Assigns a property on the raw object behind a strict proxy, which throws on an unassigned property.
+ *
+ * @param strictProxiedObject - The strict-proxied object.
+ * @param key - The property to seed.
+ * @param value - The value to seed it with.
+ */
+function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknown): void {
+  const proxyWithTarget = castTo<Partial<Record<symbol, object>>>(strictProxiedObject);
+  const rawTarget = proxyWithTarget[STRICT_PROXY_TARGET_SYMBOL] ?? strictProxiedObject;
+  castTo<Record<string, unknown>>(rawTarget)[key] = value;
 }
 
 beforeAll(async () => {
@@ -436,6 +506,7 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Generated attachment file name');
     expect(names).toContain('Duplicate name separator');
     expect(names).toContain('Attachment rename mode');
+    expect(names).toContain('Rename attachments created by other plugins');
     expect(names).toContain('Renamed attachment file name');
     expect(names).toContain('Move attachment to proper folder used by multiple notes mode');
     expect(names).toContain('Special characters');
@@ -693,9 +764,55 @@ describe('PluginSettingsTab', () => {
     expect(pluginSettingsComponent.settings.timeoutInSeconds).toBe(42);
   });
 
+  it('should hide the plugin picker while no list mode is selected', async () => {
+    // `None` and `All` never consult a plugin id, so a list of plugins would be a control that does nothing.
+    const { names, tab } = await createTab();
+    expect(isRowVisible(tab, 'Plugins')).toBe(false);
+    expect(names).not.toContain('Plugins');
+  });
+
+  it('should show the plugin picker for the include mode', async () => {
+    const { names, tab } = await createTab((settings) => {
+      settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins;
+    });
+    expect(isRowVisible(tab, 'Plugins')).toBe(true);
+    expect(names).toContain('Plugins');
+  });
+
+  it('should show the plugin picker for the exclude mode', async () => {
+    const { tab } = await createTab((settings) => {
+      settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.AllExceptListedPlugins;
+    });
+    expect(isRowVisible(tab, 'Plugins')).toBe(true);
+  });
+
+  it('should re-evaluate the predicates when the rename-by-other-plugins dropdown changes', async () => {
+    const { tab, textLikeComponents } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = textLikeComponents.find((entry) => entry.name === 'Rename attachments created by other plugins');
+    expect(captured).toBeDefined();
+    captured?.setValue(RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should bind the plugin picker', async () => {
+    const { multipleDropdownComponents, pluginSettingsComponent } = await createTab((settings) => {
+      settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins;
+      // Offered as an option because it is already stored, even though no manifest names it.
+      settings.otherPluginIdsForAttachmentRename = ['media-extended'];
+    });
+    const component = findMultipleValueComponent(multipleDropdownComponents, 'Plugins');
+    component.setValue(['media-extended']);
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.otherPluginIdsForAttachmentRename).toStrictEqual(['media-extended']);
+  });
+
   it('should bind a multiple-text field', async () => {
     const { multipleTextComponents, pluginSettingsComponent } = await createTab();
-    const component = findMultipleTextComponent(multipleTextComponents, 'Exclude paths from attachment collecting');
+    const component = findMultipleValueComponent(multipleTextComponents, 'Exclude paths from attachment collecting');
     component.setValue(['foo/bar']);
     await waitForAllAsyncOperations();
     expect(pluginSettingsComponent.settings.excludePathsFromAttachmentCollecting).toStrictEqual(['foo/bar']);
@@ -750,7 +867,7 @@ function findComponent(components: CapturedValueComponent[], name: string): Capt
   return component;
 }
 
-function findMultipleTextComponent(components: CapturedMultipleTextComponent[], name: string): CapturedMultipleTextComponent {
+function findMultipleValueComponent(components: CapturedMultipleValueComponent[], name: string): CapturedMultipleValueComponent {
   const component = components.find((entry) => entry.name === name);
   if (!component) {
     throw new Error(`Multiple-text component "${name}" was not captured.`);

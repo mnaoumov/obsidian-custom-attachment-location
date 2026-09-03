@@ -2,7 +2,6 @@ import type {
   TAbstractFile,
   TFile
 } from 'obsidian';
-import type { StrictProxyPartial } from 'obsidian-dev-utils/strict-proxy';
 import type { MockInstance } from 'vitest';
 
 import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
@@ -27,10 +26,14 @@ import {
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-import type { PluginSettings } from './plugin-settings.ts';
 import type { TokenValidator } from './token-validator.ts';
 
 import { ExternallyCreatedAttachmentHandlerComponent } from './externally-created-attachment-handler-component.ts';
+import { foreignWriteRegistry } from './foreign-write-registry.ts';
+import {
+  PluginSettings,
+  RenameAttachmentsCreatedByOtherPluginsMode
+} from './plugin-settings.ts';
 import { selfWriteRegistry } from './self-write-registry.ts';
 
 vi.mock('obsidian-dev-utils/error', () => ({
@@ -52,7 +55,8 @@ interface GetAttachmentFolderFullPathForPathParams {
 
 interface SettingsOverrides {
   isPathIgnored?(path: string): boolean;
-  shouldRenameAttachmentsCreatedByOtherPlugins?: boolean;
+  otherPluginIdsForAttachmentRename?: string[];
+  renameAttachmentsCreatedByOtherPluginsMode?: RenameAttachmentsCreatedByOtherPluginsMode;
 }
 
 interface SetupOverrides {
@@ -92,11 +96,16 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
     return typeof pathOrFile === 'string' ? pathOrFile : (pathOrFile as TAbstractFile).path;
   }
 
+  /*
+   * A REAL `PluginSettings` rather than a proxy: the component now delegates the include / exclude decision
+   * to `shouldRenameAttachmentCreatedByPlugin`, and stubbing that would test the stub instead of the rule.
+   */
   function createSettings(overrides?: SettingsOverrides): PluginSettings {
-    const partial: StrictProxyPartial<PluginSettings> = {
-      shouldRenameAttachmentsCreatedByOtherPlugins: overrides?.shouldRenameAttachmentsCreatedByOtherPlugins ?? true
-    };
-    return strictProxy<PluginSettings>(partial);
+    const settings = new PluginSettings();
+    settings.renameAttachmentsCreatedByOtherPluginsMode = overrides?.renameAttachmentsCreatedByOtherPluginsMode
+      ?? RenameAttachmentsCreatedByOtherPluginsMode.All;
+    settings.otherPluginIdsForAttachmentRename = overrides?.otherPluginIdsForAttachmentRename ?? [];
+    return settings;
   }
 
   async function setUp(overrides?: SetupOverrides): Promise<void> {
@@ -208,11 +217,79 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
   });
 
   it('should do nothing when the setting is off', async () => {
-    await setUp({ settings: { shouldRenameAttachmentsCreatedByOtherPlugins: false } });
+    await setUp({ settings: { renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode.None } });
 
     await createForeignAttachment();
 
     expect(renameFileSpy).not.toHaveBeenCalled();
+  });
+
+  it('should rename an attachment created by a listed plugin', async () => {
+    await setUp({
+      settings: {
+        otherPluginIdsForAttachmentRename: ['media-extended'],
+        renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins
+      }
+    });
+    foreignWriteRegistry.register(FOREIGN_ATTACHMENT_PATH, 'media-extended');
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).toHaveBeenCalledOnce();
+  });
+
+  it('should leave an attachment created by an unlisted plugin alone', async () => {
+    await setUp({
+      settings: {
+        otherPluginIdsForAttachmentRename: ['media-extended'],
+        renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins
+      }
+    });
+    foreignWriteRegistry.register(FOREIGN_ATTACHMENT_PATH, 'excalidraw');
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).not.toHaveBeenCalled();
+  });
+
+  it('should leave an attachment it cannot attribute alone when only listed plugins are renamed', async () => {
+    await setUp({
+      settings: {
+        otherPluginIdsForAttachmentRename: ['media-extended'],
+        renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins
+      }
+    });
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).not.toHaveBeenCalled();
+  });
+
+  it('should skip an excluded plugin and rename everything else, attributable or not', async () => {
+    await setUp({
+      settings: {
+        otherPluginIdsForAttachmentRename: ['media-extended'],
+        renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode.AllExceptListedPlugins
+      }
+    });
+    foreignWriteRegistry.register(FOREIGN_ATTACHMENT_PATH, 'media-extended');
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).not.toHaveBeenCalled();
+  });
+
+  it('should rename an attachment it cannot attribute when all but the listed plugins are renamed', async () => {
+    await setUp({
+      settings: {
+        otherPluginIdsForAttachmentRename: ['media-extended'],
+        renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode.AllExceptListedPlugins
+      }
+    });
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).toHaveBeenCalledOnce();
   });
 
   it('should ignore a file the plugin wrote itself', async () => {

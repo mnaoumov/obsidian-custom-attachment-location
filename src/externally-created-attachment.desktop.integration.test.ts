@@ -42,12 +42,12 @@ describe('Attachments created by other plugins (issue #59)', () => {
           attachmentFolderPath: string;
           attachmentRenameMode: string;
           generatedAttachmentFileName: string;
-          shouldRenameAttachmentsCreatedByOtherPlugins: boolean;
+          renameAttachmentsCreatedByOtherPluginsMode: string;
         }
 
         function isForeignSettings(value: unknown): value is ForeignSettings {
           return typeof value === 'object' && value !== null
-            && typeof (value as Record<string, unknown>)['shouldRenameAttachmentsCreatedByOtherPlugins'] === 'boolean'
+            && typeof (value as Record<string, unknown>)['renameAttachmentsCreatedByOtherPluginsMode'] === 'string'
             && typeof (value as Record<string, unknown>)['generatedAttachmentFileName'] === 'string'
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
@@ -101,16 +101,17 @@ describe('Attachments created by other plugins (issue #59)', () => {
         const originalSettings = {
           attachmentFolderPath: settings.attachmentFolderPath,
           generatedAttachmentFileName: settings.generatedAttachmentFileName,
-          shouldRenameAttachmentsCreatedByOtherPlugins: settings.shouldRenameAttachmentsCreatedByOtherPlugins
+          renameAttachmentsCreatedByOtherPluginsMode: settings.renameAttachmentsCreatedByOtherPluginsMode
         };
         function restoreSettings(currentSettings: ForeignSettings): void {
           currentSettings.attachmentFolderPath = originalSettings.attachmentFolderPath;
           currentSettings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
-          currentSettings.shouldRenameAttachmentsCreatedByOtherPlugins = originalSettings.shouldRenameAttachmentsCreatedByOtherPlugins;
+          currentSettings.renameAttachmentsCreatedByOtherPluginsMode = originalSettings.renameAttachmentsCreatedByOtherPluginsMode;
         }
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
-        settings.shouldRenameAttachmentsCreatedByOtherPlugins = isRenameEnabled;
+        // The enum's values ARE the display strings; this code runs inside Obsidian and cannot import them.
+        settings.renameAttachmentsCreatedByOtherPluginsMode = isRenameEnabled ? 'All' : 'None';
         settings.attachmentFolderPath = `./proper-${stamp}`;
         settings.generatedAttachmentFileName = `renamed-${stamp}`;
 
