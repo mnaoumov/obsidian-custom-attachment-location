@@ -593,18 +593,38 @@ describe('AttachmentCollector', () => {
         expect(mockRenameSafe).not.toHaveBeenCalled();
       });
 
-      it('should fall back to the mode when the winner yields no destination', async () => {
-        settings.notePriorities = ['.excalidraw.md'];
+      it('should leave the attachment alone when the winning note already holds it', async () => {
+        // Issue #73: the collected note outranks the drawing and already stores the image, so nothing
+        // Is ambiguous and nothing is left to do. An unambiguous collect must stay as quiet as a
+        // Singly-referenced one - the shared-attachment box reported an ambiguity that was settled.
+        settings.notePriorities = ['.md', '.excalidraw.md'];
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
-        // First call plans the move from the collected note, the recompute for the winner returns null.
-        getProperAttachmentPath.mockResolvedValueOnce('attachments/img.png').mockResolvedValueOnce(null);
+        // Already in place for every note, which is what makes the destination null.
+        getProperAttachmentPath.mockResolvedValue(null);
 
         await runSingleFile(note);
 
         expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(mockSelectMode).not.toHaveBeenCalled();
+        expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
       });
 
-      it('should fall back to the mode when the attachment file cannot be resolved', async () => {
+      it('should not cancel the run when the winning note already holds the attachment', async () => {
+        // Cancel is the loudest mode: it aborted the whole run over an attachment that was already
+        // Exactly where the priority list wanted it.
+        settings.notePriorities = ['.md', '.excalidraw.md'];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
+        getProperAttachmentPath.mockResolvedValue(null);
+
+        await runSingleFile(note);
+
+        expect(mockSelectMode).not.toHaveBeenCalled();
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(mockRenameSafe).not.toHaveBeenCalled();
+      });
+
+      it('should skip without dispatching the mode when the attachment file cannot be resolved', async () => {
+        // The winner is settled either way, so a missing file is a skip, never a shared-attachment box.
         settings.notePriorities = ['.excalidraw.md'];
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
         getFileByPath.mockReturnValue(null);
@@ -612,6 +632,8 @@ describe('AttachmentCollector', () => {
         await runSingleFile(note);
 
         expect(mockRenameSafe).not.toHaveBeenCalled();
+        expect(mockSelectMode).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('could not be resolved'));
       });
 
       it('should leave a singly-referenced attachment alone', async () => {
