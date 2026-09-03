@@ -66,17 +66,19 @@ An attachment referenced by more than one note has no single correct home, so co
 
 When a note matches several entries, the **longest** one decides its rank. That is what makes the common case work: `drawing.excalidraw.md` also ends with `.md`, so without it a list of `.md` then `.excalidraw.md` would tie instead of putting the plain note first.
 
-Three things worth knowing:
+Five things worth knowing:
 
 - If no entry matches, or if the best entry matches several of the referencing notes, nothing is decided here and the mode setting handles it as before. A tie is never broken silently. **The dialog that then appears says which of the three it was** - the list is empty, nothing matched, or several notes matched equally - so you can tell a list you never configured from one that simply did not apply.
 - **The dialog lists only the notes sharing the best rank.** A note the list deliberately ranked lower cannot break the tie between the ones above it, so it is left out rather than offered as if it could. When the list decides nothing at all - it is empty, or it matches none of them - every referencing note is listed, because nothing has ruled any of them out. The console message names exactly the same notes as the dialog.
 - The winner does not have to be the note you ran the command on. Collecting from a drawing can hand the image to a markdown note that outranks it. That is the point of the setting, and why it is empty by default.
-- Once a single note wins, the collect is settled, so it stays quiet. If the winner **already** holds the attachment there is simply nothing to move, and no shared-attachment dialog or notice appears - exactly as for an attachment only one note references.
+- Once a single note wins, the collect is settled, so no shared-attachment dialog appears. If the winner **already** holds the attachment there is simply nothing to move - exactly as for an attachment only one note references.
+- **When the winner is not the note you ran the command on, a notice names the notes that outrank it**, each as a link you can open. Every note above yours is listed, not only the winner, because the question it answers is who outranks you rather than who won. The attachment still moves to the winner - the notice reports that decision rather than asking you to make one - and running the command on the winning note itself stays silent, because nothing outranks it. Only **Collect attachments in current note** reports this; a folder-wide or vault-wide run visits notes you never singled out, so it would be a box per attachment.
 
 ### Try it
 
 1. Embed the same image in a note and in an Excalidraw drawing.
 2. Run **Collect attachments in current note** with **Note priorities** empty - the image is left alone (or handled per the mode).
 3. Set **Note priorities** to `.md` then `.excalidraw.md` and repeat - the image moves into the markdown note's attachment folder, whichever of the two you ran the command on.
-4. Run it a second time on the markdown note - the image is already in its folder, so nothing moves and nothing is reported.
-5. Embed the same image in a *second* markdown note and run it again - the two markdown notes now tie, so the dialog appears and names those two. The drawing, which the list ranked below them, is not on it.
+4. Run it on the *drawing* - the image lands in the markdown note's folder as before, and a notice now names that note, with a link to open it, so you can see who really owns the image.
+5. Run it a second time on the markdown note - the image is already in its folder, so nothing moves and nothing is reported.
+6. Embed the same image in a *second* markdown note and run it again - the two markdown notes now tie, so the dialog appears and names those two. The drawing, which the list ranked below them, is not on it.

@@ -220,6 +220,59 @@ describe('NoteOwnerResolver', () => {
     });
   });
 
+  describe('filterHigherPriorityNotePaths', () => {
+    it('should keep a note the list ranks above the reference', () => {
+      // The reporter's case: collecting from the drawing, the markdown note is the one that really
+      // Owns the image, so it is the note worth naming.
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['note.md'], 'drawing.excalidraw.md')).toEqual(['note.md']);
+    });
+
+    it('should name every note above the reference, not only the winner', () => {
+      settings.notePriorities = ['top.md', '.md', '.excalidraw.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['top.md', 'middle.md'], 'drawing.excalidraw.md')).toEqual(['top.md', 'middle.md']);
+    });
+
+    it('should drop a note that only ties with the reference', () => {
+      // A tie settles nothing, so it is the multiple-notes dialog's business rather than this report's.
+      settings.notePriorities = ['.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['a.md', 'b.md'], 'a.md')).toEqual([]);
+    });
+
+    it('should drop a note the list ranks below the reference', () => {
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['drawing.excalidraw.md'], 'note.md')).toEqual([]);
+    });
+
+    it('should return nothing when the priority list is empty', () => {
+      // Nothing has ruled the reference out, so there is no higher priority to report.
+      expect(resolver.filterHigherPriorityNotePaths(['a.md', 'b.md'], 'c.md')).toEqual([]);
+    });
+
+    it('should return nothing when none of the notes matches the list', () => {
+      settings.notePriorities = ['.canvas'];
+      expect(resolver.filterHigherPriorityNotePaths(['a.md', 'b.md'], 'c.md')).toEqual([]);
+    });
+
+    it('should never return the reference note itself', () => {
+      settings.notePriorities = ['.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['a.md', 'b.md'], 'a.md')).not.toContain('a.md');
+    });
+
+    it('should stay quiet whenever the reference note is the winner pickOwnerNotePath names', () => {
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      const notePaths = ['drawing.excalidraw.md', 'note.md'];
+      expect(resolver.pickOwnerNotePath(notePaths)).toBe('note.md');
+      expect(resolver.filterHigherPriorityNotePaths(notePaths, 'note.md')).toEqual([]);
+    });
+
+    it('should rank by frontmatter as pickOwnerNotePath does', () => {
+      settings.notePriorities = ['property:pinned', '.md'];
+      getFileCache.mockImplementation((file) => file.path === 'pinned.md' ? castTo<CachedMetadataEx>({ frontmatter: { pinned: true } }) : null);
+      expect(resolver.filterHigherPriorityNotePaths(['pinned.md'], 'plain.md')).toEqual(['pinned.md']);
+    });
+  });
+
   describe('findNoPriorityWinnerReason', () => {
     it('should report an empty list', () => {
       expect(resolver.findNoPriorityWinnerReason(['a.md'])).toBe(NoPriorityWinnerReason.EmptyList);

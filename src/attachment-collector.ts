@@ -18,6 +18,10 @@ import {
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
 import {
+  createElAsync,
+  createFragmentAsync
+} from 'obsidian-dev-utils/html-element';
+import {
   findAttachmentUnitFolderPath,
   rebasePathOntoFolder
 } from 'obsidian-dev-utils/obsidian/attachment-unit-folder';
@@ -37,6 +41,7 @@ import {
   updateLink
 } from 'obsidian-dev-utils/obsidian/link';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
+import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 import {
   getBacklinksForFileSafe,
   getCacheSafe,
@@ -136,6 +141,17 @@ interface CanvasReferenceTarget {
 interface CollectAttachmentContext {
   collectAttachmentUsedByMultipleNotesMode?: CollectAttachmentUsedByMultipleNotesMode;
   isAborted?: boolean;
+
+  /**
+   * Whether to name the higher-priority notes when the priority list hands an attachment to a note
+   * other than the one being collected (issue #75).
+   *
+   * Set only for a run over a single note - the `Collect attachments in current note` command - where
+   * the user is asking about that one note and the answer is worth a notice. A folder-wide or
+   * vault-wide run visits notes the user never singled out, so the same report there would be a box
+   * per attachment.
+   */
+  shouldReportHigherPriorityNotes?: boolean;
 }
 
 interface MovedAttachment {
@@ -190,6 +206,46 @@ export class AttachmentCollector {
       operationFunction: (abortSignal) => this.collectAttachmentsInAbstractFilesImpl(abstractFiles, abortSignal),
       operationName: t(($) => $.menuItems.collectAttachmentsInFile),
       timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
+    });
+  }
+
+  /**
+   * Builds the notice naming the notes that outrank the one being collected, so the user can open the
+   * note that really owns the attachment instead of only being told that one exists (issue #75).
+   *
+   * @param attachmentPath - The shared attachment's vault-relative path.
+   * @param notePaths - The higher-priority notes' vault-relative paths.
+   * @returns The notice content.
+   */
+  private buildHigherPriorityNotesNoticeMessage(attachmentPath: string, notePaths: readonly string[]): Promise<DocumentFragment> {
+    return createFragmentAsync(async (f) => {
+      f.appendText(t(($) => $.notice.attachmentReferencedByHigherPriorityNotes.part1));
+      f.appendText(' ');
+      f.append(
+        await renderInternalLink({
+          app: this.app,
+          pathOrAbstractFile: attachmentPath
+        })
+      );
+      f.appendText(' ');
+      f.appendText(t(($) => $.notice.attachmentReferencedByHigherPriorityNotes.part2));
+      f.append(
+        // The class carries no styling; it is how an integration test addresses the list.
+        await createElAsync('ul', { cls: 'custom-attachment-location-higher-priority-notes-list' }, async (ul) => {
+          for (const notePath of notePaths) {
+            ul.append(
+              await createElAsync('li', {}, async (li) => {
+                li.append(
+                  await renderInternalLink({
+                    app: this.app,
+                    pathOrAbstractFile: notePath
+                  })
+                );
+              })
+            );
+          }
+        })
+      );
     });
   }
 
@@ -335,6 +391,31 @@ export class AttachmentCollector {
               );
               await registerMoveAttachment();
               params.abortSignal.throwIfAborted();
+
+              /*
+               * The list settling the ownership does not mean the user can see who won. Collecting
+               * from a note the list ranked below the others hands the attachment away in silence, so
+               * name the notes that outrank this one (issue #75). Both branches of the message above
+               * report it: an attachment the winner already holds is the reporter's own case.
+               *
+               * Every note ranked above the collected one is named, not only the winner, because the
+               * question being answered is "who outranks me?" rather than "who won?".
+               */
+              const higherPriorityNotePaths = params.context.shouldReportHigherPriorityNotes
+                ? this.noteOwnerResolver.filterHigherPriorityNotePaths(backlinksSorted, params.note.path)
+                : [];
+              if (higherPriorityNotePaths.length > 0) {
+                // The log names exactly the notes the notice does, so the two can never disagree.
+                const higherPriorityNotePathsString = higherPriorityNotePaths.map((notePath) => `- ${notePath}`).join('\n');
+                this.consoleDebugComponent.consoleDebug(
+                  `Attachment ${attachmentMoveResult.oldAttachmentPath} is also referenced by notes ranked above ${params.note.path}:\n${higherPriorityNotePathsString}`
+                );
+                pluginNoticeComponent.showNotice(
+                  await this.buildHigherPriorityNotesNoticeMessage(attachmentMoveResult.oldAttachmentPath, higherPriorityNotePaths),
+                  { shouldHideOnClick: false }
+                );
+                params.abortSignal.throwIfAborted();
+              }
             } else {
               // The winner is settled either way; the attachment itself is what went missing.
               console.warn(`Skipping collecting attachment ${attachmentMoveResult.oldAttachmentPath} as it could not be resolved.`);
@@ -633,7 +714,7 @@ export class AttachmentCollector {
     const noteFiles = [...noteFilesSet];
     noteFiles.sort((a, b) => a.path.localeCompare(b.path));
 
-    const context: CollectAttachmentContext = {};
+    const context: CollectAttachmentContext = { shouldReportHigherPriorityNotes: !!singleFile };
     const abortController = new AbortController();
 
     const combinedAbortSignal = abortSignalAny(abortController.signal, this.abortSignalComponent.abortSignal);
