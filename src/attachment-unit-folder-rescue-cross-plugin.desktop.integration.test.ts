@@ -38,14 +38,18 @@ const HANDLER_PLUGIN_ID = 'advanced-rename-and-delete-handler';
 const HANDLER_REPO = 'mnaoumov/obsidian-advanced-rename-and-delete-handler';
 
 /**
- * The handler release under test.
+ * The handler release under test — **1.3.0**, the first to carry the whole-unit rescue.
  *
- * The whole-unit rescue is on the handler's `main` and lands in its **1.3.0**. Until that ships, the newest
- * released build is 1.2.0 — the version that still tears the unit apart — so pointing this suite at it
- * reproduces issue #70 rather than passing, which is how the harness proves it detects the defect at all.
- * Bump this to 1.3.0 once it is released.
+ * Pinned rather than `latest`, for the reason stated on `DownloadReleasedPluginParams.version`: a test that
+ * silently follows a moving artifact stops being a statement about anything.
+ *
+ * The pin is also what makes this suite falsifiable. Pointed at **1.2.0** — the last release before the
+ * rescue, which still tears the unit apart — it reproduces issue #70 instead of passing, leaving
+ * `a/A.md` and `a/assets/image.png`: the linked file pulled OUT of its unit folder and dropped beside it,
+ * and the unreferenced sibling destroyed with the deleted folder. That run is how the harness was shown to
+ * detect the defect at all rather than to pass vacuously, and it is a one-line change away.
  */
-const HANDLER_VERSION = '1.2.0';
+const HANDLER_VERSION = '1.3.0';
 
 const WAIT_TIMEOUT_IN_MILLISECONDS = 30_000;
 const TEST_TIMEOUT_IN_MILLISECONDS = 180_000;
