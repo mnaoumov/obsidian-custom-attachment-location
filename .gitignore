@@ -28,3 +28,5 @@ dist
 
 .claude/settings.local.json
 coverage
+
+.cache
