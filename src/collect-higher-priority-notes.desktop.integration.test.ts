@@ -243,9 +243,11 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
           for (const path of [drawingPath, plainPath, imagePath, `assets/${plainStem}`, `assets/${drawingStem}`]) {
             await trashIfExists(path);
           }
+          /* eslint-disable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
           settings.attachmentFolderPath = priorFolderPath;
           holder.apiRef = priorApiRef;
           settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
+          /* eslint-enable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
         }
       },
       input: {

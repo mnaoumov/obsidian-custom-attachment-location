@@ -251,9 +251,11 @@ describe('The shared-attachment dialog lists only the top-ranked notes (issue #7
           for (const path of [drawingPath, secondPlainPath, firstPlainPath, imagePath]) {
             await trashIfExists(path);
           }
+          /* eslint-disable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
           settings.attachmentFolderPath = priorFolderPath;
           holder.apiRef = priorApiRef;
           settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
+          /* eslint-enable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
         }
       },
       input: {

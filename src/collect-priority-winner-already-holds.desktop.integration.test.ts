@@ -259,11 +259,12 @@ describe('An unambiguous collect stays quiet when the winning note already holds
           for (const path of [secondNotePath, firstNotePath, collectedLooseImagePath, looseImagePath, heldImagePath, attachmentFolderPath]) {
             await trashIfExists(path);
           }
-          // Restoring the values captured before the awaits; nothing else in this vault writes them.
+          /* eslint-disable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
           settings.attachmentFolderPath = priorFolderPath;
           holder.apiRef = priorApiRef;
           settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
           settings.shouldRenameCollectedAttachments = wasRenamingCollectedAttachments;
+          /* eslint-enable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
         }
       },
       input: {
