@@ -544,6 +544,7 @@ function createComponent(): CustomAttachmentLocationComponent {
     imageSizeMap: strictProxy<ImageSizeMap>({}),
     markdownUrlMap: strictProxy<MarkdownUrlMap>({}),
     pluginDirectory: 'plugins/custom-attachment-location',
+    pluginId: 'custom-attachment-location',
     pluginSettingsComponent: context.pluginSettingsComponent,
     pluginVersion: PLUGIN_VERSION,
     tokenValidator: strictProxy<TokenValidator>({})

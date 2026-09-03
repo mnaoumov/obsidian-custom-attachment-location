@@ -230,6 +230,14 @@ export const ko = {
       },
       name: 'Markdown URL 형식'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: '다른 플러그인이 만든 첨부 파일에도 첨부 폴더 및 파일 이름 설정을 적용할지 여부입니다.',
+        part2: '일부 플러그인은 첨부 파일이 어디에 속하는지 Obsidian에 묻지 않고 자체 이름으로 보관함에 바로 씁니다. 이 옵션을 켜면 그런 파일은 나타나는 즉시 이동되고 이름이 변경됩니다.',
+        part3: '노트가 열려 있는 동안 만들어진 파일만 처리되며, 동기화나 보관함 가져오기로 들어온 파일은 건드리지 않습니다.'
+      },
+      name: '다른 플러그인이 만든 첨부 파일 이름 변경'
+    },
     renameAttachmentsToLowerCase: '첨부 파일을 소문자로 이름 변경',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const ko = {
     shouldConvertPastedImagesToJpeg: {
       description: '붙여넣은 이미지를 JPEG로 변환할지 여부입니다. PNG 이미지 내용이 클립보드에서 직접 붙여넣어질 때만 적용됩니다. 일반적으로 스크린샷 붙여넣기에 사용됩니다.',
       name: '붙여넣은 이미지를 JPEG로 변환'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: '다른 플러그인이 만든 첨부 파일에도 첨부 폴더 및 파일 이름 설정을 적용할지 여부입니다.',
-        part2: '일부 플러그인은 첨부 파일이 어디에 속하는지 Obsidian에 묻지 않고 자체 이름으로 보관함에 바로 씁니다. 이 옵션을 켜면 그런 파일은 나타나는 즉시 이동되고 이름이 변경됩니다.',
-        part3: '노트가 열려 있는 동안 만들어진 파일만 처리되며, 동기화나 보관함 가져오기로 들어온 파일은 건드리지 않습니다.'
-      },
-      name: '다른 플러그인이 만든 첨부 파일 이름 변경'
     },
     shouldRenameCollectedAttachments: {
       description: {

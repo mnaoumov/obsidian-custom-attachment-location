@@ -230,6 +230,14 @@ export const ms = {
       },
       name: 'Format URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Sama ada tetapan folder lampiran dan nama fail dikenakan pada lampiran yang dicipta oleh pemalam LAIN.',
+        part2: 'Sesetengah pemalam menulis lampiran terus ke dalam bilik kebal dengan nama pilihan sendiri, tanpa bertanya kepada Obsidian di mana tempatnya. Dengan ini dihidupkan, fail sebegitu dipindahkan dan dinamakan semula sebaik ia muncul.',
+        part3: 'Hanya fail yang dicipta semasa sesuatu nota dibuka disentuh, bukan fail yang tiba daripada penyegerakan atau import bilik kebal.'
+      },
+      name: 'Namakan semula lampiran yang dicipta pemalam lain'
+    },
     renameAttachmentsToLowerCase: 'Nama semula lampiran kepada huruf kecil',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const ms = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Sama ada untuk menukar imej yang ditampal kepada JPEG. Berlaku hanya apabila kandungan imej PNG ditampal terus dari papan keratan. Biasanya, untuk menampal tangkapan skrin.',
       name: 'Sama ada menukar imej yang ditampal kepada JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Sama ada tetapan folder lampiran dan nama fail dikenakan pada lampiran yang dicipta oleh pemalam LAIN.',
-        part2: 'Sesetengah pemalam menulis lampiran terus ke dalam bilik kebal dengan nama pilihan sendiri, tanpa bertanya kepada Obsidian di mana tempatnya. Dengan ini dihidupkan, fail sebegitu dipindahkan dan dinamakan semula sebaik ia muncul.',
-        part3: 'Hanya fail yang dicipta semasa sesuatu nota dibuka disentuh, bukan fail yang tiba daripada penyegerakan atau import bilik kebal.'
-      },
-      name: 'Namakan semula lampiran yang dicipta pemalam lain'
     },
     shouldRenameCollectedAttachments: {
       description: {

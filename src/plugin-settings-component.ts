@@ -28,7 +28,8 @@ import type { HandedOverSettingsComponent } from './handed-over-settings-compone
 import {
   CollectAttachmentUsedByMultipleNotesMode,
   ConvertImagesToJpegMode,
-  PluginSettings
+  PluginSettings,
+  RenameAttachmentsCreatedByOtherPluginsMode
 } from './plugin-settings.ts';
 import {
   TokenValidationMode,
@@ -106,6 +107,11 @@ class LegacySettings {
   public shouldRenameAttachmentFolder = true;
   public shouldRenameAttachments = true;
   /**
+   * The all-or-nothing switch that `renameAttachmentsCreatedByOtherPluginsMode` replaced in 12.1.0, when
+   * issue #77 asked for the rename to be scoped to named plugins.
+   */
+  public shouldRenameAttachmentsCreatedByOtherPlugins = false;
+  /**
    * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
    * recognizes the persisted key and strips it from saved settings during migration.
    */
@@ -140,6 +146,7 @@ class LegacySettingsConverter {
     this.convertWhitespaceReplacement();
     this.convertShouldKeepEmptyAttachmentFolders();
     this.convertCollectAttachmentUsedByMultipleNotesMode();
+    this.convertRenameAttachmentsCreatedByOtherPluginsMode();
     this.convertMarkdownUrlFormat();
     this.convertSpecialCharacters();
     this.convertLegacyTokens();
@@ -227,6 +234,23 @@ ${commentOut(this.legacySettings.customTokensStr)}
       && (this.legacySettings.markdownUrlFormat === '${generatedAttachmentFilePath}' || this.legacySettings.markdownUrlFormat === '${noteFilePath}')
     ) {
       this.legacySettings.markdownUrlFormat = '';
+    }
+  }
+
+  /**
+   * Carries the pre-12.1.0 all-or-nothing switch onto the mode that replaced it.
+   *
+   * `true` becomes `All`, which is exactly what the switch meant; `false` becomes `None`. Neither list mode
+   * can be reached from the old value, since the old setting had no list to name.
+   */
+  private convertRenameAttachmentsCreatedByOtherPluginsMode(): void {
+    if (
+      this.legacySettings.renameAttachmentsCreatedByOtherPluginsMode === undefined
+      && this.legacySettings.shouldRenameAttachmentsCreatedByOtherPlugins !== undefined
+    ) {
+      this.legacySettings.renameAttachmentsCreatedByOtherPluginsMode = this.legacySettings.shouldRenameAttachmentsCreatedByOtherPlugins
+        ? RenameAttachmentsCreatedByOtherPluginsMode.All
+        : RenameAttachmentsCreatedByOtherPluginsMode.None;
     }
   }
 

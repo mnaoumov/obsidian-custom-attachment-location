@@ -231,6 +231,14 @@ export const da = {
       },
       name: 'Markdown URL-format'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Om indstillingerne for vedhæftningsmappe og filnavn skal anvendes på vedhæftninger, som ANDRE plugins opretter.',
+        part2: 'Nogle plugins skriver en vedhæftning direkte i boksen under deres eget navn uden at spørge Obsidian, hvor den hører hjemme. Med dette slået til flyttes og omdøbes en sådan fil, så snart den dukker op.',
+        part3: 'Kun filer oprettet, mens en note er åben, berøres — aldrig filer, der kommer fra en synkronisering eller en boks-import.'
+      },
+      name: 'Omdøb vedhæftninger oprettet af andre plugins'
+    },
     renameAttachmentsToLowerCase: 'Omdøb vedhæftninger til små bogstaver',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const da = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Om indsatte billeder skal konverteres til JPEG. Gælder kun når PNG-billedindholdet indsættes direkte fra udklipsholderen. Typisk til indsættelse af skærmbilleder.',
       name: 'Skal konvertere indsatte billeder til JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Om indstillingerne for vedhæftningsmappe og filnavn skal anvendes på vedhæftninger, som ANDRE plugins opretter.',
-        part2: 'Nogle plugins skriver en vedhæftning direkte i boksen under deres eget navn uden at spørge Obsidian, hvor den hører hjemme. Med dette slået til flyttes og omdøbes en sådan fil, så snart den dukker op.',
-        part3: 'Kun filer oprettet, mens en note er åben, berøres — aldrig filer, der kommer fra en synkronisering eller en boks-import.'
-      },
-      name: 'Omdøb vedhæftninger oprettet af andre plugins'
     },
     shouldRenameCollectedAttachments: {
       description: {

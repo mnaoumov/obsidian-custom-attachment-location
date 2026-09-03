@@ -26,7 +26,8 @@ import {
   AttachmentRenameMode,
   CollectAttachmentUsedByMultipleNotesMode,
   ConvertImagesToJpegMode,
-  PluginSettings
+  PluginSettings,
+  RenameAttachmentsCreatedByOtherPluginsMode
 } from './plugin-settings.ts';
 import { TokenValidator } from './token-validator.ts';
 
@@ -343,6 +344,16 @@ describe('PluginSettingsComponent', () => {
     it('should map shouldDuplicateCollectedAttachments false into Skip', async () => {
       const component = await createComponent({ shouldDuplicateCollectedAttachments: false });
       expect(component.settings.collectAttachmentUsedByMultipleNotesMode).toBe(CollectAttachmentUsedByMultipleNotesMode.Skip);
+    });
+
+    it('should map shouldRenameAttachmentsCreatedByOtherPlugins true into All', async () => {
+      const component = await createComponent({ shouldRenameAttachmentsCreatedByOtherPlugins: true });
+      expect(component.settings.renameAttachmentsCreatedByOtherPluginsMode).toBe(RenameAttachmentsCreatedByOtherPluginsMode.All);
+    });
+
+    it('should map shouldRenameAttachmentsCreatedByOtherPlugins false into None', async () => {
+      const component = await createComponent({ shouldRenameAttachmentsCreatedByOtherPlugins: false });
+      expect(component.settings.renameAttachmentsCreatedByOtherPluginsMode).toBe(RenameAttachmentsCreatedByOtherPluginsMode.None);
     });
 
     it('should map keepEmptyAttachmentFolders into shouldKeepEmptyAttachmentFolders and then emptyFolderBehavior Keep', async () => {

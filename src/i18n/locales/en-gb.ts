@@ -231,6 +231,14 @@ export const enGB = {
       },
       name: 'Markdown URL format'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Whether to apply the attachment folder and file name settings to attachments that OTHER plugins create.',
+        part2: 'Some plugins write an attachment into the vault under a name of their own, without asking Obsidian where it belongs. With this enabled, such a file is moved and renamed right after it appears.',
+        part3: 'Only files created while a note is open are touched, never files arriving from a sync or a vault import.'
+      },
+      name: 'Rename attachments created by other plugins'
+    },
     renameAttachmentsToLowerCase: 'Rename attachments to lower case',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const enGB = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Whether to convert pasted images to JPEG. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
       name: 'Should convert pasted images to JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Whether to apply the attachment folder and file name settings to attachments that OTHER plugins create.',
-        part2: 'Some plugins write an attachment into the vault under a name of their own, without asking Obsidian where it belongs. With this enabled, such a file is moved and renamed right after it appears.',
-        part3: 'Only files created while a note is open are touched, never files arriving from a sync or a vault import.'
-      },
-      name: 'Rename attachments created by other plugins'
     },
     shouldRenameCollectedAttachments: {
       description: {

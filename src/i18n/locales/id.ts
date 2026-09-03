@@ -231,6 +231,14 @@ export const id = {
       },
       name: 'Format URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Apakah pengaturan folder lampiran dan nama berkas diterapkan pada lampiran yang dibuat plugin LAIN.',
+        part2: 'Sebagian plugin menulis lampiran langsung ke vault dengan nama pilihannya sendiri, tanpa menanyakan Obsidian di mana tempatnya. Bila ini diaktifkan, berkas seperti itu dipindahkan dan diganti namanya begitu muncul.',
+        part3: 'Hanya berkas yang dibuat saat sebuah catatan terbuka yang disentuh, tidak pernah berkas dari sinkronisasi atau impor vault.'
+      },
+      name: 'Ganti nama lampiran yang dibuat plugin lain'
+    },
     renameAttachmentsToLowerCase: 'Ubah nama lampiran menjadi huruf kecil',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const id = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Apakah akan mengkonversi gambar yang ditempel ke JPEG. Berlaku hanya ketika konten gambar PNG ditempel langsung dari clipboard. Biasanya, untuk menempel screenshot.',
       name: 'Haruskah mengkonversi gambar yang ditempel ke JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Apakah pengaturan folder lampiran dan nama berkas diterapkan pada lampiran yang dibuat plugin LAIN.',
-        part2: 'Sebagian plugin menulis lampiran langsung ke vault dengan nama pilihannya sendiri, tanpa menanyakan Obsidian di mana tempatnya. Bila ini diaktifkan, berkas seperti itu dipindahkan dan diganti namanya begitu muncul.',
-        part3: 'Hanya berkas yang dibuat saat sebuah catatan terbuka yang disentuh, tidak pernah berkas dari sinkronisasi atau impor vault.'
-      },
-      name: 'Ganti nama lampiran yang dibuat plugin lain'
     },
     shouldRenameCollectedAttachments: {
       description: {

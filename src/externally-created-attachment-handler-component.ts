@@ -26,6 +26,8 @@ import type { HandedOverSettingsComponent } from './handed-over-settings-compone
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { TokenValidator } from './token-validator.ts';
 
+import { foreignWriteRegistry } from './foreign-write-registry.ts';
+import { RenameAttachmentsCreatedByOtherPluginsMode } from './plugin-settings.ts';
 import { selfWriteRegistry } from './self-write-registry.ts';
 import { Substitutions } from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
@@ -50,7 +52,12 @@ interface ExternallyCreatedAttachmentHandlerComponentConstructorParams {
  * `Attachment rename mode: All` helps, because that switch lives inside `saveAttachment` too.
  *
  * So the only place left to catch such a file is after it exists. This mirrors what the *Paste image
- * rename* plugin does, and it is deliberately GENERAL — it keys off nothing specific to any one plugin.
+ * rename* plugin does, and the catch itself stays GENERAL — nothing here is keyed to any one plugin.
+ *
+ * WHICH foreign writes are taken is the user's choice, though (issue #77): all of them, only a named set,
+ * or all but a named set. That needs the creating plugin identified, which `vault.on('create')` cannot do —
+ * `WriteAttributionPatchComponent` records it at the write instead, and this handler reads it back out of
+ * {@link foreignWriteRegistry}.
  *
  * Off by default: it reacts to writes the plugin did not make, so it must never change behavior on
  * upgrade.
@@ -113,7 +120,8 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
   }
 
   private async handleCreate(abstractFile: TAbstractFile): Promise<void> {
-    if (!this.pluginSettingsComponent.settings.shouldRenameAttachmentsCreatedByOtherPlugins) {
+    const { settings } = this.pluginSettingsComponent;
+    if (settings.renameAttachmentsCreatedByOtherPluginsMode === RenameAttachmentsCreatedByOtherPluginsMode.None) {
       return;
     }
 
@@ -149,6 +157,20 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
     }
 
     if (this.handedOverSettingsComponent.isPathIgnored(attachmentFile.path)) {
+      return;
+    }
+
+    /*
+     * Consumed after the cheap guards, so a creation that was never a candidate does not throw away the
+     * attribution of a path that is about to be written again. Whatever is never consumed expires on its
+     * own after a minute.
+     *
+     * `null` — nothing recorded the write — is a real answer, not a failure: Obsidian core, a sync client
+     * and a raw `fs` write all leave no plugin on the stack. The setting treats it as "not one of the
+     * listed plugins", which is what makes both list modes read the way their names promise.
+     */
+    const creatingPluginId = foreignWriteRegistry.consume(attachmentFile.path);
+    if (!settings.shouldRenameAttachmentCreatedByPlugin(creatingPluginId)) {
       return;
     }
 

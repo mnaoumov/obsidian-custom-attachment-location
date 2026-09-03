@@ -231,6 +231,14 @@ export const am = {
       },
       name: 'Markdown URL ቅርጸት'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'የተያያዥ አቃፊ እና የፋይል ስም ቅንብሮች ሌሎች ተሰኪዎች በሚፈጥሯቸው ተያያዥ ፋይሎች ላይ ይተግበሩ እንደሆነ።',
+        part2: 'አንዳንድ ተሰኪዎች ኦብሲዲያንን የት እንደሚገባ ሳይጠይቁ ተያያዥ ፋይልን በራሳቸው ስም ወደ ቮልት ይጽፋሉ። ይህ ሲነቃ፣ እንዲህ ያለ ፋይል እንደታየ ወዲያውኑ ይንቀሳቀሳል እና ዳግም ይሰየማል።',
+        part3: 'ማስታወሻ ክፍት ሆኖ የተፈጠሩ ፋይሎች ብቻ ይነካሉ፤ ከማመሳሰል ወይም ከቮልት አስመጣ የሚመጡ ፋይሎች በጭራሽ አይነኩም።'
+      },
+      name: 'በሌሎች ተሰኪዎች የተፈጠሩ ተያያዥ ፋይሎችን ዳግም ሰይም'
+    },
     renameAttachmentsToLowerCase: 'ተያያዦችን ወደ ትንሽ ፊደል መለወጥ',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const am = {
     shouldConvertPastedImagesToJpeg: {
       description: 'የተጣበቁ ምስሎችን ወደ JPEG መቀየር አለበት እንደሆነ። የ PNG ምስል ይዘት ከክሊፕቦርድ በቀጥታ ሲጣበቅ ብቻ ይተገበራል። በተለምዶ፣ ስክሪንሾችን ለመጣበቅ።',
       name: 'የተጣበቁ ምስሎችን ወደ JPEG መቀየር አለበት'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'የተያያዥ አቃፊ እና የፋይል ስም ቅንብሮች ሌሎች ተሰኪዎች በሚፈጥሯቸው ተያያዥ ፋይሎች ላይ ይተግበሩ እንደሆነ።',
-        part2: 'አንዳንድ ተሰኪዎች ኦብሲዲያንን የት እንደሚገባ ሳይጠይቁ ተያያዥ ፋይልን በራሳቸው ስም ወደ ቮልት ይጽፋሉ። ይህ ሲነቃ፣ እንዲህ ያለ ፋይል እንደታየ ወዲያውኑ ይንቀሳቀሳል እና ዳግም ይሰየማል።',
-        part3: 'ማስታወሻ ክፍት ሆኖ የተፈጠሩ ፋይሎች ብቻ ይነካሉ፤ ከማመሳሰል ወይም ከቮልት አስመጣ የሚመጡ ፋይሎች በጭራሽ አይነኩም።'
-      },
-      name: 'በሌሎች ተሰኪዎች የተፈጠሩ ተያያዥ ፋይሎችን ዳግም ሰይም'
     },
     shouldRenameCollectedAttachments: {
       description: {

@@ -11,7 +11,8 @@ import {
   ConvertImagesToJpegMode,
   DefaultImageSizeDimension,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode,
-  PluginSettings
+  PluginSettings,
+  RenameAttachmentsCreatedByOtherPluginsMode
 } from './plugin-settings.ts';
 
 describe('PluginSettings', () => {
@@ -36,6 +37,54 @@ describe('PluginSettings', () => {
       expect(settings.excludePathsFromAttachmentCollecting).toStrictEqual([]);
       expect(settings.excludePathsFromMultipleNotesCheck).toStrictEqual([]);
       expect(settings.attachmentUnitFolderPaths).toStrictEqual([]);
+      expect(settings.renameAttachmentsCreatedByOtherPluginsMode).toBe(RenameAttachmentsCreatedByOtherPluginsMode.None);
+      expect(settings.otherPluginIdsForAttachmentRename).toStrictEqual([]);
+    });
+  });
+
+  describe('renameAttachmentsCreatedByOtherPluginsMode', () => {
+    function createSettings(mode: RenameAttachmentsCreatedByOtherPluginsMode): PluginSettings {
+      const settings = new PluginSettings();
+      settings.renameAttachmentsCreatedByOtherPluginsMode = mode;
+      settings.otherPluginIdsForAttachmentRename = ['media-extended'];
+      return settings;
+    }
+
+    it('should need the creating plugin only for the two list modes', () => {
+      expect(createSettings(RenameAttachmentsCreatedByOtherPluginsMode.None).needsCreatingPluginAttribution()).toBe(false);
+      expect(createSettings(RenameAttachmentsCreatedByOtherPluginsMode.All).needsCreatingPluginAttribution()).toBe(false);
+      expect(createSettings(RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins).needsCreatingPluginAttribution()).toBe(true);
+      expect(createSettings(RenameAttachmentsCreatedByOtherPluginsMode.AllExceptListedPlugins).needsCreatingPluginAttribution()).toBe(true);
+    });
+
+    it('should rename nothing in None mode', () => {
+      const settings = createSettings(RenameAttachmentsCreatedByOtherPluginsMode.None);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin('media-extended')).toBe(false);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin('excalidraw')).toBe(false);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin(null)).toBe(false);
+    });
+
+    it('should rename everything in All mode, list or no list', () => {
+      const settings = createSettings(RenameAttachmentsCreatedByOtherPluginsMode.All);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin('media-extended')).toBe(true);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin('excalidraw')).toBe(true);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin(null)).toBe(true);
+    });
+
+    it('should rename only the listed plugins in OnlyListedPlugins mode', () => {
+      const settings = createSettings(RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin('media-extended')).toBe(true);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin('excalidraw')).toBe(false);
+      // An unattributable file is not one of the named plugins, so the mode leaves it alone.
+      expect(settings.shouldRenameAttachmentCreatedByPlugin(null)).toBe(false);
+    });
+
+    it('should rename everything but the listed plugins in AllExceptListedPlugins mode', () => {
+      const settings = createSettings(RenameAttachmentsCreatedByOtherPluginsMode.AllExceptListedPlugins);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin('media-extended')).toBe(false);
+      expect(settings.shouldRenameAttachmentCreatedByPlugin('excalidraw')).toBe(true);
+      // An unattributable file is not one of the excluded plugins, so the mode renames it.
+      expect(settings.shouldRenameAttachmentCreatedByPlugin(null)).toBe(true);
     });
   });
 

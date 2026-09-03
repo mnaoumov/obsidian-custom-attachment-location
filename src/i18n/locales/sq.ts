@@ -230,6 +230,14 @@ export const sq = {
       },
       name: 'Formati i URL-së Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Nëse cilësimet e dosjes së bashkëngjitjeve dhe të emrit të skedarit zbatohen edhe për bashkëngjitjet që krijojnë shtojca të TJERA.',
+        part2: 'Disa shtojca e shkruajnë bashkëngjitjen drejt e në kasafortë me një emër të tyrin, pa e pyetur Obsidian se ku i takon. Me këtë të aktivizuar, një skedar i tillë zhvendoset dhe riemërtohet sapo shfaqet.',
+        part3: 'Preken vetëm skedarët e krijuar ndërsa një shënim është i hapur, kurrë skedarët që vijnë nga një sinkronizim ose nga një import kasaforte.'
+      },
+      name: 'Riemërto bashkëngjitjet e krijuara nga shtojca të tjera'
+    },
     renameAttachmentsToLowerCase: 'Riemërto bashkëngjitjet me shkronja të vogla',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const sq = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Nëse imazhet e ngjitura duhet të konvertohen në JPEG. Aplikohet vetëm kur përmbajtja e një PNG ngjitet nga clipboard. Zakonisht për pamjet e ekranit.',
       name: 'Konverto imazhet e ngjitura në JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Nëse cilësimet e dosjes së bashkëngjitjeve dhe të emrit të skedarit zbatohen edhe për bashkëngjitjet që krijojnë shtojca të TJERA.',
-        part2: 'Disa shtojca e shkruajnë bashkëngjitjen drejt e në kasafortë me një emër të tyrin, pa e pyetur Obsidian se ku i takon. Me këtë të aktivizuar, një skedar i tillë zhvendoset dhe riemërtohet sapo shfaqet.',
-        part3: 'Preken vetëm skedarët e krijuar ndërsa një shënim është i hapur, kurrë skedarët që vijnë nga një sinkronizim ose nga një import kasaforte.'
-      },
-      name: 'Riemërto bashkëngjitjet e krijuara nga shtojca të tjera'
     },
     shouldRenameCollectedAttachments: {
       description: {

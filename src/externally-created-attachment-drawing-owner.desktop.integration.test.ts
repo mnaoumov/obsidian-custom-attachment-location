@@ -8,7 +8,7 @@ import {
 
 /*
  * Issue #65 asks for a paste into an Excalidraw drawing to spawn the `${prompt}` box. This test pins
- * the boundary that answers it: `shouldRenameAttachmentsCreatedByOtherPlugins` -- the opt-in added for
+ * the boundary that answers it: `renameAttachmentsCreatedByOtherPluginsMode` -- the opt-in added for
  * issue #59 -- deliberately does NOTHING when the file in front of the user is one the user has listed
  * in `treatAsAttachmentExtensions`, which by default is exactly `.excalidraw.md`.
  *
@@ -40,7 +40,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
 
         interface OtherPluginSettings {
           attachmentFolderPath: string;
-          shouldRenameAttachmentsCreatedByOtherPlugins: boolean;
+          renameAttachmentsCreatedByOtherPluginsMode: string;
         }
 
         /*
@@ -66,7 +66,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
 
         function isOtherPluginSettings(value: unknown): value is OtherPluginSettings {
           return typeof value === 'object' && value !== null
-            && typeof (value as Record<string, unknown>)['shouldRenameAttachmentsCreatedByOtherPlugins'] === 'boolean'
+            && typeof (value as Record<string, unknown>)['renameAttachmentsCreatedByOtherPluginsMode'] === 'string'
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
@@ -126,7 +126,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
         const holder: HandedOverSettingsHolder = foundHolder;
 
         const priorFolderPath = settings.attachmentFolderPath;
-        const wasRenamingOtherPlugins = settings.shouldRenameAttachmentsCreatedByOtherPlugins;
+        const priorRenameMode = settings.renameAttachmentsCreatedByOtherPluginsMode;
         const priorApiRef = holder.apiRef;
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
@@ -215,7 +215,8 @@ describe('An attachment written by another plugin while a drawing is open is lef
         try {
           // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
           settings.attachmentFolderPath = './eco-assets/${noteFileName}';
-          settings.shouldRenameAttachmentsCreatedByOtherPlugins = true;
+          // The enum's values ARE the display strings; this code runs inside Obsidian and cannot import them.
+          settings.renameAttachmentsCreatedByOtherPluginsMode = 'All';
           holder.apiRef = {
             value: {
               getSettings: (): Record<string, unknown> => ({
@@ -240,7 +241,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
           return { attachmentPathAfterDrawing, attachmentPathAfterNote, probesFound: true };
         } finally {
           settings.attachmentFolderPath = priorFolderPath;
-          settings.shouldRenameAttachmentsCreatedByOtherPlugins = wasRenamingOtherPlugins;
+          settings.renameAttachmentsCreatedByOtherPluginsMode = priorRenameMode;
           holder.apiRef = priorApiRef;
           for (const path of createdPaths.reverse()) {
             await trashIfExists(path);

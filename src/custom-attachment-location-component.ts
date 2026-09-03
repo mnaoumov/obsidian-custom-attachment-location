@@ -36,6 +36,7 @@ import { VaultGetAvailablePathForAttachmentsPatchComponent } from './patches/vau
 import { VaultGetAvailablePathPatchComponent } from './patches/vault-get-available-path-patch-component.ts';
 import { VaultGetConfigPatchComponent } from './patches/vault-get-config-patch-component.ts';
 import { WebUtilsGetPathForFilePatchComponent } from './patches/web-utils-get-path-for-file-patch-component.ts';
+import { WriteAttributionPatchComponent } from './patches/write-attribution-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { Substitutions } from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
@@ -49,6 +50,7 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly imageSizeMap: ImageSizeMap;
   readonly markdownUrlMap: MarkdownUrlMap;
   readonly pluginDirectory: string;
+  readonly pluginId: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly pluginVersion: string;
   readonly tokenValidator: TokenValidator;
@@ -74,6 +76,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
 
   private readonly markdownUrlMap: MarkdownUrlMap;
   private readonly pluginDirectory: string;
+  private readonly pluginId: string;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly pluginVersion: string;
   private readonly tokenValidator: TokenValidator;
@@ -84,6 +87,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.pluginVersion = params.pluginVersion;
     this.pluginDirectory = params.pluginDirectory;
+    this.pluginId = params.pluginId;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.attachmentPathManager = params.attachmentPathManager;
     this.markdownUrlMap = params.markdownUrlMap;
@@ -115,6 +119,18 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.addChild(
       new VaultCreateBinaryEnsureFolderPatchComponent({
         app: this.app,
+        vault: this.app.vault
+      })
+    );
+
+    /*
+     * Before the handler that consumes what it records — and before any foreign write can happen, which is
+     * why both live behind layout-ready rather than `onload`.
+     */
+    this.addChild(
+      new WriteAttributionPatchComponent({
+        pluginId: this.pluginId,
+        pluginSettingsComponent: this.pluginSettingsComponent,
         vault: this.app.vault
       })
     );

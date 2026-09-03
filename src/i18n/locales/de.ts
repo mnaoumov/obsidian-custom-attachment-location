@@ -231,6 +231,14 @@ export const de = {
       },
       name: 'Markdown URL-Format'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Ob die Einstellungen für Anhang-Ordner und Dateiname auch auf Anhänge angewendet werden, die ANDERE Plugins erstellen.',
+        part2: 'Manche Plugins schreiben einen Anhang unter einem eigenen Namen direkt in den Tresor, ohne Obsidian zu fragen, wohin er gehört. Ist dies aktiviert, wird eine solche Datei unmittelbar nach ihrem Auftauchen verschoben und umbenannt.',
+        part3: 'Betroffen sind nur Dateien, die bei geöffneter Notiz entstehen — niemals Dateien aus einer Synchronisierung oder einem Tresor-Import.'
+      },
+      name: 'Von anderen Plugins erstellte Anhänge umbenennen'
+    },
     renameAttachmentsToLowerCase: 'Anhänge in Kleinbuchstaben umbenennen',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const de = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Ob eingefügte Bilder in JPEG konvertiert werden sollen. Gilt nur, wenn der PNG-Bildinhalt direkt aus der Zwischenablage eingefügt wird. Typischerweise für das Einfügen von Screenshots.',
       name: 'Soll eingefügte Bilder in JPEG konvertieren'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Ob die Einstellungen für Anhang-Ordner und Dateiname auch auf Anhänge angewendet werden, die ANDERE Plugins erstellen.',
-        part2: 'Manche Plugins schreiben einen Anhang unter einem eigenen Namen direkt in den Tresor, ohne Obsidian zu fragen, wohin er gehört. Ist dies aktiviert, wird eine solche Datei unmittelbar nach ihrem Auftauchen verschoben und umbenannt.',
-        part3: 'Betroffen sind nur Dateien, die bei geöffneter Notiz entstehen — niemals Dateien aus einer Synchronisierung oder einem Tresor-Import.'
-      },
-      name: 'Von anderen Plugins erstellte Anhänge umbenennen'
     },
     shouldRenameCollectedAttachments: {
       description: {

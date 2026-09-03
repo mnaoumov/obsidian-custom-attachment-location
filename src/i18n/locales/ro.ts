@@ -230,6 +230,14 @@ export const ro = {
       },
       name: 'Format URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Dacă setările pentru folderul de atașamente și numele fișierului se aplică și atașamentelor create de ALTE pluginuri.',
+        part2: 'Unele pluginuri scriu un atașament direct în seif sub un nume propriu, fără să întrebe Obsidian unde ar trebui să ajungă. Cu această opțiune activată, un astfel de fișier este mutat și redenumit imediat ce apare.',
+        part3: 'Sunt afectate doar fișierele create cât timp o notiță este deschisă, niciodată cele venite dintr-o sincronizare sau dintr-un import de seif.'
+      },
+      name: 'Redenumește atașamentele create de alte pluginuri'
+    },
     renameAttachmentsToLowerCase: 'Redenumește atașamentele cu litere mici',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const ro = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Stabilește dacă imaginile lipite să fie convertite în JPEG. Se aplică numai când conținutul unei imagini PNG este lipit direct din clipboard. De obicei, pentru capturi de ecran.',
       name: 'Convertiți imaginile lipite în JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Dacă setările pentru folderul de atașamente și numele fișierului se aplică și atașamentelor create de ALTE pluginuri.',
-        part2: 'Unele pluginuri scriu un atașament direct în seif sub un nume propriu, fără să întrebe Obsidian unde ar trebui să ajungă. Cu această opțiune activată, un astfel de fișier este mutat și redenumit imediat ce apare.',
-        part3: 'Sunt afectate doar fișierele create cât timp o notiță este deschisă, niciodată cele venite dintr-o sincronizare sau dintr-un import de seif.'
-      },
-      name: 'Redenumește atașamentele create de alte pluginuri'
     },
     shouldRenameCollectedAttachments: {
       description: {

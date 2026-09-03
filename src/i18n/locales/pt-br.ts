@@ -230,6 +230,14 @@ export const ptBR = {
       },
       name: 'Formato de URL no Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Se as configurações de pasta de anexos e de nome de arquivo devem ser aplicadas a anexos criados por OUTROS plugins.',
+        part2: 'Alguns plugins gravam um anexo no cofre com um nome próprio, sem perguntar ao Obsidian onde ele deve ficar. Com esta opção ativada, esse arquivo é movido e renomeado assim que aparece.',
+        part3: 'Somente arquivos criados enquanto uma nota está aberta são tocados, nunca os que chegam de uma sincronização ou de uma importação de cofre.'
+      },
+      name: 'Renomear anexos criados por outros plugins'
+    },
     renameAttachmentsToLowerCase: 'Renomear anexos para letras minúsculas',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const ptBR = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Se deve converter imagens coladas em JPEG. Aplica-se apenas quando o conteúdo da imagem PNG é colado diretamente da área de transferência. Tipicamente, para capturas de tela.',
       name: 'Converter imagens coladas para JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Se as configurações de pasta de anexos e de nome de arquivo devem ser aplicadas a anexos criados por OUTROS plugins.',
-        part2: 'Alguns plugins gravam um anexo no cofre com um nome próprio, sem perguntar ao Obsidian onde ele deve ficar. Com esta opção ativada, esse arquivo é movido e renomeado assim que aparece.',
-        part3: 'Somente arquivos criados enquanto uma nota está aberta são tocados, nunca os que chegam de uma sincronização ou de uma importação de cofre.'
-      },
-      name: 'Renomear anexos criados por outros plugins'
     },
     shouldRenameCollectedAttachments: {
       description: {
