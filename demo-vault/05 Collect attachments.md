@@ -66,13 +66,15 @@ An attachment referenced by more than one note has no single correct home, so co
 
 When a note matches several entries, the **longest** one decides its rank. That is what makes the common case work: `drawing.excalidraw.md` also ends with `.md`, so without it a list of `.md` then `.excalidraw.md` would tie instead of putting the plain note first.
 
-Two things worth knowing:
+Three things worth knowing:
 
 - If no entry matches, or if the best entry matches several of the referencing notes, nothing is decided here and the mode setting handles it as before. A tie is never broken silently. **The dialog that then appears says which of the three it was** - the list is empty, nothing matched, or several notes matched equally - so you can tell a list you never configured from one that simply did not apply.
 - The winner does not have to be the note you ran the command on. Collecting from a drawing can hand the image to a markdown note that outranks it. That is the point of the setting, and why it is empty by default.
+- Once a single note wins, the collect is settled, so it stays quiet. If the winner **already** holds the attachment there is simply nothing to move, and no shared-attachment dialog or notice appears - exactly as for an attachment only one note references.
 
 ### Try it
 
 1. Embed the same image in a note and in an Excalidraw drawing.
 2. Run **Collect attachments in current note** with **Note priorities** empty - the image is left alone (or handled per the mode).
 3. Set **Note priorities** to `.md` then `.excalidraw.md` and repeat - the image moves into the markdown note's attachment folder, whichever of the two you ran the command on.
+4. Run it a second time on the markdown note - the image is already in its folder, so nothing moves and nothing is reported.

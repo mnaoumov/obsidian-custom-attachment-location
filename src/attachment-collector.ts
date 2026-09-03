@@ -310,6 +310,11 @@ export class AttachmentCollector {
            * A configured priority answers "which of these notes owns it" outright, so the mode
            * dispatch below never runs. Note this can move the attachment into a note OTHER than the
            * one being collected — that is the point of the setting, and why it is empty by default.
+           *
+           * The ambiguity that mode exists for is "several notes at the HIGHEST rank", not "several
+           * notes". So a named winner short-circuits unconditionally, including when it turns out
+           * there is nothing to move because the winner already holds the attachment (issue #73):
+           * an unambiguous collect must stay as quiet as a singly-referenced one.
            */
           const priorityWinnerNotePath = this.noteOwnerResolver.pickOwnerNotePath(backlinksSorted);
           if (priorityWinnerNotePath) {
@@ -324,19 +329,22 @@ export class AttachmentCollector {
               // eslint-disable-next-line require-atomic-updates -- Matches how the surrounding code reassigns this; a single note's links are collected in sequence.
               attachmentMoveResult = priorityResult;
               this.consoleDebugComponent.consoleDebug(
-                `Collecting attachment ${attachmentMoveResult.oldAttachmentPath} into ${priorityWinnerNotePath} as the highest-priority referencing note.`
+                attachmentMoveResult.newAttachmentPath
+                  ? `Collecting attachment ${attachmentMoveResult.oldAttachmentPath} into ${priorityWinnerNotePath} as the highest-priority referencing note.`
+                  : `Leaving attachment ${attachmentMoveResult.oldAttachmentPath} where it is,`
+                    + ` as the highest-priority referencing note ${priorityWinnerNotePath} already holds it.`
               );
               await registerMoveAttachment();
               params.abortSignal.throwIfAborted();
-              continue;
+            } else {
+              // The winner is settled either way; the attachment itself is what went missing.
+              console.warn(`Skipping collecting attachment ${attachmentMoveResult.oldAttachmentPath} as it could not be resolved.`);
             }
+            continue;
           }
 
-          /*
-           * Only when the list named nobody. Reaching here WITH a winner means the move could not be
-           * prepared, which is a different story and must not be reported as a priority failure.
-           */
-          const noPriorityWinnerReason = priorityWinnerNotePath ? null : this.noteOwnerResolver.findNoPriorityWinnerReason(backlinksSorted);
+          // Reaching here means the list named nobody, so there is always a reason to report.
+          const noPriorityWinnerReason = this.noteOwnerResolver.findNoPriorityWinnerReason(backlinksSorted);
 
           async function shouldCollectWithMode(
             collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode
@@ -715,6 +723,11 @@ export class AttachmentCollector {
   /**
    * Recomputes where an attachment belongs when a note other than the one being collected has won it
    * on priority. Only the destination changes; the attachment and its unit folder are untouched.
+   *
+   * A `null` RESULT means the attachment file itself could not be resolved — the only real failure
+   * here. A null `newAttachmentPath` inside the result is not one: it says the winner already holds
+   * the attachment, so the collect is done rather than stuck. Conflating the two is what made an
+   * unambiguous collect report the shared-attachment ambiguity (issue #73).
    */
   private async prepareAttachmentToMoveForNote(params: AttachmentCollectorPrepareAttachmentToMoveForNoteParams): Promise<AttachmentMoveResult | null> {
     const attachmentFile = this.app.vault.getFileByPath(params.attachmentMoveResult.oldAttachmentPath);
@@ -729,10 +742,6 @@ export class AttachmentCollector {
       reference: params.reference,
       sequenceNumber: params.sequenceNumberByAttachmentPath.get(attachmentFile.path) ?? 0
     });
-
-    if (!newAttachmentPath) {
-      return null;
-    }
 
     return {
       ...params.attachmentMoveResult,
