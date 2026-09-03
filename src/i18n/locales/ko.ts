@@ -100,20 +100,6 @@ export const ko = {
     defaultImageSizeDimension: {
       height: '높이',
       width: '너비'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: '빈 첨부 파일 폴더를 삭제합니다.',
-        displayText: '삭제'
-      },
-      deleteWithEmptyParents: {
-        description: '빈 첨부 파일 폴더와 빈 상위 폴더들을 삭제합니다.',
-        displayText: '빈 상위 폴더와 함께 삭제'
-      },
-      keep: {
-        description: '빈 첨부 파일 폴더를 유지합니다.',
-        displayText: '유지'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const ko = {
       },
       name: '중복 이름 구분자'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: '첨부 파일 폴더가 비게 될 때:'
-      },
-      name: '빈 첨부 파일 폴더 동작'
-    },
-    excludePaths: {
-      description: {
-        part1: '다음 경로에서 노트를 제외합니다.',
-        part2: '각 경로를 새 줄에 입력하세요.',
-        part3: '경로 문자열 또는',
-        part4: '을(를) 사용할 수 있습니다. 설정이 비어 있으면 노트가 제외되지 않습니다.'
-      },
-      name: '제외 경로'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: '다음 경로에서 첨부 파일을 제외합니다',
@@ -233,15 +204,6 @@ export const ko = {
         part2: '토큰을 참조하세요'
       },
       name: '생성된 첨부 파일 이름'
-    },
-    includePaths: {
-      description: {
-        part1: '다음 경로에서 노트를 포함합니다.',
-        part2: '각 경로를 새 줄에 입력하세요.',
-        part3: '경로 문자열 또는',
-        part4: '을(를) 사용할 수 있습니다. 설정이 비어 있으면 모든 노트가 포함됩니다.'
-      },
-      name: '포함 경로'
     },
     jpegQuality: {
       description: '품질이 낮을수록 압축률이 높아집니다.',
@@ -284,21 +246,6 @@ export const ko = {
       description: '붙여넣은 이미지를 JPEG로 변환할지 여부입니다. PNG 이미지 내용이 클립보드에서 직접 붙여넣어질 때만 적용됩니다. 일반적으로 스크린샷 붙여넣기에 사용됩니다.',
       name: '붙여넣은 이미지를 JPEG로 변환'
     },
-    shouldDeleteOrphanAttachments: {
-      description: '활성화하면 노트가 삭제될 때 고아 첨부 파일도 함께 삭제됩니다.',
-      name: '고아 첨부 파일 삭제'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: '활성화하면 노트의 이름이 변경되거나 이동될 때 첨부 파일이',
-        part2: '설정에 따라 이름이 변경됩니다.'
-      },
-      name: '첨부 파일 이름 변경'
-    },
-    shouldRenameAttachmentFolders: {
-      description: '노트의 이름이 변경되거나 이동될 때 첨부 파일 폴더의 이름을 변경할지 여부입니다.',
-      name: '첨부 파일 폴더 이름 변경'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: '다른 플러그인이 만든 첨부 파일에도 첨부 폴더 및 파일 이름 설정을 적용할지 여부입니다.',
@@ -337,17 +284,6 @@ export const ko = {
         part3: '이(가) 설정되면 작업 실행 타임아웃이 비활성화됩니다.'
       },
       name: '시간 초과(초)'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: '이러한 확장자를 가진 파일을 첨부 파일로 처리합니다.',
-        part2: '기본적으로',
-        part3: '및',
-        part4: '링크된 파일은 첨부 파일로 처리되지 않으며 노트와 함께 이동되지 않습니다.',
-        part5: '이 동작을 재정의하려면 사용자 정의 확장자(예:',
-        part6: ')를 추가할 수 있습니다.'
-      },
-      name: '첨부 파일 확장자로 처리'
     }
   },
   promptWithPreviewModal: {

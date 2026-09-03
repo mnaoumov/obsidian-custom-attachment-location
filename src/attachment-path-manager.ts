@@ -19,7 +19,6 @@ import {
   DUMMY_PATH,
   getAvailablePathForAttachments
 } from 'obsidian-dev-utils/obsidian/attachment-path';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
   getFileOrNull,
   getPath,
@@ -32,7 +31,10 @@ import {
   getCacheSafe,
   getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
+import {
+  createFolderSafe,
+  EmptyFolderBehavior
+} from 'obsidian-dev-utils/obsidian/vault';
 import {
   basename,
   dirname,
@@ -42,6 +44,7 @@ import {
 import { trimStart } from 'obsidian-dev-utils/string';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { IMPORT_FILES_PREFIX } from './patches/share-receiver-import-files-patch-component.ts';
@@ -63,6 +66,7 @@ const ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE = '${originalAttachmentFileName}';
 interface AttachmentPathManagerConstructorParams {
   readonly app: App;
   readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFunction;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly tokenValidator: TokenValidator;
@@ -129,6 +133,7 @@ interface NoteLinkWalkResult {
 export class AttachmentPathManager {
   private readonly app: App;
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFunction;
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly tokenValidator: TokenValidator;
@@ -136,6 +141,7 @@ export class AttachmentPathManager {
   public constructor(params: AttachmentPathManagerConstructorParams) {
     this.app = params.app;
     this.getAvailablePathForAttachmentsOriginal = params.getAvailablePathForAttachmentsOriginal;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.tokenValidator = params.tokenValidator;
@@ -187,7 +193,7 @@ export class AttachmentPathManager {
       });
       shouldSkipGeneratedAttachmentFileName = true;
     }
-    if (noteFile && this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
+    if (noteFile && this.handedOverSettingsComponent.isPathIgnored(noteFile.path)) {
       return this.getAvailablePathForAttachmentsOriginal(attachmentFileBaseName, params.attachmentFileExtension, noteFile);
     }
 
@@ -267,7 +273,7 @@ export class AttachmentPathManager {
       const folderPath = parentFolderPath(attachmentPath);
       if (!await this.app.vault.exists(folderPath)) {
         await createFolderSafe(this.app, folderPath);
-        if (this.pluginSettingsComponent.settings.emptyFolderBehavior === EmptyFolderBehavior.Keep) {
+        if (this.handedOverSettingsComponent.settings.emptyFolderBehavior === EmptyFolderBehavior.Keep) {
           /*
            * Materialize the Keep placeholder idempotently. On a multi-device sync
            * (iCloud/Git), a peer may have already synced the same `.gitkeep` onto
@@ -487,7 +493,7 @@ export class AttachmentPathManager {
      * renamed note (issue #259 in Advanced Note Composer). Skipping the generated name leaves the file
      * named as it is and moves only its folder.
      */
-    return context === AttachmentPathContext.RenameNote && !this.pluginSettingsComponent.settings.shouldRenameAttachmentFiles;
+    return context === AttachmentPathContext.RenameNote && !this.handedOverSettingsComponent.settings.shouldRenameAttachmentFiles;
   }
 
   private async resolvePathTemplate(params: AttachmentPathManagerResolvePathTemplateParams): Promise<string> {

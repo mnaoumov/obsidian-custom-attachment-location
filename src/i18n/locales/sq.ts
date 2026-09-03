@@ -100,20 +100,6 @@ export const sq = {
     defaultImageSizeDimension: {
       height: 'Gjatësia',
       width: 'Gjerësia'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'do të fshijë dosjen e zbrazët të bashkëngjitjeve.',
-        displayText: 'Fshi'
-      },
-      deleteWithEmptyParents: {
-        description: 'do të fshijë dosjen e zbrazët të bashkëngjitjeve dhe dosjet prind të zbrazëta.',
-        displayText: 'Fshi me prindër të zbrazët'
-      },
-      keep: {
-        description: 'do të mbajë dosjen e zbrazët të bashkëngjitjeve.',
-        displayText: 'Mbaj'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const sq = {
       },
       name: 'Ndarës për emra të dyfishtë'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Kur dosja e bashkëngjitjeve bëhet e zbrazët:'
-      },
-      name: 'Sjellja e dosjes së zbrazët të bashkëngjitjeve'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Përjashto shënime nga shtegu në vijim.',
-        part2: 'Futni çdo shteg në një rresht të ri.',
-        part3: 'Mund të përdorni vargun e shtegut ose',
-        part4: 'Nëse cilësimi është bosh, asnjë shënim nuk përjashtohet.'
-      },
-      name: 'Përjashto shtigjet'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Përjashto bashkëngjitjet nga këto shtigje kur komanda',
@@ -233,15 +204,6 @@ export const sq = {
         part2: 'tokenat e disponueshëm'
       },
       name: 'Emri i gjeneruar i skedarit të bashkëngjitur'
-    },
-    includePaths: {
-      description: {
-        part1: 'Përfshi shënime nga shtigjet e mëposhtme.',
-        part2: 'Futni çdo shteg në një rresht të ri.',
-        part3: 'Mund të përdorni vargun e shtegut ose',
-        part4: 'Nëse cilësimi është bosh, të gjitha shënimet përfshihen.'
-      },
-      name: 'Përfshi shtigje'
     },
     jpegQuality: {
       description: 'Sa më e vogël të jetë cilësia, aq më e madhe është shkalla e kompresimit.',
@@ -284,21 +246,6 @@ export const sq = {
       description: 'Nëse imazhet e ngjitura duhet të konvertohen në JPEG. Aplikohet vetëm kur përmbajtja e një PNG ngjitet nga clipboard. Zakonisht për pamjet e ekranit.',
       name: 'Konverto imazhet e ngjitura në JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Nëse aktivizohet, kur fshihet shënimi, fshihen edhe bashkëngjitjet jetim.',
-      name: 'Fshi bashkëngjitjet jetim'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Nëse aktivizohet, kur një shënim riemërtohet ose zhvendoset, bashkëngjitjet do të riemërtohen sipas',
-        part2: 'vendosjes.'
-      },
-      name: 'Riemërto skedarët e bashkëngjitjes'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Nëse dosjet e bashkëngjitjes do të riemërtohen kur një shënim riemërtohet ose zhvendoset.',
-      name: 'Riemërto dosjet e bashkëngjitjes'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Nëse cilësimet e dosjes së bashkëngjitjeve dhe të emrit të skedarit zbatohen edhe për bashkëngjitjet që krijojnë shtojca të TJERA.',
@@ -337,17 +284,6 @@ export const sq = {
         part3: 'është i vendosur, koha e operacionit është e çaktivizuar.'
       },
       name: 'Kufiri i kohës në sekonda'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Trajtoni skedarët me këto zgjerime si bashkëngjitje.',
-        part2: 'Si parazgjedhje',
-        part3: 'dhe',
-        part4: 'skedarët e lidhur nuk trajtohen si bashkëngjitje dhe nuk zhvendosen me shënimin.',
-        part5: 'Mund të shtoni zgjerime të personalizuara, p.sh.',
-        part6: ', për të anashkaluar këtë sjellje.'
-      },
-      name: 'Trajto si zgjerime bashkëngjitjesh'
     }
   },
   promptWithPreviewModal: {

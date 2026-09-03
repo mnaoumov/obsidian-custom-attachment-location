@@ -26,7 +26,7 @@ interface ProbeResult {
   readonly diagnostics: string;
   readonly movedPaths: readonly string[];
   readonly noteFolder: string;
-  readonly settingsFound: boolean;
+  readonly probesFound: boolean;
   readonly wasVacatedFolderDeleted: boolean;
 }
 
@@ -43,8 +43,29 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
         interface UnitFolderSettings {
           attachmentFolderPath: string;
           attachmentUnitFolderPaths: string[];
-          emptyFolderBehavior: string;
           isAttachmentUnitFolder(path: string): boolean;
+        }
+
+        /*
+         * `emptyFolderBehavior` belongs to Advanced Rename and Delete Handler since 12.0.0, so writing it
+         * onto this plugin's settings pins nothing: the sweep asks the read-back component, which answers
+         * from the provider or from this plugin's absent-provider defaults. Those defaults happen to hold
+         * the deleting behavior this test wants, so the write would have LOOKED like it worked while
+         * testing only the default. The value therefore comes from a stub parked on the read-back
+         * component's live ref, which is the path the sweep really reads.
+         */
+        interface HandedOverProvider {
+          getSettings(): Record<string, unknown>;
+          isPathIgnored(path: string): boolean;
+          isTreatedAsAttachment(path: string): boolean;
+        }
+
+        interface HandedOverProviderRef {
+          value: HandedOverProvider | null;
+        }
+
+        interface HandedOverSettingsHolder {
+          apiRef: HandedOverProviderRef | null;
         }
 
         function isUnitFolderSettings(value: unknown): value is UnitFolderSettings {
@@ -52,9 +73,17 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
             && typeof (value as Record<string, unknown>)['isAttachmentUnitFolder'] === 'function';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): null | UnitFolderSettings {
+        function isHandedOverSettingsHolder(value: unknown): value is HandedOverSettingsHolder {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null
+            && 'apiRef' in record
+            && typeof record['isPathIgnored'] === 'function'
+            && typeof record['isTreatedAsAttachment'] === 'function';
+        }
+
+        // Neither the settings nor the read-back component is exposed publicly, so both are located by
+        // Walking the plugin's component tree.
+        function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
@@ -66,8 +95,9 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isUnitFolderSettings(record['settings'])) {
-              return record['settings'];
+            const matched = match(record);
+            if (matched !== null) {
+              return matched;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -90,12 +120,14 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
           return null;
         }
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
-          return { diagnostics: '', movedPaths: [], noteFolder: '', settingsFound: false, wasVacatedFolderDeleted: false };
+        const foundSettings = findInPluginTree((record) => isUnitFolderSettings(record['settings']) ? record['settings'] : null);
+        const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
+        if (!foundSettings || !foundHolder) {
+          return { diagnostics: '', movedPaths: [], noteFolder: '', probesFound: false, wasVacatedFolderDeleted: false };
         }
         // A narrowed `const` does not stay narrowed inside a function declaration below it.
         const settings: UnitFolderSettings = foundSettings;
+        const holder: HandedOverSettingsHolder = foundHolder;
 
         /*
          * Best-effort cleanup, so it must tolerate an entry that is already gone: the collect pass
@@ -116,7 +148,7 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
 
         const priorFolderPath = settings.attachmentFolderPath;
         const priorUnitFolderPaths = settings.attachmentUnitFolderPaths;
-        const priorEmptyFolderBehavior = settings.emptyFolderBehavior;
+        const priorApiRef = holder.apiRef;
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const sourceFolderPath = `uf-source-${stamp}`;
@@ -132,7 +164,18 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
           // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
           settings.attachmentFolderPath = './assets/${noteFileName}';
           settings.attachmentUnitFolderPaths = [unitFolderPath];
-          settings.emptyFolderBehavior = 'DeleteWithEmptyParents';
+          holder.apiRef = {
+            value: {
+              getSettings: (): Record<string, unknown> => ({
+                emptyFolderBehavior: 'DeleteWithEmptyParents',
+                notePriorities: [],
+                shouldRenameAttachmentFiles: false,
+                treatAsAttachmentExtensions: ['.excalidraw.md']
+              }),
+              isPathIgnored: (): boolean => false,
+              isTreatedAsAttachment: (path: string): boolean => path.endsWith('.excalidraw.md')
+            }
+          };
 
           await app.vault.createFolder(`${unitFolderPath}/sub`);
           await app.vault.createBinary(linkedPath, new ArrayBuffer(4));
@@ -192,7 +235,7 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
             diagnostics: `related=${JSON.stringify(related)}`,
             movedPaths: related.filter((path) => path.startsWith(`${noteFolder}/`)).sort(),
             noteFolder,
-            settingsFound: true,
+            probesFound: true,
             wasVacatedFolderDeleted
           };
         } finally {
@@ -216,7 +259,7 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
           // Restoring values captured before the awaits; nothing else in this vault writes them.
           settings.attachmentFolderPath = priorFolderPath;
           settings.attachmentUnitFolderPaths = priorUnitFolderPaths;
-          settings.emptyFolderBehavior = priorEmptyFolderBehavior;
+          holder.apiRef = priorApiRef;
         }
       },
       input: {
@@ -227,7 +270,7 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.settingsFound).toBe(true);
+    expect(result.probesFound).toBe(true);
 
     // The whole tree moved, which is the precondition the vacated-folder claim rests on.
     expect(result.movedPaths, result.diagnostics).toStrictEqual([

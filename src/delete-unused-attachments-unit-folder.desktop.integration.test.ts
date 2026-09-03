@@ -40,7 +40,7 @@ interface ProbeResult {
   readonly isKeptUnitAlive: boolean;
   readonly isSelfReferencingImageGone: boolean;
   readonly isSelfReferencingUnitGone: boolean;
-  readonly settingsFound: boolean;
+  readonly probesFound: boolean;
 }
 
 describe('Delete unused attachments in entire vault, attachment unit folders (issue #72)', () => {
@@ -59,7 +59,27 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
           attachmentFolderPath: string;
           attachmentUnitFolderPaths: string[];
           isAttachmentUnitFolder(path: string): boolean;
-          treatAsAttachmentExtensions: readonly string[];
+        }
+
+        /*
+         * `treatAsAttachmentExtensions` belongs to Advanced Rename and Delete Handler since 12.0.0, and
+         * this plugin no longer reads the array — it asks `isTreatedAsAttachment(path)`. Writing the array
+         * onto this plugin's settings therefore pins nothing, and would have LOOKED like it worked because
+         * the absent-provider default holds `.excalidraw.md` anyway. What this test needs is the
+         * PREDICATE's answer, supplied by a stub parked on the read-back component's live ref.
+         */
+        interface HandedOverProvider {
+          getSettings(): Record<string, unknown>;
+          isPathIgnored(path: string): boolean;
+          isTreatedAsAttachment(path: string): boolean;
+        }
+
+        interface HandedOverProviderRef {
+          value: HandedOverProvider | null;
+        }
+
+        interface HandedOverSettingsHolder {
+          apiRef: HandedOverProviderRef | null;
         }
 
         function isUnitFolderSettings(value: unknown): value is UnitFolderSettings {
@@ -68,9 +88,17 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object by
-        // Walking the plugin's component tree, keyed off a setting this plugin still owns.
-        function findSettings(): null | UnitFolderSettings {
+        function isHandedOverSettingsHolder(value: unknown): value is HandedOverSettingsHolder {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null
+            && 'apiRef' in record
+            && typeof record['isPathIgnored'] === 'function'
+            && typeof record['isTreatedAsAttachment'] === 'function';
+        }
+
+        // Neither the settings nor the read-back component is exposed publicly, so both are located by
+        // Walking the plugin's component tree, keyed off members this plugin still owns.
+        function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
@@ -82,8 +110,9 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isUnitFolderSettings(record['settings'])) {
-              return record['settings'];
+            const matched = match(record);
+            if (matched !== null) {
+              return matched;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -112,19 +141,21 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
           isKeptUnitAlive: false,
           isSelfReferencingImageGone: false,
           isSelfReferencingUnitGone: false,
-          settingsFound: false
+          probesFound: false
         };
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
+        const foundSettings = findInPluginTree((record) => isUnitFolderSettings(record['settings']) ? record['settings'] : null);
+        const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
+        if (!foundSettings || !foundHolder) {
           return EMPTY_RESULT;
         }
         // A narrowed `const` does not stay narrowed inside a function declaration below it.
         const settings: UnitFolderSettings = foundSettings;
+        const holder: HandedOverSettingsHolder = foundHolder;
 
         const priorFolderPath = settings.attachmentFolderPath;
         const priorUnitFolderPaths = settings.attachmentUnitFolderPaths;
-        const priorTreatAsAttachmentExtensions = settings.treatAsAttachmentExtensions;
+        const priorApiRef = holder.apiRef;
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const noteName = `duf-note-${stamp}`;
@@ -160,7 +191,18 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
           // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
           settings.attachmentFolderPath = './duf-assets/${noteFileName}';
           settings.attachmentUnitFolderPaths = [selfReferencingUnitPath, keptUnitPath];
-          settings.treatAsAttachmentExtensions = ['.excalidraw.md'];
+          holder.apiRef = {
+            value: {
+              getSettings: (): Record<string, unknown> => ({
+                emptyFolderBehavior: 'DeleteWithEmptyParents',
+                notePriorities: [],
+                shouldRenameAttachmentFiles: false,
+                treatAsAttachmentExtensions: ['.excalidraw.md']
+              }),
+              isPathIgnored: (): boolean => false,
+              isTreatedAsAttachment: (path: string): boolean => path.endsWith('.excalidraw.md')
+            }
+          };
 
           await app.vault.createFolder('duf-assets');
           await app.vault.createFolder(attachmentFolderPath);
@@ -227,12 +269,12 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
             isKeptUnitAlive: app.vault.getAbstractFileByPath(keptImagePath) !== null,
             isSelfReferencingImageGone: app.vault.getAbstractFileByPath(selfReferencingImagePath) === null,
             isSelfReferencingUnitGone: app.vault.getAbstractFileByPath(selfReferencingUnitPath) === null,
-            settingsFound: true
+            probesFound: true
           };
         } finally {
           settings.attachmentFolderPath = priorFolderPath;
           settings.attachmentUnitFolderPaths = priorUnitFolderPaths;
-          settings.treatAsAttachmentExtensions = priorTreatAsAttachmentExtensions;
+          holder.apiRef = priorApiRef;
           for (
             const path of [
               drawingPath,
@@ -258,7 +300,7 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.settingsFound).toBe(true);
+    expect(result.probesFound).toBe(true);
 
     // The whole folder goes, not file by file.
     expect(result.isSelfReferencingUnitGone).toBe(true);

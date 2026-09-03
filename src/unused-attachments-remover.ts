@@ -37,6 +37,7 @@ import {
 import { dirname } from 'obsidian-dev-utils/path';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { checkIsAttachmentUnitFolder } from './attachment-unit-folder-designation.ts';
@@ -56,6 +57,7 @@ interface UnusedAttachmentsRemoverConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -85,6 +87,7 @@ export class UnusedAttachmentsRemover {
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -93,6 +96,7 @@ export class UnusedAttachmentsRemover {
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
@@ -138,9 +142,7 @@ export class UnusedAttachmentsRemover {
         timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
       });
 
-      const outsideBacklinks = backlinks.keys().filter((backlink) =>
-        !backlink.startsWith(insidePathPrefix) && !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink)
-      );
+      const outsideBacklinks = backlinks.keys().filter((backlink) => !backlink.startsWith(insidePathPrefix) && !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
       if (outsideBacklinks.length > 0) {
         return true;
       }
@@ -177,7 +179,7 @@ export class UnusedAttachmentsRemover {
 
     const scanNote = async (noteFile: TFile): Promise<void> => {
       abortSignal.throwIfAborted();
-      if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
+      if (this.handedOverSettingsComponent.isPathIgnored(noteFile.path)) {
         console.warn(`Cannot delete unused attachments as note path is ignored: ${noteFile.path}.`);
         return;
       }
@@ -302,7 +304,7 @@ export class UnusedAttachmentsRemover {
 
     await cleanupEmptyFolders({
       app: this.app,
-      emptyFolderBehavior: this.pluginSettingsComponent.settings.emptyFolderBehavior,
+      emptyFolderBehavior: this.handedOverSettingsComponent.settings.emptyFolderBehavior,
       folderPaths: [...oldParentFolderPaths]
     });
   }

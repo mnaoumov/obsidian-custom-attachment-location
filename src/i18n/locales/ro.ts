@@ -100,20 +100,6 @@ export const ro = {
     defaultImageSizeDimension: {
       height: 'Înălțime',
       width: 'Lățime'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'va șterge dosarul de atașamente gol.',
-        displayText: 'Șterge'
-      },
-      deleteWithEmptyParents: {
-        description: 'va șterge dosarul de atașamente gol și dosarele-părinte goale.',
-        displayText: 'Șterge cu părinți goi'
-      },
-      keep: {
-        description: 'va păstra dosarul de atașamente gol.',
-        displayText: 'Păstrează'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const ro = {
       },
       name: 'Separator pentru nume duplicate'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Când dosarul de atașamente devine gol:'
-      },
-      name: 'Comportamentul dosarului de atașamente gol'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Excludeți notițe din următoarele căi.',
-        part2: 'Introduceți fiecare cale pe o linie nouă.',
-        part3: 'Puteți folosi șir de cale sau',
-        part4: 'Dacă setarea este goală, nicio notiță nu este exclusă.'
-      },
-      name: 'Excludere căi'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Excludeți atașamentele din următoarele căi când se execută comanda',
@@ -233,15 +204,6 @@ export const ro = {
         part2: 'tokenuri disponibile'
       },
       name: 'Nume fișier atașament generat'
-    },
-    includePaths: {
-      description: {
-        part1: 'Includeți notițe din următoarele căi.',
-        part2: 'Introduceți fiecare cale pe o linie nouă.',
-        part3: 'Puteți folosi șir de cale sau',
-        part4: 'Dacă setarea este goală, toate notițele sunt incluse.'
-      },
-      name: 'Includeți căi'
     },
     jpegQuality: {
       description: 'Cu cât calitatea este mai mică, cu atât rata de compresie este mai mare.',
@@ -284,21 +246,6 @@ export const ro = {
       description: 'Stabilește dacă imaginile lipite să fie convertite în JPEG. Se aplică numai când conținutul unei imagini PNG este lipit direct din clipboard. De obicei, pentru capturi de ecran.',
       name: 'Convertiți imaginile lipite în JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Dacă este activat, atunci când notița este ștearsă, atașamentele orfane vor fi și ele șterse.',
-      name: 'Șterge atașamentele orfane'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Dacă este activat, atunci când o notiță este redenumită sau mutată, atașamentele vor fi redenumite conform',
-        part2: 'setării.'
-      },
-      name: 'Redenumește fișierele atașament'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Stabilește dacă dosarele de atașamente vor fi redenumite când o notiță este redenumită sau mutată.',
-      name: 'Redenumește dosarele de atașament'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Dacă setările pentru folderul de atașamente și numele fișierului se aplică și atașamentelor create de ALTE pluginuri.',
@@ -337,17 +284,6 @@ export const ro = {
         part3: 'este setat, timpul limită va fi dezactivat.'
       },
       name: 'Timp limită (secunde)'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Tratați fișierele cu aceste extensii ca atașamente.',
-        part2: 'Implicit',
-        part3: 'și',
-        part4: 'fișierele legate nu sunt considerate atașamente și nu sunt mutate odată cu notița.',
-        part5: 'Puteți adăuga extensii personalizate, de ex.',
-        part6: ', pentru a înlocui acest comportament.'
-      },
-      name: 'Tratați ca extensii de atașamente'
     }
   },
   promptWithPreviewModal: {

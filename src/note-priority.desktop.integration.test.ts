@@ -33,7 +33,7 @@ interface PhaseResult {
 interface ProbeResult {
   readonly control: PhaseResult;
   readonly fix: PhaseResult;
-  readonly settingsFound: boolean;
+  readonly probesFound: boolean;
 }
 
 describe('Note priorities decide which note owns a shared attachment (issue #57)', () => {
@@ -49,19 +49,46 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
         interface PrioritySettings {
           attachmentFolderPath: string;
           collectAttachmentUsedByMultipleNotesMode: string;
+        }
+
+        /*
+         * `notePriorities` belongs to Advanced Rename and Delete Handler since 12.0.0, and this plugin
+         * reads it back through that plugin's API. So the setting is no longer writable here — the
+         * PROVIDER is what the phases swap, by parking a stub on the read-back component's live ref.
+         * That exercises the real read path (`apiRef.value.getSettings()`) without needing the other
+         * plugin installed in the vault.
+         */
+        interface HandedOverProvider {
+          getSettings(): Record<string, unknown>;
           isPathIgnored(path: string): boolean;
-          notePriorities: readonly string[];
+          isTreatedAsAttachment(path: string): boolean;
+        }
+
+        interface HandedOverProviderRef {
+          value: HandedOverProvider | null;
+        }
+
+        interface HandedOverSettingsHolder {
+          apiRef: HandedOverProviderRef | null;
         }
 
         function isPrioritySettings(value: unknown): value is PrioritySettings {
           return typeof value === 'object' && value !== null
-            && Array.isArray((value as Record<string, unknown>)['notePriorities'])
-            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
+            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string'
+            && typeof (value as Record<string, unknown>)['collectAttachmentUsedByMultipleNotesMode'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): null | PrioritySettings {
+        function isHandedOverSettingsHolder(value: unknown): value is HandedOverSettingsHolder {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null
+            && 'apiRef' in record
+            && typeof record['isPathIgnored'] === 'function'
+            && typeof record['isTreatedAsAttachment'] === 'function';
+        }
+
+        // Neither the settings nor the read-back component is exposed publicly, so both are located by
+        // Walking the plugin's component tree.
+        function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
@@ -73,8 +100,9 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isPrioritySettings(record['settings'])) {
-              return record['settings'];
+            const matched = match(record);
+            if (matched !== null) {
+              return matched;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -99,16 +127,35 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
 
         const EMPTY_PHASE: PhaseResult = { attachmentPath: '', movedIntoWinnerFolder: false };
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
-          return { control: EMPTY_PHASE, fix: EMPTY_PHASE, settingsFound: false };
+        const foundSettings = findInPluginTree((record) => isPrioritySettings(record['settings']) ? record['settings'] : null);
+        const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
+        if (!foundSettings || !foundHolder) {
+          return { control: EMPTY_PHASE, fix: EMPTY_PHASE, probesFound: false };
         }
         // A narrowed `const` does not stay narrowed inside a function declaration below it.
         const settings: PrioritySettings = foundSettings;
+        const holder: HandedOverSettingsHolder = foundHolder;
 
         const priorFolderPath = settings.attachmentFolderPath;
-        const priorPriorities = settings.notePriorities;
+        const priorApiRef = holder.apiRef;
         const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
+
+        // Mirrors this plugin's own absent-provider defaults, so only the value under test differs
+        // Between the two phases.
+        function stubProvider(notePriorities: readonly string[]): void {
+          holder.apiRef = {
+            value: {
+              getSettings: (): Record<string, unknown> => ({
+                emptyFolderBehavior: 'DeleteWithEmptyParents',
+                notePriorities,
+                shouldRenameAttachmentFiles: false,
+                treatAsAttachmentExtensions: ['.excalidraw.md']
+              }),
+              isPathIgnored: (): boolean => false,
+              isTreatedAsAttachment: (path: string): boolean => path.endsWith('.excalidraw.md')
+            }
+          };
+        }
 
         async function trashIfExists(path: string): Promise<void> {
           const existing = app.vault.getAbstractFileByPath(path);
@@ -130,7 +177,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
           const createdPaths = [imagePath, plainNotePath, drawingNotePath];
 
           try {
-            settings.notePriorities = notePriorities;
+            stubProvider(notePriorities);
 
             await app.vault.createBinary(imagePath, new ArrayBuffer(4));
             const plainNote = await app.vault.create(plainNotePath, `![[${imagePath}]]\n`);
@@ -186,11 +233,11 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
 
           const control = await runPhase([]);
           const fix = await runPhase(['.md', '.excalidraw.md']);
-          return { control, fix, settingsFound: true };
+          return { control, fix, probesFound: true };
         } finally {
           /* eslint-disable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
           settings.attachmentFolderPath = priorFolderPath;
-          settings.notePriorities = priorPriorities;
+          holder.apiRef = priorApiRef;
           settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
           /* eslint-enable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
         }
@@ -203,7 +250,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.settingsFound).toBe(true);
+    expect(result.probesFound).toBe(true);
 
     // Control: with no priority configured the shared attachment is left alone (Skip mode).
     expect(result.control.movedIntoWinnerFolder).toBe(false);

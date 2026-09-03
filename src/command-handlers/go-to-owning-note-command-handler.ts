@@ -11,6 +11,8 @@ import { selectItem } from 'obsidian-dev-utils/obsidian/modals/select-item';
 import type { NoteOwnerResolver } from '../note-owner-resolver.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
+import { ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME } from '../advanced-rename-and-delete-handler.ts';
+
 interface GoToOwningNoteCommandHandlerConstructorParams {
   readonly app: App;
   readonly noteOwnerResolver: NoteOwnerResolver;
@@ -95,7 +97,8 @@ export class GoToOwningNoteCommandHandler extends FileCommandHandler {
       itemTextFunction: (notePath) => notePath,
       placeholder: `${t(($) => $.goToOwningNote.selectPlaceholder, { attachmentPath: attachmentFile.path })} ${
         t(($) => $.goToOwningNote.noPriorityWinnerReason[reason], {
-          settingName: t(($) => $.pluginSettingsTab.notePriorities.name)
+          // Qualified with the owning plugin since 12.0.0 — see the same call in the collect modal.
+          settingName: `${ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME} → ${t(($) => $.pluginSettingsTab.notePriorities.name)}`
         })
       }`
     });

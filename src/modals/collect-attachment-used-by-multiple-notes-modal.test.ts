@@ -6,6 +6,7 @@ import type {
 
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
+import { NoPriorityWinnerReason } from 'obsidian-dev-utils/obsidian/note-priority';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   ButtonComponent as ButtonComponentClass,
@@ -23,7 +24,6 @@ import {
 } from 'vitest';
 
 import { translationsMap } from '../i18n/locales/translations-map.ts';
-import { NoPriorityWinnerReason } from '../note-priority.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from '../plugin-settings.ts';
 import { selectMode } from './collect-attachment-used-by-multiple-notes-modal.ts';
 
@@ -188,7 +188,7 @@ describe('selectMode', () => {
       noPriorityWinnerReason: NoPriorityWinnerReason.EmptyList
     });
     await flushOnOpen();
-    expect(getReasonText()).toBe('It was not moved because the Note priorities setting is empty, so nothing decides which of these notes owns it.');
+    expect(getReasonText()).toBe('It was not moved because the Advanced Rename and Delete Handler → Note priorities setting is empty, so nothing decides which of these notes owns it.');
     clickButton(captured.buttons[0]);
     await promise;
   });
@@ -201,7 +201,7 @@ describe('selectMode', () => {
       noPriorityWinnerReason: NoPriorityWinnerReason.NoMatch
     });
     await flushOnOpen();
-    expect(getReasonText()).toBe('It was not moved because none of these notes matches any entry in the Note priorities setting.');
+    expect(getReasonText()).toBe('It was not moved because none of these notes matches any entry in the Advanced Rename and Delete Handler → Note priorities setting.');
     clickButton(captured.buttons[3]);
     await promise;
   });
@@ -214,7 +214,7 @@ describe('selectMode', () => {
       noPriorityWinnerReason: NoPriorityWinnerReason.Tie
     });
     await flushOnOpen();
-    expect(getReasonText()).toContain('several of these notes match the Note priorities setting equally well');
+    expect(getReasonText()).toContain('several of these notes match the Advanced Rename and Delete Handler → Note priorities setting equally well');
     clickButton(captured.buttons[3]);
     await promise;
   });

@@ -11,6 +11,7 @@ import type {
   ToggleComponent
 } from 'obsidian';
 import type { AsyncEventRef } from 'obsidian-dev-utils/async-events';
+import type { PluginSuggestionComponent } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { CodeHighlighterComponent } from 'obsidian-dev-utils/obsidian/setting-components/code-highlighter-component';
@@ -20,6 +21,7 @@ import type { NumberComponent } from 'obsidian-dev-utils/obsidian/setting-compon
 import { waitForAllAsyncOperations } from 'obsidian-dev-utils/async';
 import { noopAsync } from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
+import { SuggestedPluginState } from 'obsidian-dev-utils/obsidian/components/plugin-suggestion-component';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
@@ -42,6 +44,7 @@ import {
   vi
 } from 'vitest';
 
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 import type { Plugin } from './plugin.ts';
 
@@ -73,7 +76,12 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 // Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
-const EXPECTED_ROW_COUNT = 37;
+// 28 = 27 setting rows + the suggestion banner row that rides at the top.
+const EXPECTED_ROW_COUNT = 28;
+
+// The suggestion banner's two inputs, so a test can drive both the row's render and its visibility.
+const renderBannerMock = vi.fn<(containerEl: HTMLElement) => void>();
+let suggestedPluginState = SuggestedPluginState.Enabled;
 
 interface CapturedMultipleTextComponent {
   name: string;
@@ -148,6 +156,9 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   const pluginSettingsComponent = new PluginSettingsComponent({
     app: originalApp,
     dataHandler: new MockDataHandler(),
+    handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
+      isTreatedAsAttachment: (path) => path.endsWith('.excalidraw.md')
+    }),
     pluginEventSource: strictProxy<PluginEventSource>({
       on: (): AsyncEventRef => strictProxy<AsyncEventRef>({})
     }),
@@ -239,7 +250,11 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
 
   const tab = new PluginSettingsTab({
     plugin: obsidianPlugin,
-    pluginSettingsComponent
+    pluginSettingsComponent,
+    pluginSuggestionComponent: strictProxy<PluginSuggestionComponent>({
+      getSuggestedPluginState: () => suggestedPluginState,
+      renderBanner: renderBannerMock
+    })
   });
 
   if (configure) {
@@ -370,10 +385,44 @@ beforeAll(async () => {
 describe('PluginSettingsTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    suggestedPluginState = SuggestedPluginState.Enabled;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  describe('Advanced Rename and Delete Handler suggestion banner', () => {
+    it('should hand the row element to the suggestion component, emptied first', async () => {
+      const { tab } = await createTab();
+      const row = findRow(tab, '');
+      const setting = new SettingEx(tab.containerEl);
+      setting.setName('Leftover');
+
+      row.render(setting, castTo<SettingGroup>(null));
+
+      expect(renderBannerMock).toHaveBeenCalledWith(setting.settingEl);
+      // Emptied first, so the Setting is a bare host rather than a row with a name beside a banner.
+      expect(setting.settingEl.textContent).toBe('');
+    });
+
+    it('should hide itself once the suggested plugin is enabled', async () => {
+      suggestedPluginState = SuggestedPluginState.Enabled;
+      const { tab } = await createTab();
+      expect(checkPredicate(findRow(tab, '').visible, true)).toBe(false);
+    });
+
+    it('should show itself while the suggested plugin is not enabled', async () => {
+      suggestedPluginState = SuggestedPluginState.NotInstalled;
+      const { tab } = await createTab();
+      expect(checkPredicate(findRow(tab, '').visible, true)).toBe(true);
+    });
+
+    // It is not a setting, so it must not surface as one in Obsidian's settings search.
+    it('should stay out of the settings search', async () => {
+      const { tab } = await createTab();
+      expect(findRow(tab, '').searchable).toBe(false);
+    });
   });
 
   it('should be constructable', async () => {
@@ -387,14 +436,8 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Generated attachment file name');
     expect(names).toContain('Duplicate name separator');
     expect(names).toContain('Attachment rename mode');
-    expect(names).toContain('Should handle renames');
-    expect(names).toContain('Should rename attachment folders');
-    expect(names).toContain('Should rename attachment files');
     expect(names).toContain('Renamed attachment file name');
     expect(names).toContain('Move attachment to proper folder used by multiple notes mode');
-    expect(names).toContain('Empty folder behavior');
-    expect(names).toContain('Should delete orphan attachments');
-    expect(names).toContain('Should rescue shared attachments');
     expect(names).toContain('Special characters');
     expect(names).toContain('Special characters replacement');
     expect(names).toContain('Should rename collected attachments');
@@ -404,12 +447,8 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Default image size');
     expect(names).toContain('Convert images to JPEG mode');
     expect(names).toContain('JPEG Quality');
-    expect(names).toContain('Include paths');
-    expect(names).toContain('Exclude paths');
     expect(names).toContain('Attachment unit folders');
-    expect(names).toContain('Note priorities');
     expect(names).toContain('Exclude paths from attachment collecting');
-    expect(names).toContain('Treat as attachment extensions');
     expect(names).toContain('Custom tokens');
     expect(names).toContain('Markdown URL format');
     expect(names).toContain('Timeout in seconds');
@@ -417,7 +456,10 @@ describe('PluginSettingsTab', () => {
 
   it('should keep Core inline and expose every other group as a navigable sub-page', async () => {
     const { tab } = await createTab();
-    const [coreGroup, ...pages] = tab.getSettingDefinitions();
+    // The suggestion banner rides at the top as a bare ROW: Obsidian never calls `display()` once the
+    // Declarative definitions are non-empty, so there is nowhere else to put it.
+    const [banner, coreGroup, ...pages] = tab.getSettingDefinitions();
+    expect(castTo<SettingDefinitionRender>(banner).name).toBe('');
 
     const core = castTo<SettingDefinitionGroup>(coreGroup);
     expect(core.type).toBe('group');
@@ -425,7 +467,6 @@ describe('PluginSettingsTab', () => {
 
     expect(pages.map((page) => castTo<SettingDefinitionPage>(page).name)).toEqual([
       'Move/renames',
-      'Deletion',
       'Special characters',
       'Collected attachments',
       'Images',
@@ -474,18 +515,6 @@ describe('PluginSettingsTab', () => {
     }).not.toThrow();
   });
 
-  it('should re-evaluate the predicates when the should-handle-renames toggle changes', async () => {
-    const { tab, toggles } = await createTab();
-
-    const refreshDomStateSpy = vi.fn();
-    tab.refreshDomState = refreshDomStateSpy;
-    const captured = toggles.find((entry) => entry.name === 'Should handle renames');
-    expect(captured).toBeDefined();
-    captured?.toggle.setValue(false);
-    await waitForAllAsyncOperations();
-    expect(refreshDomStateSpy).toHaveBeenCalled();
-  });
-
   it('should re-evaluate the predicates when the download-network-images toggle changes', async () => {
     const { tab, toggles } = await createTab();
 
@@ -498,31 +527,6 @@ describe('PluginSettingsTab', () => {
     expect(refreshDomStateSpy).toHaveBeenCalled();
   });
 
-  it('should re-evaluate the predicates when the delete-orphan-attachments toggle changes', async () => {
-    const { tab, toggles } = await createTab();
-
-    const refreshDomStateSpy = vi.fn();
-    tab.refreshDomState = refreshDomStateSpy;
-    const captured = toggles.find((entry) => entry.name === 'Should delete orphan attachments');
-    expect(captured).toBeDefined();
-    captured?.toggle.setValue(true);
-    await waitForAllAsyncOperations();
-    expect(refreshDomStateSpy).toHaveBeenCalled();
-  });
-
-  it('should disable the rescue row while orphan attachments are not deleted', async () => {
-    // The rescue rides on the delete path, so with deletions unhandled the toggle would do nothing.
-    const { tab } = await createTab();
-    expect(isRowDisabled(tab, 'Should rescue shared attachments')).toBe(true);
-  });
-
-  it('should enable the rescue row once orphan attachments are deleted', async () => {
-    const { tab } = await createTab((settings) => {
-      settings.shouldDeleteOrphanAttachments = true;
-    });
-    expect(isRowDisabled(tab, 'Should rescue shared attachments')).toBe(false);
-  });
-
   it('should render the network image download timeout setting when downloading is enabled', async () => {
     const { names } = await createTab((settings) => {
       settings.downloadNetworkImages = true;
@@ -533,24 +537,6 @@ describe('PluginSettingsTab', () => {
   it('should not render the network image download timeout setting when downloading is disabled', async () => {
     const { names } = await createTab();
     expect(names).not.toContain('Network image download timeout in seconds');
-  });
-
-  it('should enable the dependent rows when renames are handled', async () => {
-    const { tab } = await createTab();
-    expect(isRowDisabled(tab, 'Should rename attachment folders')).toBe(false);
-    expect(isRowDisabled(tab, 'Should rename attachment files')).toBe(false);
-  });
-
-  it('should disable the dependent rows when renames are not handled', async () => {
-    const { pluginSettingsComponent, tab } = await createTab();
-    await pluginSettingsComponent.editAndSave((settings) => {
-      settings.shouldHandleRenames = false;
-    });
-
-    // The predicate is what the tab owns; Obsidian applies it (and propagates it to the row's components)
-    // On every render and on every `refreshDomState()`.
-    expect(isRowDisabled(tab, 'Should rename attachment folders')).toBe(true);
-    expect(isRowDisabled(tab, 'Should rename attachment files')).toBe(true);
   });
 
   it('should re-evaluate the predicates when the convert-images-to-JPEG dropdown changes', async () => {
@@ -707,12 +693,12 @@ describe('PluginSettingsTab', () => {
     expect(pluginSettingsComponent.settings.timeoutInSeconds).toBe(42);
   });
 
-  it('should bind the include paths multiple-text field', async () => {
+  it('should bind a multiple-text field', async () => {
     const { multipleTextComponents, pluginSettingsComponent } = await createTab();
-    const component = findMultipleTextComponent(multipleTextComponents, 'Include paths');
+    const component = findMultipleTextComponent(multipleTextComponents, 'Exclude paths from attachment collecting');
     component.setValue(['foo/bar']);
     await waitForAllAsyncOperations();
-    expect(pluginSettingsComponent.settings.includePaths).toStrictEqual(['foo/bar']);
+    expect(pluginSettingsComponent.settings.excludePathsFromAttachmentCollecting).toStrictEqual(['foo/bar']);
   });
 
   it('should re-register custom tokens when the custom tokens code changes', async () => {

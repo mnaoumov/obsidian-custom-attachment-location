@@ -100,20 +100,6 @@ export const nl = {
     defaultImageSizeDimension: {
       height: 'Hoogte',
       width: 'Breedte'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'zal de lege bijlagenmap verwijderen.',
-        displayText: 'Verwijderen'
-      },
-      deleteWithEmptyParents: {
-        description: 'zal de lege bijlagenmap en zijn lege bovenliggende mappen verwijderen.',
-        displayText: 'Verwijderen met lege bovenliggende mappen'
-      },
-      keep: {
-        description: 'zal de lege bijlagenmap behouden.',
-        displayText: 'Behouden'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const nl = {
       },
       name: 'Dubbele naam scheidingsteken'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Wanneer de bijlagenmap leeg wordt:'
-      },
-      name: 'Lege bijlagenmap gedrag'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Sluit notities uit van de volgende paden.',
-        part2: 'Voeg elk pad toe op een nieuwe regel.',
-        part3: 'Je kunt pad string of',
-        part4: 'gebruiken. Als de instelling leeg is, worden geen notities uitgesloten.'
-      },
-      name: 'Uitgesloten paden'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Sluit bijlagen uit van de volgende paden wanneer het',
@@ -233,15 +204,6 @@ export const nl = {
         part2: 'tokens'
       },
       name: 'Gegenereerde bijlage bestandsnaam'
-    },
-    includePaths: {
-      description: {
-        part1: 'Voeg notities toe van de volgende paden.',
-        part2: 'Voeg elk pad toe op een nieuwe regel.',
-        part3: 'Je kunt pad string of',
-        part4: 'gebruiken. Als de instelling leeg is, worden alle notities opgenomen.'
-      },
-      name: 'Opgenomen paden'
     },
     jpegQuality: {
       description: 'Hoe kleiner de kwaliteit, hoe groter de compressieverhouding.',
@@ -284,21 +246,6 @@ export const nl = {
       description: 'Of geplakte afbeeldingen moeten worden geconverteerd naar JPEG. Geldt alleen wanneer PNG afbeeldingsinhoud direct vanuit het klembord wordt geplakt. Meestal voor het plakken van screenshots.',
       name: 'Moet geplakte afbeeldingen converteren naar JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Indien ingeschakeld, wanneer de notitie wordt verwijderd, worden ook de wees bijlagen verwijderd.',
-      name: 'Moet wees bijlagen verwijderen'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Indien ingeschakeld, wanneer een notitie wordt hernoemd of verplaatst, worden de bijlagen hernoemd volgens de',
-        part2: 'instelling.'
-      },
-      name: 'Moet bijlage bestanden hernoemen'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Of bijlage mappen moeten worden hernoemd wanneer een notitie wordt hernoemd of verplaatst.',
-      name: 'Moet bijlage mappen hernoemen'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Of de instellingen voor bijlagemap en bestandsnaam ook gelden voor bijlagen die ANDERE plug-ins aanmaken.',
@@ -337,17 +284,6 @@ export const nl = {
         part3: 'is ingesteld, is de uitvoeringstimeout van bewerkingen uitgeschakeld.'
       },
       name: 'Timeout in seconden'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Behandel bestanden met deze extensies als bijlagen.',
-        part2: 'Standaard worden',
-        part3: 'en',
-        part4: 'gelinkte bestanden niet behandeld als bijlagen en worden niet verplaatst met de notitie.',
-        part5: 'Je kunt aangepaste extensies toevoegen, bijv.',
-        part6: ', om dit gedrag te overschrijven.'
-      },
-      name: 'Behandel als bijlage extensies'
     }
   },
   promptWithPreviewModal: {

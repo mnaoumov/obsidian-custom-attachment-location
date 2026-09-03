@@ -13,6 +13,7 @@ import { castTo } from 'obsidian-dev-utils/object-utils';
 import { findAttachmentUnitFolderPath } from 'obsidian-dev-utils/obsidian/attachment-unit-folder';
 import { isFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
+import { NoPriorityWinnerReason } from 'obsidian-dev-utils/obsidian/note-priority';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
   beforeEach,
@@ -22,11 +23,12 @@ import {
   vi
 } from 'vitest';
 
+import type { HandedOverSettings } from './advanced-rename-and-delete-handler.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
 import { NoteOwnerResolver } from './note-owner-resolver.ts';
-import { NoPriorityWinnerReason } from './note-priority.ts';
 
 interface SettingsLike {
   isAttachmentUnitFolder: Mock<(path: string) => boolean>;
@@ -101,7 +103,10 @@ describe('NoteOwnerResolver', () => {
     });
     mockFindAttachmentUnitFolderPath.mockReturnValue(null);
     mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
-    resolver = new NoteOwnerResolver({ app, pluginSettingsComponent });
+    const handedOverSettingsComponent = strictProxy<HandedOverSettingsComponent>({
+      settings: castTo<HandedOverSettings>(settings)
+    });
+    resolver = new NoteOwnerResolver({ app, handedOverSettingsComponent, pluginSettingsComponent });
   });
 
   describe('findCandidateNotePaths', () => {
@@ -156,8 +161,19 @@ describe('NoteOwnerResolver', () => {
       const probeParams = mockFindAttachmentUnitFolderPath.mock.calls[0]?.[0];
       expect(probeParams?.attachmentPath).toBe('page_files/style.css');
 
+      /*
+       * The library's parameters are a union since 100.0.0: an app it reads the published designation
+       * from, or a predicate the caller owns. This plugin still supplies the predicate - reading the
+       * published seam instead is T898-P4 - so narrowing on the member also asserts which form is passed.
+       */
+      const isProbedWithPredicate = !!probeParams && 'checkIsAttachmentUnitFolder' in probeParams;
+      expect(isProbedWithPredicate).toBe(true);
+      if (!isProbedWithPredicate) {
+        return;
+      }
+
       settings.isAttachmentUnitFolder.mockReturnValue(true);
-      expect(probeParams?.checkIsAttachmentUnitFolder('page_files')).toBe(true);
+      expect(probeParams.checkIsAttachmentUnitFolder('page_files')).toBe(true);
       expect(settings.isAttachmentUnitFolder).toHaveBeenCalledExactlyOnceWith('page_files');
     });
 

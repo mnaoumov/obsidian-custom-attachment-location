@@ -100,20 +100,6 @@ export const cs = {
     defaultImageSizeDimension: {
       height: 'Výška',
       width: 'Šířka'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'smaže prázdnou složku příloh.',
-        displayText: 'Smazat'
-      },
-      deleteWithEmptyParents: {
-        description: 'smaže prázdnou složku příloh a její prázdné nadřazené složky.',
-        displayText: 'Smazat s prázdnými nadřazenými'
-      },
-      keep: {
-        description: 'zachová prázdnou složku příloh.',
-        displayText: 'Zachovat'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const cs = {
       },
       name: 'Oddělovač duplicitních názvů'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Když se složka příloh stane prázdnou:'
-      },
-      name: 'Chování prázdné složky příloh'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Vyloučit poznámky z následujících cest.',
-        part2: 'Vložte každou cestu na nový řádek.',
-        part3: 'Můžete použít řetězec cesty nebo',
-        part4: 'Pokud je nastavení prázdné, žádné poznámky nejsou vyloučeny.'
-      },
-      name: 'Vyloučit cesty'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Vyloučit přílohy z následujících cest když',
@@ -234,15 +205,6 @@ export const cs = {
         part2: 'tokeny'
       },
       name: 'Vygenerované jméno souboru přílohy'
-    },
-    includePaths: {
-      description: {
-        part1: 'Zahrnout poznámky z následujících cest.',
-        part2: 'Vložte každou cestu na nový řádek.',
-        part3: 'Můžete použít řetězec cesty nebo',
-        part4: 'Pokud je nastavení prázdné, všechny poznámky jsou zahrnuty.'
-      },
-      name: 'Zahrnout cesty'
     },
     jpegQuality: {
       description: 'Čím menší kvalita, tím větší kompresní poměr.',
@@ -286,21 +248,6 @@ export const cs = {
       description: 'Zda převést vložené obrázky na JPEG. Platí pouze když je obsah PNG obrázku vložen přímo ze schránky. Typicky pro vkládání snímků obrazovky.',
       name: 'Zda převést vložené obrázky na JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Pokud je povoleno, když je poznámka smazána, její sirotčí přílohy jsou také smazány.',
-      name: 'Zda smazat sirotčí přílohy'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Pokud je povoleno, když je poznámka přejmenována nebo přesunuta, její přílohy budou přejmenovány podle',
-        part2: 'nastavení.'
-      },
-      name: 'Zda přejmenovat soubory příloh'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Zda přejmenovat složky příloh když je poznámka přejmenována nebo přesunuta.',
-      name: 'Zda přejmenovat složky příloh'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Zda použít nastavení složky příloh a názvu souboru na přílohy, které vytvářejí JINÉ pluginy.',
@@ -339,17 +286,6 @@ export const cs = {
         part3: 'nastaveno, časový limit provádění operací je zakázán.'
       },
       name: 'Časový limit v sekundách'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Zacházet se soubory s těmito příponami jako s přílohami.',
-        part2: 'Ve výchozím nastavení',
-        part3: 'a',
-        part4: 'propojené soubory nejsou považovány za přílohy a nejsou přesunovány s poznámkou.',
-        part5: 'Můžete přidat vlastní přípony, např.',
-        part6: ', pro přepsání tohoto chování.'
-      },
-      name: 'Zacházet jako s příponami příloh'
     }
   },
   promptWithPreviewModal: {

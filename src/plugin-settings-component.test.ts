@@ -4,8 +4,8 @@ import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import { noopAsync } from 'obsidian-dev-utils/function';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/vault';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import { ValueWrapper } from 'obsidian-dev-utils/value-wrapper';
 import { App } from 'obsidian-test-mocks/obsidian';
@@ -17,6 +17,8 @@ import {
   it,
   vi
 } from 'vitest';
+
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 
 import { translationsMap } from './i18n/locales/translations-map.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -57,6 +59,9 @@ async function createComponent(data: unknown = {}): Promise<PluginSettingsCompon
   const component = new PluginSettingsComponent({
     app,
     dataHandler: new MockDataHandler(data),
+    handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
+      isTreatedAsAttachment: (path) => path.endsWith('.excalidraw.md')
+    }),
     pluginEventSource: strictPluginEventSource(),
     validatorWrapper
   });
@@ -156,6 +161,29 @@ describe('PluginSettingsComponent', () => {
       const result = await component.validate(settings);
       expect(result.generatedAttachmentFileName).toBeUndefined();
     });
+
+    it('should accept valid regular expressions and plain paths in the exclude lists', async () => {
+      const component = await createComponent();
+      const settings = createSettings();
+      // Both shapes in one list: a plain path, which the validator skips, and a regular expression, which
+      // It compiles.
+      settings.excludePathsFromMultipleNotesCheck = ['plain/path', String.raw`/\.excalidraw\.md$/`];
+      const result = await component.validate(settings);
+      expect(result.excludePathsFromMultipleNotesCheck).toBeUndefined();
+    });
+
+    it('should reject an invalid regular expression in an exclude list', async () => {
+      const component = await createComponent();
+      // The real PluginSettings setter eagerly compiles the regex and would throw, so the getter is
+      // Overridden to feed the validator an invalid pattern directly.
+      const settings = createSettings();
+      Object.defineProperty(settings, 'excludePathsFromMultipleNotesCheck', {
+        configurable: true,
+        get: (): string[] => ['/[/']
+      });
+      const result = await component.validate(settings);
+      expect(result.excludePathsFromMultipleNotesCheck).toBe('Invalid regular expression /[/');
+    });
   });
 
   describe('specialCharactersReplacement validator', () => {
@@ -228,55 +256,6 @@ describe('PluginSettingsComponent', () => {
     });
   });
 
-  describe('include/exclude paths validators', () => {
-    it('should accept valid regular expressions and plain paths', async () => {
-      const component = await createComponent();
-      const settings = createSettings();
-      settings.includePaths = ['/valid.*/'];
-      settings.excludePaths = ['plain/path'];
-      settings.excludePathsFromMultipleNotesCheck = [String.raw`/\.excalidraw\.md$/`];
-      const result = await component.validate(settings);
-      expect(result.includePaths).toBeUndefined();
-      expect(result.excludePaths).toBeUndefined();
-      expect(result.excludePathsFromMultipleNotesCheck).toBeUndefined();
-    });
-
-    it('should reject an invalid regular expression in includePaths', async () => {
-      const component = await createComponent();
-      // The real PluginSettings setter eagerly compiles the regex and would throw, so the getter is
-      // Overridden to feed the validator an invalid pattern directly.
-      const settings = createSettings();
-      Object.defineProperty(settings, 'includePaths', {
-        configurable: true,
-        get: (): string[] => ['/[/']
-      });
-      const result = await component.validate(settings);
-      expect(result.includePaths).toBe('Invalid regular expression /[/');
-    });
-
-    it('should reject an invalid regular expression in excludePaths', async () => {
-      const component = await createComponent();
-      const settings = createSettings();
-      Object.defineProperty(settings, 'excludePaths', {
-        configurable: true,
-        get: (): string[] => ['/(/']
-      });
-      const result = await component.validate(settings);
-      expect(result.excludePaths).toBe('Invalid regular expression /(/');
-    });
-
-    it('should reject an invalid regular expression in excludePathsFromMultipleNotesCheck', async () => {
-      const component = await createComponent();
-      const settings = createSettings();
-      Object.defineProperty(settings, 'excludePathsFromMultipleNotesCheck', {
-        configurable: true,
-        get: (): string[] => ['/)/']
-      });
-      const result = await component.validate(settings);
-      expect(result.excludePathsFromMultipleNotesCheck).toBe('Invalid regular expression /)/');
-    });
-  });
-
   describe('customTokensStr validator', () => {
     it('should accept valid custom tokens code when not debounced', async () => {
       const component = await createComponent();
@@ -320,24 +299,25 @@ describe('PluginSettingsComponent', () => {
       expect(component.settings.version).toBe('8.0.0');
     });
 
-    it('should map autoRenameFiles into shouldRenameAttachmentFiles', async () => {
+    it('should gather autoRenameFiles into the proposed rename/delete settings', async () => {
       const component = await createComponent({ autoRenameFiles: true });
-      expect(component.settings.shouldRenameAttachmentFiles).toBe(true);
+      expect(component.settings.proposedRenameDeleteSettings?.shouldRenameAttachmentFiles).toBe(true);
     });
 
-    it('should map autoRenameFolder into shouldRenameAttachmentFolder', async () => {
+    it('should gather autoRenameFolder into the proposed rename/delete settings', async () => {
       const component = await createComponent({ autoRenameFolder: false });
-      expect(component.settings.shouldRenameAttachmentFolder).toBe(false);
+      expect(component.settings.proposedRenameDeleteSettings?.shouldRenameAttachmentFolder).toBe(false);
     });
 
-    it('should map shouldRenameAttachments into shouldRenameAttachmentFolder', async () => {
+    it('should gather shouldRenameAttachments into the proposed rename/delete settings', async () => {
       const component = await createComponent({ shouldRenameAttachments: false });
-      expect(component.settings.shouldRenameAttachmentFolder).toBe(false);
+      expect(component.settings.proposedRenameDeleteSettings?.shouldRenameAttachmentFolder).toBe(false);
     });
 
-    it('should map deleteOrphanAttachments into shouldDeleteOrphanAttachments', async () => {
+    // Renamed on the way across: the other plugin spells this setting `shouldHandleDeletions`.
+    it('should gather deleteOrphanAttachments into the proposed rename/delete settings', async () => {
       const component = await createComponent({ deleteOrphanAttachments: true });
-      expect(component.settings.shouldDeleteOrphanAttachments).toBe(true);
+      expect(component.settings.proposedRenameDeleteSettings?.shouldHandleDeletions).toBe(true);
     });
 
     it('should map renameCollectedFiles into shouldRenameCollectedAttachments', async () => {
@@ -367,12 +347,12 @@ describe('PluginSettingsComponent', () => {
 
     it('should map keepEmptyAttachmentFolders into shouldKeepEmptyAttachmentFolders and then emptyFolderBehavior Keep', async () => {
       const component = await createComponent({ keepEmptyAttachmentFolders: true });
-      expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.Keep);
+      expect(component.settings.proposedRenameDeleteSettings?.emptyFolderBehavior).toBe(EmptyFolderBehavior.Keep);
     });
 
     it('should map keepEmptyAttachmentFolders false into emptyFolderBehavior DeleteWithEmptyParents', async () => {
       const component = await createComponent({ keepEmptyAttachmentFolders: false });
-      expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.DeleteWithEmptyParents);
+      expect(component.settings.proposedRenameDeleteSettings?.emptyFolderBehavior).toBe(EmptyFolderBehavior.DeleteWithEmptyParents);
     });
 
     it('should prefer emptyAttachmentFolderBehavior over keepEmptyAttachmentFolders', async () => {
@@ -380,7 +360,7 @@ describe('PluginSettingsComponent', () => {
         emptyAttachmentFolderBehavior: EmptyFolderBehavior.Delete,
         keepEmptyAttachmentFolders: true
       });
-      expect(component.settings.emptyFolderBehavior).toBe(EmptyFolderBehavior.Delete);
+      expect(component.settings.proposedRenameDeleteSettings?.emptyFolderBehavior).toBe(EmptyFolderBehavior.Delete);
     });
 
     it('should map replaceWhitespace true into a whitespace replacement appended to special characters', async () => {
@@ -437,8 +417,13 @@ describe('PluginSettingsComponent', () => {
 
     it('should leave settings at defaults when no legacy keys are present', async () => {
       const component = await createComponent({});
-      expect(component.settings.shouldRenameAttachmentFolder).toBe(true);
       expect(component.settings.attachmentRenameMode).toBe(AttachmentRenameMode.OnlyPastedImages);
+    });
+
+    // A fresh install has none of the old keys, so it must never be told it has a migration waiting.
+    it('should propose nothing when no rename/delete keys are present', async () => {
+      const component = await createComponent({});
+      expect(component.settings.proposedRenameDeleteSettings).toBeNull();
     });
   });
 });

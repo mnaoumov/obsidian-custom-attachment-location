@@ -100,20 +100,6 @@ export const ca = {
     defaultImageSizeDimension: {
       height: 'Alçada',
       width: 'Amplada'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'esborrarà la carpeta d\'adjunts buida.',
-        displayText: 'Esborrar'
-      },
-      deleteWithEmptyParents: {
-        description: 'esborrarà la carpeta d\'adjunts buida i les seves carpetes pare buides.',
-        displayText: 'Esborrar amb pares buits'
-      },
-      keep: {
-        description: 'mantindrà la carpeta d\'adjunts buida.',
-        displayText: 'Mantenir'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const ca = {
       },
       name: 'Separador de noms duplicats'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Quan la carpeta d\'adjunts es buida:'
-      },
-      name: 'Comportament de carpeta d\'adjunts buida'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Excloure notes dels següents camins.',
-        part2: 'Inseriu cada camí en una línia nova.',
-        part3: 'Podeu utilitzar cadena de camí o',
-        part4: 'Si la configuració està buida, cap nota no s\'exclou.'
-      },
-      name: 'Excloure camins'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Excloure adjunts dels següents camins quan',
@@ -234,15 +205,6 @@ export const ca = {
         part2: 'tokens disponibles'
       },
       name: 'Nom de fitxer adjunt generat'
-    },
-    includePaths: {
-      description: {
-        part1: 'Incloure notes dels següents camins.',
-        part2: 'Inseriu cada camí en una línia nova.',
-        part3: 'Podeu utilitzar cadena de camí o',
-        part4: 'Si la configuració està buida, totes les notes s\'inclouen.'
-      },
-      name: 'Incloure camins'
     },
     jpegQuality: {
       description: 'Com més petita la qualitat, més gran la relació de compressió.',
@@ -286,21 +248,6 @@ export const ca = {
       description: 'Si convertir les imatges enganxades a JPEG. S\'aplica només quan el contingut de la imatge PNG s\'enganxa directament des del porta-retalls. Típicament, per enganxar captures de pantalla.',
       name: 'Si convertir les imatges enganxades a JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Si està habilitat, quan la nota s\'esborra, els seus adjunts òrfes també s\'esborren.',
-      name: 'Si esborrar adjunts òrfes'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Si està habilitat, quan una nota es reanomena o es mou, els seus adjunts es reanomenaran segons la',
-        part2: 'configuració.'
-      },
-      name: 'Si reanomenar fitxers adjunts'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Si reanomenar carpetes adjunts quan una nota es reanomena o es mou.',
-      name: 'Si reanomenar carpetes adjunts'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Si cal aplicar la configuració de carpeta d\'adjunts i de nom de fitxer als adjunts que creen ALTRES connectors.',
@@ -339,17 +286,6 @@ export const ca = {
         part3: 'està establert, el temps d\'espera d\'execució d\'operacions està deshabilitat.'
       },
       name: 'Temps d\'espera en segons'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Tractar fitxers amb aquestes extensions com adjunts.',
-        part2: 'Per defecte',
-        part3: 'i',
-        part4: 'els fitxers enllaçats no es tracten com adjunts i no es mouen amb la nota.',
-        part5: 'Podeu afegir extensions personalitzades, p. ex.',
-        part6: ', per sobreescriure aquest comportament.'
-      },
-      name: 'Tractar com extensions d\'adjunts'
     }
   },
   promptWithPreviewModal: {

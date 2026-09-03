@@ -22,6 +22,7 @@ import {
 
 import type { ArrayBufferMap } from './array-buffer-map.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { ImageManager } from './image-manager.ts';
 import type { ImageSizeMap } from './image-size-map.ts';
 import type { MarkdownUrlMap } from './markdown-url-map.ts';
@@ -42,7 +43,7 @@ interface TestContext {
   getImageSize: ReturnType<typeof vi.fn<ImageManager['getImageSize']>>;
   imageSizeMapSet: ReturnType<typeof vi.fn<ImageSizeMap['set']>>;
   isPastedImageBuffer: ReturnType<typeof vi.fn<ArrayBufferMap['isPastedImage']>>;
-  isPathIgnored: ReturnType<typeof vi.fn<PluginSettings['isPathIgnored']>>;
+  isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
   markdownUrlMapDelete: ReturnType<typeof vi.fn<MarkdownUrlMap['delete']>>;
   markdownUrlMapSet: ReturnType<typeof vi.fn<MarkdownUrlMap['set']>>;
   saver: AttachmentSaver;
@@ -54,10 +55,10 @@ const moment = extractDefaultExportInterop(moment_);
 let context: TestContext;
 
 function createSaver(): TestContext {
-  const isPathIgnored = vi.fn<PluginSettings['isPathIgnored']>().mockReturnValue(false);
+  const isPathIgnored = vi.fn<HandedOverSettingsComponent['isPathIgnored']>().mockReturnValue(false);
+  const handedOverSettingsComponent = strictProxy<HandedOverSettingsComponent>({ isPathIgnored });
   const settings = castTo<PluginSettings>({
     attachmentRenameMode: AttachmentRenameMode.None,
-    isPathIgnored,
     markdownUrlFormat: ''
   });
 
@@ -103,6 +104,7 @@ function createSaver(): TestContext {
     app,
     arrayBufferMap,
     attachmentPathManager,
+    handedOverSettingsComponent,
     imageManager,
     imageSizeMap,
     markdownUrlMap,

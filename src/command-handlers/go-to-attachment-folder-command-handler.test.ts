@@ -24,6 +24,7 @@ import {
 } from 'vitest';
 
 import type { AttachmentPathManager } from '../attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from '../handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 import type { PluginSettings } from '../plugin-settings.ts';
 
@@ -118,6 +119,9 @@ describe('GoToAttachmentFolderCommandHandler', () => {
     handler = new GoToAttachmentFolderCommandHandler({
       app,
       attachmentPathManager,
+      handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
+        isPathIgnored: (path) => settings.isPathIgnored(path)
+      }),
       pluginNoticeComponent,
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({
         isNoteEx: () => isNoteEx(),

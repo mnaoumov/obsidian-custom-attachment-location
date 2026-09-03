@@ -100,20 +100,6 @@ export const uz = {
     defaultImageSizeDimension: {
       height: 'Balandlik',
       width: 'Kenglik'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'Bo\'sh qo\'shimcha papkasini o\'chiradi.',
-        displayText: 'O\'chirish'
-      },
-      deleteWithEmptyParents: {
-        description: 'Bo\'sh qo\'shimcha papkasini va uning bo\'sh ota-onalarini o\'chiradi.',
-        displayText: 'Bo\'sh ota-onalar bilan o\'chirish'
-      },
-      keep: {
-        description: 'Bo\'sh qo\'shimcha papkasini saqlaydi.',
-        displayText: 'Saqlash'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const uz = {
       },
       name: 'Nusxa nom ajratgichi'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Qo\'shimchalar papkasi bo\'sh bo\'lganda:'
-      },
-      name: 'Bo\'sh qo\'shimcha papkasining xatti-harakati'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Quyidagi yo\'llardan eslatmalarni chiqarib tashlang.',
-        part2: 'Har bir yo\'lni yangi qatorda kiriting.',
-        part3: 'Yo\'l satridan yoki',
-        part4: 'Agar sozlama bo\'sh bo\'lsa, hech narsa chiqarib tashlanmaydi.'
-      },
-      name: 'Chiqarib tashlanadigan yo\'llar'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Quyidagi yo\'llardan qo\'shimchalarni chiqarib tashlang, bu buyruq bajarilganda:',
@@ -233,15 +204,6 @@ export const uz = {
         part2: 'tokenlarni ko\'ring'
       },
       name: 'Yaratilgan qo\'shimcha fayl nomi'
-    },
-    includePaths: {
-      description: {
-        part1: 'Quyidagi yo\'llardagi eslatmalarni qo\'shing.',
-        part2: 'Har bir yo\'lni yangi qatorda yozing.',
-        part3: 'Yo\'l satridan yoki',
-        part4: 'Sozlama bo\'sh bo\'lsa, barcha eslatmalar qo\'shiladi.'
-      },
-      name: 'Qo\'shiladigan yo\'llar'
     },
     jpegQuality: {
       description: 'Sifat qanchalik past bo\'lsa, siqish darajasi shunchalik yuqori bo\'ladi.',
@@ -284,21 +246,6 @@ export const uz = {
       description: 'Yopishtirilgan rasmlarni JPEG formatiga aylantirish-aylantirilmasligini belgilaydi. Bu faqat PNG rasmlar bo\'lsa va to\'g\'ridan-to\'g\'ri panodan yopishtirilganda ishlatiladi. Odatda, skrinshotlar uchun.',
       name: 'Yopishtirilgan rasmlarni JPEG-ga o\'zgartirish'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Faollashtirilganda, nota o\'chirilganda uning osmonga ketgan qo\'shimchalari ham o\'chiriladi.',
-      name: 'Osmonga ketgan qo\'shimchalarni o\'chirish'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Faollashtirilganda, nota nomi o\'zgartirilganda yoki ko\'chirilganda, qo\'shimchalar',
-        part2: 'sozlash bo\'yicha qayta nomlanadi.'
-      },
-      name: 'Qo\'shimcha fayllarni qayta nomlash'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Nota nomi o\'zgartirilganda yoki ko\'chirilganda qo\'shimcha papkalarni qayta nomlash kerakligini belgilaydi.',
-      name: 'Qo\'shimcha papkalarni qayta nomlash'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Ilova papkasi va fayl nomi sozlamalari BOSHQA plaginlar yaratgan ilovalarga ham qo\'llanilsinmi.',
@@ -337,17 +284,6 @@ export const uz = {
         part3: 'belgilangan bo\'lsa, bajarilish vaqti cheklovlari o\'chiriladi.'
       },
       name: 'Vaqt tugashi (soniya)'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Ushbu kengaytmaga ega fayllar qo\'shimcha sifatida ko\'rib chiqiladi.',
-        part2: 'Standart bo\'yicha',
-        part3: 'va',
-        part4: 'bog\'langan fayllar qo\'shimcha sifatida ko\'rilmaydi va notalar bilan ko\'chirilmaydi.',
-        part5: 'Maxsus kengaytmalarni qo\'shishingiz mumkin, masalan,',
-        part6: 'bu xatti-harakatni o\'zgartirish uchun.'
-      },
-      name: 'Qo\'shimcha kengaytmalari sifatida hisoblash'
     }
   },
   promptWithPreviewModal: {

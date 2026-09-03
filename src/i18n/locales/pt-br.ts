@@ -100,20 +100,6 @@ export const ptBR = {
     defaultImageSizeDimension: {
       height: 'Altura',
       width: 'Largura'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'excluirá a pasta de anexos vazia.',
-        displayText: 'Excluir'
-      },
-      deleteWithEmptyParents: {
-        description: 'excluirá a pasta de anexos vazia e suas pastas pai vazias.',
-        displayText: 'Excluir com pais vazios'
-      },
-      keep: {
-        description: 'manterá a pasta de anexos vazia.',
-        displayText: 'Manter'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const ptBR = {
       },
       name: 'Separador de nome duplicado'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Quando a pasta de anexos ficar vazia:'
-      },
-      name: 'Comportamento de pasta de anexos vazia'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Excluir notas dos seguintes caminhos.',
-        part2: 'Insira cada caminho em uma nova linha.',
-        part3: 'Você pode usar string de caminho ou',
-        part4: 'Se a configuração estiver vazia, nenhuma nota será excluída.'
-      },
-      name: 'Excluir caminhos'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Excluir anexos dos seguintes caminhos quando o comando',
@@ -233,15 +204,6 @@ export const ptBR = {
         part2: 'tokens disponíveis'
       },
       name: 'Nome do arquivo de anexo gerado'
-    },
-    includePaths: {
-      description: {
-        part1: 'Incluir notas dos seguintes caminhos.',
-        part2: 'Insira cada caminho em uma nova linha.',
-        part3: 'Você pode usar string de caminho ou',
-        part4: 'Se a configuração estiver vazia, todas as notas serão incluídas.'
-      },
-      name: 'Incluir caminhos'
     },
     jpegQuality: {
       description: 'Quanto menor a qualidade, maior a taxa de compressão.',
@@ -284,21 +246,6 @@ export const ptBR = {
       description: 'Se deve converter imagens coladas em JPEG. Aplica-se apenas quando o conteúdo da imagem PNG é colado diretamente da área de transferência. Tipicamente, para capturas de tela.',
       name: 'Converter imagens coladas para JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Se ativado, ao excluir a nota, seus anexos órfãos também serão excluídos.',
-      name: 'Excluir anexos órfãos'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Se ativado, quando uma nota é renomeada ou movida, seus anexos serão renomeados de acordo com a',
-        part2: 'configuração.'
-      },
-      name: 'Renomear arquivos de anexos'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Se deve renomear pastas de anexos quando uma nota é renomeada ou movida.',
-      name: 'Renomear pastas de anexos'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Se as configurações de pasta de anexos e de nome de arquivo devem ser aplicadas a anexos criados por OUTROS plugins.',
@@ -337,17 +284,6 @@ export const ptBR = {
         part3: 'estiver definido, o tempo limite de execução das operações será desativado.'
       },
       name: 'Tempo limite em segundos'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Tratar arquivos com estas extensões como anexos.',
-        part2: 'Por padrão',
-        part3: 'e',
-        part4: 'arquivos vinculados não são tratados como anexos e não são movidos junto com a nota.',
-        part5: 'Você pode adicionar extensões personalizadas, por exemplo,',
-        part6: ', para sobrescrever esse comportamento.'
-      },
-      name: 'Tratar como extensões de anexos'
     }
   },
   promptWithPreviewModal: {

@@ -100,20 +100,6 @@ export const lv = {
     defaultImageSizeDimension: {
       height: 'Augstums',
       width: 'Platums'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'dzēsīs tukšo pielikumu mapi.',
-        displayText: 'Dzēst'
-      },
-      deleteWithEmptyParents: {
-        description: 'dzēsīs tukšo pielikumu mapi un tās tukšās vecāku mapes.',
-        displayText: 'Dzēst ar tukšiem vecākiem'
-      },
-      keep: {
-        description: 'saglabās tukšo pielikumu mapi.',
-        displayText: 'Saglabāt'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const lv = {
       },
       name: 'Dublēto nosaukumu atdalītājs'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Kad pielikumu mape kļūst tukša:'
-      },
-      name: 'Tukšas pielikumu mapes uzvedība'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Izslēgt piezimes no šādiem ceļiem.',
-        part2: 'Ievadiet katru ceļu jaunā rindā.',
-        part3: 'Varat izmantot ceļa virkni vai',
-        part4: 'Ja iestatījums ir tukšs, piezimes netiek izslēgtas.'
-      },
-      name: 'Izslēgt ceļus'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Izslēgt pielikumus no šādiem ceļiem, kad',
@@ -233,15 +204,6 @@ export const lv = {
         part2: 'tokenus'
       },
       name: 'Ģenerētais pielikuma faila nosaukums'
-    },
-    includePaths: {
-      description: {
-        part1: 'Iekļaut piezimes no šādiem ceļiem.',
-        part2: 'Ievadiet katru ceļu jaunā rindā.',
-        part3: 'Varat izmantot ceļa virkni vai',
-        part4: 'Ja iestatījums ir tukšs, visas piezimes tiek iekļautas.'
-      },
-      name: 'Iekļaut ceļus'
     },
     jpegQuality: {
       description: 'Jo mazāka kvalitāte, jo lielāks saspiešanas koeficients.',
@@ -284,21 +246,6 @@ export const lv = {
       description: 'Vai konvertēt ielīmētos attēlus uz JPEG. Attiecas tikai tad, kad PNG attēla saturs tiek ielīmēts tieši no starpliktuvnes. Parasti ekrānuzņēmumu ielīmēšanai.',
       name: 'Vai konvertēt ielīmētos attēlus uz JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Ja iespējots, kad piezime tiek dzēsta, tās bāreņu pielikumi arī tiek dzēsti.',
-      name: 'Vai dzēst bāreņu pielikumus'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Ja iespējots, kad piezime tiek pārdēvēta vai pārvietota, tās pielikumi tiks pārdēvēti saskaņā ar',
-        part2: 'iestatījumu.'
-      },
-      name: 'Vai pārdēvēt pielikumu failus'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Vai pārdēvēt pielikumu mapes, kad piezime tiek pārdēvēta vai pārvietota.',
-      name: 'Vai pārdēvēt pielikumu mapes'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Vai pielikumu mapes un faila nosaukuma iestatījumus piemērot pielikumiem, ko izveido CITI spraudņi.',
@@ -337,17 +284,6 @@ export const lv = {
         part3: 'ir iestatīts, operāciju izpildes laika ierobežojums ir atspējots.'
       },
       name: 'Laika ierobežojums sekundēs'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Uzskatīt failus ar šādiem paplašinājumiem par pielikumiem.',
-        part2: 'Pēc noklusējuma',
-        part3: 'un',
-        part4: 'saistītie faili netiek uzskatīti par pielikumiem un netiek pārvietoti kopā ar piezimi.',
-        part5: 'Varat pievienot pielāgotus paplašinājumus, piemēram',
-        part6: ', lai ignorētu šo uzvedību.'
-      },
-      name: 'Uzskatīt par pielikumu paplašinājumiem'
     }
   },
   promptWithPreviewModal: {

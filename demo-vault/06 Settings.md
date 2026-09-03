@@ -6,10 +6,6 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
 
 - `attachmentFolderPath`
   - the folder each new attachment is saved into (a pattern). Start it with `./` for a path relative to the note; otherwise it is relative to the vault root.
-- `includePaths`
-  - if non-empty, the plugin only applies within these paths.
-- `excludePaths`
-  - paths where the plugin does nothing (Obsidian's default behavior is used instead).
 
 ## Attachment file naming
 
@@ -17,10 +13,6 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
   - the name pattern for a newly created attachment.
 - `renamedAttachmentFileName`
   - the name pattern used when an attachment is renamed alongside its note.
-- `shouldRenameAttachmentFiles`
-  - rename attachment files when the note is renamed.
-- `shouldRenameAttachmentFolder`
-  - rename the per-note attachment folder when the note is renamed.
 - `attachmentRenameMode`
   - which attachments get renamed on paste: none, only pasted images, or all.
 - `shouldRenameAttachmentsCreatedByOtherPlugins`
@@ -57,8 +49,6 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
   - what to do when a collected attachment is referenced by several notes: cancel, copy, move, prompt, or skip.
 - `moveAttachmentToProperFolderUsedByMultipleNotesMode`
   - the same choice for the **Move attachment to proper folder** command.
-- `notePriorities`
-  - when several notes reference one attachment, decides which of them owns it, highest priority first. Entries match by extension (`.md`), by frontmatter property (`property:excalidraw-plugin`), by path, or by `/regular expression/`. A tie falls back to `collectAttachmentUsedByMultipleNotesMode`. See [05 Collect attachments](<./05 Collect attachments.md>).
 - `attachmentUnitFolderPaths`
   - folders whose whole hierarchy is one attachment, so collecting moves the entire folder rather than the single linked file. Use it for a saved page next to its `_files/` folder or a drawing next to the images it references. See [05 Collect attachments](<./05 Collect attachments.md>).
 - `excludePathsFromAttachmentCollecting`
@@ -68,18 +58,20 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
 - `shouldSkipCollectingAttachmentsReferencedByRawPath`
   - a safety net for attachments referenced by other plugins' non-standard syntaxes. When on, before collecting an attachment the plugin also scans every note's raw text for the attachment's path or file name; if a note references it in a format Obsidian does not index, the attachment is treated as still used and left in place (it is not moved or renamed). Default off. See [05 Collect attachments](<./05 Collect attachments.md>).
 
-## Renames and deletions
+## Renames and deletions — moved to another plugin in 12.0.0
 
-- `shouldHandleRenames`
-  - keep links and attachment folders consistent when notes are renamed or moved.
-- `shouldDeleteOrphanAttachments`
-  - delete an attachment when the note that owned it is deleted.
-- `shouldRescueSharedAttachments`
-  - when a note or its attachment folder is deleted while another note still references one of its attachments, move that attachment into the surviving note's attachment folder rather than leaving it behind in the deleted note's folder. It keeps its file name; only the folder is recomputed. It moves only when a single note is left referencing it, or when `notePriorities` names a clear winner among several — a tie, or no match, leaves it in place. Default off, and it only takes effect while `shouldDeleteOrphanAttachments` is on, since that is the setting which hands the delete path to the plugin at all.
-- `emptyFolderBehavior`
-  - whether to keep or delete attachment folders that become empty.
-- `treatAsAttachmentExtensions`
-  - extra file extensions (like `.excalidraw.md`) treated as attachments.
+Renames and deletions are handled by **[Advanced Rename and Delete Handler](https://obsidian.md/plugins?id=advanced-rename-and-delete-handler)**, not by this plugin. Two plugins handling one rename corrupt links and move attachments twice, so exactly one plugin owns it, and these settings live there:
+
+- `shouldHandleRenames`, `shouldHandleDeletions` (spelled `shouldDeleteOrphanAttachments` here before 12.0.0), `shouldRenameAttachmentFiles`, `shouldRenameAttachmentFolder`, `shouldRescueSharedAttachments`, `emptyFolderBehavior`, `treatAsAttachmentExtensions`, `notePriorities`, `includePaths` and `excludePaths`.
+
+Upgrading offers to move whatever you had set into that plugin, once. Until you accept, your values are kept in `proposedRenameDeleteSettings` below and the offer returns; cancelling does not throw them away.
+
+Five of those settings still matter to **this** plugin's own commands — Collect attachments, Delete unused attachments and Go to owning note all need to know what an attachment is, which paths to skip, which note owns a shared attachment and what to do with an emptied folder. This plugin reads them back from Advanced Rename and Delete Handler rather than keeping a second copy, so there is one place to set them.
+
+Two things follow, and are worth knowing before you decline the suggestion:
+
+- **`includePaths` / `excludePaths` now scope both plugins.** Excluding a folder from rename handling also excludes it from this plugin's Collect attachments and Delete unused attachments.
+- **Without Advanced Rename and Delete Handler installed, these fall back to this plugin's own defaults** — an empty path list, an empty priority list, `.excalidraw.md` as the one attachment extension, and `DeleteWithEmptyParents` for emptied folders. Nothing is lost: your values stay in `proposedRenameDeleteSettings` and are offered again the moment that plugin appears. The same fallback applies when it is installed but older than 1.2.0, which is the version that first offers these values back — the migration is still offered, so you can hand your settings over and then update.
 
 ## Image conversion and size
 
@@ -107,3 +99,7 @@ Open **Settings -> Community plugins -> Custom Attachment Location** to configur
   - timeout for the plugin's longer operations (0 means wait indefinitely).
 - `version`
   - the settings schema version; managed by the plugin, not edited by hand.
+- `isAdvancedRenameAndDeleteHandlerSuggestionDeclined`
+  - whether you dismissed the banner suggesting Advanced Rename and Delete Handler. Persisted so a decline survives a reload; managed by the plugin, not edited by hand.
+- `proposedRenameDeleteSettings`
+  - the rename/delete values this plugin held before 12.0.0, waiting to be offered to Advanced Rename and Delete Handler. `null` once the migration is applied, and `null` on a fresh install, which is how the plugin knows never to offer a migration of values you never set. Managed by the plugin, not edited by hand.

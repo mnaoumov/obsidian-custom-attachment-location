@@ -18,33 +18,36 @@ import type {
   App,
   TFile
 } from 'obsidian';
+import type { NoPriorityWinnerReason } from 'obsidian-dev-utils/obsidian/note-priority';
 
 import { Vault } from 'obsidian';
 import { findAttachmentUnitFolderPath } from 'obsidian-dev-utils/obsidian/attachment-unit-folder';
 import { isFile } from 'obsidian-dev-utils/obsidian/file-system';
 import { getBacklinksForFileSafe } from 'obsidian-dev-utils/obsidian/metadata-cache';
-
-import type { NoPriorityWinnerReason } from './note-priority.ts';
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-
 import {
   filterHighestPriorityNotePaths,
   findNoPriorityWinnerReason,
   findNotePriorityRank,
   pickHighestPriorityNotePath
-} from './note-priority.ts';
+} from 'obsidian-dev-utils/obsidian/note-priority';
+
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
+import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 interface NoteOwnerResolverConstructorParams {
   readonly app: App;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
 export class NoteOwnerResolver {
   private readonly app: App;
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: NoteOwnerResolverConstructorParams) {
     this.app = params.app;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
@@ -68,7 +71,7 @@ export class NoteOwnerResolver {
    * @returns The candidates ranked strictly above it, in the order they were given.
    */
   public filterHigherPriorityNotePaths(notePaths: readonly string[], referenceNotePath: string): string[] {
-    const entries = this.pluginSettingsComponent.settings.notePriorities;
+    const entries = this.handedOverSettingsComponent.settings.notePriorities;
     const referenceRank = this.rankNote(entries, referenceNotePath);
     return notePaths.filter((notePath) => this.rankNote(entries, notePath) < referenceRank);
   }
@@ -84,7 +87,7 @@ export class NoteOwnerResolver {
    * @returns The candidates holding the best rank, in the order they were given.
    */
   public filterTopRankNotePaths(notePaths: readonly string[]): string[] {
-    const entries = this.pluginSettingsComponent.settings.notePriorities;
+    const entries = this.handedOverSettingsComponent.settings.notePriorities;
     return filterHighestPriorityNotePaths({
       notePaths,
       rank: (notePath) => this.rankNote(entries, notePath)
@@ -118,7 +121,7 @@ export class NoteOwnerResolver {
    * @returns Which of the three ways the list failed to settle it.
    */
   public findNoPriorityWinnerReason(notePaths: readonly string[]): NoPriorityWinnerReason {
-    const entries = this.pluginSettingsComponent.settings.notePriorities;
+    const entries = this.handedOverSettingsComponent.settings.notePriorities;
     return findNoPriorityWinnerReason({
       entries,
       notePaths,
@@ -134,7 +137,7 @@ export class NoteOwnerResolver {
    * @returns The owning note's path, or `null` when there is no single winner.
    */
   public pickOwnerNotePath(notePaths: readonly string[]): null | string {
-    const entries = this.pluginSettingsComponent.settings.notePriorities;
+    const entries = this.handedOverSettingsComponent.settings.notePriorities;
     if (entries.length === 0) {
       return null;
     }

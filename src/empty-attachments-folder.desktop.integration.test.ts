@@ -33,13 +33,12 @@ describe('Empty attachments folder is not created on a dry resolution (issue #26
       async callback({ app }): Promise<ProbeResult> {
         interface Settings {
           attachmentFolderPath: string;
-          emptyFolderBehavior: unknown;
-          isPathIgnored(path: string): boolean;
+          generatedAttachmentFileName: string;
         }
         function isSettings(value: unknown): value is Settings {
           return typeof value === 'object' && value !== null
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string'
-            && 'emptyFolderBehavior' in (value as Record<string, unknown>);
+            && typeof (value as Record<string, unknown>)['generatedAttachmentFileName'] === 'string';
         }
         /*
          * The plugin does not expose its settings publicly, so locate the live settings object by

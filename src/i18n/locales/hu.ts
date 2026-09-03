@@ -100,20 +100,6 @@ export const hu = {
     defaultImageSizeDimension: {
       height: 'Magasság',
       width: 'Szélesség'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'törli az üres melléklet mappát.',
-        displayText: 'Törlés'
-      },
-      deleteWithEmptyParents: {
-        description: 'törli az üres melléklet mappát és az üres szülő mappáit.',
-        displayText: 'Törlés üres szülőkkel'
-      },
-      keep: {
-        description: 'megtartja az üres melléklet mappát.',
-        displayText: 'Megtartás'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const hu = {
       },
       name: 'Duplikált név elválasztó'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Amikor a melléklet mappa üres lesz:'
-      },
-      name: 'Üres melléklet mappa viselkedés'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Jegyzetek kizárása a következő útvonalakból.',
-        part2: 'Minden útvonalat új sorba írj.',
-        part3: 'Használhatsz útvonal stringet vagy',
-        part4: 'Ha a beállítás üres, egyetlen jegyzet sem kerül kizárásra.'
-      },
-      name: 'Útvonalak kizárása'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Mellékletek kizárása a következő útvonalakból, amikor a',
@@ -234,15 +205,6 @@ export const hu = {
         part2: 'tokeneket'
       },
       name: 'Generált melléklet fájlnév'
-    },
-    includePaths: {
-      description: {
-        part1: 'Jegyzetek belefoglalása a következő útvonalakból.',
-        part2: 'Minden útvonalat új sorba írj.',
-        part3: 'Használhatsz útvonal stringet vagy',
-        part4: 'Ha a beállítás üres, minden jegyzet bele van foglalva.'
-      },
-      name: 'Útvonalak belefoglalása'
     },
     jpegQuality: {
       description: 'Minél kisebb a minőség, annál nagyobb a tömörítési arány.',
@@ -286,21 +248,6 @@ export const hu = {
       description: 'Beillesztett képek JPEG-re konvertálása. Csak akkor érvényes, amikor a PNG kép tartalma közvetlenül a vágólapról van beillesztve. Jellemzően képernyőképek beillesztésénél.',
       name: 'Beillesztett képek JPEG-re konvertálása'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Ha engedélyezve, amikor a jegyzet törlésre kerül, az árva mellékletei is törlésre kerülnek.',
-      name: 'Árva mellékletek törlése'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Ha engedélyezve, amikor egy jegyzet átnevezésre kerül vagy áthelyezésre, a melléklet fájljai átnevezésre kerülnek a',
-        part2: 'beállítás szerint.'
-      },
-      name: 'Melléklet fájlok átnevezése'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Melléklet mappák átnevezése, amikor egy jegyzet átnevezésre kerül vagy áthelyezésre.',
-      name: 'Melléklet mappák átnevezése'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Alkalmazza-e a melléklet mappa és fájlnév beállításait a MÁS bővítmények által létrehozott mellékletekre.',
@@ -339,17 +286,6 @@ export const hu = {
         part3: 'be van állítva, a műveletek végrehajtási időtúllépése le van tiltva.'
       },
       name: 'Időtúllépés másodpercekben'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Fájlok kezelése ezekkel a kiterjesztésekkel mellékletekként.',
-        part2: 'Alapértelmezetten',
-        part3: 'és',
-        part4: 'kapcsolt fájlok nem kezelendők mellékletekként és nem mozgatandók a jegyzettel.',
-        part5: 'Hozzáadhatsz egyéni kiterjesztéseket, pl.',
-        part6: ', a viselkedés felülírásához.'
-      },
-      name: 'Melléklet kiterjesztések kezelése'
     }
   },
   promptWithPreviewModal: {

@@ -66,6 +66,7 @@ import {
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { NetworkImageDownloader } from './network-image-downloader.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
@@ -87,6 +88,7 @@ interface AttachmentCollectorConstructorParams {
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
   readonly consoleDebugComponent: ConsoleDebugComponent;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly networkImageDownloader: NetworkImageDownloader;
   readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
@@ -164,6 +166,7 @@ export class AttachmentCollector {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly networkImageDownloader: NetworkImageDownloader;
   private readonly noteOwnerResolver: NoteOwnerResolver;
   private readonly pluginName: string;
@@ -176,6 +179,7 @@ export class AttachmentCollector {
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
     this.consoleDebugComponent = params.consoleDebugComponent;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.networkImageDownloader = params.networkImageDownloader;
     this.resourceLockComponent = params.resourceLockComponent;
     this.pluginName = params.pluginName;
@@ -183,6 +187,7 @@ export class AttachmentCollector {
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.noteOwnerResolver = new NoteOwnerResolver({
       app: params.app,
+      handedOverSettingsComponent: params.handedOverSettingsComponent,
       pluginSettingsComponent: params.pluginSettingsComponent
     });
   }
@@ -646,7 +651,7 @@ export class AttachmentCollector {
 
       await cleanupEmptyFolders({
         app,
-        emptyFolderBehavior: pluginSettingsComponent.settings.emptyFolderBehavior,
+        emptyFolderBehavior: this.handedOverSettingsComponent.settings.emptyFolderBehavior,
         folderPaths: [...oldParentFolderPaths]
       });
 
@@ -660,7 +665,7 @@ export class AttachmentCollector {
     abortSignal.throwIfAborted();
     const singleFile: null | TFile = abstractFiles.length === 1 && isFile(abstractFiles[0]) ? abstractFiles[0] : null;
 
-    if (singleFile && this.pluginSettingsComponent.settings.isPathIgnored(singleFile.path)) {
+    if (singleFile && this.handedOverSettingsComponent.isPathIgnored(singleFile.path)) {
       this.pluginNoticeComponent.showNotice(t(($) => $.notice.notePathIsIgnored));
       console.warn(`Cannot collect attachments in the note as note path is ignored: ${singleFile.path}.`);
       return;
@@ -726,7 +731,7 @@ export class AttachmentCollector {
       pluginNoticeComponent: this.pluginNoticeComponent,
       processItem: async (noteFile) => {
         combinedAbortSignal.throwIfAborted();
-        if (this.pluginSettingsComponent.settings.isPathIgnored(noteFile.path)) {
+        if (this.handedOverSettingsComponent.isPathIgnored(noteFile.path)) {
           console.warn(`Cannot collect attachments in the note as note path is ignored: ${noteFile.path}.`);
           return;
         }

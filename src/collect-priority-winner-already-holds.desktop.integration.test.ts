@@ -25,7 +25,7 @@ interface ProbeResult {
   readonly heldImageStillThere: boolean;
   readonly isRenameFlagLive: boolean;
   readonly looseImagePathAfter: null | string;
-  readonly settingsFound: boolean;
+  readonly probesFound: boolean;
   readonly wasModalOpen: boolean;
 }
 
@@ -42,19 +42,47 @@ describe('An unambiguous collect stays quiet when the winning note already holds
         interface PrioritySettings {
           attachmentFolderPath: string;
           collectAttachmentUsedByMultipleNotesMode: string;
-          notePriorities: readonly string[];
           shouldRenameCollectedAttachments: boolean;
+        }
+
+        /*
+         * `notePriorities` belongs to Advanced Rename and Delete Handler since 12.0.0, and this plugin
+         * reads it back through that plugin's API. So the ranking is no longer writable here - the
+         * PROVIDER is what this stubs, by parking one on the read-back component's live ref. That
+         * exercises the real read path (`apiRef.value.getSettings()`) without needing the other plugin
+         * installed in the vault.
+         */
+        interface HandedOverProvider {
+          getSettings(): Record<string, unknown>;
+          isPathIgnored(path: string): boolean;
+          isTreatedAsAttachment(path: string): boolean;
+        }
+
+        interface HandedOverProviderRef {
+          value: HandedOverProvider | null;
+        }
+
+        interface HandedOverSettingsHolder {
+          apiRef: HandedOverProviderRef | null;
         }
 
         function isPrioritySettings(value: unknown): value is PrioritySettings {
           return typeof value === 'object' && value !== null
-            && Array.isArray((value as Record<string, unknown>)['notePriorities'])
-            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
+            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string'
+            && typeof (value as Record<string, unknown>)['shouldRenameCollectedAttachments'] === 'boolean';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): null | PrioritySettings {
+        function isHandedOverSettingsHolder(value: unknown): value is HandedOverSettingsHolder {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null
+            && 'apiRef' in record
+            && typeof record['isPathIgnored'] === 'function'
+            && typeof record['isTreatedAsAttachment'] === 'function';
+        }
+
+        // Neither the settings nor the read-back component is exposed publicly, so both are located by
+        // Walking the plugin's component tree.
+        function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
@@ -66,8 +94,9 @@ describe('An unambiguous collect stays quiet when the winning note already holds
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isPrioritySettings(record['settings'])) {
-              return record['settings'];
+            const matched = match(record);
+            if (matched !== null) {
+              return matched;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -90,17 +119,36 @@ describe('An unambiguous collect stays quiet when the winning note already holds
           return null;
         }
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
-          return { heldImageStillThere: false, isRenameFlagLive: false, looseImagePathAfter: null, settingsFound: false, wasModalOpen: false };
+        const foundSettings = findInPluginTree((record) => isPrioritySettings(record['settings']) ? record['settings'] : null);
+        const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
+        if (!foundSettings || !foundHolder) {
+          return { heldImageStillThere: false, isRenameFlagLive: false, looseImagePathAfter: null, probesFound: false, wasModalOpen: false };
         }
         // A narrowed `const` does not stay narrowed inside a function declaration below it.
         const settings: PrioritySettings = foundSettings;
+        const holder: HandedOverSettingsHolder = foundHolder;
 
         const priorFolderPath = settings.attachmentFolderPath;
-        const priorPriorities = settings.notePriorities;
+        const priorApiRef = holder.apiRef;
         const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
         const wasRenamingCollectedAttachments = settings.shouldRenameCollectedAttachments;
+
+        // Mirrors this plugin's own absent-provider defaults, so only the ranking under test differs
+        // From what a vault with no provider would see.
+        function stubProvider(notePriorities: readonly string[]): void {
+          holder.apiRef = {
+            value: {
+              getSettings: (): Record<string, unknown> => ({
+                emptyFolderBehavior: 'DeleteWithEmptyParents',
+                notePriorities,
+                shouldRenameAttachmentFiles: false,
+                treatAsAttachmentExtensions: ['.excalidraw.md']
+              }),
+              isPathIgnored: (): boolean => false,
+              isTreatedAsAttachment: (path: string): boolean => path.endsWith('.excalidraw.md')
+            }
+          };
+        }
 
         /*
          * Best-effort cleanup, so it must tolerate an entry that is already gone: the collect pass
@@ -153,7 +201,7 @@ describe('An unambiguous collect stays quiet when the winning note already holds
           // The names must survive the collect, or `already in place` would never be true.
           settings.shouldRenameCollectedAttachments = false;
           // The collected note outranks the other one, so it owns the shared image outright.
-          settings.notePriorities = [firstNotePath, secondNotePath];
+          stubProvider([firstNotePath, secondNotePath]);
 
           await app.vault.createFolder(attachmentFolderPath);
           await app.vault.createBinary(heldImagePath, new ArrayBuffer(4));
@@ -202,7 +250,7 @@ describe('An unambiguous collect stays quiet when the winning note already holds
             heldImageStillThere: app.vault.getFileByPath(heldImagePath) !== null,
             isRenameFlagLive: typeof settings.shouldRenameCollectedAttachments === 'boolean',
             looseImagePathAfter: app.vault.getFileByPath(collectedLooseImagePath)?.path ?? null,
-            settingsFound: true,
+            probesFound: true,
             wasModalOpen: activeDocument.querySelector('.modal-container') !== null
           };
         } finally {
@@ -211,11 +259,12 @@ describe('An unambiguous collect stays quiet when the winning note already holds
           for (const path of [secondNotePath, firstNotePath, collectedLooseImagePath, looseImagePath, heldImagePath, attachmentFolderPath]) {
             await trashIfExists(path);
           }
-          // Restoring the values captured before the awaits; nothing else in this vault writes them.
+          /* eslint-disable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
           settings.attachmentFolderPath = priorFolderPath;
-          settings.notePriorities = priorPriorities;
+          holder.apiRef = priorApiRef;
           settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
           settings.shouldRenameCollectedAttachments = wasRenamingCollectedAttachments;
+          /* eslint-enable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
         }
       },
       input: {
@@ -226,7 +275,7 @@ describe('An unambiguous collect stays quiet when the winning note already holds
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.settingsFound).toBe(true);
+    expect(result.probesFound).toBe(true);
     expect(result.isRenameFlagLive).toBe(true);
 
     // The shared image the winning note already held never moved, and nothing was said about it.

@@ -100,20 +100,6 @@ export const zhTW = {
     defaultImageSizeDimension: {
       height: '高度',
       width: '寬度'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: '將刪除空附件資料夾。',
-        displayText: '刪除'
-      },
-      deleteWithEmptyParents: {
-        description: '將連同空的父資料夾一起刪除空附件資料夾。',
-        displayText: '連同空的父資料夾一起刪除'
-      },
-      keep: {
-        description: '將保留空附件資料夾。',
-        displayText: '保留'
-      }
     }
   },
   pluginSettingsManager: {
@@ -201,21 +187,6 @@ export const zhTW = {
       },
       name: '重複名稱分隔符'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: '當附件資料夾變空時：'
-      },
-      name: '空附件資料夾行為'
-    },
-    excludePaths: {
-      description: {
-        part1: '排除下列路徑內的筆記。',
-        part2: '每條路徑請另起一行。',
-        part3: '您可使用路徑字串或',
-        part4: '若設定為空，則不排除任何筆記。'
-      },
-      name: '排除路徑'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: '執行',
@@ -233,15 +204,6 @@ export const zhTW = {
         part2: '令牌'
       },
       name: '產生的附件檔案名稱'
-    },
-    includePaths: {
-      description: {
-        part1: '包含下列路徑中的筆記。',
-        part2: '每條路徑請另起一行。',
-        part3: '您可使用路徑字串或',
-        part4: '若設定為空，則包含所有筆記。'
-      },
-      name: '包含路徑'
     },
     jpegQuality: {
       description: '品質越低，壓縮比越高。',
@@ -284,21 +246,6 @@ export const zhTW = {
       description: '是否轉換貼上的圖片為 JPEG。僅在 PNG 圖片內容直接從剪貼簿貼上時適用。通常用於貼上截圖。',
       name: '是否轉換貼上的圖片為 JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: '啟用時，刪除筆記時將同時刪除其孤立附件。',
-      name: '刪除孤立附件'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: '如果啟用，當筆記被重新命名或移動時，其附件將根據',
-        part2: '設定進行重新命名。'
-      },
-      name: '重新命名附件檔案'
-    },
-    shouldRenameAttachmentFolders: {
-      description: '筆記被重新命名或移動時，是否重新命名附件資料夾。',
-      name: '重新命名附件資料夾'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: '是否將附件資料夾與檔案名稱設定套用至其他外掛建立的附件。',
@@ -337,17 +284,6 @@ export const zhTW = {
         part3: ''
       },
       name: '逾時秒數'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: '將具有這些擴展名的檔案視為附件。',
-        part2: '預設情況下',
-        part3: '與',
-        part4: '連結的檔案不視為附件，且不會與筆記一起移動。',
-        part5: '您可以添加自訂擴展名，例如',
-        part6: '來覆寫此行為。'
-      },
-      name: '視為附件擴展名'
     }
   },
   promptWithPreviewModal: {

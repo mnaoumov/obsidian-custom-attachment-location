@@ -16,7 +16,6 @@ import {
   getAvailablePathForAttachments
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
   getFileOrNull,
   getPath,
@@ -30,7 +29,8 @@ import {
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import {
   createFolderSafe,
-  CreateFolderSafeResult
+  CreateFolderSafeResult,
+  EmptyFolderBehavior
 } from 'obsidian-dev-utils/obsidian/vault';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
@@ -42,6 +42,8 @@ import {
   vi
 } from 'vitest';
 
+import type { HandedOverSettings } from './advanced-rename-and-delete-handler.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 import type { TokenValidator } from './token-validator.ts';
@@ -114,13 +116,23 @@ const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockCreateFolderSafe = vi.mocked(createFolderSafe);
 const mockPromptWithPreview = vi.mocked(promptWithPreview);
 
+// The handed-over settings live in Advanced Rename and Delete Handler since 12.0.0. Mutable here so a test
+// Can still change one mid-run, exactly as it used to change .
+interface MutableHandedOverSettings {
+  emptyFolderBehavior: EmptyFolderBehavior;
+  notePriorities: readonly string[];
+  shouldRenameAttachmentFiles: boolean;
+  treatAsAttachmentExtensions: readonly string[];
+}
+
 interface TestContext {
   create: ReturnType<typeof vi.fn<Vault['create']>>;
   exists: ReturnType<typeof vi.fn<Vault['exists']>>;
   getAvailablePath: ReturnType<typeof vi.fn<Vault['getAvailablePath']>>;
   getAvailablePathForAttachmentsOriginal: ReturnType<typeof vi.fn<Vault['getAvailablePathForAttachments']>>;
+  handedOverSettings: MutableHandedOverSettings;
   isNoteEx: ReturnType<typeof vi.fn<PluginSettingsComponent['isNoteEx']>>;
-  isPathIgnored: ReturnType<typeof vi.fn<PluginSettings['isPathIgnored']>>;
+  isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
   manager: AttachmentPathManager;
   pluginSettingsComponent: PluginSettingsComponent;
   readBinary: ReturnType<typeof vi.fn<Vault['readBinary']>>;
@@ -133,15 +145,22 @@ interface TestContext {
 let context: TestContext;
 
 function createManager(): TestContext {
-  const isPathIgnored = vi.fn<PluginSettings['isPathIgnored']>().mockReturnValue(false);
+  const isPathIgnored = vi.fn<HandedOverSettingsComponent['isPathIgnored']>().mockReturnValue(false);
+  const handedOverSettings: MutableHandedOverSettings = {
+    emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
+    notePriorities: [],
+    shouldRenameAttachmentFiles: false,
+    treatAsAttachmentExtensions: ['.excalidraw.md']
+  };
+  const handedOverSettingsComponent = strictProxy<HandedOverSettingsComponent>({
+    isPathIgnored,
+    settings: castTo<HandedOverSettings>(handedOverSettings)
+  });
   const settings = castTo<PluginSettings>({
     attachmentFolderPath: 'assets',
     collectedAttachmentFileName: '',
-    emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
     generatedAttachmentFileName: 'generated',
-    isPathIgnored,
     renamedAttachmentFileName: '',
-    shouldRenameAttachmentFiles: false,
     shouldRenameCollectedAttachments: false,
     specialCharacters: '',
     specialCharactersReplacement: '-'
@@ -182,6 +201,7 @@ function createManager(): TestContext {
   const manager = new AttachmentPathManager({
     app,
     getAvailablePathForAttachmentsOriginal,
+    handedOverSettingsComponent,
     pluginNoticeComponent: new PluginNoticeComponent({ app, pluginName: 'Custom Attachment Location' }),
     pluginSettingsComponent,
     tokenValidator
@@ -192,6 +212,7 @@ function createManager(): TestContext {
     exists,
     getAvailablePath,
     getAvailablePathForAttachmentsOriginal,
+    handedOverSettings,
     isNoteEx,
     isPathIgnored,
     manager,
@@ -659,7 +680,7 @@ describe('AttachmentPathManager', () => {
     it('should keep the attachment file name on a note rename when renaming attachment files is off', async () => {
       context.settings.attachmentFolderPath = 'assets';
       context.settings.renamedAttachmentFileName = '';
-      context.settings.shouldRenameAttachmentFiles = false;
+      context.handedOverSettings.shouldRenameAttachmentFiles = false;
       // eslint-disable-next-line no-template-curly-in-string -- Valid token.
       context.settings.generatedAttachmentFileName = '${prompt}';
       const noteFile = createTFile({ path: 'note.md' });
@@ -683,7 +704,7 @@ describe('AttachmentPathManager', () => {
     it('should keep the attachment file name on a note rename when the renamed template is empty', async () => {
       context.settings.attachmentFolderPath = 'assets';
       context.settings.renamedAttachmentFileName = '';
-      context.settings.shouldRenameAttachmentFiles = true;
+      context.handedOverSettings.shouldRenameAttachmentFiles = true;
       // eslint-disable-next-line no-template-curly-in-string -- Valid token.
       context.settings.generatedAttachmentFileName = '${prompt}';
       const noteFile = createTFile({ path: 'note.md' });
@@ -816,7 +837,7 @@ describe('AttachmentPathManager', () => {
 
     it('should create the missing attachment folder when folder creation is not skipped', async () => {
       context.settings.attachmentFolderPath = 'assets';
-      context.settings.emptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
+      context.handedOverSettings.emptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
@@ -837,7 +858,7 @@ describe('AttachmentPathManager', () => {
 
     it('should create a gitkeep file when the empty folder behavior is Keep', async () => {
       context.settings.attachmentFolderPath = 'assets';
-      context.settings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
+      context.handedOverSettings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);
@@ -857,7 +878,7 @@ describe('AttachmentPathManager', () => {
 
     it('should not re-create the gitkeep file when a peer device already synced it (re #16)', async () => {
       context.settings.attachmentFolderPath = 'assets';
-      context.settings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
+      context.handedOverSettings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
       mockIsNote.mockReturnValue(true);

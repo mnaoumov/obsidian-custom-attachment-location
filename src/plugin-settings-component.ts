@@ -8,18 +8,22 @@ import {
   App,
   debounce
 } from 'obsidian';
+import { castTo } from 'obsidian-dev-utils/object-utils';
 import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
-import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/components/rename-delete-handler-component';
 import {
   getPath,
   isNote
 } from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { getOsUnsafePathCharsRegExp } from 'obsidian-dev-utils/obsidian/validation';
+import { EmptyFolderBehavior } from 'obsidian-dev-utils/obsidian/vault';
 import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
 import { replaceAll } from 'obsidian-dev-utils/string';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 import { compare } from 'semver';
+
+import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
+import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 
 import {
   CollectAttachmentUsedByMultipleNotesMode,
@@ -42,6 +46,7 @@ interface AddDateTimeFormatParams {
 interface PluginSettingsComponentConstructorParams {
   readonly app: App;
   readonly dataHandler: DataHandler;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly pluginEventSource: PluginEventSource;
   readonly validatorWrapper: ValueWrapper<TokenValidator>;
 }
@@ -59,8 +64,19 @@ class LegacySettings {
   // eslint-disable-next-line unicorn/no-non-function-verb-prefix -- A legacy persisted settings key; renaming it would break migration from every existing `data.json`.
   public deleteOrphanAttachments = false;
   public emptyAttachmentFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
+  /*
+   * The rename/delete settings this plugin owned before 12.0.0. They are no longer members of
+   * `PluginSettings` — Advanced Rename and Delete Handler owns them now — but they are still declared here
+   * for the two reasons this class exists: so the converter recognizes the persisted keys and strips them
+   * from saved settings, and so `convertRenameDeleteSettingsToProposal` can gather the user's values into
+   * `proposedRenameDeleteSettings` instead of silently dropping them.
+   */
+  public emptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
+  public excludePaths: readonly string[] = [];
   public generatedAttachmentFilename = '';
+  public includePaths: readonly string[] = [];
   public keepEmptyAttachmentFolders = false;
+  public notePriorities: readonly string[] = [];
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
   public pastedFileName = 'file-${date:YYYYMMDDHHmmssSSS}';
   public pastedImageFileName = '';
@@ -82,19 +98,25 @@ class LegacySettings {
   public renamePastedFilesWithKnownNames = false;
   public replaceWhitespace = false;
   public shouldConvertPastedImagesToJpeg = false;
+  public shouldDeleteOrphanAttachments = false;
   public shouldDuplicateCollectedAttachments = false;
+  public shouldHandleRenames = true;
   public shouldKeepEmptyAttachmentFolders = false;
+  public shouldRenameAttachmentFiles = false;
+  public shouldRenameAttachmentFolder = true;
   public shouldRenameAttachments = true;
   /**
    * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
    * recognizes the persisted key and strips it from saved settings during migration.
    */
   public shouldRenameAttachmentsToLowerCase = false;
+  public shouldRescueSharedAttachments = false;
   /**
    * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
    * recognizes the persisted key and strips it from saved settings during migration.
    */
   public toLowerCase = false;
+  public treatAsAttachmentExtensions: readonly string[] = ['.excalidraw.md'];
   public warningVersion = '';
   public whitespaceReplacement = '';
 }
@@ -121,6 +143,10 @@ class LegacySettingsConverter {
     this.convertMarkdownUrlFormat();
     this.convertSpecialCharacters();
     this.convertLegacyTokens();
+
+    // LAST, and it must stay last: it reads the rename/delete keys the converters above normalize, so
+    // Running it earlier would gather the raw legacy names instead of the values they convert into.
+    this.convertRenameDeleteSettingsToProposal();
   }
 
   private convertAutoRenameFiles(): void {
@@ -210,6 +236,45 @@ ${commentOut(this.legacySettings.customTokensStr)}
     }
   }
 
+  /**
+   * Gathers the rename/delete values this plugin used to own into a proposal for Advanced Rename and Delete
+   * Handler.
+   *
+   * Only keys the user actually had are gathered. A fresh install has none of them, so the proposal stays
+   * `null` and nobody is offered a migration of values they never set — which is the whole reason this is one
+   * nullable object rather than a flag beside a set of defaults.
+   *
+   * `shouldDeleteOrphanAttachments` is the one rename: the other plugin spells the same setting
+   * `shouldHandleDeletions`.
+   */
+  private convertRenameDeleteSettingsToProposal(): void {
+    const legacySettings = this.legacySettings;
+    const proposedSettings: Record<string, unknown> = {};
+
+    function copyIfPresent(targetPropertyName: string, value: unknown): void {
+      if (value !== undefined) {
+        proposedSettings[targetPropertyName] = value;
+      }
+    }
+
+    copyIfPresent('emptyFolderBehavior', legacySettings.emptyFolderBehavior);
+    copyIfPresent('excludePaths', legacySettings.excludePaths);
+    copyIfPresent('includePaths', legacySettings.includePaths);
+    copyIfPresent('notePriorities', legacySettings.notePriorities);
+    copyIfPresent('shouldHandleDeletions', legacySettings.shouldDeleteOrphanAttachments);
+    copyIfPresent('shouldHandleRenames', legacySettings.shouldHandleRenames);
+    copyIfPresent('shouldRenameAttachmentFiles', legacySettings.shouldRenameAttachmentFiles);
+    copyIfPresent('shouldRenameAttachmentFolder', legacySettings.shouldRenameAttachmentFolder);
+    copyIfPresent('shouldRescueSharedAttachments', legacySettings.shouldRescueSharedAttachments);
+    copyIfPresent('treatAsAttachmentExtensions', legacySettings.treatAsAttachmentExtensions);
+
+    if (Object.keys(proposedSettings).length === 0) {
+      return;
+    }
+
+    this.legacySettings.proposedRenameDeleteSettings = castTo<MigratableSettings>(proposedSettings);
+  }
+
   private convertReplaceWhitespace(): void {
     if (this.legacySettings.replaceWhitespace !== undefined) {
       this.legacySettings.whitespaceReplacement = this.legacySettings.replaceWhitespace ? '-' : '';
@@ -277,6 +342,8 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 
   private readonly customTokensValidatorDebounced = debounce(this.customTokensValidatorImpl.bind(this), CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS);
 
+  private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
+
   private lastCustomTokenValidatorResult: string | undefined = undefined;
 
   private readonly validatorWrapper: ValueWrapper<TokenValidator>;
@@ -291,16 +358,27 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       pluginSettingsClass: PluginSettings
     });
     this.app = params.app;
+    this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.validatorWrapper = params.validatorWrapper;
   }
 
+  /**
+   * Whether a file is a note rather than an attachment.
+   *
+   * The attachment-extension list this consults belongs to Advanced Rename and Delete Handler since 12.0.0,
+   * so it is read back rather than held here. It is the same question in both plugins — "is this
+   * `.excalidraw.md` a note or a drawing?" — so a single answer is the right one.
+   *
+   * @param pathOrFile - The path or file to test.
+   * @returns Whether it counts as a note.
+   */
   public isNoteEx(pathOrFile: null | PathOrAbstractFile): boolean {
     if (!pathOrFile || !isNote(pathOrFile)) {
       return false;
     }
 
     const path = getPath(this.app, pathOrFile);
-    return this.settings.treatAsAttachmentExtensions.every((extension) => !path.endsWith(extension));
+    return !this.handedOverSettingsComponent.isTreatedAsAttachment(path);
   }
 
   public replaceSpecialCharacters($string: string): string {
@@ -350,14 +428,6 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
         isEmptyAllowed: false,
         tokenValidationMode: TokenValidationMode.Error
       });
-    });
-
-    this.registerValidator('includePaths', (value): MaybeReturn<string> => {
-      return pathsValidator(value);
-    });
-
-    this.registerValidator('excludePaths', (value): MaybeReturn<string> => {
-      return pathsValidator(value);
     });
 
     this.registerValidator('excludePathsFromMultipleNotesCheck', (value): MaybeReturn<string> => {

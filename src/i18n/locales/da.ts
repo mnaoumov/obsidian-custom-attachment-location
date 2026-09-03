@@ -100,20 +100,6 @@ export const da = {
     defaultImageSizeDimension: {
       height: 'Højde',
       width: 'Bredde'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'vil slette den tomme vedhæftningsmappe.',
-        displayText: 'Slet'
-      },
-      deleteWithEmptyParents: {
-        description: 'vil slette den tomme vedhæftningsmappe og dens tomme overordnede mapper.',
-        displayText: 'Slet med tomme overordnede'
-      },
-      keep: {
-        description: 'vil bevare den tomme vedhæftningsmappe.',
-        displayText: 'Bevar'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const da = {
       },
       name: 'Duplikatnavnseparator'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Når vedhæftningsmappen bliver tom:'
-      },
-      name: 'Tom vedhæftningsmappeadfærd'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Udeluk noter fra følgende stier.',
-        part2: 'Indsæt hver sti på en ny linje.',
-        part3: 'Du kan bruge stistreng eller',
-        part4: 'Hvis indstillingen er tom, udelukkes ingen noter.'
-      },
-      name: 'Udeluk stier'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Udeluk vedhæftninger fra følgende stier når',
@@ -234,15 +205,6 @@ export const da = {
         part2: 'tokens'
       },
       name: 'Genereret vedhæftningsfilnavn'
-    },
-    includePaths: {
-      description: {
-        part1: 'Inkluder noter fra følgende stier.',
-        part2: 'Indsæt hver sti på en ny linje.',
-        part3: 'Du kan bruge stistreng eller',
-        part4: 'Hvis indstillingen er tom, inkluderes alle noter.'
-      },
-      name: 'Inkluder stier'
     },
     jpegQuality: {
       description: 'Jo mindre kvaliteten, jo større kompressionsforhold.',
@@ -286,21 +248,6 @@ export const da = {
       description: 'Om indsatte billeder skal konverteres til JPEG. Gælder kun når PNG-billedindholdet indsættes direkte fra udklipsholderen. Typisk til indsættelse af skærmbilleder.',
       name: 'Skal konvertere indsatte billeder til JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Hvis aktiveret, når noten slettes, slettes dens forældreløse vedhæftninger også.',
-      name: 'Skal slette forældreløse vedhæftninger'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Hvis aktiveret, når en note omdøbes eller flyttes, vil dens vedhæftninger blive omdøbt i henhold til',
-        part2: 'indstillingen.'
-      },
-      name: 'Skal omdøbe vedhæftningsfiler'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Om vedhæftningsmapper skal omdøbes når en note omdøbes eller flyttes.',
-      name: 'Skal omdøbe vedhæftningsmapper'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Om indstillingerne for vedhæftningsmappe og filnavn skal anvendes på vedhæftninger, som ANDRE plugins opretter.',
@@ -339,17 +286,6 @@ export const da = {
         part3: 'er sat, er operationernes udførelsestimeout deaktiveret.'
       },
       name: 'Timeout i sekunder'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Behandl filer med disse udvidelser som vedhæftninger.',
-        part2: 'Som standard',
-        part3: 'og',
-        part4: 'linkede filer behandles ikke som vedhæftninger og flyttes ikke med noten.',
-        part5: 'Du kan tilføje brugerdefinerede udvidelser, f.eks.',
-        part6: ', for at tilsidesætte denne adfærd.'
-      },
-      name: 'Behandl som vedhæftningsudvidelser'
     }
   },
   promptWithPreviewModal: {

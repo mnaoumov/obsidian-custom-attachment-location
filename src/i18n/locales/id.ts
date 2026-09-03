@@ -100,20 +100,6 @@ export const id = {
     defaultImageSizeDimension: {
       height: 'Tinggi',
       width: 'Lebar'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'akan menghapus folder lampiran yang kosong.',
-        displayText: 'Hapus'
-      },
-      deleteWithEmptyParents: {
-        description: 'akan menghapus folder lampiran yang kosong dan folder induk kosongnya.',
-        displayText: 'Hapus dengan induk kosong'
-      },
-      keep: {
-        description: 'akan mempertahankan folder lampiran yang kosong.',
-        displayText: 'Simpan'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const id = {
       },
       name: 'Pemisah nama duplikat'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Ketika folder lampiran menjadi kosong:'
-      },
-      name: 'Perilaku folder lampiran kosong'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Kecualikan catatan dari jalur berikut.',
-        part2: 'Masukkan setiap jalur pada baris baru.',
-        part3: 'Anda dapat menggunakan string jalur atau',
-        part4: 'Jika pengaturan kosong, tidak ada catatan yang dikecualikan.'
-      },
-      name: 'Kecualikan jalur'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Kecualikan lampiran dari jalur berikut ketika',
@@ -234,15 +205,6 @@ export const id = {
         part2: 'token yang tersedia'
       },
       name: 'Nama file lampiran yang dihasilkan'
-    },
-    includePaths: {
-      description: {
-        part1: 'Sertakan catatan dari jalur berikut.',
-        part2: 'Masukkan setiap jalur pada baris baru.',
-        part3: 'Anda dapat menggunakan string jalur atau',
-        part4: 'Jika pengaturan kosong, semua catatan disertakan.'
-      },
-      name: 'Sertakan jalur'
     },
     jpegQuality: {
       description: 'Semakin kecil kualitasnya, semakin besar rasio kompresi.',
@@ -286,21 +248,6 @@ export const id = {
       description: 'Apakah akan mengkonversi gambar yang ditempel ke JPEG. Berlaku hanya ketika konten gambar PNG ditempel langsung dari clipboard. Biasanya, untuk menempel screenshot.',
       name: 'Haruskah mengkonversi gambar yang ditempel ke JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Jika diaktifkan, ketika catatan dihapus, lampiran yatimnya juga akan dihapus.',
-      name: 'Haruskah menghapus lampiran yatim'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Jika diaktifkan, ketika catatan diubah namanya atau dipindahkan, file lampirannya akan diubah namanya sesuai dengan',
-        part2: 'pengaturan.'
-      },
-      name: 'Haruskah mengubah nama file lampiran'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Apakah akan mengubah nama folder lampiran ketika catatan diubah namanya atau dipindahkan.',
-      name: 'Haruskah mengubah nama folder lampiran'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Apakah pengaturan folder lampiran dan nama berkas diterapkan pada lampiran yang dibuat plugin LAIN.',
@@ -339,17 +286,6 @@ export const id = {
         part3: 'diatur, timeout eksekusi operasi dinonaktifkan.'
       },
       name: 'Timeout dalam detik'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Perlakukan file dengan ekstensi ini sebagai lampiran.',
-        part2: 'Secara default',
-        part3: 'dan',
-        part4: 'file yang ditautkan tidak diperlakukan sebagai lampiran dan tidak dipindahkan dengan catatan.',
-        part5: 'Anda dapat menambahkan ekstensi kustom, misalnya',
-        part6: ', untuk menimpa perilaku ini.'
-      },
-      name: 'Perlakukan sebagai ekstensi lampiran'
     }
   },
   promptWithPreviewModal: {

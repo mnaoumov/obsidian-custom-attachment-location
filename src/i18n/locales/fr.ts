@@ -100,20 +100,6 @@ export const fr = {
     defaultImageSizeDimension: {
       height: 'Hauteur',
       width: 'Largeur'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'supprimera le dossier de pièces jointes vide.',
-        displayText: 'Supprimer'
-      },
-      deleteWithEmptyParents: {
-        description: 'supprimera le dossier de pièces jointes vide et ses dossiers parents vides.',
-        displayText: 'Supprimer avec parents vides'
-      },
-      keep: {
-        description: 'conservera le dossier de pièces jointes vide.',
-        displayText: 'Conserver'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const fr = {
       },
       name: 'Séparateur de nom dupliqué'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Lorsque le dossier de pièces jointes devient vide :'
-      },
-      name: 'Comportement du dossier de pièces jointes vide'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Exclure les notes des chemins suivants.',
-        part2: 'Insérez chaque chemin sur une nouvelle ligne.',
-        part3: 'Vous pouvez utiliser une chaîne de chemin ou',
-        part4: 'Si le paramètre est vide, aucune note n\'est exclue.'
-      },
-      name: 'Chemins exclus'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Exclure les pièces jointes des chemins suivants lorsque la commande',
@@ -234,15 +205,6 @@ export const fr = {
         part2: 'jetons disponibles'
       },
       name: 'Nom de fichier de pièce jointe généré'
-    },
-    includePaths: {
-      description: {
-        part1: 'Inclure les notes des chemins suivants.',
-        part2: 'Insérez chaque chemin sur une nouvelle ligne.',
-        part3: 'Vous pouvez utiliser une chaîne de chemin ou',
-        part4: 'Si le paramètre est vide, toutes les notes sont incluses.'
-      },
-      name: 'Chemins inclus'
     },
     jpegQuality: {
       description: 'Plus la qualité est faible, plus le taux de compression est élevé.',
@@ -286,21 +248,6 @@ export const fr = {
       description: 'Convertir les images collées en JPEG. S\'applique uniquement lorsque le contenu d\'image PNG est collé directement depuis le presse-papiers. Typiquement, pour coller des captures d\'écran.',
       name: 'Convertir les images collées en JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Si activé, lorsque la note est supprimée, ses pièces jointes orphelines sont également supprimées.',
-      name: 'Supprimer les pièces jointes orphelines'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Si activé, lorsqu\'une note est renommée ou déplacée, ses fichiers de pièces jointes seront renommés selon le paramètre',
-        part2: '.'
-      },
-      name: 'Renommer les fichiers de pièces jointes'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Renommer les dossiers de pièces jointes lorsqu\'une note est renommée ou déplacée.',
-      name: 'Renommer les dossiers de pièces jointes'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Appliquer ou non les réglages de dossier de pièces jointes et de nom de fichier aux pièces jointes créées par D\'AUTRES modules.',
@@ -339,17 +286,6 @@ export const fr = {
         part3: 'est défini, le délai d\'expiration de l\'exécution des opérations est désactivé.'
       },
       name: 'Délai d\'expiration en secondes'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Traiter les fichiers avec ces extensions comme des pièces jointes.',
-        part2: 'Par défaut',
-        part3: 'et',
-        part4: 'les fichiers liés ne sont pas traités comme des pièces jointes et ne sont pas déplacés avec la note.',
-        part5: 'Vous pouvez ajouter des extensions personnalisées, par ex.',
-        part6: ', pour remplacer ce comportement.'
-      },
-      name: 'Extensions traitées comme pièces jointes'
     }
   },
   promptWithPreviewModal: {

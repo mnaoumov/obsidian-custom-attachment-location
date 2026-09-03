@@ -100,20 +100,6 @@ export const it = {
     defaultImageSizeDimension: {
       height: 'Altezza',
       width: 'Larghezza'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'eliminerà la cartella allegati vuota.',
-        displayText: 'Elimina'
-      },
-      deleteWithEmptyParents: {
-        description: 'eliminerà la cartella allegati vuota e le sue cartelle padre vuote.',
-        displayText: 'Elimina con genitori vuoti'
-      },
-      keep: {
-        description: 'manterrà la cartella allegati vuota.',
-        displayText: 'Mantieni'
-      }
     }
   },
   pluginSettingsManager: {
@@ -202,21 +188,6 @@ export const it = {
       },
       name: 'Separatore nome duplicato'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'Quando la cartella allegati diventa vuota:'
-      },
-      name: 'Comportamento cartella allegati vuota'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Escludi note dai seguenti percorsi.',
-        part2: 'Inserisci ogni percorso su una nuova riga.',
-        part3: 'Puoi usare stringa percorso o',
-        part4: 'Se l\'impostazione è vuota, nessuna nota viene esclusa.'
-      },
-      name: 'Percorsi esclusi'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Escludi allegati dai seguenti percorsi quando il comando',
@@ -234,15 +205,6 @@ export const it = {
         part2: 'token disponibili'
       },
       name: 'Nome file allegato generato'
-    },
-    includePaths: {
-      description: {
-        part1: 'Includi note dai seguenti percorsi.',
-        part2: 'Inserisci ogni percorso su una nuova riga.',
-        part3: 'Puoi usare stringa percorso o',
-        part4: 'Se l\'impostazione è vuota, tutte le note vengono incluse.'
-      },
-      name: 'Percorsi inclusi'
     },
     jpegQuality: {
       description: 'Più piccola è la qualità, maggiore è il rapporto di compressione.',
@@ -286,21 +248,6 @@ export const it = {
       description: 'Se convertire le immagini incollate in JPEG. Si applica solo quando il contenuto dell\'immagine PNG viene incollato direttamente dagli appunti. Tipicamente, per incollare screenshot.',
       name: 'Converti immagini incollate in JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'Se abilitato, quando la nota viene eliminata, anche i suoi allegati orfani vengono eliminati.',
-      name: 'Elimina allegati orfani'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'Se abilitato, quando una nota viene rinominata o spostata, i suoi file allegati verranno rinominati secondo l\'impostazione',
-        part2: '.'
-      },
-      name: 'Rinomina file allegati'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Se rinominare le cartelle allegati quando una nota viene rinominata o spostata.',
-      name: 'Rinomina cartelle allegati'
-    },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
         part1: 'Se applicare le impostazioni di cartella allegati e nome file agli allegati creati da ALTRI plugin.',
@@ -339,17 +286,6 @@ export const it = {
         part3: 'è impostato, il timeout di esecuzione delle operazioni è disabilitato.'
       },
       name: 'Timeout in secondi'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Tratta i file con queste estensioni come allegati.',
-        part2: 'Per impostazione predefinita',
-        part3: 'e',
-        part4: 'i file collegati non sono trattati come allegati e non vengono spostati con la nota.',
-        part5: 'Puoi aggiungere estensioni personalizzate, ad es.',
-        part6: ', per sovrascrivere questo comportamento.'
-      },
-      name: 'Tratta come estensioni allegati'
     }
   },
   promptWithPreviewModal: {

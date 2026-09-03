@@ -116,8 +116,7 @@ export const defaultTranslations = {
     },
     noOwningNote: 'No note references the attachment \'{{attachmentPath}}\'.',
     notePathIsIgnored: 'Note path is ignored',
-    noUnusedAttachments: 'No unused attachments found.',
-    updatingLinks: 'Updating links: {{processed}}/{{total}} - \'{{currentPath}}\''
+    noUnusedAttachments: 'No unused attachments found.'
   },
   pluginSettings: {
     attachmentRenameMode: {
@@ -177,20 +176,6 @@ export const defaultTranslations = {
     defaultImageSizeDimension: {
       height: 'Height',
       width: 'Width'
-    },
-    emptyFolderBehavior: {
-      delete: {
-        description: 'will delete the empty folder.',
-        displayText: 'Delete'
-      },
-      deleteWithEmptyParents: {
-        description: 'will delete the empty folder and its empty parent folders.',
-        displayText: 'Delete with empty parents'
-      },
-      keep: {
-        description: 'will keep the empty folder.',
-        displayText: 'Keep'
-      }
     },
     moveAttachmentToProperFolderUsedByMultipleNotesMode: {
       cancel: {
@@ -320,21 +305,6 @@ export const defaultTranslations = {
       },
       name: 'Duplicate name separator'
     },
-    emptyFolderBehavior: {
-      description: {
-        part1: 'When the folder becomes empty:'
-      },
-      name: 'Empty folder behavior'
-    },
-    excludePaths: {
-      description: {
-        part1: 'Exclude notes from the following paths.',
-        part2: 'Insert each path on a new line.',
-        part3: 'You can use path string or',
-        part4: 'If the setting is empty, no notes are excluded.'
-      },
-      name: 'Exclude paths'
-    },
     excludePathsFromAttachmentCollecting: {
       description: {
         part1: 'Exclude attachments from the following paths when',
@@ -371,20 +341,10 @@ export const defaultTranslations = {
       collectedAttachments: 'Collected attachments',
       core: 'Core',
       customTokens: 'Custom tokens',
-      deletion: 'Deletion',
       images: 'Images',
       moveRenames: 'Move/renames',
       path: 'Path',
       specialCharacters: 'Special characters'
-    },
-    includePaths: {
-      description: {
-        part1: 'Include notes from the following paths.',
-        part2: 'Insert each path on a new line.',
-        part3: 'You can use path string or',
-        part4: 'If the setting is empty, all notes are included.'
-      },
-      name: 'Include paths'
     },
     jpegQuality: {
       description: 'The smaller the quality, the greater the compression ratio.',
@@ -422,17 +382,6 @@ export const defaultTranslations = {
       name: 'Network image download timeout in seconds'
     },
     notePriorities: {
-      description: {
-        part1: 'When an attachment is referenced by several notes, the first matching entry decides which note it belongs to.',
-        part2: 'Insert each entry on a new line, highest priority first.',
-        part3: 'An entry starting with a dot is a file extension, e.g.',
-        part4: 'An entry starting with',
-        part5: 'matches a frontmatter property, optionally with a value, e.g.',
-        part6: 'Anything else is a path from the vault root, or a',
-        part7: 'When no entry matches, or when the best entry matches several of the notes, the ambiguity is left to the mode above.',
-        part8: 'If the setting is empty, every such attachment is left to the mode above, which is the behavior without this setting.',
-        part9: 'Note that this can move an attachment into a note other than the one you ran the command on.'
-      },
       name: 'Note priorities'
     },
     pages: {
@@ -444,9 +393,6 @@ export const defaultTranslations = {
       },
       customTokens: {
         description: 'JavaScript tokens you define yourself for use in the path and file name templates.'
-      },
-      deletion: {
-        description: 'What happens to orphan attachments and folders left empty.'
       },
       images: {
         description: 'Default size, JPEG conversion, and metadata handling for images.'
@@ -478,18 +424,6 @@ export const defaultTranslations = {
       description: 'Whether to convert pasted images to JPEG. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
       name: 'Should convert pasted images to JPEG'
     },
-    shouldDeleteOrphanAttachments: {
-      description: 'If enabled, when the note is deleted, its orphan attachments are deleted as well.',
-      name: 'Should delete orphan attachments'
-    },
-    shouldHandleRenames: {
-      description: {
-        part1: 'Whether to handle renames.',
-        part2: 'To handle embeds inside canvas text nodes on rename, additionally install the',
-        part3: 'plugin. Canvas file node links are handled without it.'
-      },
-      name: 'Should handle renames'
-    },
     shouldPreserveImageMetadata: {
       description: {
         part1: 'If enabled, the EXIF, GPS, XMP and ICC profile data of a converted image is carried into the JPEG. Only works when the original is already a JPEG; nothing else stores that data in a form that can be copied across.',
@@ -497,17 +431,6 @@ export const defaultTranslations = {
         part3: 'The orientation is always reset, because the conversion has already rotated the pixels.'
       },
       name: 'Should preserve image metadata'
-    },
-    shouldRenameAttachmentFiles: {
-      description: {
-        part1: 'If enabled, when a note is renamed or moved, its attachments will be renamed according to the',
-        part2: 'setting.'
-      },
-      name: 'Should rename attachment files'
-    },
-    shouldRenameAttachmentFolders: {
-      description: 'Whether to rename attachment folders when a note is renamed or moved.',
-      name: 'Should rename attachment folders'
     },
     shouldRenameAttachmentsCreatedByOtherPlugins: {
       description: {
@@ -525,15 +448,6 @@ export const defaultTranslations = {
         part4: 'setting.'
       },
       name: 'Should rename collected attachments'
-    },
-    shouldRescueSharedAttachments: {
-      description: {
-        part1: 'If enabled, when a note or its attachment folder is deleted while another note still references one of its attachments, that attachment is moved into the surviving note\'s attachment folder instead of being left behind in the deleted note\'s folder. Its file name is kept.',
-        part2: 'It moves only when a single note is left referencing the attachment, or when the',
-        part3: 'setting names a clear winner among several. Otherwise the attachment stays where it is.',
-        part4: 'Takes effect only while orphan attachments are deleted.'
-      },
-      name: 'Should rescue shared attachments'
     },
     shouldSetLinkDisplayTextToAttachmentFileName: {
       description: 'If enabled, when a link to an attachment is inserted, its display text is set to the attachment file name (without extension). Does not affect links between notes.',
@@ -564,19 +478,12 @@ export const defaultTranslations = {
         part3: 'is set, the operations execution timeout is disabled.'
       },
       name: 'Timeout in seconds'
-    },
-    treatAsAttachmentExtensions: {
-      description: {
-        part1: 'Treat files with these extensions as attachments.',
-        part2: 'By default',
-        part3: 'and',
-        part4: 'linked files are not treated as attachments and are not moved with the note.',
-        part5: 'You can add custom extensions, e.g.',
-        part6: ', to override this behavior.',
-        part7: 'Insert each extension on a new line.'
-      },
-      name: 'Treat as attachment extensions'
     }
+  },
+  pluginSuggestion: {
+    reason: 'Custom Attachment Location no longer handles renames and deletions itself.'
+      + ' Without Advanced Rename and Delete Handler, renaming a note will not move or rename its attachments,'
+      + ' and deleting a note will leave its attachments behind.'
   },
   promptWithPreviewModal: {
     fileNameTitle: 'Rename attachment file',

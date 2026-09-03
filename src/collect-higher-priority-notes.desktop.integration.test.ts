@@ -25,7 +25,7 @@ interface ProbeResult {
   readonly drawingStem: string;
   readonly listedItems: readonly string[];
   readonly plainStem: string;
-  readonly settingsFound: boolean;
+  readonly probesFound: boolean;
 }
 
 describe('Collecting from an outranked note names the higher-priority notes (issue #75)', () => {
@@ -42,18 +42,46 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
         interface PrioritySettings {
           attachmentFolderPath: string;
           collectAttachmentUsedByMultipleNotesMode: string;
-          notePriorities: readonly string[];
+        }
+
+        /*
+         * `notePriorities` belongs to Advanced Rename and Delete Handler since 12.0.0, and this plugin
+         * reads it back through that plugin's API. So the ranking is no longer writable here - the
+         * PROVIDER is what this stubs, by parking one on the read-back component's live ref. That
+         * exercises the real read path (`apiRef.value.getSettings()`) without needing the other plugin
+         * installed in the vault.
+         */
+        interface HandedOverProvider {
+          getSettings(): Record<string, unknown>;
+          isPathIgnored(path: string): boolean;
+          isTreatedAsAttachment(path: string): boolean;
+        }
+
+        interface HandedOverProviderRef {
+          value: HandedOverProvider | null;
+        }
+
+        interface HandedOverSettingsHolder {
+          apiRef: HandedOverProviderRef | null;
         }
 
         function isPrioritySettings(value: unknown): value is PrioritySettings {
           return typeof value === 'object' && value !== null
-            && Array.isArray((value as Record<string, unknown>)['notePriorities'])
-            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
+            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string'
+            && typeof (value as Record<string, unknown>)['collectAttachmentUsedByMultipleNotesMode'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): null | PrioritySettings {
+        function isHandedOverSettingsHolder(value: unknown): value is HandedOverSettingsHolder {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null
+            && 'apiRef' in record
+            && typeof record['isPathIgnored'] === 'function'
+            && typeof record['isTreatedAsAttachment'] === 'function';
+        }
+
+        // Neither the settings nor the read-back component is exposed publicly, so both are located by
+        // Walking the plugin's component tree.
+        function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
@@ -65,8 +93,9 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isPrioritySettings(record['settings'])) {
-              return record['settings'];
+            const matched = match(record);
+            if (matched !== null) {
+              return matched;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -89,15 +118,35 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
           return null;
         }
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
-          return { drawingStem: '', listedItems: [], plainStem: '', settingsFound: false };
+        const foundSettings = findInPluginTree((record) => isPrioritySettings(record['settings']) ? record['settings'] : null);
+        const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
+        if (!foundSettings || !foundHolder) {
+          return { drawingStem: '', listedItems: [], plainStem: '', probesFound: false };
         }
+        // A narrowed `const` does not stay narrowed inside a function declaration below it.
         const settings: PrioritySettings = foundSettings;
+        const holder: HandedOverSettingsHolder = foundHolder;
 
         const priorFolderPath = settings.attachmentFolderPath;
-        const priorPriorities = settings.notePriorities;
+        const priorApiRef = holder.apiRef;
         const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
+
+        // Mirrors this plugin's own absent-provider defaults, so only the ranking under test differs
+        // From what a vault with no provider would see.
+        function stubProvider(notePriorities: readonly string[]): void {
+          holder.apiRef = {
+            value: {
+              getSettings: (): Record<string, unknown> => ({
+                emptyFolderBehavior: 'DeleteWithEmptyParents',
+                notePriorities,
+                shouldRenameAttachmentFiles: false,
+                treatAsAttachmentExtensions: ['.excalidraw.md']
+              }),
+              isPathIgnored: (): boolean => false,
+              isTreatedAsAttachment: (path: string): boolean => path.endsWith('.excalidraw.md')
+            }
+          };
+        }
 
         /*
          * Best-effort cleanup, so it must tolerate an entry that is already gone: the collect pass
@@ -144,7 +193,7 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
            * Longest-match ranks `*.excalidraw.md` below a plain `.md`, even though it ends with `.md`
            * too, so the drawing the command runs on is the outranked note.
            */
-          settings.notePriorities = ['.md', '.excalidraw.md'];
+          stubProvider(['.md', '.excalidraw.md']);
 
           await app.vault.createBinary(imagePath, new ArrayBuffer(4));
           await app.vault.create(plainPath, `![[${imagePath}]]\n`);
@@ -187,16 +236,18 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
             drawingStem,
             listedItems,
             plainStem,
-            settingsFound: true
+            probesFound: true
           };
         } finally {
           removeOpenNotices();
           for (const path of [drawingPath, plainPath, imagePath, `assets/${plainStem}`, `assets/${drawingStem}`]) {
             await trashIfExists(path);
           }
+          /* eslint-disable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
           settings.attachmentFolderPath = priorFolderPath;
-          settings.notePriorities = priorPriorities;
+          holder.apiRef = priorApiRef;
           settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
+          /* eslint-enable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
         }
       },
       input: {
@@ -208,7 +259,7 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
       vaultPath: getTemporaryVault().path
     });
 
-    expect(result.settingsFound).toBe(true);
+    expect(result.probesFound).toBe(true);
 
     // Exactly the one note that outranks the drawing the command ran on.
     expect(result.listedItems).toHaveLength(1);

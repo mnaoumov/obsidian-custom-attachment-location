@@ -41,6 +41,7 @@ import {
 } from 'vitest';
 
 import type { AttachmentPathManager } from '../attachment-path-manager.ts';
+import type { HandedOverSettingsComponent } from '../handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 import type { PluginSettings } from '../plugin-settings.ts';
 
@@ -138,7 +139,7 @@ const mockGetProperAttachmentPath = vi.fn<AttachmentPathManager['getProperAttach
 const mockGetSequenceNumberMap = vi.fn<AttachmentPathManager['getSequenceNumberMap']>();
 const mockIsExcludedFromMultipleNotesCheck = vi.fn<PluginSettings['isExcludedFromMultipleNotesCheck']>();
 const mockIsNoteEx = vi.fn<PluginSettingsComponent['isNoteEx']>();
-const mockIsPathIgnored = vi.fn<PluginSettings['isPathIgnored']>();
+const mockIsPathIgnored = vi.fn<HandedOverSettingsComponent['isPathIgnored']>();
 
 function createBacklinks(map: Map<string, Reference[]>): CustomArrayDict<Reference> {
   return strictProxy<CustomArrayDict<Reference>>({
@@ -208,7 +209,6 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       isNoteEx: mockIsNoteEx,
       settings: strictProxy<PluginSettings>({
         isExcludedFromMultipleNotesCheck: mockIsExcludedFromMultipleNotesCheck,
-        isPathIgnored: mockIsPathIgnored,
         get moveAttachmentToProperFolderUsedByMultipleNotesMode(): MoveAttachmentToProperFolderUsedByMultipleNotesMode {
           return mode;
         }
@@ -227,6 +227,9 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       abortSignalComponent,
       app,
       attachmentPathManager,
+      handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
+        isPathIgnored: mockIsPathIgnored
+      }),
       pluginNoticeComponent,
       pluginSettingsComponent,
       resourceLockComponent
