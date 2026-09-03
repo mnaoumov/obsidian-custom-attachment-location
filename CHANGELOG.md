@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 12.0.0
+
+- feat(rename-delete)!: hand rename and delete over to Advanced Rename and Delete Handler
+- feat(collect): name the higher-priority notes when collecting from an outranked note
+- feat(note-priority): report only the notes tying for the highest rank
+- feat(collect): stay quiet when the priority winner already holds the attachment
+- feat: re #72
+- feat(attachment-unit-folder): publish the unit folder designation on the vault
+- fix: re #69
+- fix(build): wire build:compile to buildCompile and drop the duplicate leaf script
+
 ## 11.11.0
 
 - style: satisfy capitalized-comments in the new tests
