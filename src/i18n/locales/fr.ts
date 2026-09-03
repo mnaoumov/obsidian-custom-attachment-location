@@ -231,6 +231,14 @@ export const fr = {
       },
       name: 'Format d\'URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Appliquer ou non les réglages de dossier de pièces jointes et de nom de fichier aux pièces jointes créées par D\'AUTRES modules.',
+        part2: 'Certains modules écrivent une pièce jointe dans le coffre sous un nom de leur choix, sans demander à Obsidian où elle doit aller. Avec cette option, un tel fichier est déplacé et renommé dès son apparition.',
+        part3: 'Seuls les fichiers créés pendant qu\'une note est ouverte sont concernés, jamais ceux provenant d\'une synchronisation ou d\'un import de coffre.'
+      },
+      name: 'Renommer les pièces jointes créées par d\'autres modules'
+    },
     renameAttachmentsToLowerCase: 'Renommer les pièces jointes en minuscules',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const fr = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Convertir les images collées en JPEG. S\'applique uniquement lorsque le contenu d\'image PNG est collé directement depuis le presse-papiers. Typiquement, pour coller des captures d\'écran.',
       name: 'Convertir les images collées en JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Appliquer ou non les réglages de dossier de pièces jointes et de nom de fichier aux pièces jointes créées par D\'AUTRES modules.',
-        part2: 'Certains modules écrivent une pièce jointe dans le coffre sous un nom de leur choix, sans demander à Obsidian où elle doit aller. Avec cette option, un tel fichier est déplacé et renommé dès son apparition.',
-        part3: 'Seuls les fichiers créés pendant qu\'une note est ouverte sont concernés, jamais ceux provenant d\'une synchronisation ou d\'un import de coffre.'
-      },
-      name: 'Renommer les pièces jointes créées par d\'autres modules'
     },
     shouldRenameCollectedAttachments: {
       description: {

@@ -231,6 +231,14 @@ export const ja = {
       },
       name: 'Markdown URL形式'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: '他のプラグインが作成した添付ファイルにも、添付フォルダーとファイル名の設定を適用するかどうか。',
+        part2: '一部のプラグインは、どこに置くべきかを Obsidian に尋ねることなく、独自の名前で添付ファイルを直接保管庫に書き込みます。これを有効にすると、そのようなファイルは出現した直後に移動され、名前が変更されます。',
+        part3: 'ノートを開いている間に作成されたファイルのみが対象で、同期や保管庫の取り込みで届いたファイルは決して変更されません。'
+      },
+      name: '他のプラグインが作成した添付ファイルの名前を変更'
+    },
     renameAttachmentsToLowerCase: '添付ファイルを小文字にリネーム',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const ja = {
     shouldConvertPastedImagesToJpeg: {
       description: '貼り付けた画像をJPEGに変換するかどうか。PNG画像の内容がクリップボードから直接貼り付けられた場合にのみ適用されます。通常、スクリーンショットの貼り付けに使用されます。',
       name: '貼り付けた画像をJPEGに変換する'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: '他のプラグインが作成した添付ファイルにも、添付フォルダーとファイル名の設定を適用するかどうか。',
-        part2: '一部のプラグインは、どこに置くべきかを Obsidian に尋ねることなく、独自の名前で添付ファイルを直接保管庫に書き込みます。これを有効にすると、そのようなファイルは出現した直後に移動され、名前が変更されます。',
-        part3: 'ノートを開いている間に作成されたファイルのみが対象で、同期や保管庫の取り込みで届いたファイルは決して変更されません。'
-      },
-      name: '他のプラグインが作成した添付ファイルの名前を変更'
     },
     shouldRenameCollectedAttachments: {
       description: {

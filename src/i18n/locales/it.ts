@@ -231,6 +231,14 @@ export const it = {
       },
       name: 'Formato URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Se applicare le impostazioni di cartella allegati e nome file agli allegati creati da ALTRI plugin.',
+        part2: 'Alcuni plugin scrivono un allegato nel vault con un nome proprio, senza chiedere a Obsidian dove debba andare. Con questa opzione attiva, un file simile viene spostato e rinominato non appena compare.',
+        part3: 'Vengono toccati solo i file creati mentre una nota è aperta, mai quelli provenienti da una sincronizzazione o da un\'importazione del vault.'
+      },
+      name: 'Rinomina gli allegati creati da altri plugin'
+    },
     renameAttachmentsToLowerCase: 'Rinomina allegati in minuscolo',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const it = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Se convertire le immagini incollate in JPEG. Si applica solo quando il contenuto dell\'immagine PNG viene incollato direttamente dagli appunti. Tipicamente, per incollare screenshot.',
       name: 'Converti immagini incollate in JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Se applicare le impostazioni di cartella allegati e nome file agli allegati creati da ALTRI plugin.',
-        part2: 'Alcuni plugin scrivono un allegato nel vault con un nome proprio, senza chiedere a Obsidian dove debba andare. Con questa opzione attiva, un file simile viene spostato e rinominato non appena compare.',
-        part3: 'Vengono toccati solo i file creati mentre una nota è aperta, mai quelli provenienti da una sincronizzazione o da un\'importazione del vault.'
-      },
-      name: 'Rinomina gli allegati creati da altri plugin'
     },
     shouldRenameCollectedAttachments: {
       description: {

@@ -169,6 +169,7 @@ export class Plugin extends PluginBase {
         imageSizeMap,
         markdownUrlMap,
         pluginDirectory: this.manifest.dir ?? '',
+        pluginId: this.manifest.id,
         pluginSettingsComponent,
         pluginVersion: this.manifest.version,
         tokenValidator: validator

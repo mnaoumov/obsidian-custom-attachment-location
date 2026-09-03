@@ -230,6 +230,14 @@ export const nl = {
       },
       name: 'Markdown URL formaat'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Of de instellingen voor bijlagemap en bestandsnaam ook gelden voor bijlagen die ANDERE plug-ins aanmaken.',
+        part2: 'Sommige plug-ins schrijven een bijlage onder een eigen naam rechtstreeks in de kluis, zonder Obsidian te vragen waar die hoort. Staat dit aan, dan wordt zo\'n bestand meteen na het verschijnen verplaatst en hernoemd.',
+        part3: 'Alleen bestanden die ontstaan terwijl een notitie open is worden aangeraakt, nooit bestanden uit een synchronisatie of een kluisimport.'
+      },
+      name: 'Bijlagen hernoemen die andere plug-ins aanmaken'
+    },
     renameAttachmentsToLowerCase: 'Hernoem bijlagen naar kleine letters',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const nl = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Of geplakte afbeeldingen moeten worden geconverteerd naar JPEG. Geldt alleen wanneer PNG afbeeldingsinhoud direct vanuit het klembord wordt geplakt. Meestal voor het plakken van screenshots.',
       name: 'Moet geplakte afbeeldingen converteren naar JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Of de instellingen voor bijlagemap en bestandsnaam ook gelden voor bijlagen die ANDERE plug-ins aanmaken.',
-        part2: 'Sommige plug-ins schrijven een bijlage onder een eigen naam rechtstreeks in de kluis, zonder Obsidian te vragen waar die hoort. Staat dit aan, dan wordt zo\'n bestand meteen na het verschijnen verplaatst en hernoemd.',
-        part3: 'Alleen bestanden die ontstaan terwijl een notitie open is worden aangeraakt, nooit bestanden uit een synchronisatie of een kluisimport.'
-      },
-      name: 'Bijlagen hernoemen die andere plug-ins aanmaken'
     },
     shouldRenameCollectedAttachments: {
       description: {

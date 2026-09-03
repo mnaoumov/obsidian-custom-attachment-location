@@ -231,6 +231,14 @@ export const cs = {
       },
       name: 'Formát URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Zda použít nastavení složky příloh a názvu souboru na přílohy, které vytvářejí JINÉ pluginy.',
+        part2: 'Některé pluginy zapíší přílohu do trezoru pod vlastním názvem, aniž by se Obsidianu zeptaly, kam patří. Je-li tato volba zapnutá, takový soubor se hned po vzniku přesune a přejmenuje.',
+        part3: 'Zpracují se jen soubory vzniklé při otevřené poznámce, nikdy soubory přicházející ze synchronizace nebo z importu trezoru.'
+      },
+      name: 'Přejmenovat přílohy vytvořené jinými pluginy'
+    },
     renameAttachmentsToLowerCase: 'Přejmenovat přílohy na malá písmena',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const cs = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Zda převést vložené obrázky na JPEG. Platí pouze když je obsah PNG obrázku vložen přímo ze schránky. Typicky pro vkládání snímků obrazovky.',
       name: 'Zda převést vložené obrázky na JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Zda použít nastavení složky příloh a názvu souboru na přílohy, které vytvářejí JINÉ pluginy.',
-        part2: 'Některé pluginy zapíší přílohu do trezoru pod vlastním názvem, aniž by se Obsidianu zeptaly, kam patří. Je-li tato volba zapnutá, takový soubor se hned po vzniku přesune a přejmenuje.',
-        part3: 'Zpracují se jen soubory vzniklé při otevřené poznámce, nikdy soubory přicházející ze synchronizace nebo z importu trezoru.'
-      },
-      name: 'Přejmenovat přílohy vytvořené jinými pluginy'
     },
     shouldRenameCollectedAttachments: {
       description: {

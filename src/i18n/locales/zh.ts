@@ -238,6 +238,14 @@ export const zh = {
       description: '下载每张网络图片的超时时间（秒）。',
       name: '网络图片下载超时时间（秒）'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: '是否将附件文件夹和文件名设置应用于其他插件创建的附件。',
+        part2: '有些插件不询问 Obsidian 附件应放在何处，直接以自己的命名把附件写入库中。启用此项后，这类文件一出现就会被移动并重命名。',
+        part3: '仅处理在打开笔记时创建的文件，绝不触碰来自同步或库导入的文件。'
+      },
+      name: '重命名其他插件创建的附件'
+    },
     renameAttachmentsToLowerCase: '将附件重命名为小写',
     renamedAttachmentFileName: {
       description: {
@@ -253,14 +261,6 @@ export const zh = {
     shouldConvertPastedImagesToJpeg: {
       description: '是否将粘贴的图片转换为 JPEG。仅当 PNG 图像内容直接从剪贴板粘贴时适用。通常用于粘贴屏幕截图。',
       name: '是否将粘贴的图片转换为 JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: '是否将附件文件夹和文件名设置应用于其他插件创建的附件。',
-        part2: '有些插件不询问 Obsidian 附件应放在何处，直接以自己的命名把附件写入库中。启用此项后，这类文件一出现就会被移动并重命名。',
-        part3: '仅处理在打开笔记时创建的文件，绝不触碰来自同步或库导入的文件。'
-      },
-      name: '重命名其他插件创建的附件'
     },
     shouldRenameCollectedAttachments: {
       description: {

@@ -230,6 +230,14 @@ export const zhTW = {
       },
       name: 'Markdown URL 格式'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: '是否將附件資料夾與檔案名稱設定套用至其他外掛建立的附件。',
+        part2: '有些外掛不詢問 Obsidian 附件該放在哪裡，逕自以自己的命名把附件寫入儲存庫。啟用此項後，這類檔案一出現就會被移動並重新命名。',
+        part3: '僅處理在筆記開啟時建立的檔案，絕不碰觸來自同步或儲存庫匯入的檔案。'
+      },
+      name: '重新命名其他外掛建立的附件'
+    },
     renameAttachmentsToLowerCase: '將附件名稱改成小寫',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const zhTW = {
     shouldConvertPastedImagesToJpeg: {
       description: '是否轉換貼上的圖片為 JPEG。僅在 PNG 圖片內容直接從剪貼簿貼上時適用。通常用於貼上截圖。',
       name: '是否轉換貼上的圖片為 JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: '是否將附件資料夾與檔案名稱設定套用至其他外掛建立的附件。',
-        part2: '有些外掛不詢問 Obsidian 附件該放在哪裡，逕自以自己的命名把附件寫入儲存庫。啟用此項後，這類檔案一出現就會被移動並重新命名。',
-        part3: '僅處理在筆記開啟時建立的檔案，絕不碰觸來自同步或儲存庫匯入的檔案。'
-      },
-      name: '重新命名其他外掛建立的附件'
     },
     shouldRenameCollectedAttachments: {
       description: {

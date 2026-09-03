@@ -230,6 +230,14 @@ export const pl = {
       },
       name: 'Format adresu URL w Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Czy stosować ustawienia folderu załączników i nazwy pliku do załączników tworzonych przez INNE wtyczki.',
+        part2: 'Niektóre wtyczki zapisują załącznik do skarbca pod własną nazwą, nie pytając Obsidiana, gdzie powinien trafić. Gdy ta opcja jest włączona, taki plik zostaje przeniesiony i przemianowany zaraz po pojawieniu się.',
+        part3: 'Dotyczy wyłącznie plików powstałych przy otwartej notatce, nigdy plików pochodzących z synchronizacji ani z importu skarbca.'
+      },
+      name: 'Zmieniaj nazwy załączników tworzonych przez inne wtyczki'
+    },
     renameAttachmentsToLowerCase: 'Przemianuj załączniki na małe litery',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const pl = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Czy konwertować wklejone obrazy do JPEG. Dotyczy tylko sytuacji, gdy zawartość obrazu PNG jest wklejana bezpośrednio ze schowka (zazwyczaj przy wklejaniu zrzutów ekranu).',
       name: 'Czy konwertować wklejone obrazy do JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Czy stosować ustawienia folderu załączników i nazwy pliku do załączników tworzonych przez INNE wtyczki.',
-        part2: 'Niektóre wtyczki zapisują załącznik do skarbca pod własną nazwą, nie pytając Obsidiana, gdzie powinien trafić. Gdy ta opcja jest włączona, taki plik zostaje przeniesiony i przemianowany zaraz po pojawieniu się.',
-        part3: 'Dotyczy wyłącznie plików powstałych przy otwartej notatce, nigdy plików pochodzących z synchronizacji ani z importu skarbca.'
-      },
-      name: 'Zmieniaj nazwy załączników tworzonych przez inne wtyczki'
     },
     shouldRenameCollectedAttachments: {
       description: {

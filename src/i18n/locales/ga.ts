@@ -231,6 +231,14 @@ export const ga = {
       },
       name: 'Formáid URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Cé acu na socruithe fillteáin ceangaltán agus ainm comhaid a chur i bhfeidhm ar cheangaltáin a chruthaíonn breiseáin EILE.',
+        part2: 'Scríobhann roinnt breiseán ceangaltán isteach sa taisce faoi ainm dá gcuid féin, gan fiafraí d\'Obsidian cá mbaineann sé. Agus é seo ar siúl, bogtar agus athainmnítear comhad den sórt sin díreach tar éis dó teacht chun cinn.',
+        part3: 'Ní bhaintear ach le comhaid a chruthaítear agus nóta ar oscailt, riamh le comhaid a thagann ó shioncronú nó ó iompórtáil taisce.'
+      },
+      name: 'Athainmnigh ceangaltáin a chruthaíonn breiseáin eile'
+    },
     renameAttachmentsToLowerCase: 'Athainmnigh ceangaltáin go litreacha beaga',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const ga = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Cibé an gcaithfear íomhánna greamaithe a thiontú go JPEG. Baineann seo leis nuair a ghreamaitear ábhair íomhá PNG ón ghearrtáisce go díreach. Go típúl, chun grênghrafaí a ghreamadh.',
       name: 'An gcaithfear íomhánna greamaithe a thiontú go JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Cé acu na socruithe fillteáin ceangaltán agus ainm comhaid a chur i bhfeidhm ar cheangaltáin a chruthaíonn breiseáin EILE.',
-        part2: 'Scríobhann roinnt breiseán ceangaltán isteach sa taisce faoi ainm dá gcuid féin, gan fiafraí d\'Obsidian cá mbaineann sé. Agus é seo ar siúl, bogtar agus athainmnítear comhad den sórt sin díreach tar éis dó teacht chun cinn.',
-        part3: 'Ní bhaintear ach le comhaid a chruthaítear agus nóta ar oscailt, riamh le comhaid a thagann ó shioncronú nó ó iompórtáil taisce.'
-      },
-      name: 'Athainmnigh ceangaltáin a chruthaíonn breiseáin eile'
     },
     shouldRenameCollectedAttachments: {
       description: {

@@ -194,6 +194,24 @@ export const defaultTranslations = {
         description: 'skip the attachment and proceed to the next one.',
         displayText: 'Skip'
       }
+    },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      all: {
+        description: 'attachments created by any plugin are renamed.',
+        displayText: 'All'
+      },
+      allExceptListedPlugins: {
+        description: 'attachments created by any plugin are renamed, except those created by the plugins listed below.',
+        displayText: 'All except listed plugins'
+      },
+      none: {
+        description: 'attachments created by other plugins are left alone.',
+        displayText: 'None'
+      },
+      onlyListedPlugins: {
+        description: 'only attachments created by the plugins listed below are renamed.',
+        displayText: 'Only listed plugins'
+      }
     }
   },
   pluginSettingsManager: {
@@ -384,6 +402,13 @@ export const defaultTranslations = {
     notePriorities: {
       name: 'Note priorities'
     },
+    otherPluginIdsForAttachmentRename: {
+      description: {
+        part1: 'The plugins the mode above is scoped to. Pick them by name; only plugins currently installed can be picked.',
+        part2: 'A plugin that is disabled or uninstalled keeps its place in the list, shown by its id, so re-enabling it needs no change here.'
+      },
+      name: 'Plugins'
+    },
     pages: {
       advanced: {
         description: 'Link format, display text, and the operation timeout.'
@@ -406,6 +431,15 @@ export const defaultTranslations = {
       specialCharacters: {
         description: 'Characters stripped from generated names, and what replaces them.'
       }
+    },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Whether to apply the attachment folder and file name settings to attachments that OTHER plugins create.',
+        part2: 'Some plugins write an attachment into the vault under a name of their own, without asking Obsidian where it belongs. When this is on, such a file is moved and renamed right after it appears.',
+        part3: 'Only files created while a note is open are touched, never files arriving from a sync or a vault import.',
+        part4: 'The creating plugin is identified from the call stack of the write. That is best-effort: no plugin is identified for a file written by Obsidian itself, by a sync client, or by a plugin that defers its write. Such a file counts as NOT being in the list below.'
+      },
+      name: 'Rename attachments created by other plugins'
     },
     renameAttachmentsToLowerCase: 'Rename attachments to lower case',
     renamedAttachmentFileName: {
@@ -431,14 +465,6 @@ export const defaultTranslations = {
         part3: 'The orientation is always reset, because the conversion has already rotated the pixels.'
       },
       name: 'Should preserve image metadata'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Whether to apply the attachment folder and file name settings to attachments that OTHER plugins create.',
-        part2: 'Some plugins write an attachment into the vault under a name of their own, without asking Obsidian where it belongs. With this enabled, such a file is moved and renamed right after it appears.',
-        part3: 'Only files created while a note is open are touched, never files arriving from a sync or a vault import.'
-      },
-      name: 'Rename attachments created by other plugins'
     },
     shouldRenameCollectedAttachments: {
       description: {

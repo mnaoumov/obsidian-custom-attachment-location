@@ -231,6 +231,14 @@ export const hu = {
       },
       name: 'Markdown URL formátum'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Alkalmazza-e a melléklet mappa és fájlnév beállításait a MÁS bővítmények által létrehozott mellékletekre.',
+        part2: 'Egyes bővítmények saját néven írnak mellékletet a tárolóba, anélkül hogy megkérdeznék az Obsidiant, hová tartozik. Ha ez be van kapcsolva, az ilyen fájl a megjelenése után azonnal átkerül és átnevezésre kerül.',
+        part3: 'Csak a nyitott jegyzet mellett létrejövő fájlokat érinti, a szinkronizálásból vagy tárolóimportból érkezőket soha.'
+      },
+      name: 'Más bővítmények által létrehozott mellékletek átnevezése'
+    },
     renameAttachmentsToLowerCase: 'Mellékletek átnevezése kisbetűre',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const hu = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Beillesztett képek JPEG-re konvertálása. Csak akkor érvényes, amikor a PNG kép tartalma közvetlenül a vágólapról van beillesztve. Jellemzően képernyőképek beillesztésénél.',
       name: 'Beillesztett képek JPEG-re konvertálása'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Alkalmazza-e a melléklet mappa és fájlnév beállításait a MÁS bővítmények által létrehozott mellékletekre.',
-        part2: 'Egyes bővítmények saját néven írnak mellékletet a tárolóba, anélkül hogy megkérdeznék az Obsidiant, hová tartozik. Ha ez be van kapcsolva, az ilyen fájl a megjelenése után azonnal átkerül és átnevezésre kerül.',
-        part3: 'Csak a nyitott jegyzet mellett létrejövő fájlokat érinti, a szinkronizálásból vagy tárolóimportból érkezőket soha.'
-      },
-      name: 'Más bővítmények által létrehozott mellékletek átnevezése'
     },
     shouldRenameCollectedAttachments: {
       description: {

@@ -231,6 +231,14 @@ export const es = {
       },
       name: 'Formato de URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Si se deben aplicar los ajustes de carpeta de adjuntos y nombre de archivo a los adjuntos que crean OTROS complementos.',
+        part2: 'Algunos complementos escriben un adjunto en la bóveda con un nombre propio, sin preguntar a Obsidian dónde corresponde. Con esta opción activada, ese archivo se mueve y se renombra en cuanto aparece.',
+        part3: 'Solo se tocan los archivos creados mientras hay una nota abierta, nunca los que llegan de una sincronización o de una importación de bóveda.'
+      },
+      name: 'Renombrar adjuntos creados por otros complementos'
+    },
     renameAttachmentsToLowerCase: 'Renombrar archivos adjuntos a minúsculas',
     renamedAttachmentFileName: {
       description: {
@@ -247,14 +255,6 @@ export const es = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Si convertir imágenes pegadas a JPEG. Se aplica solo cuando el contenido de imagen PNG se pega directamente desde el portapapeles. Típicamente, para pegar capturas de pantalla.',
       name: 'Si convertir imágenes pegadas a JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Si se deben aplicar los ajustes de carpeta de adjuntos y nombre de archivo a los adjuntos que crean OTROS complementos.',
-        part2: 'Algunos complementos escriben un adjunto en la bóveda con un nombre propio, sin preguntar a Obsidian dónde corresponde. Con esta opción activada, ese archivo se mueve y se renombra en cuanto aparece.',
-        part3: 'Solo se tocan los archivos creados mientras hay una nota abierta, nunca los que llegan de una sincronización o de una importación de bóveda.'
-      },
-      name: 'Renombrar adjuntos creados por otros complementos'
     },
     shouldRenameCollectedAttachments: {
       description: {

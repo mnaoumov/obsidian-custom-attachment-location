@@ -33,6 +33,7 @@ import {
   ConvertImagesToJpegMode,
   DefaultImageSizeDimension,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode,
+  RenameAttachmentsCreatedByOtherPluginsMode,
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
 import { Substitutions } from './substitutions.ts';
@@ -59,11 +60,14 @@ interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstr
 }
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
+  // Kept so this plugin can leave ITSELF out of the plugin picker; the base class does not expose `plugin`.
+  private readonly ownPluginId: string;
   private readonly pluginSettingsComponent2: PluginSettingsComponent;
   private readonly pluginSuggestionComponent: PluginSuggestionComponent;
 
   public constructor(params: PluginSettingsTabConstructorParams) {
     super(params);
+    this.ownPluginId = params.plugin.manifest.id;
     this.pluginSettingsComponent2 = params.pluginSettingsComponent;
     this.pluginSuggestionComponent = params.pluginSuggestionComponent;
   }
@@ -673,21 +677,69 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentsCreatedByOtherPlugins.description.part1));
+          f.appendText(t(($) => $.pluginSettingsTab.renameAttachmentsCreatedByOtherPluginsMode.description.part1));
           f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentsCreatedByOtherPlugins.description.part2));
+          f.appendText(t(($) => $.pluginSettingsTab.renameAttachmentsCreatedByOtherPluginsMode.description.part2));
           f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRenameAttachmentsCreatedByOtherPlugins.description.part3));
+          f.appendText(t(($) => $.pluginSettingsTab.renameAttachmentsCreatedByOtherPluginsMode.description.part3));
+          f.createEl('br');
+          appendCodeBlock(f, t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.none.displayText));
+          f.appendText(' - ');
+          f.appendText(t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.none.description));
+          f.createEl('br');
+          appendCodeBlock(f, t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.all.displayText));
+          f.appendText(' - ');
+          f.appendText(t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.all.description));
+          f.createEl('br');
+          appendCodeBlock(f, t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.onlyListedPlugins.displayText));
+          f.appendText(' - ');
+          f.appendText(t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.onlyListedPlugins.description));
+          f.createEl('br');
+          appendCodeBlock(f, t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.allExceptListedPlugins.displayText));
+          f.appendText(' - ');
+          f.appendText(t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.allExceptListedPlugins.description));
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.renameAttachmentsCreatedByOtherPluginsMode.description.part4));
         }),
-        name: t(($) => $.pluginSettingsTab.shouldRenameAttachmentsCreatedByOtherPlugins.name),
+        name: t(($) => $.pluginSettingsTab.renameAttachmentsCreatedByOtherPluginsMode.name),
         render: (setting) => {
-          setting.addToggle((toggle) => {
+          setting.addDropdown((dropdown) => {
+            dropdown.addOptions({
+              /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
+              [RenameAttachmentsCreatedByOtherPluginsMode.None]: t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.none.displayText),
+              [RenameAttachmentsCreatedByOtherPluginsMode.All]: t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.all.displayText),
+              [RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins]: t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.onlyListedPlugins.displayText),
+              [RenameAttachmentsCreatedByOtherPluginsMode.AllExceptListedPlugins]: t(($) => $.pluginSettings.renameAttachmentsCreatedByOtherPluginsMode.allExceptListedPlugins.displayText)
+              /* eslint-enable perfectionist/sort-objects -- Need to keep enum order. */
+            });
             this.bind({
-              propertyName: 'shouldRenameAttachmentsCreatedByOtherPlugins',
-              valueComponent: toggle
+              onChanged: () => {
+                // The plugin list below is only shown for the two list modes, via its `visible` predicate.
+                this.refreshDomState();
+              },
+              propertyName: 'renameAttachmentsCreatedByOtherPluginsMode',
+              valueComponent: dropdown
             });
           });
         }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText(t(($) => $.pluginSettingsTab.otherPluginIdsForAttachmentRename.description.part1));
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.otherPluginIdsForAttachmentRename.description.part2));
+        }),
+        name: t(($) => $.pluginSettingsTab.otherPluginIdsForAttachmentRename.name),
+        render: (setting) => {
+          setting.addMultipleDropdown((multipleDropdown) => {
+            multipleDropdown.addOptions(this.getSelectablePluginOptions());
+            this.bind({
+              propertyName: 'otherPluginIdsForAttachmentRename',
+              valueComponent: multipleDropdown
+            });
+          });
+        },
+        visible: () => this.pluginSettingsComponent.settings.needsCreatingPluginAttribution()
       }),
       this.settingEx({
         desc: createFragment((f) => {
@@ -847,6 +899,36 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       })
     ];
+  }
+
+  /**
+   * The plugins offered in the picker, as plugin id -> display name.
+   *
+   * Built from the installed manifests so the user picks a plugin by NAME — the id is a folder name under
+   * `.obsidian/plugins` that the Obsidian UI never shows, so asking for it by hand would be guesswork.
+   *
+   * Any id already stored is added back even when its plugin is currently disabled or no longer installed,
+   * listed under the bare id since there is no manifest to name it. Without that, merely opening this tab
+   * would drop the entry — the picker cannot hold a value it has no option for.
+   *
+   * @returns The options for the plugin picker.
+   */
+  private getSelectablePluginOptions(): Record<string, string> {
+    const options: Record<string, string> = {};
+
+    for (const manifest of Object.values(this.app.plugins.manifests)) {
+      if (manifest.id === this.ownPluginId) {
+        continue;
+      }
+
+      options[manifest.id] = manifest.name;
+    }
+
+    for (const pluginId of this.pluginSettingsComponent.settings.otherPluginIdsForAttachmentRename) {
+      options[pluginId] ??= pluginId;
+    }
+
+    return options;
   }
 
   private getSpecialCharactersItems(): SettingDefinitionRender[] {

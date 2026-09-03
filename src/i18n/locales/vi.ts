@@ -230,6 +230,14 @@ export const vi = {
       },
       name: 'Định dạng URL Markdown'
     },
+    renameAttachmentsCreatedByOtherPluginsMode: {
+      description: {
+        part1: 'Có áp dụng các thiết lập thư mục đính kèm và tên tệp cho những tệp đính kèm do plugin KHÁC tạo hay không.',
+        part2: 'Một số plugin ghi thẳng tệp đính kèm vào kho với tên của riêng chúng, mà không hỏi Obsidian xem nó thuộc về đâu. Khi bật tùy chọn này, tệp như vậy sẽ được di chuyển và đổi tên ngay sau khi xuất hiện.',
+        part3: 'Chỉ những tệp được tạo khi đang mở một ghi chú mới bị tác động, không bao giờ đụng đến tệp đến từ đồng bộ hoặc nhập kho.'
+      },
+      name: 'Đổi tên tệp đính kèm do plugin khác tạo'
+    },
     renameAttachmentsToLowerCase: 'Đổi tên tệp đính kèm thành chữ thường',
     renamedAttachmentFileName: {
       description: {
@@ -245,14 +253,6 @@ export const vi = {
     shouldConvertPastedImagesToJpeg: {
       description: 'Có nên chuyển đổi hình ảnh dán sang định dạng JPEG không. Chỉ áp dụng khi nội dung ảnh PNG được dán trực tiếp từ clipboard. Thường dùng cho ảnh chụp màn hình.',
       name: 'Chuyển hình ảnh dán sang JPEG'
-    },
-    shouldRenameAttachmentsCreatedByOtherPlugins: {
-      description: {
-        part1: 'Có áp dụng các thiết lập thư mục đính kèm và tên tệp cho những tệp đính kèm do plugin KHÁC tạo hay không.',
-        part2: 'Một số plugin ghi thẳng tệp đính kèm vào kho với tên của riêng chúng, mà không hỏi Obsidian xem nó thuộc về đâu. Khi bật tùy chọn này, tệp như vậy sẽ được di chuyển và đổi tên ngay sau khi xuất hiện.',
-        part3: 'Chỉ những tệp được tạo khi đang mở một ghi chú mới bị tác động, không bao giờ đụng đến tệp đến từ đồng bộ hoặc nhập kho.'
-      },
-      name: 'Đổi tên tệp đính kèm do plugin khác tạo'
     },
     shouldRenameCollectedAttachments: {
       description: {
