@@ -11,6 +11,10 @@
  * A tie is deliberately NOT resolved here. Two notes of equal priority is exactly the ambiguity the
  * existing mode setting already exists to handle, and inventing a second, silent rule for it would
  * move a file the user never named.
+ *
+ * The tie is also the whole of what gets REPORTED. A note the list ranked below the best rank cannot
+ * resolve the ambiguity, so listing it only adds noise, which is why
+ * {@link filterHighestPriorityNotePaths} exists alongside the two functions that decide.
  */
 
 import { isValidRegExp } from 'obsidian-dev-utils/reg-exp';
@@ -43,6 +47,14 @@ export enum NoPriorityWinnerReason {
    */
   Tie = 'Tie'
 }
+
+/**
+ * Parameters for {@link filterHighestPriorityNotePaths}.
+ *
+ * The same question as {@link pickHighestPriorityNotePath} asks, so deliberately the same parameters:
+ * the two must be answered from identical inputs or they could disagree.
+ */
+export type FilterHighestPriorityNotePathsParams = PickHighestPriorityNotePathParams;
 
 /**
  * Parameters for {@link findNoPriorityWinnerReason}.
@@ -97,6 +109,40 @@ export interface PickHighestPriorityNotePathParams {
  * that matches nothing always loses to one that matches something.
  */
 export const NO_PRIORITY_MATCH = Infinity;
+
+/**
+ * Narrows the referencing notes to the ones sharing the best rank.
+ *
+ * Those notes are the whole of the ambiguity: one the list ranked below them cannot resolve anything,
+ * so reporting it only adds noise (issue #74). This mirrors {@link pickHighestPriorityNotePath}'s
+ * conditions rather than re-deciding anything, so the two can only ever agree — whenever that names a
+ * winner, this returns exactly that one note.
+ *
+ * A list that decides nothing at all — empty, or matching no note — ranks every note
+ * {@link NO_PRIORITY_MATCH}, so they all tie and every one of them is kept. That is the same list the
+ * user saw before, which is correct: nothing has ruled any of them out.
+ *
+ * @param params - The referencing notes and how to rank one.
+ * @returns The notes holding the best rank, in the order they were given.
+ */
+export function filterHighestPriorityNotePaths(params: FilterHighestPriorityNotePathsParams): string[] {
+  // Ranking can hit the vault and the metadata cache, so each note is ranked once and carried.
+  const rankedNotePaths = params.notePaths.map((notePath) => ({
+    notePath,
+    rank: params.rank(notePath)
+  }));
+
+  let bestRank = NO_PRIORITY_MATCH;
+  for (const ranked of rankedNotePaths) {
+    if (ranked.rank < bestRank) {
+      bestRank = ranked.rank;
+    }
+  }
+
+  return rankedNotePaths
+    .filter((ranked) => ranked.rank === bestRank)
+    .map((ranked) => ranked.notePath);
+}
 
 /**
  * Explains why the priority list named no owner for an attachment.

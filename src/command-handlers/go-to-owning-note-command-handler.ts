@@ -77,6 +77,10 @@ export class GoToOwningNoteCommandHandler extends FileCommandHandler {
    * Asks the user which note owns the attachment, but only once the priority list has failed to say.
    * The placeholder carries the reason it failed, so the user learns whether the list is empty, did not
    * match, or tied, rather than only that they are being asked.
+   *
+   * Only the notes tying for the best rank are offered: the list has already ruled the others out, so
+   * offering one would invite an answer the plugin itself would not have given (issue #74). Both the
+   * decision and the reason are still taken over every candidate.
    */
   private async pickNotePath(attachmentFile: TFile, candidateNotePaths: string[]): Promise<null | string> {
     const ownerNotePath = this.noteOwnerResolver.pickOwnerNotePath(candidateNotePaths);
@@ -87,7 +91,7 @@ export class GoToOwningNoteCommandHandler extends FileCommandHandler {
     const reason = this.noteOwnerResolver.findNoPriorityWinnerReason(candidateNotePaths);
     return await selectItem({
       app: this.app,
-      items: candidateNotePaths,
+      items: this.noteOwnerResolver.filterTopRankNotePaths(candidateNotePaths),
       itemTextFunction: (notePath) => notePath,
       placeholder: `${t(($) => $.goToOwningNote.selectPlaceholder, { attachmentPath: attachmentFile.path })} ${
         t(($) => $.goToOwningNote.noPriorityWinnerReason[reason], {

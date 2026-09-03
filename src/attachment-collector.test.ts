@@ -584,6 +584,55 @@ describe('AttachmentCollector', () => {
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
       });
 
+      it('should list only the tied notes in the dialog, not the ones ranked below them', async () => {
+        // Issue #74: the drawing also ends with `.md`, but the longer entry demotes it. It cannot
+        // Resolve the tie between the two plain notes, so offering it is noise the reporter had to
+        // Read past.
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md', 'drawing.excalidraw.md']));
+        settings.notePriorities = ['.md', '.excalidraw.md'];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
+
+        await runSingleFile(note);
+
+        expect(mockSelectMode).toHaveBeenCalledWith({
+          app,
+          attachmentPath: 'img.png',
+          backlinks: ['a.md', 'b.md'],
+          isCancelMode: true,
+          noPriorityWinnerReason: NoPriorityWinnerReason.Tie
+        });
+      });
+
+      it('should name the same notes in the log as in the dialog', async () => {
+        // A user reading the console must not see a note the box omitted, or the two disagree about
+        // What the ambiguity even is.
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md', 'drawing.excalidraw.md']));
+        settings.notePriorities = ['.md', '.excalidraw.md'];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
+
+        await runSingleFile(note);
+
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('- a.md\n- b.md'));
+        expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('drawing.excalidraw.md'));
+      });
+
+      it('should keep every note when the list ranks none of them', async () => {
+        // Nothing ruled any of them out, so narrowing here would hide a note that can still answer.
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md', 'drawing.excalidraw.md']));
+        settings.notePriorities = ['.canvas'];
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
+
+        await runSingleFile(note);
+
+        expect(mockSelectMode).toHaveBeenCalledWith({
+          app,
+          attachmentPath: 'img.png',
+          backlinks: ['a.md', 'b.md', 'drawing.excalidraw.md'],
+          isCancelMode: true,
+          noPriorityWinnerReason: NoPriorityWinnerReason.NoMatch
+        });
+      });
+
       it('should fall back to the mode when no note matches any entry', async () => {
         settings.notePriorities = ['.canvas'];
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;

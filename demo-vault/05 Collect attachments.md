@@ -69,6 +69,7 @@ When a note matches several entries, the **longest** one decides its rank. That 
 Three things worth knowing:
 
 - If no entry matches, or if the best entry matches several of the referencing notes, nothing is decided here and the mode setting handles it as before. A tie is never broken silently. **The dialog that then appears says which of the three it was** - the list is empty, nothing matched, or several notes matched equally - so you can tell a list you never configured from one that simply did not apply.
+- **The dialog lists only the notes sharing the best rank.** A note the list deliberately ranked lower cannot break the tie between the ones above it, so it is left out rather than offered as if it could. When the list decides nothing at all - it is empty, or it matches none of them - every referencing note is listed, because nothing has ruled any of them out. The console message names exactly the same notes as the dialog.
 - The winner does not have to be the note you ran the command on. Collecting from a drawing can hand the image to a markdown note that outranks it. That is the point of the setting, and why it is empty by default.
 - Once a single note wins, the collect is settled, so it stays quiet. If the winner **already** holds the attachment there is simply nothing to move, and no shared-attachment dialog or notice appears - exactly as for an attachment only one note references.
 
@@ -78,3 +79,4 @@ Three things worth knowing:
 2. Run **Collect attachments in current note** with **Note priorities** empty - the image is left alone (or handled per the mode).
 3. Set **Note priorities** to `.md` then `.excalidraw.md` and repeat - the image moves into the markdown note's attachment folder, whichever of the two you ran the command on.
 4. Run it a second time on the markdown note - the image is already in its folder, so nothing moves and nothing is reported.
+5. Embed the same image in a *second* markdown note and run it again - the two markdown notes now tie, so the dialog appears and names those two. The drawing, which the list ranked below them, is not on it.

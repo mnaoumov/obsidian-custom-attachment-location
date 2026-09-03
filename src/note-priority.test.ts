@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+  filterHighestPriorityNotePaths,
   findNoPriorityWinnerReason,
   findNotePriorityRank,
   NO_PRIORITY_MATCH,
@@ -207,6 +208,64 @@ describe('findNoPriorityWinnerReason', () => {
 
       expect(pickHighestPriorityNotePath({ notePaths: testCase.notePaths, rank })).toBeNull();
       expect(findNoPriorityWinnerReason({ entries: ['.md'], notePaths: testCase.notePaths, rank })).not.toBe(NoPriorityWinnerReason.EmptyList);
+    }
+  });
+});
+
+describe('filterHighestPriorityNotePaths', () => {
+  function filter(notePaths: string[], ranks: Record<string, number>): string[] {
+    return filterHighestPriorityNotePaths({
+      notePaths,
+      rank: (notePath) => ranks[notePath] ?? NO_PRIORITY_MATCH
+    });
+  }
+
+  it('should drop a note the list ranked below the best rank', () => {
+    // Issue #74: the demoted note cannot resolve the ambiguity, so reporting it is only noise.
+    expect(filter(['a.md', 'b.md', 'c.excalidraw.md'], { 'a.md': 0, 'b.md': 0, 'c.excalidraw.md': 1 })).toEqual(['a.md', 'b.md']);
+  });
+
+  it('should drop a note that matches nothing when another one matches', () => {
+    expect(filter(['a.md', 'b.canvas'], { 'a.md': 0 })).toEqual(['a.md']);
+  });
+
+  it('should keep every note when none of them matches anything', () => {
+    // Nothing has ruled any of them out, so the user sees the same list as before.
+    expect(filter(['a.canvas', 'b.canvas'], {})).toEqual(['a.canvas', 'b.canvas']);
+  });
+
+  it('should keep every note when the priority list decides nothing', () => {
+    // An empty priority list ranks everything NO_PRIORITY_MATCH, which is the same all-tie shape.
+    expect(filter(['b.md', 'a.md'], {})).toEqual(['b.md', 'a.md']);
+  });
+
+  it('should preserve the order it was given rather than re-sorting', () => {
+    expect(filter(['c.md', 'a.md', 'b.md'], { 'a.md': 0, 'b.md': 0, 'c.md': 0 })).toEqual(['c.md', 'a.md', 'b.md']);
+  });
+
+  it('should return nothing for an empty list', () => {
+    expect(filter([], {})).toEqual([]);
+  });
+
+  it('should never narrow a tie to a single note, which would report an ambiguity as settled', () => {
+    expect(filter(['a.md', 'b.md', 'c.canvas'], { 'a.md': 0, 'b.md': 0 })).toHaveLength(2);
+  });
+
+  it('should agree with pickHighestPriorityNotePath whenever it names a winner', () => {
+    const cases: NonWinningCase[] = [
+      { notePaths: ['a.md', 'b.excalidraw.md'], ranks: { 'a.md': 0, 'b.excalidraw.md': 1 } },
+      { notePaths: ['a.md', 'b.canvas'], ranks: { 'a.md': 1 } },
+      { notePaths: ['a.md'], ranks: { 'a.md': 0 } }
+    ];
+
+    for (const testCase of cases) {
+      function rank(notePath: string): number {
+        return testCase.ranks[notePath] ?? NO_PRIORITY_MATCH;
+      }
+
+      const winner = pickHighestPriorityNotePath({ notePaths: testCase.notePaths, rank });
+      expect(winner).not.toBeNull();
+      expect(filterHighestPriorityNotePaths({ notePaths: testCase.notePaths, rank })).toEqual([winner]);
     }
   });
 });
