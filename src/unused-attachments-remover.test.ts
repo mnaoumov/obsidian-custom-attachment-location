@@ -8,6 +8,7 @@ import type {
 } from 'obsidian';
 import type { AbortSignalComponent } from 'obsidian-dev-utils/obsidian/components/abort-signal-component';
 import type { CachedMetadataEx } from 'obsidian-dev-utils/obsidian/metadata-cache';
+import type { CanvasReference } from 'obsidian-dev-utils/obsidian/reference';
 import type {
   Mock,
   MockInstance
@@ -68,6 +69,7 @@ interface SettingsLike {
   getTimeoutInMilliseconds(): number;
   isAttachmentUnitFolder(path: string): boolean;
   isExcludedFromMultipleNotesCheck(path: string): boolean;
+  isOrphanAttachmentScanCandidate(path: string): boolean;
   isPathIgnored(path: string): boolean;
 }
 
@@ -164,6 +166,17 @@ function createGetAvailablePathForAttachments(settingsLike: SettingsLike): App['
 
 let vaultRootFolder: TFolder;
 
+function createCanvasReference(link: string): CanvasReference {
+  return strictProxy<CanvasReference>({
+    isCanvas: true,
+    key: '',
+    link,
+    nodeIndex: 0,
+    original: `![[${link}]]`,
+    type: 'file'
+  });
+}
+
 function createFolder(path: string): TFolder {
   return strictProxy<TFolder>({
     name: path.split('/').at(-1) ?? '',
@@ -207,6 +220,8 @@ describe('UnusedAttachmentsRemover', () => {
       getTimeoutInMilliseconds: vi.fn<() => number>().mockReturnValue(1000),
       isAttachmentUnitFolder: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isExcludedFromMultipleNotesCheck: vi.fn<(path: string) => boolean>().mockReturnValue(false),
+      // The shipped default is `None`, so every pre-existing test runs with the orphan pass off.
+      isOrphanAttachmentScanCandidate: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false)
     };
     attachmentFolder = strictProxy<TFolder>({ children: [], path: ATTACHMENT_FOLDER_PATH });
@@ -764,6 +779,173 @@ describe('UnusedAttachmentsRemover', () => {
       await params.operationFunction(new AbortController().signal);
 
       expect(mockGetCacheSafe).toHaveBeenCalledWith(app, note);
+    });
+  });
+
+  /*
+   * The attachment-driven pass (T847). Everything here goes through the VAULT-WIDE command, because that
+   * is the only entry point that runs it — the per-note and per-folder scopes deliberately do not, since
+   * "no note references this" is only trustworthy from a scan that read every note there is.
+   */
+  describe('attachments no note owns', () => {
+    const ORPHAN_FOLDER_PATH = 'lost/assets';
+
+    let noteFiles: TFile[];
+    let orphan: TFile;
+    let vaultFiles: TFile[];
+
+    /**
+     * Points the vault-root walk at {@link vaultFiles}, and every other walk at the files given.
+     *
+     * The remover recurses the root to build its scope and then recurses each attachment or unit folder it
+     * resolves, so one mock has to answer both and tell them apart by which folder it was handed.
+     *
+     * @param otherFolderChildren - What a non-root walk yields.
+     */
+    function mockVaultWalk(otherFolderChildren: TFile[] = []): void {
+      vi.spyOn(Vault, 'recurseChildren').mockImplementation((root, callback) => {
+        for (const child of root === vaultRootFolder ? vaultFiles : otherFolderChildren) {
+          callback(child);
+        }
+      });
+    }
+
+    async function runEntireVaultOperation(): Promise<void> {
+      remover.deleteUnusedAttachmentsEntireVault();
+      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+      await params.operationFunction(new AbortController().signal);
+    }
+
+    beforeEach(() => {
+      orphan = createFile(`${ORPHAN_FOLDER_PATH}/orphan.png`);
+      vaultFiles = [orphan];
+      // Nothing in these vaults is a note unless a test says so - that is the whole scenario.
+      noteFiles = [];
+
+      mockIsFile.mockImplementation((f) => f !== vaultRootFolder);
+      mockIsFolder.mockImplementation((f) => f === vaultRootFolder);
+      /*
+       * Both predicates are driven off one list, because the sweep reads them against each other: the scope
+       * walk gathers notes with `isNote` and rejects orphan candidates with `isNoteEx`. Letting them
+       * disagree by accident makes a note its own attachment, which no real vault does.
+       */
+      mockIsNote.mockImplementation((f) => noteFiles.includes(castTo<TFile>(f)));
+      vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => noteFiles.includes(castTo<TFile>(f)));
+      mockIsCanvasFile.mockReturnValue(false);
+      mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
+      mockGetLinks.mockReturnValue([]);
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
+      mockConfirm.mockResolvedValue(true);
+      mockVaultWalk();
+    });
+
+    it('should not look at anything when the mode is off', async () => {
+      await runEntireVaultOperation();
+      expect(settings.isOrphanAttachmentScanCandidate).toHaveBeenCalledWith(orphan.path);
+      expect(mockGetBacklinksForFileSafe).not.toHaveBeenCalled();
+      expect(showNoticeSpy).toHaveBeenCalledExactlyOnceWith('No unused attachments found.');
+    });
+
+    it('should trash an attachment whose owning note is gone', async () => {
+      vi.mocked(settings.isOrphanAttachmentScanCandidate).mockReturnValue(true);
+      await runEntireVaultOperation();
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, orphan);
+    });
+
+    it('should confine the scan to the listed paths', async () => {
+      const elsewhere = createFile('elsewhere/other.png');
+      vaultFiles = [orphan, elsewhere];
+      mockVaultWalk();
+      vi.mocked(settings.isOrphanAttachmentScanCandidate).mockImplementation((path) => path.startsWith(`${ORPHAN_FOLDER_PATH}/`));
+
+      await runEntireVaultOperation();
+
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, orphan);
+    });
+
+    it('should skip an attachment whose own path is ignored', async () => {
+      vi.mocked(settings.isOrphanAttachmentScanCandidate).mockReturnValue(true);
+      vi.mocked(settings.isPathIgnored).mockImplementation((path) => path === orphan.path);
+
+      await runEntireVaultOperation();
+
+      expect(mockGetBacklinksForFileSafe).not.toHaveBeenCalled();
+      expect(mockTrashSafe).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(`Cannot delete unused attachment as its path is ignored: ${orphan.path}.`);
+    });
+
+    it('should keep an attachment a canvas embeds, which carries no backlink', async () => {
+      /*
+       * The regression this pass most needs. Obsidian does not index a canvas's embeds, so the file has no
+       * backlink at all and a backlink lookup alone calls it unreferenced. Only the reference the canvas
+       * scan reported keeps it alive.
+       */
+      const canvas = createFile('board.canvas');
+      const embedded = createFile(`${ORPHAN_FOLDER_PATH}/embedded.png`);
+      vaultFiles = [canvas, embedded];
+      mockVaultWalk();
+      noteFiles = [canvas];
+      mockIsCanvasFile.mockImplementation((f) => f === canvas);
+      mockGetCanvasReferences.mockResolvedValue([createCanvasReference(embedded.path)]);
+      mockExtractLinkFile.mockReturnValue(embedded);
+      vi.mocked(settings.isOrphanAttachmentScanCandidate).mockReturnValue(true);
+      // The canvas owns no attachment folder of its own, so the note-driven pass contributes nothing.
+      getFolderByPath.mockReturnValue(null);
+
+      await runEntireVaultOperation();
+
+      expect(mockTrashSafe).not.toHaveBeenCalled();
+      expect(showNoticeSpy).toHaveBeenCalledExactlyOnceWith('No unused attachments found.');
+    });
+
+    it('should keep an attachment an ignored note still references', async () => {
+      const ignoredNote = createFile('ignored/note.md');
+      const referenced = createFile(`${ORPHAN_FOLDER_PATH}/referenced.png`);
+      vaultFiles = [ignoredNote, referenced];
+      mockVaultWalk();
+      noteFiles = [ignoredNote];
+      mockGetLinks.mockReturnValue([createReference(referenced.path)]);
+      mockExtractLinkFile.mockReturnValue(referenced);
+      vi.mocked(settings.isOrphanAttachmentScanCandidate).mockReturnValue(true);
+      vi.mocked(settings.isPathIgnored).mockImplementation((path) => path === ignoredNote.path);
+
+      await runEntireVaultOperation();
+
+      expect(mockTrashSafe).not.toHaveBeenCalled();
+    });
+
+    it('should trash an unowned attachment unit folder whole', async () => {
+      const unitFolderPath = `${ORPHAN_FOLDER_PATH}/page_files`;
+      const member = createFile(`${unitFolderPath}/img.png`);
+      const unitFolder = createFolder(unitFolderPath);
+      vaultFiles = [member];
+      mockVaultWalk([member]);
+      getFolderByPath.mockImplementation((path) => path === unitFolderPath ? unitFolder : null);
+      vi.mocked(settings.isAttachmentUnitFolder).mockImplementation((path) => path === unitFolderPath);
+      vi.mocked(settings.isOrphanAttachmentScanCandidate).mockReturnValue(true);
+
+      await runEntireVaultOperation();
+
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unitFolder);
+    });
+
+    it('should not judge an attachment the note-driven pass already listed', async () => {
+      const note = createFile('note.md');
+      const unused = createFile(`${ATTACHMENT_FOLDER_PATH}/unused.png`);
+      vaultFiles = [note, unused];
+      noteFiles = [note];
+      mockVaultWalk([unused]);
+      vi.mocked(settings.isOrphanAttachmentScanCandidate).mockReturnValue(true);
+
+      await runEntireVaultOperation();
+
+      // Judged once by the note that owns it, and not a second time by the pass for files nothing owns.
+      expect(mockGetBacklinksForFileSafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        pathOrFile: unused,
+        timeoutInMilliseconds: 1000
+      });
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unused);
     });
   });
 });

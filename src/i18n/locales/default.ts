@@ -55,6 +55,10 @@ export const defaultTranslations = {
       partUnitFolders: 'Nothing outside the following attachment unit folders references anything inside them, so each of them will be moved to the trash whole:',
       unitFolderCount: '{{count}} attachment unit folder(s) will be moved to the trash with everything inside them.'
     },
+    orphanProgressBar: {
+      message: 'Scanning for attachments no note owns {{iterationString}} - \'{{attachmentFilePath}}\'.',
+      title: 'Scanning for attachments no note owns...'
+    },
     progressBar: {
       message: 'Scanning for unused attachments {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Scanning for unused attachments...'
@@ -193,6 +197,20 @@ export const defaultTranslations = {
       skip: {
         description: 'skip the attachment and proceed to the next one.',
         displayText: 'Skip'
+      }
+    },
+    orphanAttachmentScanMode: {
+      entireVault: {
+        description: 'every file in the vault that is not a note is checked. The widest reach, and the one to read the confirmation dialog carefully for: a file you keep deliberately without linking it anywhere is an unused attachment by this definition.',
+        displayText: 'Entire vault'
+      },
+      listedPaths: {
+        description: 'only files under the paths listed below are checked.',
+        displayText: 'Listed paths'
+      },
+      none: {
+        description: 'no extra pass. Attachments are found only through the notes that own them, so an attachment folder whose note has been deleted is never looked at.',
+        displayText: 'None'
       }
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
@@ -401,6 +419,27 @@ export const defaultTranslations = {
     },
     notePriorities: {
       name: 'Note priorities'
+    },
+    orphanAttachmentScanMode: {
+      description: {
+        part1: 'Whether',
+        part2: 'Delete unused attachments in entire vault',
+        part3: 'also looks for attachments no note owns at all.',
+        part4: 'The sweep normally reaches an attachment folder through the note that owns it, so a folder whose note has been deleted - by a sync client, say, which fires no event this plugin can see - is never visited and its files stay forever.',
+        part5: 'The folders to look in have to be named, because the attachment folder setting is a template that cannot be run backwards: there is no single place attachments live that this plugin could work out on its own.',
+        part6: 'Applies only to the whole-vault command. Nothing is ever deleted without the confirmation dialog first listing it.'
+      },
+      name: 'Find attachments no note owns'
+    },
+    orphanAttachmentScanPaths: {
+      description: {
+        part1: 'The folders the pass above looks in.',
+        part2: 'Insert each path on a new line.',
+        part3: 'You can use path string or',
+        part4: 'A plain path is matched from the vault root. To match a folder name wherever it appears, use a regular expression.',
+        part5: 'If the setting is empty, nothing is checked and the pass does nothing.'
+      },
+      name: 'Paths to look in'
     },
     otherPluginIdsForAttachmentRename: {
       description: {

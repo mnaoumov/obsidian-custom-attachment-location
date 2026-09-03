@@ -52,6 +52,27 @@ export enum MoveAttachmentToProperFolderUsedByMultipleNotesMode {
 }
 
 /**
+ * Which attachments the vault sweep judges WITHOUT going through an owning note.
+ *
+ * The note-driven sweep reaches an attachment folder only through the note that owns it, so a folder whose
+ * note is gone — removed by a sync client rather than by Obsidian, say — is never visited and its files sit
+ * there forever. This mode adds a second, attachment-driven pass for exactly that case.
+ *
+ * The scope has to be NAMED rather than derived. `attachmentFolderPath` is a per-note template and cannot be
+ * run backwards — `${prompt}` and `${random}` throw away the very value the folder name was built from, and
+ * two notes can resolve to one folder — so there is no vault-wide attachment root to enumerate. See the file
+ * comment of `note-owner-resolver.ts`, which settles the same point for the other direction.
+ *
+ * {@link None} is the default, because the two list modes delete files no note points at, which is a file
+ * the user may be keeping deliberately.
+ */
+export enum OrphanAttachmentScanMode {
+  EntireVault = 'Entire vault',
+  ListedPaths = 'Listed paths',
+  None = 'None'
+}
+
+/**
  * Which of the attachments OTHER plugins create get this plugin's folder and file-name templates applied.
  *
  * The two list modes are the two polarities issue #77 asks for: name the plugins it applies to, or name the
@@ -94,6 +115,7 @@ export class PluginSettings {
   public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public networkImageDownloadTimeoutInSeconds = 30;
+  public orphanAttachmentScanMode: OrphanAttachmentScanMode = OrphanAttachmentScanMode.None;
 
   /**
    * The plugin ids the two list modes of {@link renameAttachmentsCreatedByOtherPluginsMode} are scoped to.
@@ -168,6 +190,21 @@ export class PluginSettings {
     this._multipleNotesCheckPaths.excludePaths = value;
   }
 
+  /**
+   * The folders {@link OrphanAttachmentScanMode.ListedPaths} confines the attachment-driven pass to.
+   *
+   * Same vocabulary as {@link attachmentUnitFolderPaths}: a plain entry is a path from the vault root, and
+   * an entry wrapped in `/` is a regular expression, which is what matching a folder *name* wherever it
+   * appears needs — e.g. `/\/!!files\//`.
+   */
+  public get orphanAttachmentScanPaths(): string[] {
+    return this._orphanAttachmentScanPaths.excludePaths;
+  }
+
+  public set orphanAttachmentScanPaths(value: string[]) {
+    this._orphanAttachmentScanPaths.excludePaths = value;
+  }
+
   public get specialCharactersRegExp(): RegExp {
     return new RegExp(`[${escapeRegExp(this.specialCharacters)}]+`, 'gu');
   }
@@ -179,6 +216,8 @@ export class PluginSettings {
   // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
   private _customTokensStr = '';
   private readonly _multipleNotesCheckPaths = new PathSettings();
+  // Exclude half only, same as `_attachmentUnitFolderPaths` — a scope list, not an include/exclude pair.
+  private readonly _orphanAttachmentScanPaths = new PathSettings();
 
   public getNetworkImageDownloadTimeoutInMilliseconds(): number {
     const MILLISECONDS_IN_SECOND = 1000;
@@ -203,6 +242,32 @@ export class PluginSettings {
   }
 
   /**
+   * Whether an attachment is in scope for the attachment-driven pass, which needs no owning note.
+   *
+   * The mode's whole meaning lives here rather than being spread through the sweep, so there is one place
+   * that says what each mode admits.
+   *
+   * @param path - The vault-relative path of the attachment.
+   * @returns `true` when the pass may judge it.
+   */
+  public isOrphanAttachmentScanCandidate(path: string): boolean {
+    const mode = this.orphanAttachmentScanMode;
+    if (mode === OrphanAttachmentScanMode.None) {
+      return false;
+    }
+
+    /*
+     * Ifs rather than an exhaustive `switch`: `default-case` demands a branch no enum value can reach, and
+     * an unreachable branch is exactly what the coverage bar forbids.
+     */
+    if (mode === OrphanAttachmentScanMode.EntireVault) {
+      return true;
+    }
+
+    return this._orphanAttachmentScanPaths.isPathIgnored(path);
+  }
+
+  /**
    * Whether the creating plugin has to be identified before an externally created attachment can be judged.
    *
    * `false` for both non-list modes, which is what keeps the stack capture off the hot path entirely for a
@@ -213,6 +278,18 @@ export class PluginSettings {
   public needsCreatingPluginAttribution(): boolean {
     return this.renameAttachmentsCreatedByOtherPluginsMode === RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins
       || this.renameAttachmentsCreatedByOtherPluginsMode === RenameAttachmentsCreatedByOtherPluginsMode.AllExceptListedPlugins;
+  }
+
+  /**
+   * Whether the path list scoping the attachment-driven pass is in play.
+   *
+   * Phrased as a question about the domain rather than as an enum comparison, so the settings tab's
+   * visibility predicate reads as what it means. Mirrors {@link needsCreatingPluginAttribution}.
+   *
+   * @returns `true` when the current mode consults {@link orphanAttachmentScanPaths}.
+   */
+  public needsOrphanAttachmentScanPaths(): boolean {
+    return this.orphanAttachmentScanMode === OrphanAttachmentScanMode.ListedPaths;
   }
 
   /**

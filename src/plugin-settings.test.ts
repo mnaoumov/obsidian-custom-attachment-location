@@ -11,6 +11,7 @@ import {
   ConvertImagesToJpegMode,
   DefaultImageSizeDimension,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode,
+  OrphanAttachmentScanMode,
   PluginSettings,
   RenameAttachmentsCreatedByOtherPluginsMode
 } from './plugin-settings.ts';
@@ -39,6 +40,50 @@ describe('PluginSettings', () => {
       expect(settings.attachmentUnitFolderPaths).toStrictEqual([]);
       expect(settings.renameAttachmentsCreatedByOtherPluginsMode).toBe(RenameAttachmentsCreatedByOtherPluginsMode.None);
       expect(settings.otherPluginIdsForAttachmentRename).toStrictEqual([]);
+      expect(settings.orphanAttachmentScanMode).toBe(OrphanAttachmentScanMode.None);
+      expect(settings.orphanAttachmentScanPaths).toStrictEqual([]);
+    });
+  });
+
+  describe('orphanAttachmentScanMode', () => {
+    it('should get and set the scan paths', () => {
+      const settings = new PluginSettings();
+      settings.orphanAttachmentScanPaths = ['Books/!!files'];
+      expect(settings.orphanAttachmentScanPaths).toStrictEqual(['Books/!!files']);
+    });
+
+    it('should admit nothing while the mode is off, whatever the paths say', () => {
+      const settings = new PluginSettings();
+      settings.orphanAttachmentScanPaths = ['Books/!!files'];
+      expect(settings.isOrphanAttachmentScanCandidate('Books/!!files/cover.png')).toBe(false);
+      expect(settings.needsOrphanAttachmentScanPaths()).toBe(false);
+    });
+
+    it('should admit only the listed paths under the listed-paths mode', () => {
+      const settings = new PluginSettings();
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.ListedPaths;
+      settings.orphanAttachmentScanPaths = ['Books/!!files'];
+      expect(settings.isOrphanAttachmentScanCandidate('Books/!!files/cover.png')).toBe(true);
+      expect(settings.isOrphanAttachmentScanCandidate('elsewhere/cover.png')).toBe(false);
+      expect(settings.needsOrphanAttachmentScanPaths()).toBe(true);
+    });
+
+    it('should match a folder name anywhere via a regular expression', () => {
+      // The form the vault that surfaced this needs: its attachment folders are named, not rooted.
+      const settings = new PluginSettings();
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.ListedPaths;
+      settings.orphanAttachmentScanPaths = [String.raw`/\/!!files\//`];
+      expect(settings.isOrphanAttachmentScanCandidate('Books/!!files/cover.png')).toBe(true);
+      expect(settings.isOrphanAttachmentScanCandidate('Notes/deep/!!files/scan.pdf')).toBe(true);
+      expect(settings.isOrphanAttachmentScanCandidate('Books/files/cover.png')).toBe(false);
+    });
+
+    it('should admit everything under the entire-vault mode, listing nothing', () => {
+      const settings = new PluginSettings();
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.EntireVault;
+      expect(settings.isOrphanAttachmentScanCandidate('anywhere/at/all.png')).toBe(true);
+      // The list is not consulted, so it does not gate the row that edits it either.
+      expect(settings.needsOrphanAttachmentScanPaths()).toBe(false);
     });
   });
 

@@ -13,7 +13,7 @@ The vault-wide sweep reads every note and looks up the backlinks of every attach
 
 It is deliberately careful, because it deletes your data:
 
-- It only ever touches files inside the note's own attachment folder.
+- It only ever touches files inside the note's own attachment folder, unless you turn on **Find attachments no note owns** (see below).
 - An attachment that is still referenced by the note is kept.
 - An attachment that is still referenced by **another** note is kept - the same shared-attachment check the **Collect attachments** command uses (`excludePathsFromMultipleNotesCheck` applies here too).
 - A folder listed under **Attachment unit folders** is one attachment, and is judged as a whole rather than file by file - see below.
@@ -130,6 +130,67 @@ Then:
 4. Confirm. `page_files/` is gone entirely - `img.png` with it, even though the drawing beside it embedded that image. `kept_files/` is untouched, `orphan.png` included.
 
 Remove both entries from **Attachment unit folders** and repeat with a fresh copy to see the difference: now `img.png` is kept (the drawing still references it) while the drawing and `orphan.png` are trashed individually - each folder left half-empty.
+
+## Attachments no note owns
+
+Everything above starts from a **note**: the sweep reads a note, works out where that note's attachments belong, and looks in there. Which means there is one thing it structurally cannot find - **an attachment folder whose note is gone**.
+
+Delete `My note.md` and its `assets/My note/` folder stays behind. Nothing in the vault points at that folder any more, no note resolves to it, so no scan ever opens it. Its files sit there permanently, and even `Delete unused attachments in entire vault` walks straight past them. This is not only about deleting a note in Obsidian: a vault synced by Syncthing, git or git-annex has notes removed by the sync, so the plugin never sees a deletion event either and the settings on the next page do not fire.
+
+`orphanAttachmentScanMode` adds a second pass for exactly that case. It has three settings and is **off by default**:
+
+- **None** - as above. Attachments are found only through the notes that own them.
+- **Listed paths** - also check every file under the paths in `orphanAttachmentScanPaths`, whether or not a note leads there.
+- **Entire vault** - also check every file in the vault that is not a note.
+
+Two things to understand before turning it on.
+
+**You have to say where to look.** The plugin cannot work it out. `attachmentFolderPath` is a pattern, and a pattern only runs one way: `${prompt}` and `${random}` throw away the very value the folder name was built from, and two notes can resolve to the same folder. There is no "attachment root" to enumerate, so **Listed paths** takes the folders from you. If your attachments all live in folders called `!!files`, that is `/\/!!files\//` - a regular expression, because a plain entry is anchored at the vault root.
+
+**"Unused" gets a wider meaning.** Without a note in the picture, the only remaining evidence is the link graph: a file with no backlinks is unused. Under **Entire vault** that includes a PDF you dropped in a folder and never linked, which you may be keeping on purpose. The confirmation dialog still names everything first, and a path excluded in **Advanced Rename and Delete Handler** is skipped, but this is the mode to point at a folder you trust rather than the whole vault.
+
+It applies to the **whole-vault command only**. The per-note and per-folder commands do not run it, deliberately: this pass concludes that nothing references a file, and that conclusion is only safe from a scan that actually read every note in the vault. A canvas outside a selected folder could be the one thing embedding a file inside it - and a canvas's embeds are not in Obsidian's backlink index at all, which is why the plugin reads them out of the canvas file itself.
+
+### Try it
+
+Click the button below. It creates `Ownerless demo/` holding two attachment folders: `Kept note/` (whose note exists and embeds its image) and `Gone note/` (whose note does **not** exist - the case this is about).
+
+```code-button
+---
+caption: Set up the ownerless-attachment demo
+---
+const rootFolder = 'Ownerless demo';
+const notePath = 'Kept note.md';
+
+for (const path of [rootFolder, `${rootFolder}/Kept note`, `${rootFolder}/Gone note`]) {
+  if (!app.vault.getFolderByPath(path)) {
+    await app.vault.createFolder(path);
+  }
+}
+
+// A tiny valid PNG header is enough for the demo.
+const bytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47]).buffer;
+for (const path of [`${rootFolder}/Kept note/kept.png`, `${rootFolder}/Gone note/lost.png`]) {
+  if (!app.vault.getFileByPath(path)) {
+    await app.vault.createBinary(path, bytes);
+  }
+}
+
+if (!app.vault.getFileByPath(notePath)) {
+  await app.vault.create(notePath, `![[${rootFolder}/Kept note/kept.png]]\n`);
+}
+
+const note = app.vault.getFileByPath(notePath);
+if (note) {
+  await app.workspace.getLeaf(false).openFile(note);
+}
+```
+
+Then:
+
+1. Run **Delete unused attachments in entire vault** as it stands. It reports **no unused attachments**: `lost.png` is invisible to it, because no note leads to `Gone note/`.
+2. In the settings tab, on the **Path** page, set **Find attachments no note owns** to **Listed paths** and add `Ownerless demo` to **Paths to look in**.
+3. Run the command again. Now the dialog names `Ownerless demo/Gone note/lost.png` - and does not mention `kept.png`, which its note still embeds.
 
 ## When you delete the note itself, or its folder
 

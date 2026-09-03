@@ -56,6 +56,7 @@ import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import {
   AttachmentRenameMode,
   ConvertImagesToJpegMode,
+  OrphanAttachmentScanMode,
   RenameAttachmentsCreatedByOtherPluginsMode,
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
@@ -79,8 +80,8 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 // Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
-// 29 = 28 setting rows + the suggestion banner row that rides at the top.
-const EXPECTED_ROW_COUNT = 29;
+// 31 = 30 setting rows + the suggestion banner row that rides at the top.
+const EXPECTED_ROW_COUNT = 31;
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
@@ -808,6 +809,48 @@ describe('PluginSettingsTab', () => {
     component.setValue(['media-extended']);
     await waitForAllAsyncOperations();
     expect(pluginSettingsComponent.settings.otherPluginIdsForAttachmentRename).toStrictEqual(['media-extended']);
+  });
+
+  it('should hide the ownerless-scan paths while the mode does not consult them', async () => {
+    // Off and entire-vault both ignore the list, so showing it would be a control that decides nothing.
+    const { names, tab } = await createTab();
+    expect(isRowVisible(tab, 'Paths to look in')).toBe(false);
+    expect(names).not.toContain('Paths to look in');
+
+    const { tab: entireVaultTab } = await createTab((settings) => {
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.EntireVault;
+    });
+    expect(isRowVisible(entireVaultTab, 'Paths to look in')).toBe(false);
+  });
+
+  it('should show the ownerless-scan paths for the listed-paths mode', async () => {
+    const { names, tab } = await createTab((settings) => {
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.ListedPaths;
+    });
+    expect(isRowVisible(tab, 'Paths to look in')).toBe(true);
+    expect(names).toContain('Paths to look in');
+  });
+
+  it('should re-evaluate the predicates when the ownerless-scan dropdown changes', async () => {
+    const { tab, textLikeComponents } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = textLikeComponents.find((entry) => entry.name === 'Find attachments no note owns');
+    expect(captured).toBeDefined();
+    captured?.setValue(OrphanAttachmentScanMode.ListedPaths);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should bind the ownerless-scan paths', async () => {
+    const { multipleTextComponents, pluginSettingsComponent } = await createTab((settings) => {
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.ListedPaths;
+    });
+    const component = findMultipleValueComponent(multipleTextComponents, 'Paths to look in');
+    component.setValue(['Books/!!files']);
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.orphanAttachmentScanPaths).toStrictEqual(['Books/!!files']);
   });
 
   it('should bind a multiple-text field', async () => {
