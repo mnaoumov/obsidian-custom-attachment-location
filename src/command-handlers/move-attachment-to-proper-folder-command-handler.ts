@@ -148,6 +148,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
   private async moveAttachmentToProperFolder(attachmentFile: TFile, context: MoveAttachmentToProperFolderContext): Promise<boolean> {
     const app = this.app;
+    const pluginSettingsComponent = this.pluginSettingsComponent;
     let backlinks = await getBacklinksForFileSafe({
       app: this.app,
       pathOrFile: attachmentFile
@@ -158,8 +159,6 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     }
 
     let backlinksToCopy: string[] = [];
-    // eslint-disable-next-line unicorn/no-this-assignment -- `shouldContinueWithMode` is a hoisted function declaration called before its definition, so `this` cannot be lexical here.
-    const that = this;
 
     // Notes matching the configured patterns are ignored when deciding whether the attachment is used by multiple notes.
     const relevantBacklinkKeys = [...backlinks.keys()].filter((backlink) => !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
@@ -242,7 +241,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       switch (mode) {
         case MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel: {
           if (
-            that.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode
+            pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode
               === MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel
           ) {
             await selectMode({ app, attachmentPath: attachmentFile.path, backlinks: relevantBacklinkKeys, isCancelMode: true });
