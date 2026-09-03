@@ -100,6 +100,10 @@ export const defaultTranslations = {
   },
   notice: {
     attachmentFolderDependsOnAttachment: 'The attachment folder for \'{{notePath}}\' depends on the attachment being saved, so there is no single folder to navigate to.',
+    attachmentReferencedByHigherPriorityNotes: {
+      part1: 'Attachment',
+      part2: 'is also referenced by notes of higher priority:'
+    },
     attachmentReferencedByRawPath: 'Skipping collecting attachment \'{{attachmentPath}}\' because it is referenced by a raw path in \'{{noteFilePath}}\'.',
     attachmentUnitFolderUsedByMultipleNotes: 'Skipping collecting attachment \'{{attachmentPath}}\' because its attachment unit folder \'{{unitFolderPath}}\' is referenced by multiple notes.',
     collectingAttachments: 'Collecting attachments for \'{{noteFilePath}}\'',

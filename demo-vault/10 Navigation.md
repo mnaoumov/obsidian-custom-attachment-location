@@ -21,7 +21,7 @@ This is not the first command run backwards. A pattern cannot be un-applied — 
 
 - **One note references it.** That note opens.
 - **Several do.** The **Note priorities** setting decides, exactly as it does when collecting (see [06 Settings](<./06 Settings.md>)). Put `.md` above `.excalidraw.md` and an image shared by both opens the markdown note.
-- **The priority list names nobody** — it is empty, nothing matched, or several notes tie — you are asked which one, and told which of the three it was.
+- **The priority list names nobody** — it is empty, nothing matched, or several notes tie — you are asked which one, and told which of the three it was. Only the notes sharing the best rank are offered: the list has already ruled the others out, so picking one would open a note the plugin itself would never have chosen. When the list decides nothing, every referencing note is offered.
 
 If the attachment sits in an **attachment unit folder** (see [06 Settings](<./06 Settings.md>)), the whole folder is consulted, not just the selected file. A saved web page's `_files` folder holds one linked `.html` and a pile of images nothing links to directly; without this they would all be ownerless.
 
