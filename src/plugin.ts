@@ -98,6 +98,7 @@ export class Plugin extends PluginBase {
         app: this.app,
         isSuggestionDeclined: (): boolean => pluginSettingsComponent.settings.isAdvancedRenameAndDeleteHandlerSuggestionDeclined,
         pluginNoticeComponent: this.pluginNoticeComponent,
+        pluginSettingsComponent,
         reason: t(($) => $.pluginSuggestion.reason),
         // `editAndSave`, not `setProperty`: a decline has to outlive a reload, and `setProperty` only edits
         // The in-memory state, so the suggestion would come back forever.
