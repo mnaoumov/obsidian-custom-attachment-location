@@ -291,9 +291,9 @@ beforeEach(() => {
   // The onloadImpl binds vault.getAvailablePathForAttachments to pass it to AttachmentPathManager; seed it on the raw target so the strict-proxy does not throw.
   seedOnRawTarget(app.vault, 'getAvailablePathForAttachments', vi.fn((): Promise<string> => Promise.resolve('attachments/file.png')));
 
-  // The base's Notebook Navigator registrar reads `app.plugins.getPlugin` once the layout is ready; seed it on the raw target so the strict proxy does not throw. `null` is the "Notebook Navigator is not installed" default.
+  // The base's Notebook Navigator registrar reads `app.plugins.getPlugin` once the layout is ready. `obsidian-test-mocks` models the registry now and already answers `null` there, so this seeds only `getPlugin` on it rather than replacing the whole registry: the tests below assert on the calls and re-point the return value, which a bare `registerPlugin__` cannot express.
   getPluginMock = vi.fn((_pluginId: string): null | PluginOriginal => null);
-  seedOnRawTarget(app, 'plugins', { getPlugin: getPluginMock });
+  seedOnRawTarget(app.plugins, 'getPlugin', getPluginMock);
 
   // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument read/write the same seeded holder.
   castTo<AppGlobal>(window).app = app;
