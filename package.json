@@ -47,7 +47,7 @@
     "version": "jiti scripts/version.ts"
   },
   "overrides": {
-    "@puppeteer/browsers": "^3.2.1",
+    "@puppeteer/browsers": "^3.2.2",
     "deepmerge-ts": "^8.0.2",
     "eslint": "$eslint",
     "js-yaml": "^5.4.1",
@@ -64,20 +64,20 @@
     "@tsconfig/strictest": "^2.0.8",
     "@types/node": "^26.4.1",
     "@types/semver": "^7.8.0",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.0",
     "acorn": "^8.18.0",
     "better-typescript-lib": "^2.12.0",
     "czg": "^1.14.0",
-    "electron": "^44.1.1",
+    "electron": "^44.2.0",
     "eslint": "^10.9.1",
     "husky": "^9.1.7",
-    "i18next": "^26.4.1",
+    "i18next": "^26.4.2",
     "jiti": "^2.7.0",
     "jsdom": "^30.0.1",
     "json5": "^2.2.3",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.13.1",
-    "obsidian-dev-utils": "^101.1.0",
+    "obsidian-dev-utils": "^101.4.0",
     "obsidian-integration-testing": "^12.0.0",
     "obsidian-test-mocks": "^5.0.0",
     "semver": "^7.8.5",
@@ -85,7 +85,7 @@
     "slugify": "^1.6.9",
     "type-fest": "^5.9.0",
     "typescript": "6.0.3",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.0",
     "zod": "^4.5.4"
   }
 }
