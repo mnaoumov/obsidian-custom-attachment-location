@@ -79,7 +79,7 @@
     "obsidian": "^1.13.1",
     "obsidian-dev-utils": "^106.0.0",
     "obsidian-integration-testing": "^16.0.0",
-    "obsidian-test-mocks": "^5.0.0",
+    "obsidian-test-mocks": "^7.0.0",
     "semver": "^7.8.5",
     "sharp": "^0.35.4",
     "slugify": "^1.6.9",

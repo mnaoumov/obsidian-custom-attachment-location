@@ -201,7 +201,13 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   addTextSpy.mockImplementation(function capturingAddText(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddText.call(this, (component) => {
-      textLikeComponents.push({ inputEl: component.inputEl, name, setValue: (value) => component.setValue(value) });
+      textLikeComponents.push({
+        inputEl: component.inputEl,
+        name,
+        setValue: (value) => {
+          typeInto(component.setValue(value).inputEl);
+        }
+      });
       callback(component);
     });
   });
@@ -210,7 +216,12 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   addCodeHighlighterSpy.mockImplementation(function capturingAddCodeHighlighter(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddCodeHighlighter.call(this, (component: CodeHighlighterComponent) => {
-      textLikeComponents.push({ name, setValue: (value) => component.setValue(value) });
+      textLikeComponents.push({
+        name,
+        setValue: (value) => {
+          typeInto(component.setValue(value).inputEl);
+        }
+      });
       callback(component);
     });
   });
@@ -219,7 +230,12 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   addDropdownSpy.mockImplementation(function capturingAddDropdown(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddDropdown.call(this, (component: DropdownComponent) => {
-      textLikeComponents.push({ name, setValue: (value) => component.setValue(value) });
+      textLikeComponents.push({
+        name,
+        setValue: (value) => {
+          pickIn(component.setValue(value).selectEl);
+        }
+      });
       callback(component);
     });
   });
@@ -228,7 +244,13 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   addNumberSpy.mockImplementation(function capturingAddNumber(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddNumber.call(this, (component: NumberComponent) => {
-      textLikeComponents.push({ inputEl: component.inputEl, name, setValue: (value) => component.setValue(Number(value)) });
+      textLikeComponents.push({
+        inputEl: component.inputEl,
+        name,
+        setValue: (value) => {
+          typeInto(component.setValue(Number(value)).inputEl);
+        }
+      });
       callback(component);
     });
   });
@@ -237,7 +259,12 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   addMultipleTextSpy.mockImplementation(function capturingAddMultipleText(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddMultipleText.call(this, (component: MultipleTextComponent) => {
-      multipleTextComponents.push({ name, setValue: (value) => component.setValue(value) });
+      multipleTextComponents.push({
+        name,
+        setValue: (value) => {
+          typeInto(component.setValue(value).inputEl);
+        }
+      });
       callback(component);
     });
   });
@@ -254,7 +281,12 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
        */
       seedOnRawTarget(component, 'setPlaceholderValue', undefined);
       seedOnRawTarget(component, 'isEmpty', undefined);
-      multipleDropdownComponents.push({ name, setValue: (value) => component.setValue(value) });
+      multipleDropdownComponents.push({
+        name,
+        setValue: (value) => {
+          pickIn(component.setValue(value).selectEl);
+        }
+      });
       callback(component);
     });
   });
@@ -1023,4 +1055,16 @@ function getResetButton(buttons: ButtonComponentClass[]): ButtonComponentClass {
     throw new Error('Reset button was not captured.');
   }
   return button;
+}
+
+// Obsidian fires a select's `onChange` from the element's `change` event, never from `setValue`, so a
+// test that changes a row the way the user does has to raise that event after setting the value.
+function pickIn(selectEl: HTMLSelectElement): void {
+  selectEl.dispatchEvent(new Event('change'));
+}
+
+// Obsidian fires a text-like input's `onChange` from the element's `input` event, never from `setValue`,
+// so a test that changes a row the way the user does has to raise that event after setting the value.
+function typeInto(inputEl: HTMLInputElement | HTMLTextAreaElement): void {
+  inputEl.dispatchEvent(new Event('input'));
 }
