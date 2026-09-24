@@ -104,6 +104,11 @@ describe('The published API answers per note, which the getConfig patch cannot',
           shouldRenameCollectedAttachments: boolean;
         }
 
+        interface FolderSettingsComponent {
+          editAndSave: (settingsEditor: (settings: FolderSettings) => void) => Promise<void>;
+          readonly settings: FolderSettings;
+        }
+
         const EMPTY: ProbeResult = {
           apiFolderForClosedNote: null,
           apiFolderForOpenNote: null,
@@ -133,9 +138,13 @@ describe('The published API answers per note, which the getConfig patch cannot',
 
         const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
 
-        // The settings are not exposed publicly, so the live object the resolver reads is located by walking
-        // The plugin's component tree.
-        function findSettings(): FolderSettings | null {
+        /*
+         * The settings are not exposed publicly, so the component that owns them is located by walking the
+         * plugin's component tree. Edits go through its `editAndSave`, never onto the settings object: a reload
+         * of `data.json` replaces that object, so an in-memory edit would revert to the defaults while the
+         * file-open field computed before the reload still held the staged folder.
+         */
+        function findSettingsComponent(): FolderSettingsComponent | null {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
           const queue: unknown[] = [pluginRecord];
@@ -147,8 +156,8 @@ describe('The published API answers per note, which the getConfig patch cannot',
             }
             seen.add(current);
             const record = current as Record<string, unknown>;
-            if (isFolderSettings(record['settings'])) {
-              return record['settings'];
+            if (isFolderSettings(record['settings']) && typeof record['editAndSave'] === 'function') {
+              return current as FolderSettingsComponent;
             }
             let values: unknown[] = [];
             if (Array.isArray(current)) {
@@ -189,14 +198,21 @@ describe('The published API answers per note, which the getConfig patch cannot',
         }
 
         const api = record.api;
-        const settings = findSettings();
+        const foundSettingsComponent = findSettingsComponent();
 
-        if (!settings) {
+        if (!foundSettingsComponent) {
           return { ...EMPTY, apiFound: true, apiVersion: record.apiVersion, contractMethodNames: Object.keys(record.contract).sort() };
         }
 
-        const priorFolderPath = settings.attachmentFolderPath;
-        const wasRenamingCollectedAttachments = settings.shouldRenameCollectedAttachments;
+        const settingsComponent: FolderSettingsComponent = foundSettingsComponent;
+        const priorFolderPath = settingsComponent.settings.attachmentFolderPath;
+        const wasRenamingCollectedAttachments = settingsComponent.settings.shouldRenameCollectedAttachments;
+
+        async function editSettings(changes: Partial<FolderSettings>): Promise<void> {
+          await settingsComponent.editAndSave((settings) => {
+            Object.assign(settings, changes);
+          });
+        }
 
         async function trashIfExists(path: string): Promise<void> {
           const existing = app.vault.getAbstractFileByPath(path);
@@ -216,9 +232,11 @@ describe('The published API answers per note, which the getConfig patch cannot',
         const imageFileName = `api-img-${stamp}.png`;
 
         try {
-          settings.attachmentFolderPath = attachmentFolderPath;
-          // The staged name must survive, or the asserted proper path could not name the file it was staged as.
-          settings.shouldRenameCollectedAttachments = false;
+          await editSettings({
+            attachmentFolderPath,
+            // The staged name must survive, or the asserted proper path could not name the file it was staged as.
+            shouldRenameCollectedAttachments: false
+          });
 
           await app.vault.createBinary(imageFileName, new ArrayBuffer(4));
           const openNote = await app.vault.create(`${openNoteBaseName}.md`, `![[${imageFileName}]]\n`);
@@ -271,8 +289,10 @@ describe('The published API answers per note, which the getConfig patch cannot',
             settingsFound: true
           };
         } finally {
-          settings.attachmentFolderPath = priorFolderPath;
-          settings.shouldRenameCollectedAttachments = wasRenamingCollectedAttachments;
+          await editSettings({
+            attachmentFolderPath: priorFolderPath,
+            shouldRenameCollectedAttachments: wasRenamingCollectedAttachments
+          });
           for (const path of [`${openNoteBaseName}.md`, `${closedNoteBaseName}.md`, imageFileName, `_/${openNoteBaseName}`]) {
             await trashIfExists(path);
           }
