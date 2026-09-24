@@ -169,8 +169,7 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
         const movedLinkedPath = `${noteFolder}/page_files/logo.png`;
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './assets/${noteFileName}';
+          settings.attachmentFolderPath = './assets/{{noteFileName}}';
           settings.attachmentUnitFolderPaths = [unitFolderPath];
           holder.apiRef = {
             value: {

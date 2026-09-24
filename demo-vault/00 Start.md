@@ -1,6 +1,6 @@
 # Start here
 
-Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location/) demo vault. When you paste or drag a file into a note, Obsidian normally drops it into one shared attachment folder with a generic name. **Custom Attachment Location** lets you decide *where* each attachment is stored and *how* it is named, using tokens like `${noteFileName}`, `${date:{momentJsFormat:'YYYYMMDD'}}`, and many more.
+Welcome to the [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location/) demo vault. When you paste or drag a file into a note, Obsidian normally drops it into one shared attachment folder with a generic name. **Custom Attachment Location** lets you decide *where* each attachment is stored and *how* it is named, using tokens like `{{noteFileName}}`, `{{date:{momentJsFormat:'YYYYMMDD'}}}`, and many more.
 
 **How to try it:** open [01 Attachment folder location](<./01 Attachment folder location.md>) and paste an image into it. With this vault's settings, the file lands in a per-note folder such as `assets/01 Attachment folder location/` instead of one global pile. A fresh install of the plugin changes nothing about where attachments land: it follows Obsidian's own attachment setting until you pick a pattern, and this vault has picked one. You supply the pasted or dragged file - the plugin decides where it goes and what it is called.
 

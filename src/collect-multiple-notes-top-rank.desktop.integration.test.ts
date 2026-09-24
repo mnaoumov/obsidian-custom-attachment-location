@@ -200,8 +200,7 @@ describe('The shared-attachment dialog lists only the top-ranked notes (issue #7
         const drawingPath = `${drawingStem}.excalidraw.md`;
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './assets/${noteFileName}';
+          settings.attachmentFolderPath = './assets/{{noteFileName}}';
           settings.collectAttachmentUsedByMultipleNotesMode = 'Cancel';
           /*
            * Longest-match ranks `*.excalidraw.md` below a plain `.md`, even though it ends with `.md`

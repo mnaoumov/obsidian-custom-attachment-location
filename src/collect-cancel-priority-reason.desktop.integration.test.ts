@@ -251,8 +251,7 @@ describe('The cancel dialog names the real reason a shared attachment did not mo
         }
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './assets/${noteFileName}';
+          settings.attachmentFolderPath = './assets/{{noteFileName}}';
           settings.collectAttachmentUsedByMultipleNotesMode = 'Cancel';
 
           const emptyListReason = await readReason([]);

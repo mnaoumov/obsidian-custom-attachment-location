@@ -32,6 +32,7 @@ import {
   PluginSettings,
   RenameAttachmentsCreatedByOtherPluginsMode
 } from './plugin-settings.ts';
+import { migrateLegacyTokenSyntax } from './token-parser.ts';
 import {
   TokenValidationMode,
   TokenValidator
@@ -41,6 +42,16 @@ import { CustomToken } from './tokens/custom-token.ts';
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
 // The prefix obsidian-dev-utils' private-property transformer skips, and that marks a backing field of `PluginSettings`.
 const PRIVATE_PROPERTY_PREFIX = '_';
+
+// Every setting evaluated as a template, so every one the `{{...}}` syntax migration rewrites.
+const TOKENIZED_SETTINGS_KEYS = [
+  'attachmentFolderPath',
+  'collectedAttachmentFileName',
+  'collectedAttachmentFolderPath',
+  'generatedAttachmentFileName',
+  'markdownUrlFormat',
+  'renamedAttachmentFileName'
+] as const satisfies readonly (keyof PluginSettings)[];
 
 interface AddDateTimeFormatParams {
   readonly $string: string;
@@ -153,6 +164,8 @@ class LegacySettingsConverter {
     this.convertMarkdownUrlFormat();
     this.convertSpecialCharacters();
     this.convertLegacyTokens();
+    // After every converter above, since several of them still write the `${...}` syntax.
+    this.convertTokenSyntax();
 
     // LAST, and it must stay last: it reads the rename/delete keys the converters above normalize, so
     // Running it earlier would gather the raw legacy names instead of the values they convert into.
@@ -336,6 +349,23 @@ ${commentOut(this.legacySettings.customTokensStr)}
   private convertSpecialCharacters(): void {
     if (this.legacySettings.version && compare(this.legacySettings.version, '9.16.0') < 0 && this.legacySettings.specialCharacters === String.raw`#^[]|*\<>:?`) {
       this.legacySettings.specialCharacters = String.raw`#^[]|*\<>:?/`;
+    }
+  }
+
+  /**
+   * Carries the six tokenized settings from the retired `${...}` syntax onto `{{...}}` (14.0.0).
+   *
+   * Not version-gated, deliberately: `${...}` no longer parses, so a legacy token left in any of these keys is
+   * broken whatever version wrote it, and {@link migrateLegacyTokenSyntax} leaves a string holding none untouched.
+   * `customTokensStr` is user-authored JavaScript and is NOT migrated; a template it still fills in the old syntax
+   * fails with a `LegacyTokenSyntaxError` naming the replacement.
+   */
+  private convertTokenSyntax(): void {
+    for (const key of TOKENIZED_SETTINGS_KEYS) {
+      const value = this.legacySettings[key];
+      if (typeof value === 'string') {
+        this.legacySettings[key] = migrateLegacyTokenSyntax(value);
+      }
     }
   }
 

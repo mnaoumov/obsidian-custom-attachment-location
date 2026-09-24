@@ -48,7 +48,7 @@ import { confirmMinimizable } from './modals/minimizable-confirm-modal.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 
 // The note's attachment folder path template rarely depends on the attachment file name (the default
-// `./assets/${noteFileName}` does not), so a placeholder name is enough to resolve the folder to scan.
+// `./assets/{{noteFileName}}` does not), so a placeholder name is enough to resolve the folder to scan.
 const PLACEHOLDER_ATTACHMENT_FILE_NAME = 'unused-attachment';
 
 /**

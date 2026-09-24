@@ -121,8 +121,7 @@ describe('PluginSettingsComponent', () => {
       await createComponent(null, dataHandler);
       const saved = await dataHandler.loadData() as Partial<PluginSettings>;
       expect(saved.shouldFollowObsidianAttachmentLocation).toBe(true);
-      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      expect(saved.attachmentFolderPath).toBe('./assets/${noteFileName}');
+      expect(saved.attachmentFolderPath).toBe('./assets/{{noteFileName}}');
     });
 
     it('should write the full settings record when loadData answers undefined', async () => {
@@ -205,8 +204,7 @@ describe('PluginSettingsComponent', () => {
     it('should accept a valid attachment folder path with tokens', async () => {
       const component = await createComponent();
       const settings = createSettings();
-      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      settings.attachmentFolderPath = './assets/${noteFileName}';
+      settings.attachmentFolderPath = './assets/{{noteFileName}}';
       const result = await component.validate(settings);
       expect(result.attachmentFolderPath).toBeUndefined();
     });
@@ -214,17 +212,24 @@ describe('PluginSettingsComponent', () => {
     it('should reject an attachment folder path with an unknown token', async () => {
       const component = await createComponent();
       const settings = createSettings();
-      // eslint-disable-next-line no-template-curly-in-string -- Invalid token used on purpose.
-      settings.attachmentFolderPath = '${unknownToken}';
+      settings.attachmentFolderPath = '{{unknownToken}}';
       const result = await component.validate(settings);
       expect(result.attachmentFolderPath).toContain('Unknown token');
+    });
+
+    it('should reject an attachment folder path in the retired token syntax, naming the replacement', async () => {
+      const component = await createComponent();
+      const settings = createSettings();
+      // eslint-disable-next-line no-template-curly-in-string -- The retired plugin token syntax, not a JS template literal.
+      settings.attachmentFolderPath = './assets/${noteFileName}';
+      const result = await component.validate(settings);
+      expect(result.attachmentFolderPath).toContain('Write it as \'{{noteFileName}}\' instead.');
     });
 
     it('should accept a valid collected attachment folder path with tokens', async () => {
       const component = await createComponent();
       const settings = createSettings();
-      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      settings.collectedAttachmentFolderPath = './${noteFileName}.assets';
+      settings.collectedAttachmentFolderPath = './{{noteFileName}}.assets';
       const result = await component.validate(settings);
       expect(result.collectedAttachmentFolderPath).toBeUndefined();
     });
@@ -240,8 +245,7 @@ describe('PluginSettingsComponent', () => {
     it('should reject a collected attachment folder path with an unknown token', async () => {
       const component = await createComponent();
       const settings = createSettings();
-      // eslint-disable-next-line no-template-curly-in-string -- Invalid token used on purpose.
-      settings.collectedAttachmentFolderPath = '${unknownToken}';
+      settings.collectedAttachmentFolderPath = '{{unknownToken}}';
       const result = await component.validate(settings);
       expect(result.collectedAttachmentFolderPath).toContain('Unknown token');
     });
@@ -249,8 +253,15 @@ describe('PluginSettingsComponent', () => {
     it('should accept a valid generated attachment file name with tokens', async () => {
       const component = await createComponent();
       const settings = createSettings();
-      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      settings.generatedAttachmentFileName = 'file-${date:{momentJsFormat:\'YYYY\'}}';
+      settings.generatedAttachmentFileName = 'file-{{date:{momentJsFormat:\'YYYY\'}}}';
+      const result = await component.validate(settings);
+      expect(result.generatedAttachmentFileName).toBeUndefined();
+    });
+
+    it('should accept the scalar date format shorthand in the generated attachment file name', async () => {
+      const component = await createComponent();
+      const settings = createSettings();
+      settings.generatedAttachmentFileName = 'file-{{date:YYYY-MM-DD}}';
       const result = await component.validate(settings);
       expect(result.generatedAttachmentFileName).toBeUndefined();
     });
@@ -415,8 +426,7 @@ describe('PluginSettingsComponent', () => {
   describe('legacy settings converter', () => {
     it('should keep the default attachmentFolderPath when the record has no such key', async () => {
       const component = await createComponent({ shouldFollowObsidianAttachmentLocation: false });
-      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-      expect(component.settings.attachmentFolderPath).toBe('./assets/${noteFileName}');
+      expect(component.settings.attachmentFolderPath).toBe('./assets/{{noteFileName}}');
     });
 
     it('should map warningVersion into version', async () => {
@@ -546,8 +556,57 @@ describe('PluginSettingsComponent', () => {
         // eslint-disable-next-line no-template-curly-in-string -- Legacy token format.
         generatedAttachmentFileName: 'file-${date:YYYYMMDD}'
       });
-      // eslint-disable-next-line no-template-curly-in-string -- Expected converted token format.
-      expect(component.settings.generatedAttachmentFileName).toBe('file-${date:{momentJsFormat:\'YYYYMMDD\'}}');
+      expect(component.settings.generatedAttachmentFileName).toBe('file-{{date:{momentJsFormat:\'YYYYMMDD\'}}}');
+    });
+
+    /* eslint-disable no-template-curly-in-string -- The retired `${...}` plugin token syntax, not JS template literals. */
+    it('should migrate every tokenized setting from the ${...} syntax to {{...}}', async () => {
+      const component = await createComponent({
+        attachmentFolderPath: './assets/${noteFileName}/${date:{momentJsFormat:\'YYYY\'}}',
+        collectedAttachmentFileName: 'collected-${sequenceNumber:{length:2}}',
+        collectedAttachmentFolderPath: './${noteFileName}.assets',
+        generatedAttachmentFileName: '${prompt:{defaultValueTemplate:\'${originalAttachmentFileName}-${date:{momentJsFormat:"YYYY"}}\'}}',
+        markdownUrlFormat: '<${generatedAttachmentFilePath}>',
+        renamedAttachmentFileName: '${noteFileName}-${originalAttachmentFileName}',
+        version: '13.0.0'
+      });
+      expect(component.settings.attachmentFolderPath).toBe('./assets/{{noteFileName}}/{{date:{momentJsFormat:\'YYYY\'}}}');
+      expect(component.settings.collectedAttachmentFileName).toBe('collected-{{sequenceNumber:{length:2}}}');
+      expect(component.settings.collectedAttachmentFolderPath).toBe('./{{noteFileName}}.assets');
+      expect(component.settings.generatedAttachmentFileName).toBe(
+        '{{prompt:{defaultValueTemplate:\'{{originalAttachmentFileName}}-{{date:{momentJsFormat:"YYYY"}}}\'}}}'
+      );
+      expect(component.settings.markdownUrlFormat).toBe('<{{generatedAttachmentFilePath}}>');
+      expect(component.settings.renamedAttachmentFileName).toBe('{{noteFileName}}-{{originalAttachmentFileName}}');
+    });
+
+    it('should carry the pre-10.0.0 scalar date format through both migrations', async () => {
+      const component = await createComponent({
+        attachmentFolderPath: 'assets/${noteFileCreationDate:YYYY}',
+        version: '9.0.0'
+      });
+      expect(component.settings.attachmentFolderPath).toBe('assets/{{noteFileCreationDate:{momentJsFormat:\'YYYY\'}}}');
+    });
+
+    it('should not migrate the custom tokens code', async () => {
+      const customTokensString = 'registerCustomToken(\'foo\', (ctx) => ctx.fillTemplate(\'${noteFileName}\'));';
+      const component = await createComponent({
+        // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key.
+        customTokensStr: customTokensString,
+        version: '13.0.0'
+      });
+      expect(component.settings.customTokensStr).toBe(customTokensString);
+    });
+    /* eslint-enable no-template-curly-in-string -- The retired `${...}` plugin token syntax, not JS template literals. */
+
+    it('should leave a setting already in the {{...}} syntax as it is', async () => {
+      const component = await createComponent({
+        attachmentFolderPath: './assets/{{noteFileName}}',
+        generatedAttachmentFileName: 'file-{{date:YYYY-MM-DD}}',
+        version: '14.0.0'
+      });
+      expect(component.settings.attachmentFolderPath).toBe('./assets/{{noteFileName}}');
+      expect(component.settings.generatedAttachmentFileName).toBe('file-{{date:YYYY-MM-DD}}');
     });
 
     it('should leave settings at defaults when no legacy keys are present', async () => {

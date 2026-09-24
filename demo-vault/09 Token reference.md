@@ -6,8 +6,9 @@ Tokens work in the three pattern settings: `attachmentFolderPath`, `generatedAtt
 
 Token strings:
 
-- `${token}`: Use token default format (`null`).
-- `${token:{...}}`: Use explicit format parsed as a **JSON5 object** (single-line).
+- `{{token}}`: Use token default format (`null`).
+- `{{token:{...}}}`: Use explicit format parsed as a **JSON5 object** (single-line).
+- `{{token:text}}`: The scalar shorthand, text free of `{` and `}`. The five date tokens take it as their Moment.js format, so `{{date:YYYY-MM-DD}}` means `{{date:{momentJsFormat:'YYYY-MM-DD'}}}` - the same form core's Templates plugin uses. A custom token receives the text itself as `ctx.format`; every other built-in token rejects it.
 
 `token` is case-insensitive. Format object keys and values are case-sensitive.
 
@@ -15,14 +16,14 @@ Token strings:
 
 The `<format>` part must be a JSON5 **object** (single line), i.e. it must start with `{` and end with `}`.
 
-- Property names can be quoted or unquoted: `${attachmentFileSize:{unit:'KB','decimalPoints':2}}`.
-- Strings must be quoted: `${date:{momentJsFormat:'YYYYMMDD'}}`.
-- JSON5 allows (optional) trailing commas: `${attachmentFileSize:{unit:'KB',decimalPoints:2,}}`.
+- Property names can be quoted or unquoted: `{{attachmentFileSize:{unit:'KB','decimalPoints':2}}}`.
+- Strings must be quoted: `{{date:{momentJsFormat:'YYYYMMDD'}}}`.
+- JSON5 allows (optional) trailing commas: `{{attachmentFileSize:{unit:'KB',decimalPoints:2,}}}`.
 
 If you need quotes inside a JSON5 string, either escape them or switch quote types:
 
-- `${date:{momentJsFormat:'It\'s ${date}'}}`
-- `${date:{momentJsFormat:"It's ${date}"}}`
+- `{{date:{momentJsFormat:'It\'s {{date}}'}}}`
+- `{{date:{momentJsFormat:"It's {{date}}"}}}`
 
 ### Escaping literal text inside a Moment.js format
 
@@ -30,8 +31,8 @@ The `momentJsFormat` value is a [Moment.js format string](https://momentjs.com/d
 
 To include literal text, escape it with **square brackets** `[...]` (the Moment.js escape syntax), not quotes:
 
-- `${date:{momentJsFormat:'YYYY-MM-DD [at] HH:mm'}}` → `2026-04-02 at 18:15`
-- `${date:{momentJsFormat:'[Backup] YYYY [taken at] HH[h]mm'}}` → `Backup 2026 taken at 18h15`
+- `{{date:{momentJsFormat:'YYYY-MM-DD [at] HH:mm'}}}` → `2026-04-02 at 18:15`
+- `{{date:{momentJsFormat:'[Backup] YYYY [taken at] HH[h]mm'}}}` → `Backup 2026 taken at 18h15`
 
 ## Validation (strict)
 
@@ -39,9 +40,9 @@ Each token validates its own `format` shape at runtime. Unknown object propertie
 
 Example (error):
 
-`❌ ${attachmentFileSize:{unit:'B',decimalPoints:3,unknownProperty:'alpha'}}`
+`❌ {{attachmentFileSize:{unit:'B',decimalPoints:3,unknownProperty:'alpha'}}}`
 
-## `${attachmentFileSize}`
+## `{{attachmentFileSize}}`
 
 Size of the attachment file.
 
@@ -60,10 +61,10 @@ Size of the attachment file.
 
 ### Examples
 
-- `${attachmentFileSize}`: `123`.
-- `${attachmentFileSize:{unit:'KB',decimalPoints:2}}`: `456.78`.
+- `{{attachmentFileSize}}`: `123`.
+- `{{attachmentFileSize:{unit:'KB',decimalPoints:2}}}`: `456.78`.
 
-## `${date}`
+## `{{date}}`
 
 Current date/time.
 
@@ -81,10 +82,11 @@ Current date/time.
 
 ### Examples
 
-- `${date:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
-- `${date:{momentJsFormat:'YYYY-MM-DD [at] HH-mm'}}`: `2025-12-31 at 18-15` (literal text escaped with `[...]`; see [Escaping literal text inside a Moment.js format](#escaping-literal-text-inside-a-momentjs-format)).
+- `{{date:{momentJsFormat:'YYYY-MM-DD'}}}`: `2025-12-31`.
+- `{{date:YYYY-MM-DD}}`: `2025-12-31`, the scalar shorthand for the example above.
+- `{{date:{momentJsFormat:'YYYY-MM-DD [at] HH-mm'}}}`: `2025-12-31 at 18-15` (literal text escaped with `[...]`; see [Escaping literal text inside a Moment.js format](#escaping-literal-text-inside-a-momentjs-format)).
 
-## `${frontmatter}`
+## `{{frontmatter}}`
 
 Frontmatter value of the current note.
 
@@ -104,9 +106,9 @@ Nested keys are supported, e.g. `'key1.key2.3.key4'`.
 
 ### Examples
 
-- `${frontmatter:{key:'tags.0'}}`: `tag1`.
+- `{{frontmatter:{key:'tags.0'}}}`: `tag1`.
 
-## `${generatedAttachmentFileName}`
+## `{{generatedAttachmentFileName}}`
 
 The generated file name of the attachment (available only inside [`markdownUrlFormat`](<./06 Settings.md>) setting).
 
@@ -130,14 +132,14 @@ The generated file name of the attachment (available only inside [`markdownUrlFo
 
 ### Examples
 
-- `${generatedAttachmentFileName}`: `alpha/bravo/charlie.pdf -> charlie`.
-- `${generatedAttachmentFileName:{case:'lower'}}`: `alpha/bravo/CHARLIE.pdf -> charlie`.
-- `${generatedAttachmentFileName:{case:'upper'}}`: `alpha/bravo/charlie.pdf -> CHARLIE`.
-- `${generatedAttachmentFileName:{slugify:true}}`: `alpha/bravo/charlie delta.pdf -> charlie-delta`.
-- `${generatedAttachmentFileName:{trim:{side:'left',length:2}}}`: `alpha/bravo/charlie.pdf -> ch`.
-- `${generatedAttachmentFileName:{trim:{side:'right',length:2}}}`: `alpha/bravo/charlie.pdf -> ie`.
+- `{{generatedAttachmentFileName}}`: `alpha/bravo/charlie.pdf -> charlie`.
+- `{{generatedAttachmentFileName:{case:'lower'}}}`: `alpha/bravo/CHARLIE.pdf -> charlie`.
+- `{{generatedAttachmentFileName:{case:'upper'}}}`: `alpha/bravo/charlie.pdf -> CHARLIE`.
+- `{{generatedAttachmentFileName:{slugify:true}}}`: `alpha/bravo/charlie delta.pdf -> charlie-delta`.
+- `{{generatedAttachmentFileName:{trim:{side:'left',length:2}}}}`: `alpha/bravo/charlie.pdf -> ch`.
+- `{{generatedAttachmentFileName:{trim:{side:'right',length:2}}}}`: `alpha/bravo/charlie.pdf -> ie`.
 
-## `${generatedAttachmentFilePath}`
+## `{{generatedAttachmentFilePath}}`
 
 The generated file path of the attachment (available only inside [`markdownUrlFormat`](<./06 Settings.md>) setting).
 
@@ -151,9 +153,9 @@ The generated file path of the attachment (available only inside [`markdownUrlFo
 
 ### Examples
 
-- `${generatedAttachmentFilePath}`: `alpha/bravo/charlie.pdf`.
+- `{{generatedAttachmentFilePath}}`: `alpha/bravo/charlie.pdf`.
 
-## `${heading}`
+## `{{heading}}`
 
 The heading above the cursor in the note editor where the attachment is inserted. Empty if such heading does not exist.
 
@@ -171,15 +173,15 @@ The heading above the cursor in the note editor where the attachment is inserted
 
 ### Examples
 
-- `${heading}`: `Nearest heading at any level`.
-- `${heading:{level:'1'}}`: `Nearest heading at level 1`.
-- `${heading:{level:'2'}}`: `Nearest heading at level 2`.
-- `${heading:{level:'3'}}`: `Nearest heading at level 3`.
-- `${heading:{level:'4'}}`: `Nearest heading at level 4`.
-- `${heading:{level:'5'}}`: `Nearest heading at level 5`.
-- `${heading:{level:'6'}}`: `Nearest heading at level 6`.
+- `{{heading}}`: `Nearest heading at any level`.
+- `{{heading:{level:'1'}}}`: `Nearest heading at level 1`.
+- `{{heading:{level:'2'}}}`: `Nearest heading at level 2`.
+- `{{heading:{level:'3'}}}`: `Nearest heading at level 3`.
+- `{{heading:{level:'4'}}}`: `Nearest heading at level 4`.
+- `{{heading:{level:'5'}}}`: `Nearest heading at level 5`.
+- `{{heading:{level:'6'}}}`: `Nearest heading at level 6`.
 
-## `${noteFileCreationDate}`
+## `{{noteFileCreationDate}}`
 
 Note file creation date/time.
 
@@ -199,9 +201,9 @@ Note file creation date/time.
 
 ### Examples
 
-- `${noteFileCreationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
+- `{{noteFileCreationDate:{momentJsFormat:'YYYY-MM-DD'}}}`: `2025-12-31`.
 
-## `${noteFileModificationDate}`
+## `{{noteFileModificationDate}}`
 
 Note file modification date/time.
 
@@ -221,9 +223,9 @@ Note file modification date/time.
 
 ### Examples
 
-- `${noteFileModificationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
+- `{{noteFileModificationDate:{momentJsFormat:'YYYY-MM-DD'}}}`: `2025-12-31`.
 
-## `${noteFileName}`
+## `{{noteFileName}}`
 
 Current note file name.
 
@@ -247,14 +249,14 @@ Current note file name.
 
 ### Examples
 
-- `${noteFileName}`: `alpha/bravo/charlie.md -> charlie`.
-- `${noteFileName:{case:'lower'}}`: `alpha/bravo/CHARLIE.md -> charlie`.
-- `${noteFileName:{case:'upper'}}`: `alpha/bravo/charlie.md -> CHARLIE`.
-- `${noteFileName:{slugify:true}}`: `alpha/bravo/charlie delta.md -> charlie-delta`.
-- `${noteFileName:{trim:{side:'left',length:2}}}`: `alpha/bravo/charlie.md -> ch`.
-- `${noteFileName:{trim:{side:'right',length:2}}}`: `alpha/bravo/charlie.md -> ie`.
+- `{{noteFileName}}`: `alpha/bravo/charlie.md -> charlie`.
+- `{{noteFileName:{case:'lower'}}}`: `alpha/bravo/CHARLIE.md -> charlie`.
+- `{{noteFileName:{case:'upper'}}}`: `alpha/bravo/charlie.md -> CHARLIE`.
+- `{{noteFileName:{slugify:true}}}`: `alpha/bravo/charlie delta.md -> charlie-delta`.
+- `{{noteFileName:{trim:{side:'left',length:2}}}}`: `alpha/bravo/charlie.md -> ch`.
+- `{{noteFileName:{trim:{side:'right',length:2}}}}`: `alpha/bravo/charlie.md -> ie`.
 
-## `${noteFilePath}`
+## `{{noteFilePath}}`
 
 Current note full path.
 
@@ -268,9 +270,9 @@ Current note full path.
 
 ### Examples
 
-- `${noteFilePath}`: `alpha/bravo/charlie.md`.
+- `{{noteFilePath}}`: `alpha/bravo/charlie.md`.
 
-## `${noteFolderName}`
+## `{{noteFolderName}}`
 
 Current note's folder name.
 
@@ -298,16 +300,16 @@ Current note's folder name.
 
 ### Examples
 
-- `${noteFolderName}`: `alpha/bravo/charlie/delta.md -> charlie`.
-- `${noteFolderName:{pick:{from:'end',index:1}}}`: `alpha/bravo/charlie/delta/echo/foxtrot.md -> delta`.
-- `${noteFolderName:{pick:{from:'start',index:1}}}`: `alpha/bravo/charlie/delta/echo/foxtrot.md -> bravo`.
-- `${noteFolderName:{case:'lower'}}`: `alpha/bravo/CHARLIE/delta.md -> charlie`.
-- `${noteFolderName:{case:'upper'}}`: `alpha/bravo/charlie/delta.md -> CHARLIE`.
-- `${noteFolderName:{slugify:true}}`: `alpha/bravo/charlie delta/echo.md -> charlie-delta`.
-- `${noteFolderName:{trim:{side:'left',length:2}}}`: `alpha/bravo/charlie/delta.md -> ch`.
-- `${noteFolderName:{trim:{side:'right',length:2}}}`: `alpha/bravo/charlie/delta.md -> ie`.
+- `{{noteFolderName}}`: `alpha/bravo/charlie/delta.md -> charlie`.
+- `{{noteFolderName:{pick:{from:'end',index:1}}}}`: `alpha/bravo/charlie/delta/echo/foxtrot.md -> delta`.
+- `{{noteFolderName:{pick:{from:'start',index:1}}}}`: `alpha/bravo/charlie/delta/echo/foxtrot.md -> bravo`.
+- `{{noteFolderName:{case:'lower'}}}`: `alpha/bravo/CHARLIE/delta.md -> charlie`.
+- `{{noteFolderName:{case:'upper'}}}`: `alpha/bravo/charlie/delta.md -> CHARLIE`.
+- `{{noteFolderName:{slugify:true}}}`: `alpha/bravo/charlie delta/echo.md -> charlie-delta`.
+- `{{noteFolderName:{trim:{side:'left',length:2}}}}`: `alpha/bravo/charlie/delta.md -> ch`.
+- `{{noteFolderName:{trim:{side:'right',length:2}}}}`: `alpha/bravo/charlie/delta.md -> ie`.
 
-## `${noteFolderPath}`
+## `{{noteFolderPath}}`
 
 Current note's folder full path.
 
@@ -321,9 +323,9 @@ Current note's folder full path.
 
 ### Examples
 
-- `${noteFolderPath}`: `alpha/bravo/charlie.md -> alpha/bravo`.
+- `{{noteFolderPath}}`: `alpha/bravo/charlie.md -> alpha/bravo`.
 
-## `${originalAttachmentFileCreationDate}`
+## `{{originalAttachmentFileCreationDate}}`
 
 Original attachment file creation date/time.
 
@@ -344,10 +346,10 @@ Original attachment file creation date/time.
 
 ### Examples
 
-- `${originalAttachmentFileCreationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
-- `${originalAttachmentFileCreationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}`: `(empty)`.
+- `{{originalAttachmentFileCreationDate:{momentJsFormat:'YYYY-MM-DD'}}}`: `2025-12-31`.
+- `{{originalAttachmentFileCreationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}}`: `(empty)`.
 
-## `${originalAttachmentFileExtension}`
+## `{{originalAttachmentFileExtension}}`
 
 Extension of the original attachment file.
 
@@ -361,9 +363,9 @@ Extension of the original attachment file.
 
 ### Examples
 
-- `${originalAttachmentFileExtension}`: `alpha.bravo.pdf -> pdf`.
+- `{{originalAttachmentFileExtension}}`: `alpha.bravo.pdf -> pdf`.
 
-## `${originalAttachmentFileModificationDate}`
+## `{{originalAttachmentFileModificationDate}}`
 
 Original attachment file modification date/time.
 
@@ -384,10 +386,10 @@ Original attachment file modification date/time.
 
 ### Examples
 
-- `${originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD'}}`: `2025-12-31`.
-- `${originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}`: `(empty)`.
+- `{{originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD'}}}`: `2025-12-31`.
+- `{{originalAttachmentFileModificationDate:{momentJsFormat:'YYYY-MM-DD',valueWhenUnknown:'empty'}}}`: `(empty)`.
 
-## `${originalAttachmentFileName}`
+## `{{originalAttachmentFileName}}`
 
 File name of the original attachment file.
 
@@ -411,20 +413,20 @@ File name of the original attachment file.
 
 ### Examples
 
-- `${originalAttachmentFileName}`: `alpha.pdf -> alpha`.
-- `${originalAttachmentFileName:{case:'lower'}}`: `ALPHA.pdf -> alpha`.
-- `${originalAttachmentFileName:{case:'upper'}}`: `alpha.pdf -> ALPHA`.
-- `${originalAttachmentFileName:{slugify:true}}`: `alpha bravo.pdf -> alpha-bravo`.
-- `${originalAttachmentFileName:{trim:{side:'left',length:2}}}`: `alpha.pdf -> al`.
-- `${originalAttachmentFileName:{trim:{side:'right',length:2}}}`: `alpha.pdf -> ha`.
+- `{{originalAttachmentFileName}}`: `alpha.pdf -> alpha`.
+- `{{originalAttachmentFileName:{case:'lower'}}}`: `ALPHA.pdf -> alpha`.
+- `{{originalAttachmentFileName:{case:'upper'}}}`: `alpha.pdf -> ALPHA`.
+- `{{originalAttachmentFileName:{slugify:true}}}`: `alpha bravo.pdf -> alpha-bravo`.
+- `{{originalAttachmentFileName:{trim:{side:'left',length:2}}}}`: `alpha.pdf -> al`.
+- `{{originalAttachmentFileName:{trim:{side:'right',length:2}}}}`: `alpha.pdf -> ha`.
 
-## `${prompt}`
+## `{{prompt}}`
 
 The value asked from the user prompt.
 
-The modal opens with the input already focused and the pre-filled value selected, so you can type the new name straight away — the first keystroke replaces what is there. `defaultValueTemplate` controls what it is pre-filled with; set it to something other than the attachment's own name if you would rather start from `${uuid}`, `${date}`, or anything else.
+The modal opens with the input already focused and the pre-filled value selected, so you can type the new name straight away — the first keystroke replaces what is there. `defaultValueTemplate` controls what it is pre-filled with; set it to something other than the attachment's own name if you would rather start from `{{uuid}}`, `{{date}}`, or anything else.
 
-The heading names what you are deciding: **Rename attachment file** when `${prompt}` sits in the generated file name, **Choose attachment folder** when it sits in the attachment folder path. The second line shows the whole template with the current token highlighted.
+The heading names what you are deciding: **Rename attachment file** when `{{prompt}}` sits in the generated file name, **Choose attachment folder** when it sits in the attachment folder path. The second line shows the whole template with the current token highlighted.
 
 Also in the prompt modal, you can preview the file, if it is supported by Obsidian (image, video, pdf).
 
@@ -434,7 +436,7 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 {
   case?: 'lower' | 'title' | 'upper';
   collapseWhitespace?: boolean; // default: false
-  defaultValueTemplate?: string; // default: ${originalAttachmentFileName}
+  defaultValueTemplate?: string; // default: {{originalAttachmentFileName}}
   slugify?: boolean; // default: false
   trim?: {
     length: number;
@@ -449,18 +451,18 @@ Also in the prompt modal, you can preview the file, if it is supported by Obsidi
 
 ### Examples
 
-- `${prompt}`: `alpha -> alpha`.
-- `${prompt:{case:'lower'}}`: `ALPHA -> alpha`.
-- `${prompt:{case:'title'}}`: `my REPORT about api -> My REPORT About Api` - the first letter of each word, except a word that is already entirely upper case, which is left alone so an acronym survives.
-- `${prompt:{case:'upper'}}`: `alpha -> ALPHA`.
-- `${prompt:{collapseWhitespace:true}}`: `[   alpha    bravo   ] -> [alpha bravo]` (brackets shown only to make the spaces visible) - every run of whitespace becomes one space, and the ends are stripped.
-- `${prompt:{case:'title',collapseWhitespace:true}}`: `[  my   REPORT about  api  ] -> [My REPORT About Api]` - the two compose, which is the whole cleaning together.
-- `${prompt:{defaultValueTemplate:'${uuid}'}}`: shows prompt with default value as generated `${uuid}`.
-- `${prompt:{slugify:true}}`: `alpha bravo -> alpha-bravo`.
-- `${prompt:{trim:{side:'left',length:2}}}`: `alpha -> al`.
-- `${prompt:{trim:{side:'right',length:2}}}`: `alpha -> ha`.
+- `{{prompt}}`: `alpha -> alpha`.
+- `{{prompt:{case:'lower'}}}`: `ALPHA -> alpha`.
+- `{{prompt:{case:'title'}}}`: `my REPORT about api -> My REPORT About Api` - the first letter of each word, except a word that is already entirely upper case, which is left alone so an acronym survives.
+- `{{prompt:{case:'upper'}}}`: `alpha -> ALPHA`.
+- `{{prompt:{collapseWhitespace:true}}}`: `[   alpha    bravo   ] -> [alpha bravo]` (brackets shown only to make the spaces visible) - every run of whitespace becomes one space, and the ends are stripped.
+- `{{prompt:{case:'title',collapseWhitespace:true}}}`: `[  my   REPORT about  api  ] -> [My REPORT About Api]` - the two compose, which is the whole cleaning together.
+- `{{prompt:{defaultValueTemplate:'{{uuid}}'}}}`: shows prompt with default value as generated `{{uuid}}`.
+- `{{prompt:{slugify:true}}}`: `alpha bravo -> alpha-bravo`.
+- `{{prompt:{trim:{side:'left',length:2}}}}`: `alpha -> al`.
+- `{{prompt:{trim:{side:'right',length:2}}}}`: `alpha -> ha`.
 
-## `${random}`
+## `{{random}}`
 
 Random value.
 
@@ -481,13 +483,13 @@ Random value.
 
 ### Examples
 
-- `${random}`: `7`.
-- `${random:{digits:false}}`: `M`.
-- `${random:{length:10}}`: `8JR91VMU9R`.
-- `${random:{letterCase:mixed,length:10}}`: `8Jr91vmU9R`.
-- `${random:{letters:false}}`: `7`.
+- `{{random}}`: `7`.
+- `{{random:{digits:false}}}`: `M`.
+- `{{random:{length:10}}}`: `8JR91VMU9R`.
+- `{{random:{letterCase:mixed,length:10}}}`: `8Jr91vmU9R`.
+- `{{random:{letters:false}}}`: `7`.
 
-## `${sequenceNumber}`
+## `{{sequenceNumber}}`
 
 Sequential number of the first link within the note to the attachment file. Applicable only during note rename and collecting attachments.
 
@@ -507,10 +509,10 @@ When the link cannot be found, the value of the token is `0`.
 
 ### Examples
 
-- `${sequenceNumber}`: `1`.
-- `${sequenceNumber:{length:4}}`: `0001`.
+- `{{sequenceNumber}}`: `1`.
+- `{{sequenceNumber:{length:4}}}`: `0001`.
 
-## `${uuid}`
+## `{{uuid}}`
 
 Random UUID value.
 
@@ -529,8 +531,8 @@ Random UUID value.
 
 ### Examples
 
-- `${uuid}`: `edd5b990-fede-4e02-aa0e-1e9251da2f83`.
-- `${uuid:{case:'upper'}}`: `EDD5B990-FEDE-4E02-AA0E-1E9251DA2F83`.
-- `${uuid:{hyphens:false}}`: `edd5b990fede4e02aa0e1e9251da2f83`.
+- `{{uuid}}`: `edd5b990-fede-4e02-aa0e-1e9251da2f83`.
+- `{{uuid:{case:'upper'}}}`: `EDD5B990-FEDE-4E02-AA0E-1E9251DA2F83`.
+- `{{uuid:{hyphens:false}}}`: `edd5b990fede4e02aa0e1e9251da2f83`.
 
 [Moment.js format]: https://momentjs.com/docs/#/displaying/format/

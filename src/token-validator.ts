@@ -12,7 +12,9 @@ import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { Substitutions } from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 import {
-  parseFormatObject,
+  findLegacyToken,
+  LegacyTokenSyntaxError,
+  parseTokenFormat,
   scanTokens
 } from './token-parser.ts';
 
@@ -25,6 +27,7 @@ export enum TokenValidationMode {
 interface Token {
   end: number;
   formatText: null | string;
+  isScalarFormat: boolean;
   raw: string;
   start: number;
   token: string;
@@ -82,8 +85,8 @@ export class TokenValidator {
     let cleanFileName: string;
     try {
       cleanFileName = removeTokens(params.fileName);
-    } catch {
-      return `Invalid token syntax in file name "${params.fileName}"`;
+    } catch (error) {
+      return error instanceof LegacyTokenSyntaxError ? error.message : `Invalid token syntax in file name "${params.fileName}"`;
     }
 
     if (cleanFileName === '.' || cleanFileName === '..') {
@@ -106,6 +109,11 @@ export class TokenValidator {
   }
 
   public async validatePath(params: TokenValidatorValidatePathParams): Promise<string> {
+    const legacyTokenError = findLegacyToken(params.path);
+    if (legacyTokenError) {
+      return legacyTokenError.message;
+    }
+
     if (params.areTokensAllowed) {
       const unknownToken = await this.validateTokens(params.path);
       if (unknownToken) {
@@ -155,6 +163,11 @@ export class TokenValidator {
       tokenValidator: this
     });
 
+    const legacyTokenError = findLegacyToken($string);
+    if (legacyTokenError) {
+      return legacyTokenError.message;
+    }
+
     const extractedTokens = extractTokens($string);
 
     for (const extractedToken of extractedTokens) {
@@ -165,10 +178,7 @@ export class TokenValidator {
       // Validate the format object is parseable JSON5 (if present).
       if (extractedToken.formatText !== null) {
         try {
-          parseFormatObject({
-            formatText: extractedToken.formatText,
-            tokenName: extractedToken.token
-          });
+          parseTokenFormat(extractedToken);
         } catch (error) {
           return `Invalid format for token '${extractedToken.token}': ${(error as Error).message}`;
         }

@@ -10,7 +10,8 @@ import { TokenBase } from './token-base.ts';
 
 type TokenEvaluator = (context: TokenEvaluatorContext) => Promisable<string>;
 
-const formatSchema = z.looseObject({});
+// A custom token reads `ctx.format` itself, so it takes the scalar shorthand (`{{myToken:text}}`) as well as an object.
+const formatSchema = z.union([z.looseObject({}), z.string()]);
 type Format = z.infer<typeof formatSchema>;
 type RegisterCustomTokenFunction = (token: string, evaluator: TokenEvaluator) => void;
 type RegisterCustomTokensWrapperFunction = (registerCustomToken: RegisterCustomTokenFunction) => void;

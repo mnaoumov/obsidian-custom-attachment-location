@@ -3,7 +3,7 @@
   "name": "Custom Attachment Location",
   "version": "13.0.0",
   "minAppVersion": "1.13.7",
-  "description": "Customize attachment location with variables(${noteFileName}, ${date:format}, etc) like typora.",
+  "description": "Customize attachment location with variables({{noteFileName}}, {{date:format}}, etc) like typora.",
   "author": "mnaoumov (created by RainCat1998)",
   "authorUrl": "https://github.com/mnaoumov/",
   "isDesktopOnly": false,

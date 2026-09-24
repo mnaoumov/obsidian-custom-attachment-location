@@ -196,8 +196,7 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
         }
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './duf-assets/${noteFileName}';
+          settings.attachmentFolderPath = './duf-assets/{{noteFileName}}';
           settings.attachmentUnitFolderPaths = [selfReferencingUnitPath, keptUnitPath];
           holder.apiRef = {
             value: {

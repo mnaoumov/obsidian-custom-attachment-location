@@ -75,7 +75,7 @@ class PreviewModal extends Modal {
     const temporaryPath = `__temp${String(Date.now())}__${fullFileName}`;
     /*
      * Claimed so the externally-created-attachment handler does not treat this scratch file as an
-     * attachment some other plugin just added — which would rename it and, with a `${prompt}`
+     * attachment some other plugin just added — which would rename it and, with a `{{prompt}}`
      * template, open a second prompt on top of this one.
      */
     selfWriteRegistry.register(temporaryPath);
@@ -123,8 +123,8 @@ class PromptWithPreviewModal extends Modal {
   }
 
   /**
-   * The heading (and input placeholder) names what the user is actually deciding. `${prompt}` is not
-   * only a rename token — the same modal appears for a `${prompt}` in the attachment folder template,
+   * The heading (and input placeholder) names what the user is actually deciding. `{{prompt}}` is not
+   * only a rename token — the same modal appears for a `{{prompt}}` in the attachment folder template,
    * where "Rename attachment file" would be plainly wrong (issue #59). Anything that is neither part
    * (e.g. the Markdown URL format) keeps the generic wording.
    */

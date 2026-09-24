@@ -4,14 +4,14 @@
  * {@link ExternallyCreatedAttachmentHandlerComponent} reacts to `vault.on('create')` so it can rename
  * attachments other plugins write straight through `vault.createBinary` (issue #59). That event does not
  * say who wrote the file, and the plugin writes attachments too — so without this registry the plugin
- * would re-process its own saves, which for a `${prompt}` template means a second prompt for every
- * attachment, and for a `${date}`/`${uuid}` template means an endless spurious rename.
+ * would re-process its own saves, which for a `{{prompt}}` template means a second prompt for every
+ * attachment, and for a `{{date}}`/`{{uuid}}` template means an endless spurious rename.
  *
  * "Recompute the path and skip when it already matches" is NOT a substitute: the very tokens that make
  * re-processing harmful are the ones that resolve to something different on every evaluation.
  *
  * Registration is by path rather than by a depth counter around the write, because a write can await
- * for a long time (the `${prompt}` modal waits on the user) and a counter would suppress every
+ * for a long time (the `{{prompt}}` modal waits on the user) and a counter would suppress every
  * genuinely foreign creation happening in that window.
  */
 

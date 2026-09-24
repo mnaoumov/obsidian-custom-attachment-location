@@ -1,7 +1,7 @@
 {
   "name": "obsidian-custom-attachment-location",
   "version": "13.0.0",
-  "description": "Customize attachment location with variables(${noteFileName}, ${date:format}, etc) like typora.",
+  "description": "Customize attachment location with variables({{noteFileName}}, {{date:format}}, etc) like typora.",
   "keywords": [],
   "homepage": "https://github.com/mnaoumov/obsidian-custom-attachment-location#readme",
   "bugs": "https://github.com/mnaoumov/obsidian-custom-attachment-location/issues",

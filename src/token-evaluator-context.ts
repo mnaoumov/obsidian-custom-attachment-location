@@ -72,7 +72,7 @@ export enum ActionContext {
 /**
  * Which template a token is being evaluated in.
  *
- * Tells a token what the value it returns will become, which is what lets `${prompt}` ask a question
+ * Tells a token what the value it returns will become, which is what lets `{{prompt}}` ask a question
  * that matches what the user is actually deciding — a file name, a folder, or neither.
  */
 export enum TemplatePart {
@@ -133,9 +133,10 @@ export interface TokenEvaluatorContext {
   fillTemplate: (template: string) => Promise<string>;
 
   /**
-   * The format of the token.
+   * The format of the token: `null` for none, the text itself for the scalar shorthand (`{{date:YYYY-MM-DD}}`),
+   * and the parsed JSON5 object otherwise.
    */
-  format: null | Record<string, unknown>;
+  format: null | Record<string, unknown> | string;
 
   /**
    * A full template string.

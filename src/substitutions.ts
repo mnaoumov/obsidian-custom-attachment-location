@@ -21,7 +21,7 @@ import {
   TemplatePart
 } from './token-evaluator-context.ts';
 import {
-  parseFormatObject,
+  parseTokenFormat,
   scanTokens
 } from './token-parser.ts';
 import { AttachmentFileSizeToken } from './tokens/attachment-file-size-token.ts';
@@ -194,12 +194,7 @@ export class Substitutions {
         throw new Error(`Unknown token '${scannedToken.token}'.`);
       }
 
-      const format = scannedToken.formatText === null
-        ? null
-        : parseFormatObject({
-          formatText: scannedToken.formatText,
-          tokenName: scannedToken.token
-        });
+      const format = parseTokenFormat(scannedToken);
 
       const context: TokenEvaluatorContext = {
         abortSignal,
@@ -209,7 +204,7 @@ export class Substitutions {
         cursorLine: this.cursorLine,
         /*
          * Bound to the enclosing `templatePart` so a nested fill (a custom token calling
-         * `ctx.fillTemplate`, or `${prompt}` resolving its `defaultValueTemplate`) inherits it. The
+         * `ctx.fillTemplate`, or `{{prompt}}` resolving its `defaultValueTemplate`) inherits it. The
          * exposed signature stays one-argument, as the custom-token API documents it.
          */
         fillTemplate: (nestedTemplate: string) => this.fillTemplate(nestedTemplate, templatePart),

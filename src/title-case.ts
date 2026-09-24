@@ -4,7 +4,7 @@
  * Normalizes a human-typed name: collapses its whitespace and title-cases it while leaving acronyms
  * alone.
  *
- * Requested against `${prompt}` (issue #59), where the value is typed by hand and therefore arrives
+ * Requested against `{{prompt}}` (issue #59), where the value is typed by hand and therefore arrives
  * with whatever spacing and casing the typing produced. Invalid characters are NOT handled here — the
  * plugin already replaces those through the `specialCharacters` / `specialCharactersReplacement`
  * settings, and a second, differently-configured idea of a valid character is exactly the kind of

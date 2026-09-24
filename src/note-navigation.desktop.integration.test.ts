@@ -108,8 +108,7 @@ describe('Navigation between a note and its attachments', () => {
           return emptyResult;
         }
 
-        // eslint-disable-next-line no-template-curly-in-string -- Intentional plugin token, not a JS template literal.
-        settings.attachmentFolderPath = './_/${noteFileName}';
+        settings.attachmentFolderPath = './_/{{noteFileName}}';
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const noteBaseName = `NavNote-${stamp}`;

@@ -236,8 +236,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
         }
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './assets/${noteFileName}';
+          settings.attachmentFolderPath = './assets/{{noteFileName}}';
           settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';
 
           const control = await runPhase([]);

@@ -3,7 +3,7 @@
  *
  * Answers "which note owns this attachment?".
  *
- * The attachment folder path is a template, so it cannot be run backwards: `${prompt}` and `${random}`
+ * The attachment folder path is a template, so it cannot be run backwards: `{{prompt}}` and `{{random}}`
  * throw away the very value the folder name was built from, and nothing stops two notes resolving to
  * the same folder. The only reliable inverse is the link graph, ranked by the note-priority list the
  * user has already configured for exactly this question.

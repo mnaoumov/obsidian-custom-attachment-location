@@ -7,7 +7,7 @@ import {
 } from 'vitest';
 
 /*
- * End-to-end coverage for issue #26: with "Location for new attachments" = `./_/${noteFileName}`, a
+ * End-to-end coverage for issue #26: with "Location for new attachments" = `./_/{{noteFileName}}`, a
  * *dry* `getAvailablePathForAttachments` resolution (Obsidian core / third-party plugins probing where
  * an attachment would land) must NOT eagerly create the empty per-note attachment folder. A real save
  * that goes through the base method (audio recorder, downloaded-image paste, dropped-file import) must
@@ -92,8 +92,7 @@ describe('Empty attachments folder is not created on a dry resolution (issue #26
           };
         }
 
-        // eslint-disable-next-line no-template-curly-in-string -- Intentional plugin token, not a JS template literal.
-        settings.attachmentFolderPath = './_/${noteFileName}';
+        settings.attachmentFolderPath = './_/{{noteFileName}}';
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const noteBaseName = `EmptyFolderNote-${stamp}`;

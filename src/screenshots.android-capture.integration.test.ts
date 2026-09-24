@@ -144,11 +144,9 @@ beforeAll(async () => {
     [`.obsidian/plugins/${PLUGIN_ID}/data.json`]: JSON.stringify({
       // The pattern the plugin's own defaults recommend, spelled out so the
       // Frames match what the settings would show.
-      // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a template literal of this file.
-      attachmentFolderPath: './assets/${noteFileName}',
+      attachmentFolderPath: './assets/{{noteFileName}}',
       attachmentRenameMode: 'All',
-      // eslint-disable-next-line no-template-curly-in-string -- Plugin tokens, not a template literal of this file.
-      generatedAttachmentFileName: '${noteFileName}-${date:{momentJsFormat:\'YYYYMMDD\'}}',
+      generatedAttachmentFileName: '{{noteFileName}}-{{date:{momentJsFormat:\'YYYYMMDD\'}}}',
       shouldHandleRenames: true,
       shouldRenameAttachmentFolder: true
     }),

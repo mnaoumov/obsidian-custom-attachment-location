@@ -25,6 +25,7 @@ import {
   ActionContext,
   TemplatePart
 } from './token-evaluator-context.ts';
+import { LegacyTokenSyntaxError } from './token-parser.ts';
 
 vi.mock('obsidian-dev-utils/error', () => ({
   printError: vi.fn<(error: unknown) => void>()
@@ -44,10 +45,6 @@ interface SubstitutionsOverrides {
 }
 
 const mockPrintError = vi.mocked(printError);
-
-const DOLLAR = '$';
-const OPEN_BRACE = '{';
-const CLOSE_BRACE = '}';
 
 function createApp(activeEditorOverrides?: ActiveEditorOverrides): App {
   const cursor = activeEditorOverrides?.cursor;
@@ -80,7 +77,7 @@ function createSubstitutions(overrides?: SubstitutionsOverrides): Substitutions 
 }
 
 function tk(inner: string): string {
-  return `${DOLLAR}${OPEN_BRACE}${inner}${CLOSE_BRACE}`;
+  return `{{${inner}}}`;
 }
 
 describe('Substitutions', () => {
@@ -202,13 +199,40 @@ describe('Substitutions', () => {
 
     it('should carry the template part into a nested fill', async () => {
       // A token reaching back through `ctx.fillTemplate` must not silently drop to the default —
-      // This is the path `${prompt}` takes when it resolves its own `defaultValueTemplate`.
+      // This is the path `{{prompt}}` takes when it resolves its own `defaultValueTemplate`.
       Substitutions.registerCustomTokens(
         'registerCustomToken("part", (ctx) => ctx.templatePart);'
           + `registerCustomToken("nested", (ctx) => ctx.fillTemplate('${tk('part')}'));`
       );
       expect(await createSubstitutions().fillTemplate(tk('nested'), TemplatePart.FileName)).toBe(TemplatePart.FileName);
     });
+
+    it('should hand a date token the scalar format shorthand as its moment.js format', async () => {
+      expect(await createSubstitutions().fillTemplate(tk('date:[constant]'))).toBe('constant');
+    });
+
+    it('should hand a custom token the scalar format as the text itself', async () => {
+      Substitutions.registerCustomTokens('registerCustomToken("echo", (ctx) => typeof ctx.format + ":" + ctx.format);');
+      expect(await createSubstitutions().fillTemplate(tk('echo:some text'))).toBe('string:some text');
+    });
+
+    it('should reject the scalar format shorthand for a token whose format is an object', async () => {
+      await expect(createSubstitutions().fillTemplate(tk('noteFileName:upper'))).rejects.toThrow();
+    });
+
+    /* eslint-disable no-template-curly-in-string -- The retired `${...}` plugin token syntax, not JS template literals. */
+    it('should fail loudly on a token in the retired syntax instead of leaving it as text', async () => {
+      await expect(createSubstitutions().fillTemplate('./assets/${noteFileName}')).rejects.toThrow(LegacyTokenSyntaxError);
+      await expect(createSubstitutions().fillTemplate('./assets/${noteFileName}')).rejects.toThrow(
+        'Write it as \'{{noteFileName}}\' instead.'
+      );
+    });
+
+    it('should fail loudly on a retired-syntax template a custom token fills', async () => {
+      Substitutions.registerCustomTokens('registerCustomToken("stale", (ctx) => ctx.fillTemplate(\'${noteFileName}\'));');
+      await expect(createSubstitutions().fillTemplate(tk('stale'))).rejects.toThrow(LegacyTokenSyntaxError);
+    });
+    /* eslint-enable no-template-curly-in-string -- The retired `${...}` plugin token syntax, not JS template literals. */
   });
 
   describe('getAttachmentFileContent (via the attachmentFileSize token)', () => {

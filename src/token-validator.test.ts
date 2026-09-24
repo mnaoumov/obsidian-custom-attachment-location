@@ -23,10 +23,6 @@ vi.mock('obsidian-dev-utils/error', () => ({
   printError: vi.fn<(error: unknown) => void>()
 }));
 
-const DOLLAR = '$';
-const OPEN_BRACE = '{';
-const CLOSE_BRACE = '}';
-
 function createTokenValidator(): TokenValidator {
   const app = strictProxy<App>({
     workspace: castTo<App['workspace']>({ activeEditor: null })
@@ -38,7 +34,7 @@ function createTokenValidator(): TokenValidator {
 }
 
 function tk(inner: string): string {
-  return `${DOLLAR}${OPEN_BRACE}${inner}${CLOSE_BRACE}`;
+  return `{{${inner}}}`;
 }
 
 describe('TokenValidator', () => {
@@ -122,6 +118,38 @@ describe('TokenValidator', () => {
       expect(message).toContain('Unknown token \'unknownToken\'');
     });
 
+    it('should accept the scalar date format shorthand in Validate mode', async () => {
+      const message = await createTokenValidator().validateFileName({
+        areSingleDotsAllowed: false,
+        fileName: tk('date:YYYY-MM-DD'),
+        isEmptyAllowed: false,
+        tokenValidationMode: TokenValidationMode.Validate
+      });
+      expect(message).toBe('');
+    });
+
+    it('should name the replacement of a token in the retired syntax in Validate mode', async () => {
+      const message = await createTokenValidator().validateFileName({
+        areSingleDotsAllowed: false,
+        // eslint-disable-next-line no-template-curly-in-string -- The retired plugin token syntax, not a JS template literal.
+        fileName: 'file-${noteFileName}',
+        isEmptyAllowed: false,
+        tokenValidationMode: TokenValidationMode.Validate
+      });
+      expect(message).toContain('Write it as \'{{noteFileName}}\' instead.');
+    });
+
+    it('should name the replacement of a token in the retired syntax in Skip mode', async () => {
+      const message = await createTokenValidator().validateFileName({
+        areSingleDotsAllowed: false,
+        // eslint-disable-next-line no-template-curly-in-string -- The retired plugin token syntax, not a JS template literal.
+        fileName: 'file-${noteFileName}',
+        isEmptyAllowed: false,
+        tokenValidationMode: TokenValidationMode.Skip
+      });
+      expect(message).toContain('Write it as \'{{noteFileName}}\' instead.');
+    });
+
     it('should throw for an invalid validation mode', async () => {
       await expect(
         createTokenValidator().validateFileName({
@@ -136,7 +164,7 @@ describe('TokenValidator', () => {
     it('should return an error when the token syntax is invalid', async () => {
       const message = await createTokenValidator().validateFileName({
         areSingleDotsAllowed: false,
-        fileName: `before${DOLLAR}${OPEN_BRACE}`,
+        fileName: 'before{{',
         isEmptyAllowed: false,
         tokenValidationMode: TokenValidationMode.Skip
       });
@@ -229,6 +257,18 @@ describe('TokenValidator', () => {
         path: tk('unknownToken')
       });
       expect(message).toContain('Unknown token');
+    });
+
+    it('should name the replacement of a token in the retired syntax', async () => {
+      const message = await createTokenValidator().validatePath({
+        areTokensAllowed: true,
+        // eslint-disable-next-line no-template-curly-in-string -- The retired plugin token syntax, not a JS template literal.
+        path: 'folder/${noteFileName}'
+      });
+      expect(message).toBe(
+        // eslint-disable-next-line no-template-curly-in-string -- The retired plugin token syntax, not a JS template literal.
+        'The token \'${noteFileName}\' uses the \'${...}\' syntax, which is no longer supported. Write it as \'{{noteFileName}}\' instead.'
+      );
     });
 
     it('should reject tokens when tokens are not allowed', async () => {

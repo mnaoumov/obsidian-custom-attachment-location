@@ -7,7 +7,7 @@ import {
 } from 'vitest';
 
 /*
- * Issue #65 asks for a paste into an Excalidraw drawing to spawn the `${prompt}` box. This test pins
+ * Issue #65 asks for a paste into an Excalidraw drawing to spawn the `{{prompt}}` box. This test pins
  * the boundary that answers it: `renameAttachmentsCreatedByOtherPluginsMode` -- the opt-in added for
  * issue #59 -- deliberately does NOTHING when the file in front of the user is one the user has listed
  * in `treatAsAttachmentExtensions`, which by default is exactly `.excalidraw.md`.
@@ -236,8 +236,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
         }
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './eco-assets/${noteFileName}';
+          settings.attachmentFolderPath = './eco-assets/{{noteFileName}}';
           // The enum's values ARE the display strings; this code runs inside Obsidian and cannot import them.
           settings.renameAttachmentsCreatedByOtherPluginsMode = 'All';
           holder.apiRef = {

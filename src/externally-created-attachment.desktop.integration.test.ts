@@ -44,7 +44,7 @@ interface RunParams {
   readonly isLinked?: boolean;
   /**
    * Issue #82's shape instead of issue #59's: a note inside a folder, the attachment folder template
-   * `./assets/${noteFileName}`, the vault on RELATIVE Markdown links, and the embed spelled relative to
+   * `./assets/{{noteFileName}}`, the vault on RELATIVE Markdown links, and the embed spelled relative to
    * the note. That spelling holds the vault path nowhere, which is what used to write the folder twice.
    */
   readonly isRelativeLinkScenario: boolean;
@@ -142,8 +142,7 @@ describe('Attachments created by other plugins (issue #59)', () => {
         if (isRelativeLinkScenario) {
           app.vault.setConfig('newLinkFormat', 'relative');
           app.vault.setConfig('useMarkdownLinks', true);
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './assets/${noteFileName}';
+          settings.attachmentFolderPath = './assets/{{noteFileName}}';
           const noteFolder = `notes-${stamp}`;
           const noteBaseName = `Test Note ${stamp}`;
           await app.vault.createFolder(noteFolder);

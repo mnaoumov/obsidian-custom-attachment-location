@@ -6,14 +6,15 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 import {
   formatDate,
-  momentJsFormatSchema
+  momentJsFormatSchema,
+  withMomentJsFormatShorthand
 } from './moment-js-token-base.ts';
 import { TokenBase } from './token-base.ts';
 
-const formatSchema = z.strictObject({
+const formatSchema = withMomentJsFormatShorthand(z.strictObject({
   ...momentJsFormatSchema.shape
-});
-type Format = z.infer<typeof formatSchema>;
+}));
+type Format = z.output<typeof formatSchema>;
 
 export class NoteFileCreationDateToken extends TokenBase<Format> {
   public constructor() {

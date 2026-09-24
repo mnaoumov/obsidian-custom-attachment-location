@@ -81,16 +81,14 @@ function createContext(overrides: StrictProxyPartial<TokenEvaluatorContext>): To
   return strictProxy<TokenEvaluatorContext>({
     app: createApp({}),
     fillTemplate: vi.fn((template: string): Promise<string> => Promise.resolve(template)),
-    // eslint-disable-next-line no-template-curly-in-string -- This is a literal token template string, not a JS template literal.
-    fullTemplate: 'before${token}after',
+    fullTemplate: 'before{{token}}after',
     getAttachmentFileContent: vi.fn((): Promise<ArrayBuffer | undefined> => Promise.resolve(undefined)),
     originalAttachmentFileExtension: 'png',
     originalAttachmentFileName: 'image',
     templatePart: TemplatePart.Other,
     tokenEndOffset: 13,
     tokenStartOffset: 6,
-    // eslint-disable-next-line no-template-curly-in-string -- This is a literal token template string, not a JS template literal.
-    tokenWithFormat: '${token}',
+    tokenWithFormat: '{{token}}',
     ...overrides
   });
 }

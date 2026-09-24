@@ -106,10 +106,8 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
 
           // The control: the same token with no cleaning, so any difference below is the new format
           // And not something else in the pipeline.
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          const untouchedPath = await resolveWith('${originalAttachmentFileName}');
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          const cleanedPath = await resolveWith('${originalAttachmentFileName:{case:\'title\',collapseWhitespace:true}}');
+          const untouchedPath = await resolveWith('{{originalAttachmentFileName}}');
+          const cleanedPath = await resolveWith('{{originalAttachmentFileName:{case:\'title\',collapseWhitespace:true}}}');
 
           return { cleanedPath, settingsFound: true, untouchedPath };
         } finally {

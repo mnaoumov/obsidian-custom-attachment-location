@@ -9,12 +9,12 @@ import {
 /*
  * End-to-end coverage for the defect behind Advanced Note Composer issue #259: a PROGRAMMATIC
  * attachment-path resolution with `AttachmentPathContext.RenameNote` must never run the
- * generated-name template, and so must never open the `${prompt}` modal.
+ * generated-name template, and so must never open the `{{prompt}}` modal.
  *
  * The reporter saw it as "error when splitting recursively" — one `Rename attachment file` dialog per
  * created note, and `Error: Prompt cancelled` on cancel — but nothing about it is specific to that
  * plugin. `renamedAttachmentFileName` ships empty, so the resolver fell back to
- * `generatedAttachmentFileName`, and a `${prompt}` there opened a modal.
+ * `generatedAttachmentFileName`, and a `{{prompt}}` there opened a modal.
  *
  * This drives `vault.getAvailablePathForAttachments.extended` directly, which is exactly the surface
  * dev-utils' `getAttachmentFilePath` reaches and therefore exactly what Advanced Note Composer calls.
@@ -179,7 +179,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
 
         /*
          * These tests share one Obsidian instance with every other integration file, and the settings
-         * object is the live one. Snapshot it and put it back — a leaked `${prompt}` template would
+         * object is the live one. Snapshot it and put it back — a leaked `{{prompt}}` template would
          * block the next test behind a modal nobody answers.
          */
         const originalSettings = {
@@ -197,8 +197,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
 
         // The reporter's configuration, and the shipped defaults for the two rename settings.
         settings.attachmentFolderPath = './@';
-        // eslint-disable-next-line no-template-curly-in-string -- Intentional plugin token, not a JS template literal.
-        settings.generatedAttachmentFileName = '${prompt}';
+        settings.generatedAttachmentFileName = '{{prompt}}';
         settings.renamedAttachmentFileName = '';
 
         /*
@@ -207,7 +206,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
          *
          * The selector is deliberately unscoped: any prompt modal on screen during this callback is
          * this test's, because the shared config sets `fileParallelism: false`, so no other integration
-         * file — `prompt-input-focus`, which drives its own `${prompt}` modal, included — can be
+         * file — `prompt-input-focus`, which drives its own `{{prompt}}` modal, included — can be
          * mid-flight here. The interval is cleared before the callback returns.
          */
         let wasPromptShown = false;
@@ -275,7 +274,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
 
     expect(result.probesFound).toBe(true);
     expect(result.errors).toEqual([]);
-    // The `${prompt}` modal is what the reporter saw once per created note. It must never open here.
+    // The `{{prompt}}` modal is what the reporter saw once per created note. It must never open here.
     expect(result.wasPromptShown).toBe(false);
     // The attachment keeps its name; only the folder follows the note.
     expect(result.pathWithRenamingOff).toMatch(/^t643-[\d-]+\/@\/pic-[\d-]+\.png$/);

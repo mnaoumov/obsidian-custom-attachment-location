@@ -3,7 +3,7 @@
 Besides the folder, the plugin also controls the **file name** given to a new attachment. This vault ships with the plugin's default naming setting (`generatedAttachmentFileName`):
 
 ```text
-file-${date:{momentJsFormat:'YYYYMMDDHHmmssSSS'}}
+file-{{date:{momentJsFormat:'YYYYMMDDHHmmssSSS'}}}
 ```
 
 So a pasted image is saved as something like `file-20251231093015123.png` instead of Obsidian's default `Pasted image 20251231093015`.
@@ -17,27 +17,27 @@ So a pasted image is saved as something like `file-20251231093015123.png` instea
 
 Open **Settings -> Community plugins -> Custom Attachment Location** and edit **Generated attachment file name**. A few ideas:
 
-- `${noteFileName}-${date:{momentJsFormat:'YYYYMMDD'}}`
+- `{{noteFileName}}-{{date:{momentJsFormat:'YYYYMMDD'}}}`
   - name after the note plus the date.
-- `${originalAttachmentFileName}`
+- `{{originalAttachmentFileName}}`
   - keep the file's original name (handy for dragged files).
-- `${prompt}`
+- `{{prompt}}`
   - ask you for a name each time, with a live preview of the file.
 
-The first two are buttons; `${prompt}` is left to set by hand, since it interrupts every paste until you change it back:
+The first two are buttons; `{{prompt}}` is left to set by hand, since it interrupts every paste until you change it back:
 
 ```code-button
 ---
 caption: Name after the note plus the date
 ---
-await require('/demoSetup.ts').changeSettings(app, { generatedAttachmentFileName: '${noteFileName}-${date:{momentJsFormat:\'YYYYMMDD\'}}' });
+await require('/demoSetup.ts').changeSettings(app, { generatedAttachmentFileName: '{{noteFileName}}-{{date:{momentJsFormat:\'YYYYMMDD\'}}}' });
 ```
 
 ```code-button
 ---
 caption: Keep the original file name
 ---
-await require('/demoSetup.ts').changeSettings(app, { generatedAttachmentFileName: '${originalAttachmentFileName}' });
+await require('/demoSetup.ts').changeSettings(app, { generatedAttachmentFileName: '{{originalAttachmentFileName}}' });
 ```
 
 ```code-button
