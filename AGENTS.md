@@ -19,7 +19,7 @@ Consequences for anyone touching the tests:
 - `canExecuteAbstractFile(abstractFile)` is the per-file predicate. The **command palette** reaches it through `canExecute()` (`shouldAddToCommandPalette() && !!activeFile && this.canExecuteAbstractFile(activeFile)`), the **single-file menu** calls it directly, and the base's `canExecuteAbstractFiles` composes it over every entry.
 - `canExecuteAbstractFiles(abstractFiles)` is reached by the **multi-select menu alone**.
 
-So a handler that overrides only the second, leaving the first at its base `return true`, gates one surface out of three — and the other two offer a command that then walks its own filter and does nothing. All three of this repo's gated handlers were that shape until the issue #151 work, and it was caught only because `excalidraw-source-note-skip.desktop.integration.test.ts` asks `checkCallback(true)` — the same availability question Obsidian asks before listing a command. Every unit test passed while the palette was still offering it, because the unit tests called the override.
+So a handler that overrides only the second, leaving the first at its base `return true`, gates one surface out of three — and the other two offer a command that then walks its own filter and does nothing. All three of this repo's gated handlers were that shape until the drawing-skip work, and it was caught only because `excalidraw-source-note-skip.desktop.integration.test.ts` asks `checkCallback(true)` — the same availability question Obsidian asks before listing a command. Every unit test passed while the palette was still offering it, because the unit tests called the override.
 
 Two consequences for anyone adding or changing one:
 

@@ -325,8 +325,7 @@ export class Plugin extends PluginBase {
     // Surface: with the dependency gone they would stay in the palette, calling into torn-down components.
     const commandHandlersDisposable = await this.commandHandlerComponent.registerCommandHandlers(() => [
       new CollectAttachmentsInFileCommandHandler({
-        attachmentCollector,
-        pluginSettingsComponent
+        attachmentCollector
       }),
       new DeleteUnusedAttachmentsInFileCommandHandler({
         pluginSettingsComponent,
