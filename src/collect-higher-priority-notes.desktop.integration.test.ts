@@ -192,8 +192,7 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
         const drawingPath = `${drawingStem}.excalidraw.md`;
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './assets/${noteFileName}';
+          settings.attachmentFolderPath = './assets/{{noteFileName}}';
           // Never reached on the winner path; set to the quietest mode so a regression fails on the
           // Missing notice rather than hanging on a dialog.
           settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';

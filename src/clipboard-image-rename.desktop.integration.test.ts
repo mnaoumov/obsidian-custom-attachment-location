@@ -118,8 +118,7 @@ describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issu
 
         settings.attachmentRenameMode = 'Only pasted images';
         settings.attachmentFolderPath = './';
-        // eslint-disable-next-line no-template-curly-in-string -- Intentional plugin token, not a JS template literal.
-        settings.generatedAttachmentFileName = 'pasted-${date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}';
+        settings.generatedAttachmentFileName = 'pasted-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}';
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const note = await app.vault.create(`clip-note-${stamp}.md`, '');

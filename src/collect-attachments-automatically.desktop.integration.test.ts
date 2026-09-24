@@ -136,7 +136,7 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
       }
 
       try {
-        settings.attachmentFolderPath = `${attachmentFolderRoot}/\${noteFileName}`;
+        settings.attachmentFolderPath = `${attachmentFolderRoot}/{{noteFileName}}`;
         settings.collectedAttachmentFolderPath = '';
         settings.shouldCollectAttachmentsAutomatically = false;
 

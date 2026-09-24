@@ -62,7 +62,7 @@ export class GoToAttachmentFolderCommandHandler extends FileCommandHandler {
 
   protected override async executeFile(file: TFile): Promise<void> {
     /*
-     * `DUMMY_PATH` is what keeps `${prompt}` from opening a modal — navigating to a folder must never
+     * `DUMMY_PATH` is what keeps `{{prompt}}` from opening a modal — navigating to a folder must never
      * ask the user to name an attachment that is not being saved.
      */
     const attachmentFolderPath = await this.attachmentPathManager.getAttachmentFolderFullPathForPath({
@@ -73,7 +73,7 @@ export class GoToAttachmentFolderCommandHandler extends FileCommandHandler {
 
     /*
      * A dummy that survived into the resolved path means the folder genuinely varies per attachment
-     * (`${prompt}` or `${originalAttachmentFileName}` in the folder template), so this note has no one
+     * (`{{prompt}}` or `{{originalAttachmentFileName}}` in the folder template), so this note has no one
      * folder to go to.
      */
     if (attachmentFolderPath.includes(DUMMY_PATH)) {

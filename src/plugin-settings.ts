@@ -12,7 +12,7 @@ export const SAMPLE_CUSTOM_TOKENS = String.raw`registerCustomToken('foo', (ctx) 
 registerCustomToken('bar', async (ctx) => {
   await sleep(100);
   const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
-  const filledTemplate = await ctx.fillTemplate('qux \${quux} corge \${grault:{garply:\'waldo\'}} fred');
+  const filledTemplate = await ctx.fillTemplate('qux {{quux}} corge {{grault:{garply:\'waldo\'}}} fred');
   return ctx.noteFileName + ctx.app.appId + formatValue + ctx.obsidian.apiVersion + filledTemplate;
 });`;
 
@@ -59,7 +59,7 @@ export enum MoveAttachmentToProperFolderUsedByMultipleNotesMode {
  * there forever. This mode adds a second, attachment-driven pass for exactly that case.
  *
  * The scope has to be NAMED rather than derived. `attachmentFolderPath` is a per-note template and cannot be
- * run backwards — `${prompt}` and `${random}` throw away the very value the folder name was built from, and
+ * run backwards — `{{prompt}}` and `{{random}}` throw away the very value the folder name was built from, and
  * two notes can resolve to one folder — so there is no vault-wide attachment root to enumerate. See the file
  * comment of `note-owner-resolver.ts`, which settles the same point for the other direction.
  *
@@ -89,8 +89,7 @@ export enum RenameAttachmentsCreatedByOtherPluginsMode {
 }
 
 export class PluginSettings {
-  // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-  public attachmentFolderPath = './assets/${noteFileName}';
+  public attachmentFolderPath = './assets/{{noteFileName}}';
   public attachmentRenameMode: AttachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
   public collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
   public collectedAttachmentFileName = '';
@@ -101,7 +100,7 @@ export class PluginSettings {
    * The folder twin of {@link collectedAttachmentFileName}, and empty means the same thing there as here:
    * fall back to the setting that governs new attachments, so a user who never opens this sees the behavior
    * they always had. The two destinations are decoupled for the export workflow issue #78 describes — a
-   * shared `_Attachments` folder while a note is being worked on, and a portable `./${noteFileName}.assets`
+   * shared `_Attachments` folder while a note is being worked on, and a portable `./{{noteFileName}}.assets`
    * beside the note once it is collected for export — which until now needed the one setting flipped before
    * each export and flipped back afterwards.
    *
@@ -137,8 +136,7 @@ export class PluginSettings {
    */
   public excludeExtensionsFromMultipleNotesCheck: string[] = [];
 
-  // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-  public generatedAttachmentFileName = 'file-${date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}';
+  public generatedAttachmentFileName = 'file-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}';
 
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public jpegQuality = 0.8;
@@ -194,7 +192,7 @@ export class PluginSettings {
    * it does over the template.
    *
    * On by default since 13.0.0, so a fresh install changes nothing about where attachments land until the user
-   * picks a pattern. The template default stays `./assets/${noteFileName}`, the default of every earlier
+   * picks a pattern. The template default stays `./assets/{{noteFileName}}`, the default of every earlier
    * release, so a user whose attachments moved on the upgrade switches this off and has the old behavior back.
    */
   public shouldFollowObsidianAttachmentLocation = true;

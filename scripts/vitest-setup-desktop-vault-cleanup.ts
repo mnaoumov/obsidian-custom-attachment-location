@@ -100,7 +100,7 @@ interface OperationQueueState {
  *   ("Delete unused attachments in entire vault", "Collect attachments", the link-update progress
  *   reporter) scales with that size.
  * - Plugin settings. Each file writes straight onto the live settings object, so a later file inherits
- *   whatever the ~30 before it left — an attachment path carrying a `${prompt}` token, a rescue toggle,
+ *   whatever the ~30 before it left — an attachment path carrying a `{{prompt}}` token, a rescue toggle,
  *   a note-priority list.
  *
  * Third, and the one that actually caused failures rather than merely risking them: obsidian-dev-utils'

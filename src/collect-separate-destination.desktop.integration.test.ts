@@ -22,8 +22,7 @@ import {
 
 const PLUGIN_ID = 'obsidian-custom-attachment-location';
 const NEW_ATTACHMENT_FOLDER_PATH = '_Attachments';
-// eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-const COLLECTED_ATTACHMENT_FOLDER_PATH = './${noteFileName}.assets';
+const COLLECTED_ATTACHMENT_FOLDER_PATH = './{{noteFileName}}.assets';
 /*
  * Under the transport's ~30s per-closure cap, not at it.
  * The closure spends this ceiling twice per phase and runs two phases, so at 10_000 it declared 40s.

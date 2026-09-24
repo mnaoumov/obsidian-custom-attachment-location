@@ -69,7 +69,7 @@ import { PLUGIN_API_CONTRACT } from './plugin-api.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { TokenValidator } from './token-validator.ts';
-import { TokenizedStringLanguageComponent } from './tokenized-string-language-component.ts';
+import { createTokenizedStringLanguageComponent } from './tokenized-string-language.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 // --- Hoisted shared state ---
@@ -226,11 +226,8 @@ vi.mock('./plugin-settings-tab.ts', () => ({
   PluginSettingsTab: vi.fn()
 }));
 
-vi.mock('./tokenized-string-language-component.ts', () => ({
-  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
-  TokenizedStringLanguageComponent: vi.fn(function tokenizedStringLanguageComponentStub() {
-    return new Component();
-  })
+vi.mock('./tokenized-string-language.ts', () => ({
+  createTokenizedStringLanguageComponent: vi.fn(() => new Component())
 }));
 
 vi.mock('./token-validator.ts', () => ({
@@ -410,7 +407,7 @@ describe('Plugin', () => {
       expect.any(OpenDemoVaultCommandHandler)
     ]);
     expect(AppSaveAttachmentPatchComponent).toHaveBeenCalledOnce();
-    expect(TokenizedStringLanguageComponent).toHaveBeenCalledOnce();
+    expect(createTokenizedStringLanguageComponent).toHaveBeenCalledOnce();
   });
 
   describe('Consistent Attachments and Links overlap', () => {

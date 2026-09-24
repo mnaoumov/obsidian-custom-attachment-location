@@ -186,7 +186,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
         }
 
         try {
-          settings.attachmentFolderPath = `./${rootFolder}/\${noteFileName}`;
+          settings.attachmentFolderPath = `./${rootFolder}/{{noteFileName}}`;
           settings.orphanAttachmentScanMode = noneMode;
           settings.orphanAttachmentScanPaths = [];
 

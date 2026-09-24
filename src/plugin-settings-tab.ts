@@ -37,7 +37,7 @@ import {
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
 import { Substitutions } from './substitutions.ts';
-import { TOKENIZED_STRING_LANGUAGE } from './tokenized-string-language-component.ts';
+import { TOKENIZED_STRING_LANGUAGE } from './tokenized-string-language.ts';
 
 const VISIBLE_SPACE_CHARACTER = '␣';
 const JPEG_QUALITY_PRECISION = 2;

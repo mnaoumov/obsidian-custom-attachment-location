@@ -5,11 +5,13 @@ import {
   expect,
   it
 } from 'vitest';
+import { z } from 'zod';
 
 import {
   formatDate,
   formatNow,
-  momentJsFormatSchema
+  momentJsFormatSchema,
+  withMomentJsFormatShorthand
 } from './moment-js-token-base.ts';
 
 const moment = extractDefaultExportInterop(moment_);
@@ -24,6 +26,25 @@ describe('momentJsFormatSchema', () => {
 
   it('should reject a missing momentJsFormat', () => {
     expect(() => momentJsFormatSchema.parse({})).toThrow();
+  });
+});
+
+describe('withMomentJsFormatShorthand', () => {
+  const schema = withMomentJsFormatShorthand(z.strictObject({
+    ...momentJsFormatSchema.shape,
+    valueWhenUnknown: z.enum(['empty', 'now']).optional().default('empty')
+  }));
+
+  it('should take a bare string as the moment.js format, keeping the other defaults', () => {
+    expect(schema.parse('YYYY-MM-DD')).toStrictEqual({ momentJsFormat: 'YYYY-MM-DD', valueWhenUnknown: 'empty' });
+  });
+
+  it('should still take the object form', () => {
+    expect(schema.parse({ momentJsFormat: 'YYYY', valueWhenUnknown: 'now' })).toStrictEqual({ momentJsFormat: 'YYYY', valueWhenUnknown: 'now' });
+  });
+
+  it('should still reject a missing moment.js format', () => {
+    expect(() => schema.parse({})).toThrow();
   });
 });
 

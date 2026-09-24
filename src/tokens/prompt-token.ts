@@ -13,8 +13,7 @@ import { TokenBase } from './token-base.ts';
 
 const formatSchema = z.strictObject({
   ...stringFormatSchema.shape,
-  // eslint-disable-next-line no-template-curly-in-string -- Valid token.
-  defaultValueTemplate: z.string().optional().default('${originalAttachmentFileName}')
+  defaultValueTemplate: z.string().optional().default('{{originalAttachmentFileName}}')
 });
 type Format = z.infer<typeof formatSchema>;
 

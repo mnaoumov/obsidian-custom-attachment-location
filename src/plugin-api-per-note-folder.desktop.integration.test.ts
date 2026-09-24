@@ -26,8 +26,7 @@ import {
  */
 
 const PLUGIN_ID = 'obsidian-custom-attachment-location';
-// eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-const ATTACHMENT_FOLDER_PATH = './_/${noteFileName}';
+const ATTACHMENT_FOLDER_PATH = './_/{{noteFileName}}';
 /*
  * Under the transport's ~30s per-closure cap, not at it. The closure spends this ceiling twice — once for the
  * file-open field to be filled, once for the staged embed to be indexed — and every step is a write into a

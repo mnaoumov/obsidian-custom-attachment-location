@@ -25,7 +25,7 @@ interface OperationQueueWrapper {
 }
 
 /*
- * End-to-end coverage for the first and third halves of issue #59: the `${prompt}` modal must
+ * End-to-end coverage for the first and third halves of issue #59: the `{{prompt}}` modal must
  * open with its input already focused and its default value pre-selected, so typing replaces the name
  * without a click first — and its heading must say what is actually being decided.
  *
@@ -162,7 +162,7 @@ describe('The prompt token modal (issue #59)', () => {
 
         /*
          * These tests share one Obsidian instance with every other integration file, and the settings
-         * object is the live one. Snapshot it and put it back — a leaked `${prompt}` template would
+         * object is the live one. Snapshot it and put it back — a leaked `{{prompt}}` template would
          * block the next test behind a modal nobody answers.
          */
         const originalSettings = {
@@ -179,8 +179,7 @@ describe('The prompt token modal (issue #59)', () => {
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         settings.attachmentRenameMode = 'All';
         settings.attachmentFolderPath = './';
-        // eslint-disable-next-line no-template-curly-in-string -- Intentional plugin token, not a JS template literal.
-        settings.generatedAttachmentFileName = '${prompt}';
+        settings.generatedAttachmentFileName = '{{prompt}}';
 
         const note = await app.vault.create(`prompt-note-${stamp}.md`, '');
         const leaf = app.workspace.getLeaf(false);
@@ -206,7 +205,7 @@ describe('The prompt token modal (issue #59)', () => {
 
         const originalBaseName = `original-${stamp}`;
         /*
-         * `saveAttachment` is the sink the plugin patches; it reaches the same `${prompt}` evaluation
+         * `saveAttachment` is the sink the plugin patches; it reaches the same `{{prompt}}` evaluation
          * a real paste does, without needing a synthetic clipboard event.
          */
         const savePromise = app.saveAttachment(originalBaseName, 'png', new ArrayBuffer(8));

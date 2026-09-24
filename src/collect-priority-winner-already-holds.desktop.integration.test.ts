@@ -203,8 +203,7 @@ describe('An unambiguous collect stays quiet when the winning note already holds
         const collectedLooseImagePath = `${attachmentFolderPath}/wh-loose-${stamp}.png`;
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './assets/${noteFileName}';
+          settings.attachmentFolderPath = './assets/{{noteFileName}}';
           settings.collectAttachmentUsedByMultipleNotesMode = 'Cancel';
           // The names must survive the collect, or `already in place` would never be true.
           settings.shouldRenameCollectedAttachments = false;

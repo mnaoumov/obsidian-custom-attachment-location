@@ -139,7 +139,7 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
     if (
       /*
        * The plugin's own writes claim their path before writing it. Consuming the claim here is what
-       * stops a `${prompt}` template prompting a second time for every attachment the plugin saves.
+       * stops a `{{prompt}}` template prompting a second time for every attachment the plugin saves.
        */
       selfWriteRegistry.consume(attachmentFile.path)
       || this.pluginSettingsComponent.isNoteEx(attachmentFile)

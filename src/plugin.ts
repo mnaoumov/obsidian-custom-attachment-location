@@ -62,7 +62,7 @@ import {
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { TokenValidator } from './token-validator.ts';
-import { TokenizedStringLanguageComponent } from './tokenized-string-language-component.ts';
+import { createTokenizedStringLanguageComponent } from './tokenized-string-language.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 export class Plugin extends PluginBase {
@@ -387,6 +387,6 @@ export class Plugin extends PluginBase {
       })
     );
 
-    this.addChild(new TokenizedStringLanguageComponent());
+    this.addChild(createTokenizedStringLanguageComponent());
   }
 }

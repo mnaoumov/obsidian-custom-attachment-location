@@ -134,8 +134,7 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
         }
 
         try {
-          // eslint-disable-next-line no-template-curly-in-string -- A plugin token, not a JS template literal.
-          settings.attachmentFolderPath = './duv-assets/${noteFileName}';
+          settings.attachmentFolderPath = './duv-assets/{{noteFileName}}';
 
           await app.vault.createFolder('duv-assets');
           await app.vault.createFolder(farFolder);
