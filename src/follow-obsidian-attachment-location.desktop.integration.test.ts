@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for the mode that follows Obsidian's own *Default location for new attachments*.
  *
@@ -54,17 +56,19 @@ interface ProbeResult {
 describe('Follow Obsidian attachment location', () => {
   it('places, collects and relabels exactly as Obsidian would', async () => {
     const result = await evalInObsidian({
-      async callback({ app, lib: { waitUntil }, pluginId, settleTimeoutInMilliseconds, waitTimeoutInMilliseconds }): Promise<ProbeResult> {
+      async callback({
+        app,
+        findPluginSettingsComponent: findSettingsComponent,
+        lib: { waitUntil },
+        pluginId,
+        settleTimeoutInMilliseconds,
+        waitTimeoutInMilliseconds
+      }): Promise<ProbeResult> {
         interface FollowSettings {
           attachmentFolderPath: string;
           collectedAttachmentFolderPath: string;
           shouldFollowObsidianAttachmentLocation: boolean;
           shouldRenameCollectedAttachments: boolean;
-        }
-
-        interface FollowSettingsComponent {
-          editAndSave: (settingsEditor: (settings: FollowSettings) => void) => Promise<void>;
-          readonly settings: FollowSettings;
         }
 
         type CollectAttachmentsInAbstractFilesFunction = (this: unknown, abstractFiles: unknown[]) => void;
@@ -80,50 +84,13 @@ describe('Follow Obsidian attachment location', () => {
 
         const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
 
-        /*
-         * The settings component is not exposed publicly, so it is located by walking the plugin's component tree
-         * — the same walk the collect-destination suite uses. Edits go through its `editAndSave` rather than onto
-         * the settings object: Obsidian renders its own settings tab from definitions cached when the tab was last
-         * updated, and it is the save event that refreshes them, exactly as a user toggling the setting would.
-         */
-        function findSettingsComponent(): FollowSettingsComponent | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [pluginRecord];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isFollowSettings(record['settings']) && typeof record['editAndSave'] === 'function') {
-              return current as FollowSettingsComponent;
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
         const emptySnapshot: CoreTabSnapshot = { activeTabIdAfterButtonClick: null, rows: [] };
-        const foundSettingsComponent = findSettingsComponent();
+        /*
+         * Edits go through the settings component's `editAndSave` rather than onto the settings object: Obsidian
+         * renders its own settings tab from definitions cached when the tab was last updated, and it is the save
+         * event that refreshes them, exactly as a user toggling the setting would.
+         */
+        const foundSettingsComponent = findSettingsComponent(pluginRecord, isFollowSettings);
         const foundCollect = pluginRecord?.['collectAttachmentsInAbstractFiles'];
         if (!foundSettingsComponent || typeof foundCollect !== 'function') {
           return {
@@ -136,7 +103,8 @@ describe('Follow Obsidian attachment location', () => {
             probesFound: false
           };
         }
-        const settingsComponent: FollowSettingsComponent = foundSettingsComponent;
+        // A narrowed `const` does not stay narrowed inside a function declaration below it.
+        const settingsComponent = foundSettingsComponent;
 
         async function editSettings(changes: Partial<FollowSettings>): Promise<void> {
           await settingsComponent.editAndSave((settings) => {
@@ -276,6 +244,7 @@ describe('Follow Obsidian attachment location', () => {
         }
       },
       input: {
+        findPluginSettingsComponent,
         pluginId: PLUGIN_ID,
         settleTimeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS,
         waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS

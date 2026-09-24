@@ -11,6 +11,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #50: a network image downloaded by "Collect attachments in current file"
  * must be linked through Obsidian's own link generator, exactly like a pasted attachment, so it honors
@@ -64,6 +66,7 @@ describe('Network image link format (issue #50)', () => {
     const result = await evalInObsidian({
       async callback({
         app,
+        findPluginSettingsComponent: findSettingsComponent,
         imageUrl: url,
         lib: { waitUntil }
       }): Promise<ProbeResult> {
@@ -80,58 +83,26 @@ describe('Network image link format (issue #50)', () => {
           return typeof record['downloadNetworkImages'] === 'boolean' && typeof record['attachmentFolderPath'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object by walking its component tree.
-        function findSettings(): NetworkImageSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isNetworkImageSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(
+          app.plugins.getPlugin('obsidian-custom-attachment-location'),
+          isNetworkImageSettings
+        );
+        if (!settingsComponent) {
           return { content: '', downloadedPaths: [], settingsFound: false };
         }
 
         // The temp vault is shared by every suite in this project, so each mutated setting has to be put back
         // afterwards - otherwise this test silently reconfigures link generation for the tests that follow.
-        const didDownloadNetworkImages = settings.downloadNetworkImages;
-        const originalAttachmentFolderPath = settings.attachmentFolderPath;
+        const didDownloadNetworkImages = settingsComponent.settings.downloadNetworkImages;
+        const originalAttachmentFolderPath = settingsComponent.settings.attachmentFolderPath;
         const originalUseMarkdownLinks = app.vault.getConfig('useMarkdownLinks');
         const originalNewLinkFormat = app.vault.getConfig('newLinkFormat');
 
         try {
-          settings.downloadNetworkImages = true;
-          settings.attachmentFolderPath = './assets';
+          await settingsComponent.editAndSave((settings) => {
+            settings.downloadNetworkImages = true;
+            settings.attachmentFolderPath = './assets';
+          });
 
           // The exact configuration from the report: markdown links, relative to the note.
           app.vault.setConfig('useMarkdownLinks', true);
@@ -179,13 +150,15 @@ describe('Network image link format (issue #50)', () => {
 
           return { content, downloadedPaths, settingsFound: true };
         } finally {
-          settings.downloadNetworkImages = didDownloadNetworkImages;
-          settings.attachmentFolderPath = originalAttachmentFolderPath;
+          await settingsComponent.editAndSave((settings) => {
+            settings.downloadNetworkImages = didDownloadNetworkImages;
+            settings.attachmentFolderPath = originalAttachmentFolderPath;
+          });
           app.vault.setConfig('useMarkdownLinks', originalUseMarkdownLinks);
           app.vault.setConfig('newLinkFormat', originalNewLinkFormat);
         }
       },
-      input: { imageUrl },
+      input: { findPluginSettingsComponent, imageUrl },
       vaultPath: getTemporaryVault().path
     });
 

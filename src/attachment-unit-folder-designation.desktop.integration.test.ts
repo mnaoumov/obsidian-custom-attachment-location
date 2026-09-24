@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for the attachment-unit-folder designation this plugin publishes on the
  * patched `Vault.getAvailablePathForAttachments`, beside `extended`.
@@ -34,13 +36,13 @@ interface ProbeResult {
 describe('The attachment unit folder designation is published on the vault', () => {
   it('answers for a designated folder and for a plain one', async () => {
     const result = await evalInObsidian({
-      // Reading a published member needs no `await`; the callback may answer synchronously.
-      callback({
+      async callback({
         app,
         designatedFolderPath,
+        findPluginSettingsComponent: findSettingsComponent,
         plainFolderPath,
         pluginId
-      }): ProbeResult {
+      }): Promise<ProbeResult> {
         interface UnitFolderSettings {
           attachmentUnitFolderPaths: string[];
           isAttachmentUnitFolder: (path: string) => boolean;
@@ -51,46 +53,8 @@ describe('The attachment unit folder designation is published on the vault', () 
             && typeof (value as Record<string, unknown>)['isAttachmentUnitFolder'] === 'function';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the patch component reads) by walking the plugin's component tree.
-        function findSettings(): null | UnitFolderSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isUnitFolderSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin(pluginId), isUnitFolderSettings);
+        if (!settingsComponent) {
           return {
             isDesignatedFolderReported: false,
             isDesignationPublished: false,
@@ -99,9 +63,11 @@ describe('The attachment unit folder designation is published on the vault', () 
           };
         }
 
-        const priorUnitFolderPaths = settings.attachmentUnitFolderPaths;
+        const priorUnitFolderPaths = settingsComponent.settings.attachmentUnitFolderPaths;
         try {
-          settings.attachmentUnitFolderPaths = [designatedFolderPath];
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentUnitFolderPaths = [designatedFolderPath];
+          });
 
           /*
            * Read it the way a foreign plugin does: off `app.vault` alone, with no access to this
@@ -125,11 +91,14 @@ describe('The attachment unit folder designation is published on the vault', () 
               settingsFound: true
             };
         } finally {
-          settings.attachmentUnitFolderPaths = priorUnitFolderPaths;
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentUnitFolderPaths = priorUnitFolderPaths;
+          });
         }
       },
       input: {
         designatedFolderPath: DESIGNATED_FOLDER_PATH,
+        findPluginSettingsComponent,
         plainFolderPath: PLAIN_FOLDER_PATH,
         pluginId: PLUGIN_ID
       },

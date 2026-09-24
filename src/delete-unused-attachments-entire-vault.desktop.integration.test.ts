@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #64: `Delete unused attachments` over the WHOLE vault, not just
  * the current note.
@@ -48,6 +50,7 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
       async callback({
         app,
         deleteCommandId,
+        findPluginSettingsComponent: findSettingsComponent,
         lib: { waitUntil },
         pluginId,
         waitTimeoutInMilliseconds
@@ -63,50 +66,11 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object by
-        // walking the plugin's component tree.
-        function findSettings(): null | RemoverSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isRemoverSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const foundSettings = findSettings();
-        if (!foundSettings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin(pluginId), isRemoverSettings);
+        if (!settingsComponent) {
           return { confirmText: '', isKeptAlive: false, isOrphanGone: false, settingsFound: false };
         }
-        const settings: RemoverSettings = foundSettings;
-        const priorFolderPath = settings.attachmentFolderPath;
+        const priorFolderPath = settingsComponent.settings.attachmentFolderPath;
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const farNotePath = `duv-far-${stamp}.md`;
@@ -134,7 +98,9 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
         }
 
         try {
-          settings.attachmentFolderPath = './duv-assets/{{noteFileName}}';
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = './duv-assets/{{noteFileName}}';
+          });
 
           await app.vault.createFolder('duv-assets');
           await app.vault.createFolder(farFolder);
@@ -187,7 +153,9 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
             settingsFound: true
           };
         } finally {
-          settings.attachmentFolderPath = priorFolderPath;
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = priorFolderPath;
+          });
           for (const path of createdPaths) {
             await trashIfExists(path);
           }
@@ -197,6 +165,7 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
       },
       input: {
         deleteCommandId: DELETE_COMMAND_ID,
+        findPluginSettingsComponent,
         pluginId: PLUGIN_ID,
         waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS
       },

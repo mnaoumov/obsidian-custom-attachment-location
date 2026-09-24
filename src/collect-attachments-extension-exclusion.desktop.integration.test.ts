@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #80: `excludeExtensionsFromMultipleNotesCheck` must make the
  * "Collect attachments in current note" command skip the multiple-notes check entirely for attachments
@@ -40,7 +42,7 @@ interface ProbeResult {
 describe('Collect attachments — exclude attachment extensions from the multiple-notes check (issue #80)', () => {
   it('collects a listed file type although several notes reference it', async () => {
     const result = await evalInObsidian({
-      async callback({ app }): Promise<ProbeResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ProbeResult> {
         interface MultipleNotesSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
           excludeExtensionsFromMultipleNotesCheck: string[];
@@ -52,48 +54,10 @@ describe('Collect attachments — exclude attachment extensions from the multipl
             && typeof (value as Record<string, unknown>)['isExtensionExcludedFromMultipleNotesCheck'] === 'function';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): MultipleNotesSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isMultipleNotesSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
         const emptyPhase: PhaseResult = { backlinkCount: -1, movedOut: false, newPaths: [] };
 
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isMultipleNotesSettings);
+        if (!settingsComponent) {
           return {
             control: emptyPhase,
             fix: emptyPhase,
@@ -102,7 +66,13 @@ describe('Collect attachments — exclude attachment extensions from the multipl
           };
         }
 
-        settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';
+        // A narrowed `const` does not stay narrowed inside a function declaration below it.
+        const component = settingsComponent;
+        const priorMode = component.settings.collectAttachmentUsedByMultipleNotesMode;
+        const priorExcludeExtensions = [...component.settings.excludeExtensionsFromMultipleNotesCheck];
+        await component.editAndSave((settings) => {
+          settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';
+        });
         const collectCommandId = 'obsidian-custom-attachment-location:collect-attachments-in-file';
 
         /*
@@ -112,8 +82,10 @@ describe('Collect attachments — exclude attachment extensions from the multipl
          * three phases expect the attachment to STAY, so their collect wait runs out on the passing path; the
          * collect itself finishes well inside it in this small vault.
          */
-        async function runPhase(activeSettings: MultipleNotesSettings, excludeExtensions: string[], attachmentExtension: string): Promise<PhaseResult> {
-          activeSettings.excludeExtensionsFromMultipleNotesCheck = excludeExtensions;
+        async function runPhase(excludeExtensions: string[], attachmentExtension: string): Promise<PhaseResult> {
+          await component.editAndSave((settings) => {
+            settings.excludeExtensionsFromMultipleNotesCheck = excludeExtensions;
+          });
 
           const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
           const attachmentPath = `shared-${stamp}.${attachmentExtension}`;
@@ -170,17 +142,24 @@ describe('Collect attachments — exclude attachment extensions from the multipl
           };
         }
 
-        const control = await runPhase(settings, [], 'af');
-        const fix = await runPhase(settings, ['.AF'], 'af');
-        const otherTypeStillAsks = await runPhase(settings, ['.AF'], 'png');
-        return {
-          control,
-          fix,
-          otherTypeStillAsks,
-          settingsFound: true
-        };
+        try {
+          const control = await runPhase([], 'af');
+          const fix = await runPhase(['.AF'], 'af');
+          const otherTypeStillAsks = await runPhase(['.AF'], 'png');
+          return {
+            control,
+            fix,
+            otherTypeStillAsks,
+            settingsFound: true
+          };
+        } finally {
+          await component.editAndSave((settings) => {
+            settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
+            settings.excludeExtensionsFromMultipleNotesCheck = priorExcludeExtensions;
+          });
+        }
       },
-      input: {},
+      input: { findPluginSettingsComponent },
       vaultPath: getTemporaryVault().path
     });
 

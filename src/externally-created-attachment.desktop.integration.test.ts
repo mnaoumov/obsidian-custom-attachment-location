@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for the second half of issue #59: an attachment another plugin writes
  * straight into the vault must be moved and renamed per the configured templates, once the opt-in
@@ -54,7 +56,7 @@ interface RunParams {
 describe('Attachments created by other plugins (issue #59)', () => {
   async function run(params: RunParams): Promise<ForeignAttachmentResult> {
     return await evalInObsidian({
-      async callback({ app, isLinked, isRelativeLinkScenario, shouldRename: isRenameEnabled }): Promise<ForeignAttachmentResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent, isLinked, isRelativeLinkScenario, shouldRename: isRenameEnabled }): Promise<ForeignAttachmentResult> {
         interface ForeignSettings {
           attachmentFolderPath: string;
           attachmentRenameMode: string;
@@ -69,155 +71,132 @@ describe('Attachments created by other plugins (issue #59)', () => {
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        function findSettings(): ForeignSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isForeignSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isForeignSettings);
+        if (!settingsComponent) {
           return { finalPaths: [], linkTargetPath: null, noteContent: '', properPath: '', settingsFound: false };
         }
 
         /*
          * These tests share one Obsidian instance with every other integration file, and the settings
-         * object is the live one. Snapshot it and put it back, or the next test in the run inherits
+         * are the live, saved ones. Snapshot them and put them back, or the next test in the run inherits
          * this folder template.
          */
         const originalSettings = {
-          attachmentFolderPath: settings.attachmentFolderPath,
-          generatedAttachmentFileName: settings.generatedAttachmentFileName,
-          renameAttachmentsCreatedByOtherPluginsMode: settings.renameAttachmentsCreatedByOtherPluginsMode
+          attachmentFolderPath: settingsComponent.settings.attachmentFolderPath,
+          generatedAttachmentFileName: settingsComponent.settings.generatedAttachmentFileName,
+          renameAttachmentsCreatedByOtherPluginsMode: settingsComponent.settings.renameAttachmentsCreatedByOtherPluginsMode
         };
-        function restoreSettings(currentSettings: ForeignSettings): void {
-          currentSettings.attachmentFolderPath = originalSettings.attachmentFolderPath;
-          currentSettings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
-          currentSettings.renameAttachmentsCreatedByOtherPluginsMode = originalSettings.renameAttachmentsCreatedByOtherPluginsMode;
-        }
 
         // The vault's link format is shared state too, and the relative scenario changes it.
         const originalNewLinkFormat = app.vault.getConfig('newLinkFormat');
         const originalUseMarkdownLinks = app.vault.getConfig('useMarkdownLinks');
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
-        // The enum's values ARE the display strings; this code runs inside Obsidian and cannot import them.
-        settings.renameAttachmentsCreatedByOtherPluginsMode = isRenameEnabled ? 'All' : 'None';
-        settings.generatedAttachmentFileName = `renamed-${stamp}`;
+        await settingsComponent.editAndSave((settings) => {
+          // The enum's values ARE the display strings; this code runs inside Obsidian and cannot import them.
+          settings.renameAttachmentsCreatedByOtherPluginsMode = isRenameEnabled ? 'All' : 'None';
+          settings.generatedAttachmentFileName = `renamed-${stamp}`;
+        });
 
-        let notePath: string;
-        let foreignFolder: string;
-        let insertedEmbed: string;
-        let properPath: string;
-        if (isRelativeLinkScenario) {
-          app.vault.setConfig('newLinkFormat', 'relative');
-          app.vault.setConfig('useMarkdownLinks', true);
-          settings.attachmentFolderPath = './assets/{{noteFileName}}';
-          const noteFolder = `notes-${stamp}`;
-          const noteBaseName = `Test Note ${stamp}`;
-          await app.vault.createFolder(noteFolder);
-          notePath = `${noteFolder}/${noteBaseName}.md`;
-          // Media Extended writes into the folder `getAvailablePathForAttachment` hands it, which is already the right one.
-          foreignFolder = `${noteFolder}/assets/${noteBaseName}`;
-          insertedEmbed = `![](./assets/${encodeURI(noteBaseName)}/mx-img-${stamp}.png)`;
-          properPath = `${foreignFolder}/renamed-${stamp}.png`;
-        } else {
-          settings.attachmentFolderPath = `./proper-${stamp}`;
-          notePath = `foreign-note-${stamp}.md`;
-          // Exactly what Media Extended does: its own folder, its own file name, a direct binary write.
-          foreignFolder = `foreign-${stamp}`;
-          /*
-           * The SHORTEST-FORM spelling, `![[<file name>|<alias>]]`, because that is what Obsidian's link
-           * generation produces by default and therefore what Media Extended actually inserts. Asserting
-           * only the full-path spelling here is what let a dangling embed ship past this suite once.
-           */
-          insertedEmbed = `![[mx-img-${stamp}.png|Some title]]`;
-          properPath = `proper-${stamp}/renamed-${stamp}.png`;
-        }
-
-        const note = await app.vault.create(notePath, '');
-        const leaf = app.workspace.getLeaf(false);
-        await leaf.openFile(note);
-        await app.workspace.revealLeaf(leaf);
-        await sleep(500);
-
-        await app.vault.createFolder(foreignFolder);
-        const foreignPath = `${foreignFolder}/mx-img-${stamp}.png`;
-        await app.vault.createBinary(foreignPath, new ArrayBuffer(8));
-
-        /*
-         * ...and then, as soon as that write resolves, it inserts its own embed into the editor — by
-         * which time the `create` handler has ALREADY begun moving the file. That ordering is the
-         * whole risk in catching an attachment after the fact, and it is why *Paste image rename*
-         * rewrites the current editor line by hand instead of trusting the rename to do it. Assert
-         * the embed ends up pointing at the moved file.
-         */
-        const view = leaf.view as EditableViewLike;
-        if (isLinked) {
-          view.editor?.replaceSelection(insertedEmbed);
-        }
-
-        const deadline = Date.now() + 15_000;
-        while (Date.now() < deadline) {
-          if (app.vault.getFileByPath(properPath)) {
-            break;
+        try {
+          let notePath: string;
+          let foreignFolder: string;
+          let insertedEmbed: string;
+          let properPath: string;
+          if (isRelativeLinkScenario) {
+            app.vault.setConfig('newLinkFormat', 'relative');
+            app.vault.setConfig('useMarkdownLinks', true);
+            await settingsComponent.editAndSave((settings) => {
+              settings.attachmentFolderPath = './assets/{{noteFileName}}';
+            });
+            const noteFolder = `notes-${stamp}`;
+            const noteBaseName = `Test Note ${stamp}`;
+            await app.vault.createFolder(noteFolder);
+            notePath = `${noteFolder}/${noteBaseName}.md`;
+            // Media Extended writes into the folder `getAvailablePathForAttachment` hands it, which is already the right one.
+            foreignFolder = `${noteFolder}/assets/${noteBaseName}`;
+            insertedEmbed = `![](./assets/${encodeURI(noteBaseName)}/mx-img-${stamp}.png)`;
+            properPath = `${foreignFolder}/renamed-${stamp}.png`;
+          } else {
+            await settingsComponent.editAndSave((settings) => {
+              settings.attachmentFolderPath = `./proper-${stamp}`;
+            });
+            notePath = `foreign-note-${stamp}.md`;
+            // Exactly what Media Extended does: its own folder, its own file name, a direct binary write.
+            foreignFolder = `foreign-${stamp}`;
+            /*
+             * The SHORTEST-FORM spelling, `![[<file name>|<alias>]]`, because that is what Obsidian's link
+             * generation produces by default and therefore what Media Extended actually inserts. Asserting
+             * only the full-path spelling here is what let a dangling embed ship past this suite once.
+             */
+            insertedEmbed = `![[mx-img-${stamp}.png|Some title]]`;
+            properPath = `proper-${stamp}/renamed-${stamp}.png`;
           }
-          await sleep(300);
+
+          const note = await app.vault.create(notePath, '');
+          const leaf = app.workspace.getLeaf(false);
+          await leaf.openFile(note);
+          await app.workspace.revealLeaf(leaf);
+          await sleep(500);
+
+          await app.vault.createFolder(foreignFolder);
+          const foreignPath = `${foreignFolder}/mx-img-${stamp}.png`;
+          await app.vault.createBinary(foreignPath, new ArrayBuffer(8));
+
+          /*
+           * ...and then, as soon as that write resolves, it inserts its own embed into the editor — by
+           * which time the `create` handler has ALREADY begun moving the file. That ordering is the
+           * whole risk in catching an attachment after the fact, and it is why *Paste image rename*
+           * rewrites the current editor line by hand instead of trusting the rename to do it. Assert
+           * the embed ends up pointing at the moved file.
+           */
+          const view = leaf.view as EditableViewLike;
+          if (isLinked) {
+            view.editor?.replaceSelection(insertedEmbed);
+          }
+
+          const deadline = Date.now() + 15_000;
+          while (Date.now() < deadline) {
+            if (app.vault.getFileByPath(properPath)) {
+              break;
+            }
+            await sleep(300);
+          }
+
+          // A settled read: when the setting is off, nothing should ever have moved.
+          await sleep(1000);
+          const finalPaths = app.vault.getFiles()
+            .map((file) => file.path)
+            .filter((path) => path.includes(stamp) && path.endsWith('.png'));
+
+          await view.save?.();
+          const noteContent = await app.vault.read(note);
+          // What Obsidian itself resolves the one embed in the note to — the only judge of a broken link.
+          const linkMatch = /\]\((?<markdownPath>[^)]+)\)|\[\[(?<wikiPath>[^\]|]+)/.exec(noteContent);
+          const linkPath = linkMatch?.groups?.['markdownPath'] ?? linkMatch?.groups?.['wikiPath'];
+          const linkTargetPath = linkPath === undefined
+            ? null
+            : app.metadataCache.getFirstLinkpathDest(decodeURI(linkPath), note.path)?.path ?? null;
+
+          leaf.detach();
+
+          return { finalPaths, linkTargetPath, noteContent, properPath, settingsFound: true };
+        } finally {
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = originalSettings.attachmentFolderPath;
+            settings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
+            settings.renameAttachmentsCreatedByOtherPluginsMode = originalSettings.renameAttachmentsCreatedByOtherPluginsMode;
+          });
+          app.vault.setConfig('newLinkFormat', originalNewLinkFormat);
+          app.vault.setConfig('useMarkdownLinks', originalUseMarkdownLinks);
         }
-
-        // A settled read: when the setting is off, nothing should ever have moved.
-        await sleep(1000);
-        const finalPaths = app.vault.getFiles()
-          .map((file) => file.path)
-          .filter((path) => path.includes(stamp) && path.endsWith('.png'));
-
-        await view.save?.();
-        const noteContent = await app.vault.read(note);
-        // What Obsidian itself resolves the one embed in the note to — the only judge of a broken link.
-        const linkMatch = /\]\((?<markdownPath>[^)]+)\)|\[\[(?<wikiPath>[^\]|]+)/.exec(noteContent);
-        const linkPath = linkMatch?.groups?.['markdownPath'] ?? linkMatch?.groups?.['wikiPath'];
-        const linkTargetPath = linkPath === undefined
-          ? null
-          : app.metadataCache.getFirstLinkpathDest(decodeURI(linkPath), note.path)?.path ?? null;
-
-        leaf.detach();
-        restoreSettings(settings);
-        app.vault.setConfig('newLinkFormat', originalNewLinkFormat);
-        app.vault.setConfig('useMarkdownLinks', originalUseMarkdownLinks);
-
-        return { finalPaths, linkTargetPath, noteContent, properPath, settingsFound: true };
       },
-      input: { isLinked: params.isLinked ?? true, isRelativeLinkScenario: params.isRelativeLinkScenario, shouldRename: params.shouldRename },
+      input: {
+        findPluginSettingsComponent,
+        isLinked: params.isLinked ?? true,
+        isRelativeLinkScenario: params.isRelativeLinkScenario,
+        shouldRename: params.shouldRename
+      },
       vaultPath: getTemporaryVault().path
     });
   }

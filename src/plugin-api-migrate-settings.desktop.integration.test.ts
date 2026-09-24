@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for `CustomAttachmentLocationApi.migrateSettings`, the receiving half of the collect-settings
  * handover from Consistent Attachments and Links.
@@ -51,6 +53,7 @@ describe('migrateSettings', () => {
       async callback({
         app,
         dialogTitlePrefix,
+        findPluginSettingsComponent: findSettingsComponent,
         lib: { waitUntil },
         pluginId,
         sourcePluginId,
@@ -124,46 +127,6 @@ describe('migrateSettings', () => {
             && typeof record['shouldCollectAttachmentsAutomatically'] === 'boolean';
         }
 
-        const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
-
-        // The settings are not exposed publicly, so the live object is located by walking the plugin's
-        // component tree.
-        function findSettings(): CollectSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [pluginRecord];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isCollectSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
         /*
          * Found by TITLE, never by a bare `.modal-container` lookup: a dialog of another plugin may be open
          * at the same time, and the first container in the DOM would then be the wrong one.
@@ -200,18 +163,22 @@ describe('migrateSettings', () => {
           return EMPTY;
         }
 
-        const settings = findSettings();
-        if (!settings) {
+        /*
+         * Read through the component each time rather than off a cached settings object: `migrateSettings` saves,
+         * and a reload replaces the object.
+         */
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin(pluginId), isCollectSettings);
+        if (!settingsComponent) {
           return { ...EMPTY, apiFound: true, apiVersion: record.apiVersion };
         }
 
-        const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
+        const priorMode = settingsComponent.settings.collectAttachmentUsedByMultipleNotesMode;
         const proposedMode = priorMode === 'Copy' ? 'Move' : 'Copy';
 
         const noChange = await api.migrateSettings({
           proposedSettings: {
             collectAttachmentUsedByMultipleNotesMode: priorMode,
-            shouldCollectAttachmentsAutomatically: settings.shouldCollectAttachmentsAutomatically
+            shouldCollectAttachmentsAutomatically: settingsComponent.settings.shouldCollectAttachmentsAutomatically
           },
           sourcePluginId
         });
@@ -220,7 +187,7 @@ describe('migrateSettings', () => {
         const proposal = {
           proposedSettings: {
             collectAttachmentUsedByMultipleNotesMode: proposedMode,
-            shouldCollectAttachmentsAutomatically: settings.shouldCollectAttachmentsAutomatically
+            shouldCollectAttachmentsAutomatically: settingsComponent.settings.shouldCollectAttachmentsAutomatically
           },
           sourcePluginId
         };
@@ -228,12 +195,12 @@ describe('migrateSettings', () => {
         const cancelPromise = api.migrateSettings(proposal);
         const rowCount = await answerDialog('Cancel');
         const cancelResult = await cancelPromise;
-        const modeAfterCancel = settings.collectAttachmentUsedByMultipleNotesMode;
+        const modeAfterCancel = settingsComponent.settings.collectAttachmentUsedByMultipleNotesMode;
 
         const okPromise = api.migrateSettings(proposal);
         await answerDialog('OK');
         const okResult = await okPromise;
-        const modeAfterOk = settings.collectAttachmentUsedByMultipleNotesMode;
+        const modeAfterOk = settingsComponent.settings.collectAttachmentUsedByMultipleNotesMode;
 
         const restorePromise = api.migrateSettings({
           proposedSettings: { collectAttachmentUsedByMultipleNotesMode: priorMode },
@@ -249,7 +216,7 @@ describe('migrateSettings', () => {
           didNoChangeOpenDialog,
           modeAfterCancel,
           modeAfterOk,
-          modeAfterRestore: settings.collectAttachmentUsedByMultipleNotesMode,
+          modeAfterRestore: settingsComponent.settings.collectAttachmentUsedByMultipleNotesMode,
           noChangeResult: noChange.isApplied,
           okResult: okResult.isApplied,
           proposedMode,
@@ -260,6 +227,7 @@ describe('migrateSettings', () => {
       },
       input: {
         dialogTitlePrefix: DIALOG_TITLE_PREFIX,
+        findPluginSettingsComponent,
         pluginId: PLUGIN_ID,
         sourcePluginId: SOURCE_PLUGIN_ID,
         waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS

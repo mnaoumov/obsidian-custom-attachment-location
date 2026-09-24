@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for the vault-wide sweep reaching an attachment folder whose owning note
  * no longer exists.
@@ -56,6 +58,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
       async callback({
         app,
         deleteCommandId,
+        findPluginSettingsComponent: findSettingsComponent,
         lib: { waitUntil },
         listedPathsMode,
         noneMode,
@@ -78,46 +81,8 @@ describe('Delete unused attachments in entire vault, for attachments no note own
             && Array.isArray(record['orphanAttachmentScanPaths']);
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object by
-        // walking the plugin's component tree.
-        function findSettings(): null | RemoverSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isRemoverSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const foundSettings = findSettings();
-        if (!foundSettings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin(pluginId), isRemoverSettings);
+        if (!settingsComponent) {
           return {
             confirmText: '',
             isKeptAliveAfterScan: false,
@@ -127,10 +92,9 @@ describe('Delete unused attachments in entire vault, for attachments no note own
             settingsFound: false
           };
         }
-        const settings: RemoverSettings = foundSettings;
-        const priorFolderPath = settings.attachmentFolderPath;
-        const priorScanMode = settings.orphanAttachmentScanMode;
-        const priorScanPaths = settings.orphanAttachmentScanPaths;
+        const priorFolderPath = settingsComponent.settings.attachmentFolderPath;
+        const priorScanMode = settingsComponent.settings.orphanAttachmentScanMode;
+        const priorScanPaths = [...settingsComponent.settings.orphanAttachmentScanPaths];
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const rootFolder = `duo-assets-${stamp}`;
@@ -186,9 +150,11 @@ describe('Delete unused attachments in entire vault, for attachments no note own
         }
 
         try {
-          settings.attachmentFolderPath = `./${rootFolder}/{{noteFileName}}`;
-          settings.orphanAttachmentScanMode = noneMode;
-          settings.orphanAttachmentScanPaths = [];
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = `./${rootFolder}/{{noteFileName}}`;
+            settings.orphanAttachmentScanMode = noneMode;
+            settings.orphanAttachmentScanPaths = [];
+          });
 
           await app.vault.createFolder(rootFolder);
           await app.vault.createFolder(ownerlessFolder);
@@ -236,8 +202,10 @@ describe('Delete unused attachments in entire vault, for attachments no note own
           const isOrphanKeptWhileModeOff = app.vault.getAbstractFileByPath(orphanPath) !== null;
 
           // Sweep two, mode ON and scoped to the staged tree, so nothing else in the vault is at risk.
-          settings.orphanAttachmentScanMode = listedPathsMode;
-          settings.orphanAttachmentScanPaths = [rootFolder];
+          await settingsComponent.editAndSave((settings) => {
+            settings.orphanAttachmentScanMode = listedPathsMode;
+            settings.orphanAttachmentScanPaths = [rootFolder];
+          });
 
           app.commands.executeCommandById(deleteCommandId);
           await waitUntil({
@@ -264,9 +232,11 @@ describe('Delete unused attachments in entire vault, for attachments no note own
             settingsFound: true
           };
         } finally {
-          settings.attachmentFolderPath = priorFolderPath;
-          settings.orphanAttachmentScanMode = priorScanMode;
-          settings.orphanAttachmentScanPaths = priorScanPaths;
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = priorFolderPath;
+            settings.orphanAttachmentScanMode = priorScanMode;
+            settings.orphanAttachmentScanPaths = priorScanPaths;
+          });
           for (const path of createdPaths) {
             await trashIfExists(path);
           }
@@ -277,6 +247,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
       },
       input: {
         deleteCommandId: DELETE_COMMAND_ID,
+        findPluginSettingsComponent,
         listedPathsMode: ORPHAN_SCAN_MODE_LISTED_PATHS,
         noneMode: ORPHAN_SCAN_MODE_NONE,
         pluginId: PLUGIN_ID,

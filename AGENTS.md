@@ -39,6 +39,10 @@ Two consequences for anyone adding or changing one:
 
 The convention: a consumer copies that one file, or references it where it sits, with no build-time dependency on this repository. `src/plugin-api.ts` holds only the runtime half (`PLUGIN_API_CONTRACT`, `PLUGIN_API_VERSION`) and RE-EXPORTS the types from it, so each type is declared once. Adding a member means editing `api.d.ts`, the contract, the impl, and the version — a minor bump for an addition, which is what lets a consumer keep asking for `'^1'`.
 
+## An integration suite edits settings through `editAndSave`, never onto the settings object
+
+A `data.json` reload replaces the settings object, so an assignment onto it reverts to the file's values mid-suite, silently. Every desktop suite therefore gets the settings component from `scripts/helpers/plugin-settings-component-finder.ts`, passed into the closure through `evalInObsidian`'s `input` (functions there are serialized by source text, so the finder stays self-contained), and both edits and the final restore go through `editAndSave`. Read values through `settingsComponent.settings` each time rather than holding the object. A saved edit outlives the suite in `data.json`, so a suite that changes settings restores them in a `finally`.
+
 ## A fresh install follows Obsidian's attachment location, so every test vault seeds pattern mode
 
 Since 13.0.0 `shouldFollowObsidianAttachmentLocation` defaults to on. While it is on, `attachmentFolderPath` is not consulted at all, so an integration vault with no `data.json` of ours quietly turns every pattern suite into a test of Obsidian's own setting. `scripts/helpers/plugin-settings-seed.ts` seeds `{ shouldFollowObsidianAttachmentLocation: false }`. The desktop/Android, demo-vault and performance setups all compose it, and a new project that opens a vault needs it too. The demo vault commits a full `data.json` in pattern mode for the same reason: notes 01 and 08 demonstrate patterns and hard-code `assets/<note>`.

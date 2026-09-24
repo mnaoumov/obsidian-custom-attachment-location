@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #46: the opt-in `shouldSkipCollectingAttachmentsReferencedByRawPath`
  * safety net. An attachment is embedded with a normal `![[...]]` wikilink in the active note AND
@@ -30,7 +32,7 @@ interface ProbeResult {
 describe('Collect attachments — raw path safety net (issue #46)', () => {
   it('leaves an attachment referenced by a non-indexed raw path in place when the setting is on', async () => {
     const result = await evalInObsidian({
-      async callback({ app }): Promise<ProbeResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ProbeResult> {
         interface RawPathSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
           isExcludedFromMultipleNotesCheck: (path: string) => boolean;
@@ -43,46 +45,8 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
             && 'shouldSkipCollectingAttachmentsReferencedByRawPath' in (value as Record<string, unknown>);
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): null | RawPathSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isRawPathSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isRawPathSettings);
+        if (!settingsComponent) {
           return {
             control: { backlinkCount: -1, movedOut: false },
             fix: { backlinkCount: -1, movedOut: false },
@@ -90,7 +54,13 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
           };
         }
 
-        settings.collectAttachmentUsedByMultipleNotesMode = 'Move';
+        // A narrowed `const` does not stay narrowed inside a function declaration below it.
+        const component = settingsComponent;
+        const priorMode = component.settings.collectAttachmentUsedByMultipleNotesMode;
+        const wasSkippingRawPathReferences = component.settings.shouldSkipCollectingAttachmentsReferencedByRawPath;
+        await component.editAndSave((settings) => {
+          settings.collectAttachmentUsedByMultipleNotesMode = 'Move';
+        });
         const collectCommandId = 'obsidian-custom-attachment-location:collect-attachments-in-file';
 
         /*
@@ -98,8 +68,10 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
          * per-closure default. The project raises its command timeout past that, but only as a backstop — a
          * closure that spends it dies as a bare transport timeout, never as the wait that overran.
          */
-        async function runPhase(activeSettings: RawPathSettings, shouldSkip: boolean): Promise<PhaseResult> {
-          activeSettings.shouldSkipCollectingAttachmentsReferencedByRawPath = shouldSkip;
+        async function runPhase(shouldSkip: boolean): Promise<PhaseResult> {
+          await component.editAndSave((settings) => {
+            settings.shouldSkipCollectingAttachmentsReferencedByRawPath = shouldSkip;
+          });
 
           const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
           const imgPath = `img-${stamp}.png`;
@@ -141,11 +113,18 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
           };
         }
 
-        const control = await runPhase(settings, false);
-        const fix = await runPhase(settings, true);
-        return { control, fix, settingsFound: true };
+        try {
+          const control = await runPhase(false);
+          const fix = await runPhase(true);
+          return { control, fix, settingsFound: true };
+        } finally {
+          await component.editAndSave((settings) => {
+            settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
+            settings.shouldSkipCollectingAttachmentsReferencedByRawPath = wasSkippingRawPathReferences;
+          });
+        }
       },
-      input: {},
+      input: { findPluginSettingsComponent },
       vaultPath: getTemporaryVault().path
     });
 

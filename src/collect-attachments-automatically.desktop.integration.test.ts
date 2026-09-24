@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for `Collect attachments automatically`, the setting Consistent Attachments and Links
  * hands over when it stops collecting.
@@ -43,6 +45,7 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
     async callback({
       app,
       attachmentFolderRoot,
+      findPluginSettingsComponent: findSettingsComponent,
       lib: { waitUntil },
       phaseName,
       pluginId,
@@ -67,52 +70,12 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
           && typeof record['shouldRenameCollectedAttachments'] === 'boolean';
       }
 
-      const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
-
-      // The settings are not exposed publicly, so the live object the component reads is located by
-      // walking the plugin's component tree.
-      function findSettings(): AutoCollectSettings | null {
-        const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-        const seen = new Set<unknown>();
-        const queue: unknown[] = [pluginRecord];
-        let budget = 12_000;
-        while (queue.length > 0 && budget-- > 0) {
-          const current = queue.shift();
-          if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-            continue;
-          }
-          seen.add(current);
-          const record = current as Record<string, unknown>;
-          if (isAutoCollectSettings(record['settings'])) {
-            return record['settings'];
-          }
-          let values: unknown[] = [];
-          if (Array.isArray(current)) {
-            values = current;
-          } else if (current instanceof Map) {
-            values = [...current.values()];
-          } else {
-            for (const [key, value] of Object.entries(record)) {
-              if (!block.has(key)) {
-                values.push(value);
-              }
-            }
-          }
-          for (const value of values) {
-            if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-              queue.push(value);
-            }
-          }
-        }
-        return null;
-      }
-
-      const settings = findSettings();
-      if (!settings) {
+      const settingsComponent = findSettingsComponent(app.plugins.getPlugin(pluginId), isAutoCollectSettings);
+      if (!settingsComponent) {
         return { filePaths: [], settingsFound: false };
       }
 
-      const prior = { ...settings };
+      const prior = { ...settingsComponent.settings };
       const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
       const noteStem = `auto-${phaseName}-${stamp}`;
       const notePath = `${noteStem}.md`;
@@ -136,9 +99,11 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
       }
 
       try {
-        settings.attachmentFolderPath = `${attachmentFolderRoot}/{{noteFileName}}`;
-        settings.collectedAttachmentFolderPath = '';
-        settings.shouldCollectAttachmentsAutomatically = false;
+        await settingsComponent.editAndSave((settings) => {
+          settings.attachmentFolderPath = `${attachmentFolderRoot}/{{noteFileName}}`;
+          settings.collectedAttachmentFolderPath = '';
+          settings.shouldCollectAttachmentsAutomatically = false;
+        });
 
         /*
          * Every phase embeds one attachment misplaced at the vault root, and waits for it to leave. That is the
@@ -147,11 +112,15 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
         const misplacedPath = `${noteStem}-img.png`;
         const embeddedPaths: string[] = [];
         if (phaseName === 'misplaced') {
-          settings.shouldRenameCollectedAttachments = false;
-          settings.collectedAttachmentFileName = '';
+          await settingsComponent.editAndSave((settings) => {
+            settings.shouldRenameCollectedAttachments = false;
+            settings.collectedAttachmentFileName = '';
+          });
         } else {
-          settings.shouldRenameCollectedAttachments = true;
-          settings.collectedAttachmentFileName = 'pic';
+          await settingsComponent.editAndSave((settings) => {
+            settings.shouldRenameCollectedAttachments = true;
+            settings.collectedAttachmentFileName = 'pic';
+          });
           await app.vault.createFolder(noteFolderPath);
           // A DIFFERENT file holds the proper name, so the referenced one is parked beside it.
           await app.vault.createBinary(`${noteFolderPath}/pic.png`, new ArrayBuffer(3));
@@ -175,7 +144,9 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
         });
 
         // Turned on only now, so creating the note did not already collect it.
-        settings.shouldCollectAttachmentsAutomatically = true;
+        await settingsComponent.editAndSave((settings) => {
+          settings.shouldCollectAttachmentsAutomatically = true;
+        });
         await app.vault.modify(note, `Changed.\n\n${embeds}\n`);
 
         await waitUntil({
@@ -187,18 +158,23 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
         await sleep(settleInMilliseconds);
         return { filePaths: listNoteFolder(), settingsFound: true };
       } finally {
-        settings.shouldCollectAttachmentsAutomatically = false;
+        await settingsComponent.editAndSave((settings) => {
+          settings.shouldCollectAttachmentsAutomatically = false;
+        });
         await trashIfExists(notePath);
         await trashIfExists(noteFolderPath);
-        settings.attachmentFolderPath = prior.attachmentFolderPath;
-        settings.collectedAttachmentFileName = prior.collectedAttachmentFileName;
-        settings.collectedAttachmentFolderPath = prior.collectedAttachmentFolderPath;
-        settings.shouldCollectAttachmentsAutomatically = prior.shouldCollectAttachmentsAutomatically;
-        settings.shouldRenameCollectedAttachments = prior.shouldRenameCollectedAttachments;
+        await settingsComponent.editAndSave((settings) => {
+          settings.attachmentFolderPath = prior.attachmentFolderPath;
+          settings.collectedAttachmentFileName = prior.collectedAttachmentFileName;
+          settings.collectedAttachmentFolderPath = prior.collectedAttachmentFolderPath;
+          settings.shouldCollectAttachmentsAutomatically = prior.shouldCollectAttachmentsAutomatically;
+          settings.shouldRenameCollectedAttachments = prior.shouldRenameCollectedAttachments;
+        });
       }
     },
     input: {
       attachmentFolderRoot: ATTACHMENT_FOLDER_ROOT,
+      findPluginSettingsComponent,
       phaseName: phase,
       pluginId: PLUGIN_ID,
       settleInMilliseconds: SETTLE_IN_MILLISECONDS,
