@@ -36,6 +36,26 @@ vi.mock('obsidian-dev-utils/error', async (importOriginal) => ({
   printError: vi.fn<(error: unknown) => void>()
 }));
 
+class JsonDataHandler implements DataHandler {
+  public saveCount = 0;
+  private json: string | undefined;
+
+  public constructor(data: unknown) {
+    this.json = JSON.stringify(data);
+  }
+
+  public async loadData(): Promise<unknown> {
+    await noopAsync();
+    return this.json === undefined ? undefined : JSON.parse(this.json);
+  }
+
+  public async saveData(data: unknown): Promise<void> {
+    this.saveCount++;
+    this.json = JSON.stringify(data);
+    await noopAsync();
+  }
+}
+
 class MockDataHandler implements DataHandler {
   private data: unknown;
 
@@ -110,6 +130,24 @@ describe('PluginSettingsComponent', () => {
       await createComponent(undefined, dataHandler);
       const saved = await dataHandler.loadData() as Partial<PluginSettings>;
       expect(saved.shouldFollowObsidianAttachmentLocation).toBe(true);
+    });
+
+    /*
+     * Obsidian stores data.json as JSON, so the handler round-trips through it. The private backing fields of
+     * `PluginSettings` used to reach the record as keys holding `undefined`, which JSON drops, so every load
+     * found the file different from what it would write and saved it again — and a save Obsidian reported back
+     * as an external change reloaded, and saved, without end.
+     */
+    it('should not write data.json again when loading the record it wrote', async () => {
+      const dataHandler = new JsonDataHandler({ shouldFollowObsidianAttachmentLocation: false });
+      const component = await createComponent(undefined, dataHandler);
+      const savesAfterFirstLoad = dataHandler.saveCount;
+      const written = await dataHandler.loadData() as Record<string, unknown>;
+
+      await component.loadFromFile(false);
+
+      expect(dataHandler.saveCount).toBe(savesAfterFirstLoad);
+      expect(Object.keys(written).filter((key) => key.startsWith('_'))).toEqual([]);
     });
 
     it('should keep a stored value the default now disagrees with', async () => {
