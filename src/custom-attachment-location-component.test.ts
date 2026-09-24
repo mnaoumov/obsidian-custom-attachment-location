@@ -7,7 +7,10 @@ import type {
 } from 'obsidian';
 
 import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
-import { noopAsync } from 'obsidian-dev-utils/function';
+import {
+  noop,
+  noopAsync
+} from 'obsidian-dev-utils/function';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
@@ -166,6 +169,7 @@ interface ComponentContext {
   loadFromFileMock: ReturnType<typeof vi.fn>;
   pluginSettingsComponent: PluginSettingsComponent;
   settings: PluginSettings;
+  whenLoadedFromFileMock: ReturnType<typeof vi.fn>;
 }
 
 const PLUGIN_VERSION = '10.0.0';
@@ -196,11 +200,13 @@ describe('CustomAttachmentLocationComponent', () => {
       return noopAsync();
     });
     const loadFromFileMock = vi.fn((): Promise<void> => noopAsync());
+    const whenLoadedFromFileMock = vi.fn((): Promise<void> => noopAsync());
 
     const pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
       editAndSave: editAndSaveMock,
       loadFromFile: loadFromFileMock,
-      settings
+      settings,
+      whenLoadedFromFile: whenLoadedFromFileMock
     });
 
     const getAttachmentFolderFullPathForPathMock = vi.fn((): Promise<string> => Promise.resolve('attachments/note'));
@@ -232,7 +238,8 @@ describe('CustomAttachmentLocationComponent', () => {
       isPathIgnoredMock,
       loadFromFileMock,
       pluginSettingsComponent,
-      settings
+      settings,
+      whenLoadedFromFileMock
     };
   });
 
@@ -270,6 +277,26 @@ describe('CustomAttachmentLocationComponent', () => {
       const component = createComponent();
       await loadAndReachLayoutReady(component);
       expect(vi.mocked(Substitutions.registerCustomTokens)).toHaveBeenCalledWith('custom-tokens');
+      expect(context.loadFromFileMock).toHaveBeenCalledWith(false);
+    });
+
+    it('should not register custom tokens until the settings have been read from the file', async () => {
+      let resolve: () => void = noop;
+      context.whenLoadedFromFileMock.mockReturnValue(
+        new Promise<void>((promiseResolve) => {
+          resolve = promiseResolve;
+        })
+      );
+      const registerCustomTokensMock = vi.mocked(Substitutions.registerCustomTokens);
+      const callCountBefore = registerCustomTokensMock.mock.calls.length;
+      const component = createComponent();
+      await loadAndReachLayoutReady(component);
+      expect(registerCustomTokensMock.mock.calls.length).toBe(callCountBefore);
+      expect(context.loadFromFileMock).not.toHaveBeenCalled();
+
+      resolve();
+      await vi.runAllTimersAsync();
+      expect(registerCustomTokensMock.mock.calls.length).toBe(callCountBefore + 1);
       expect(context.loadFromFileMock).toHaveBeenCalledWith(false);
     });
 

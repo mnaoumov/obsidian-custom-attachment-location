@@ -117,6 +117,12 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   }
 
   protected override async onLayoutReady(): Promise<void> {
+    /*
+     * On an enable after layout-ready this runs while the settings component is still reading `data.json`, so
+     * `customTokensStr` would still be the default. The reload below is not redundant: the first load validated
+     * the stored templates before any custom token existed, so it runs again once they are registered.
+     */
+    await this.pluginSettingsComponent.whenLoadedFromFile();
     Substitutions.registerCustomTokens(this.pluginSettingsComponent.settings.customTokensStr);
     await this.pluginSettingsComponent.loadFromFile(false);
 
