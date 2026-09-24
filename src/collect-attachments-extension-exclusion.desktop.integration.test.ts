@@ -196,7 +196,7 @@ describe('Collect attachments — exclude attachment extensions from the multipl
     expect(result.control.newPaths).toStrictEqual([]);
 
     // Fix: listing the extension skips the check, so it is collected. `.AF` against a `.af` file also
-    // Proves the matching is case-insensitive and tolerates the leading dot, in the real settings object.
+    // proves the matching is case-insensitive and tolerates the leading dot, in the real settings object.
     expect(result.fix.movedOut).toBe(true);
     expect(result.fix.newPaths).toHaveLength(1);
     expect(result.fix.newPaths[0]).toMatch(/^assets\/first-note-.*\/shared-.*\.af$/);

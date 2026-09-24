@@ -64,7 +64,7 @@ interface CanvasTextNodeJson {
 
 describe('Canvas table sized embed survives the rewrite (issue #27)', () => {
   // A real check that the reproduction scenario is well-formed: the table-escaped sized embed is
-  // Persisted into the canvas text node byte-for-byte (the input the rewrite must preserve).
+  // persisted into the canvas text node byte-for-byte (the input the rewrite must preserve).
   it('persists a table-escaped sized embed `\\|500` into a canvas text node', async () => {
     const result = await evalInObsidian({
       async callback({ app }): Promise<CanvasTableSetupResult> {
@@ -90,7 +90,7 @@ describe('Canvas table sized embed survives the rewrite (issue #27)', () => {
 
     expect(result.settingsFound).toBe(true);
     // The literal backslash-escaped divider survives the JSON round-trip (this is the exact input
-    // The obsidian-dev-utils `applyCanvasChanges` fix must preserve when it rewrites the embed).
+    // the obsidian-dev-utils `applyCanvasChanges` fix must preserve when it rewrites the embed).
     expect(result.nodeTextOnDisk).toMatch(/!\[\[[^[\]]*\.png\\\|500\]\]/);
   }, 120_000);
 

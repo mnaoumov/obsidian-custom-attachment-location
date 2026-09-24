@@ -148,7 +148,7 @@ describe('Attachment-path bottleneck', () => {
         const extendedNoContentMs = await timeExtended(handlerSample.noteFile, handlerSample.attachmentFile, undefined);
 
         // THE FIX: with the default templates (no attachment-content token) the patched handler
-        // Must never pull the bytes, so the lazy read provider is called zero times.
+        // must never pull the bytes, so the lazy read provider is called zero times.
         let defaultTemplateReadCount = 0;
         await invokeExtended({
           ...buildParams(handlerSample.noteFile, handlerSample.attachmentFile, undefined),
@@ -260,7 +260,7 @@ describe('Attachment-path bottleneck', () => {
     expect(result.fileCount).toBeGreaterThanOrEqual(PERFORMANCE_VAULT_TOTAL_FILE_COUNT);
 
     // THE FIX, proven end-to-end: resolving a path with the default templates never pulls the
-    // Attachment bytes, so the per-attachment binary read that dominated the freeze is gone.
+    // attachment bytes, so the per-attachment binary read that dominated the freeze is gone.
     expect(result.defaultTemplateReadCount).toBe(0);
 
     // KEY FINDING: the consumer call cost grows with attachment file size although the produced path is identical, so the size-proportional binary read dominates, not the path computation.
@@ -273,11 +273,11 @@ describe('Attachment-path bottleneck', () => {
     expect(result.largeAvgReadMs).toBeGreaterThan(result.extendedWithContentMs);
 
     // Passing the binary content buys no useful work (no default token reads it): the handler
-    // Is about as fast without it, so reading it is pure waste.
+    // is about as fast without it, so reading it is pure waste.
     expect(result.extendedNoContentMs).toBeLessThan(result.extendedWithContentMs * CONTENT_WASTE_TOLERANCE);
 
     // Secondary cost surfaced for the record: the handler's per-call cache + link walk is at
-    // Least as expensive for a note with many embeds as for a note with one.
+    // least as expensive for a note with many embeds as for a note with one.
     expect(result.fatNoteExtendedMs).toBeGreaterThan(0);
     expect(result.thinNoteExtendedMs).toBeGreaterThan(0);
   }, SCENARIO_TIMEOUT_IN_MS);

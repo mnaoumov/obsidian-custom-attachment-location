@@ -60,7 +60,7 @@ function createContext(): TestContext {
   });
 
   // Stands in for Obsidian's own link generation. The real one honors "New link format" / "Use Wikilinks" and escapes the destination,
-  // Which is precisely what the downloader must delegate to rather than reimplement, so the stub only has to be recognizable.
+  // which is precisely what the downloader must delegate to rather than reimplement, so the stub only has to be recognizable.
   const generateMarkdownLink = vi.fn<FileManager['generateMarkdownLink']>().mockReturnValue('[generated](../assets/generated.png)');
   const fileManager = strictProxy<FileManager>({ generateMarkdownLink });
 
@@ -217,7 +217,7 @@ describe('NetworkImageDownloader', () => {
       await context.downloader.downloadNetworkImagesForNote(context.noteFile);
 
       // Both copies are downloaded, so each one has to point at the file saved for it - keying the rewrite by the matched text instead
-      // Would leave the first attachment orphaned and both embeds pointing at the second.
+      // would leave the first attachment orphaned and both embeds pointing at the second.
       expect(context.createBinary).toHaveBeenCalledTimes(2);
       expect(context.modify).toHaveBeenCalledWith(
         context.noteFile,

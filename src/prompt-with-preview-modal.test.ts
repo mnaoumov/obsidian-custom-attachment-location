@@ -95,7 +95,7 @@ function createContext(overrides: StrictProxyPartial<TokenEvaluatorContext>): To
 
 function createEmbedRegistry(embedByExtension: EmbedByExtension): App['embedRegistry'] {
   // A null-prototype dictionary so strictProxy does not wrap it (it only wraps plain objects),
-  // Letting lookups of missing extensions return `undefined` instead of throwing.
+  // letting lookups of missing extensions return `undefined` instead of throwing.
   const dictionary = Object.assign(Object.create(null), embedByExtension);
   return castTo<App['embedRegistry']>({
     embedByExtension: dictionary

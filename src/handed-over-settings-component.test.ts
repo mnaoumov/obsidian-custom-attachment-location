@@ -18,7 +18,7 @@ import type {
 } from './advanced-rename-and-delete-handler.ts';
 
 // `watchPluginApi` is a function export, so it cannot be spied on in place — the module is mocked instead,
-// Keeping every other export real.
+// keeping every other export real.
 const { mockWatchPluginApi } = vi.hoisted(() => ({
   mockWatchPluginApi: vi.fn<() => PluginApiRef<AdvancedRenameAndDeleteHandlerApi>>()
 }));
@@ -123,7 +123,7 @@ describe('HandedOverSettingsComponent', () => {
     });
 
     // Uncached on purpose: the user can edit these in the other plugin's tab at any time, and asking on
-    // Every call means there is no staleness to invalidate.
+    // every call means there is no staleness to invalidate.
     it('should reflect a later change without needing to be told', () => {
       const component = createComponent();
       component.load();
@@ -138,7 +138,7 @@ describe('HandedOverSettingsComponent', () => {
   });
 
   // A user who declines the suggestion is a supported state, so every read has to answer without the
-  // Provider — and answer with THIS plugin's historic defaults, not the other plugin's.
+  // provider — and answer with THIS plugin's historic defaults, not the other plugin's.
   describe('while the provider is unavailable', () => {
     beforeEach(() => {
       watchedApi = null;
@@ -169,7 +169,7 @@ describe('HandedOverSettingsComponent', () => {
   });
 
   // Before `onload` there is no ref at all, and the base may read through the component while children are
-  // Still being wired up.
+  // still being wired up.
   it('should answer from the defaults before it has loaded', () => {
     const component = createComponent();
 

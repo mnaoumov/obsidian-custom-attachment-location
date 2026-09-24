@@ -70,7 +70,7 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
       const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
 
       // The settings are not exposed publicly, so the live object the component reads is located by
-      // Walking the plugin's component tree.
+      // walking the plugin's component tree.
       function findSettings(): AutoCollectSettings | null {
         const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
         const seen = new Set<unknown>();

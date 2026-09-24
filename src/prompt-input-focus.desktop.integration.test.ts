@@ -219,7 +219,7 @@ describe('The prompt token modal (issue #59)', () => {
          */
         async function abandon(): Promise<void> {
           // Its own close affordance, not its content buttons: cancelling is what resolves the queued
-          // Save, while clicking blindly would activate whatever the dialog happens to offer.
+          // save, while clicking blindly would activate whatever the dialog happens to offer.
           for (const closeEl of document.querySelectorAll<HTMLElement>('.modal-container .modal-close-button')) {
             closeEl.click();
           }

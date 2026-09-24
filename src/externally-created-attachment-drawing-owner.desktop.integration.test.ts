@@ -96,7 +96,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
         }
 
         // Neither the settings nor the read-back component is exposed publicly, so both are located by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -170,7 +170,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
           await sleep(SETTLE_DELAY_IN_MILLISECONDS);
 
           // The handler renames as well as moves, so the file cannot be found again by its original
-          // Name. Snapshot the vault instead and report whichever path appeared.
+          // name. Snapshot the vault instead and report whichever path appeared.
           const pathsBefore = new Set(app.vault.getFiles().map((file) => file.path));
           await app.vault.createBinary(imageName, new ArrayBuffer(4));
           createdPaths.push(imageName);
@@ -226,7 +226,7 @@ describe('An attachment written by another plugin while a drawing is open is lef
             }
           } else {
             // Nothing should happen here, and absence cannot be polled for -- give the handler its
-            // Whole freshness window to act, then assert that it did not.
+            // whole freshness window to act, then assert that it did not.
             await sleep(SETTLE_DELAY_IN_MILLISECONDS);
           }
 
@@ -281,13 +281,13 @@ describe('An attachment written by another plugin while a drawing is open is lef
 
     // With a normal note open, the opt-in does its job: the foreign write is filed under the note.
     // Moved AND renamed: the file name is the plugin's `generatedAttachmentFileName`, not the one the
-    // Foreign plugin wrote, which is exactly what the reporter wants for a drawing.
+    // foreign plugin wrote, which is exactly what the reporter wants for a drawing.
     expect(result.attachmentPathAfterNote).toMatch(/^eco-assets\/eco-note-[^/]+\/[^/]+\.png$/);
     expect(result.attachmentPathAfterNote).not.toContain('eco-a-');
 
     // With a file the user treats as an attachment open, it declines and leaves the file at the root.
     // This is the answer to #65: not an oversight, but the only safe outcome while the drawing's own
-    // Reference is unreachable.
+    // reference is unreachable.
     expect(result.attachmentPathAfterDrawing).toMatch(/^eco-b-.*\.png$/);
   }, 180_000);
 });

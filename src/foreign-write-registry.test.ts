@@ -35,7 +35,7 @@ describe('foreignWriteRegistry', () => {
 
   it('should let the innermost write win for the same path', () => {
     // A plugin reaching the disk through `vault.createBinary` also passes `adapter.writeBinary`, so one
-    // File is registered more than once. The last registration is the call that actually created it.
+    // file is registered more than once. The last registration is the call that actually created it.
     foreignWriteRegistry.register('assets/file.png', 'outer-plugin');
     foreignWriteRegistry.register('assets/file.png', 'inner-plugin');
 

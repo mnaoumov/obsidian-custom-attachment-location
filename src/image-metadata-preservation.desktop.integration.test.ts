@@ -336,7 +336,7 @@ describe('Image metadata is preserved across the JPEG conversion (issue #55)', (
           await fsPromises.writeFile(temporaryFilePath, new Uint8Array(sourceBuffer));
 
           // The attachment is renamed on save (a clipboard insert counts as pasted), so the saved file
-          // Cannot be found by its source name. Watch for a JPEG that was not there before instead.
+          // cannot be found by its source name. Watch for a JPEG that was not there before instead.
           const jpegPathsBefore = new Set(app.vault.getFiles().filter((file) => file.extension === 'jpg').map((file) => file.path));
 
           await clipboardManager.insertFiles([{

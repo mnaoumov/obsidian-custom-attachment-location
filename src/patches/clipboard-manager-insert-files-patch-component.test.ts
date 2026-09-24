@@ -97,7 +97,7 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
     await strictProxy<ClipboardManagerPrototype>(clipboardManager).insertFiles(attachments);
 
     // Assert by reference identity (`.mock.calls`) rather than structural `toHaveBeenCalledWith`,
-    // Because all-zero ArrayBuffers compare loosely so identity is the only reliable check.
+    // because all-zero ArrayBuffers compare loosely so identity is the only reliable check.
     const markCalls = vi.mocked(arrayBufferMap.markAsPastedImage).mock.calls;
     expect(markCalls).toHaveLength(1);
     expect(markCalls[0]?.[0]).toBe(imageBuffer);

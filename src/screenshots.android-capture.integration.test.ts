@@ -143,7 +143,7 @@ beforeAll(async () => {
   vault.populate({
     [`.obsidian/plugins/${PLUGIN_ID}/data.json`]: JSON.stringify({
       // The pattern the plugin's own defaults recommend, spelled out so the
-      // Frames match what the settings would show.
+      // frames match what the settings would show.
       attachmentFolderPath: './assets/{{noteFileName}}',
       attachmentRenameMode: 'All',
       generatedAttachmentFileName: '{{noteFileName}}-{{date:{momentJsFormat:\'YYYYMMDD\'}}}',
@@ -158,7 +158,7 @@ beforeAll(async () => {
   setupDiagnostics = await evalInObsidian({
     async callback({ app, fontSizeInPixels, lib: { waitUntil }, subjectNotePath }) {
       // A closure runs inside ONE Appium `execute/sync` call, which WebDriver
-      // Caps around 30s, so every wait in here stays under it.
+      // caps around 30s, so every wait in here stays under it.
       const SETTLE_TIMEOUT_IN_MILLISECONDS = 20_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1500;
 
@@ -171,10 +171,10 @@ beforeAll(async () => {
       });
 
       // The drawer's foot carries the vault switcher, which in a capture run
-      // Shows the harness's generated `temp-vault-XXXXXX` name — a private-looking
-      // String that belongs in no listing. Hidden rather than renamed because the
-      // Name is the harness's to choose, not this suite's. Both selectors: the
-      // Switcher was rebuilt between Obsidian versions and each ships one.
+      // shows the harness's generated `temp-vault-XXXXXX` name — a private-looking
+      // string that belongs in no listing. Hidden rather than renamed because the
+      // name is the harness's to choose, not this suite's. Both selectors: the
+      // switcher was rebuilt between Obsidian versions and each ships one.
       const style = createEl('style');
       style.textContent = '.workspace-drawer-vault-switcher, .workspace-drawer-header-switcher { visibility: hidden; }';
       document.head.append(style);
@@ -199,8 +199,8 @@ beforeAll(async () => {
 describe('mobile store screenshots', () => {
   it('stages the fixtures the shots are framed on', () => {
     // Surfaced as an assertion because vitest swallows console output from an
-    // Integration worker, and a silently-wrong layout produces five bad images
-    // Without a single failure.
+    // integration worker, and a silently-wrong layout produces five bad images
+    // without a single failure.
     expect(setupDiagnostics).toMatchObject({ isVaultReady: true });
   });
 
@@ -208,9 +208,9 @@ describe('mobile store screenshots', () => {
     await setPluginEnabled(false);
 
     // Four pastes, not one: the complaint is a PILE of identically-shaped names,
-    // And a single file under the caption "one heap" would be the caption doing
-    // The work the picture is supposed to do. Two notes, so the pile visibly
-    // Belongs to no note in particular.
+    // and a single file under the caption "one heap" would be the caption doing
+    // the work the picture is supposed to do. Two notes, so the pile visibly
+    // belongs to no note in particular.
     const savedPaths: string[] = [];
     for (const [index, fileName] of PILE_FILE_NAMES.entries()) {
       const notePath = index % 2 === 0 ? SUBJECT_NOTE_PATH : SECOND_NOTE_PATH;
@@ -218,7 +218,7 @@ describe('mobile store screenshots', () => {
     }
 
     // Obsidian's own default is the vault root, and the name is the timestamp
-    // One. Both halves of the complaint, asserted rather than assumed.
+    // one. Both halves of the complaint, asserted rather than assumed.
     expect(savedPaths).toStrictEqual(PILE_FILE_NAMES.map((fileName) => `${fileName}.png`));
     await openNote(SUBJECT_NOTE_PATH);
     await shoot(1, 'Every pasted screenshot in one heap, named after the clock');
@@ -266,8 +266,8 @@ describe('mobile store screenshots', () => {
  */
 async function buildScreenshotAttachment(): Promise<Uint8Array> {
   // Drawn as shapes rather than text: sharp renders SVG text through whatever
-  // Fonts the host happens to have, so a captioned placeholder would look
-  // Different on another machine — or lose its caption entirely.
+  // fonts the host happens to have, so a captioned placeholder would look
+  // different on another machine — or lose its caption entirely.
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="270">
     <rect width="480" height="270" rx="10" fill="#f4f5f8"/>
     <rect width="480" height="34" rx="10" fill="#5a76b4"/>
@@ -376,13 +376,13 @@ async function openNote(notePath: string, shouldShowTree = true): Promise<number
         intervalInMilliseconds: POLL_INTERVAL_IN_MILLISECONDS,
         async poll({ app, drawerSettleDelayInMilliseconds, toggleDelayInMilliseconds }): Promise<DrawerAttempt> {
           // `.tree-item-self`, not `.nav-file-title`: the tree starts fully
-          // Collapsed, so at this point every row is a FOLDER and waiting for a
-          // File row waits forever.
+          // collapsed, so at this point every row is a FOLDER and waiting for a
+          // file row waits forever.
           //
           // And ALL of them, not `querySelector`'s first: Obsidian leaves earlier
-          // Renders in the document, so the first match can be a detached row that
-          // Is zero-sized no matter what the drawer does — which reads as "the
-          // Drawer never opened" while it sits open on screen.
+          // renders in the document, so the first match can be a detached row that
+          // is zero-sized no matter what the drawer does — which reads as "the
+          // drawer never opened" while it sits open on screen.
           function isDrawerOpen(): boolean {
             return [...document.querySelectorAll('.nav-files-container .tree-item-self')]
               .map((row) => row.getBoundingClientRect())
@@ -390,26 +390,26 @@ async function openNote(notePath: string, shouldShowTree = true): Promise<number
           }
 
           // COLLAPSE first, always. The drawer's `collapsed` flag and its actual
-          // Visibility drift apart on a phone: after the first note is opened the
-          // Split reports `collapsed === false` while the drawer element is still
+          // visibility drift apart on a phone: after the first note is opened the
+          // split reports `collapsed === false` while the drawer element is still
           // `display: none`, and in that state `expand()` is a no-op that returns
-          // Happily and shows nothing. Toggling it shut and open again is what
-          // Re-runs the code that actually displays it.
+          // happily and shows nothing. Toggling it shut and open again is what
+          // re-runs the code that actually displays it.
           //
           // ONE collapse/expand pair per attempt, never two: calling `expand()`
-          // Again on a drawer that is already sliding open toggles it back, so an
-          // Eager retry flips it open and shut forever and never satisfies its own
-          // Predicate. The poll interval is what keeps the next attempt from
-          // Landing mid-slide.
+          // again on a drawer that is already sliding open toggles it back, so an
+          // eager retry flips it open and shut forever and never satisfies its own
+          // predicate. The poll interval is what keeps the next attempt from
+          // landing mid-slide.
           app.workspace.leftSplit.collapse();
           await sleep(toggleDelayInMilliseconds);
           app.workspace.leftSplit.expand();
           await sleep(drawerSettleDelayInMilliseconds);
 
           // ONLY once the drawer is out. The mobile drawer is tabbed — files,
-          // Search, bookmarks — and an open drawer showing the wrong tab lays the
-          // File rows out at zero width, which looks exactly like a drawer that
-          // Never opened. Revealing BEFORE expanding, though, leaves it shut.
+          // search, bookmarks — and an open drawer showing the wrong tab lays the
+          // file rows out at zero width, which looks exactly like a drawer that
+          // never opened. Revealing BEFORE expanding, though, leaves it shut.
           const fileExplorerLeaf = app.workspace.getLeavesOfType('file-explorer')[0];
           if (fileExplorerLeaf) {
             await app.workspace.revealLeaf(fileExplorerLeaf);
@@ -418,8 +418,8 @@ async function openNote(notePath: string, shouldShowTree = true): Promise<number
           await sleep(drawerSettleDelayInMilliseconds);
 
           // The two facts that told the story when this failed: the split's own
-          // Flag, and whether the drawer element is actually displayed. They
-          // Disagree, and that disagreement IS the bug this retry works around.
+          // flag, and whether the drawer element is actually displayed. They
+          // disagree, and that disagreement IS the bug this retry works around.
           const drawer = document.querySelector('.workspace-drawer.mod-left');
 
           return {
@@ -432,8 +432,8 @@ async function openNote(notePath: string, shouldShowTree = true): Promise<number
         timeoutMessage: 'the file drawer to finish opening',
         until(attempt: DrawerAttempt): boolean {
           // Remembered in NODE, because the attempt that fails is no longer the one
-          // That reports: the diagnostic below is thrown out here rather than
-          // Inside Obsidian.
+          // that reports: the diagnostic below is thrown out here rather than
+          // inside Obsidian.
           lastAttempt = attempt;
           return attempt.isOpen;
         },
@@ -441,8 +441,8 @@ async function openNote(notePath: string, shouldShowTree = true): Promise<number
       });
     } catch (error) {
       // Only a drawer that was actually polled and never opened gets the drawer's
-      // Own message; anything that failed before the first attempt returned — a
-      // Missing note, a dead transport — is reported as itself.
+      // own message; anything that failed before the first attempt returned — a
+      // missing note, a dead transport — is reported as itself.
       if (!lastAttempt) {
         throw error;
       }
@@ -467,8 +467,8 @@ async function openNote(notePath: string, shouldShowTree = true): Promise<number
 
       // A folder the tree has not expanded is a folder the reader cannot see, and
       // WHERE the attachment landed is the entire story here. Expanded on every
-      // Shot rather than once, because each paste creates a new folder that
-      // Arrives collapsed.
+      // shot rather than once, because each paste creates a new folder that
+      // arrives collapsed.
       const fileExplorerLeaf = app.workspace.getLeavesOfType('file-explorer')[0];
       if (fileExplorerLeaf) {
         const view: unknown = fileExplorerLeaf.view;
@@ -482,7 +482,7 @@ async function openNote(notePath: string, shouldShowTree = true): Promise<number
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
 
       // Only the on-screen copies count — Obsidian leaves the note's previous
-      // Render in the document, detached and zero-sized.
+      // render in the document, detached and zero-sized.
       return [...document.querySelectorAll('.internal-embed img, .image-embed img')]
         .filter((element) => element.getBoundingClientRect().width > 0).length;
     },
@@ -520,8 +520,8 @@ async function pasteAttachment(notePath: string, fileName: string): Promise<stri
       const savedFile = await app.saveAttachment(baseName, 'png', binary.buffer);
 
       // `generateMarkdownLink` returns a plain link even for an image, so the `!`
-      // Is added here — without it the note shows link TEXT and shot 5 has no
-      // Embed to prove still resolves.
+      // is added here — without it the note shows link TEXT and shot 5 has no
+      // embed to prove still resolves.
       const link = app.fileManager.generateMarkdownLink(savedFile, file.path);
       await app.vault.process(file, (content) => `${content}\n!${link}\n`);
 
@@ -605,8 +605,8 @@ async function shoot(index: number, caption: string): Promise<void> {
   const captured = await captureObsidianScreenshot({ vaultPath: vaultPath() });
 
   // The AVD is 900x1600, so the device frame IS the store's size. Asserting it
-  // Here is what keeps that true: run this against any other AVD and it fails
-  // Loudly instead of quietly shipping an off-spec image.
+  // here is what keeps that true: run this against any other AVD and it fails
+  // loudly instead of quietly shipping an off-spec image.
   expect(readPngDimensions(captured)).toStrictEqual({
     heightInPixels: HEIGHT_IN_PIXELS,
     widthInPixels: WIDTH_IN_PIXELS

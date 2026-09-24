@@ -657,7 +657,7 @@ describe('AttachmentCollector', () => {
 
       it('should warn that a singly-referenced attachment is already in its destination folder', async () => {
         // The commonest attachment of all, and the one path that used to report nothing at all -
-        // Not even to the console, while both multiple-notes branches warned.
+        // not even to the console, while both multiple-notes branches warned.
         await runSingleFile(note);
 
         expect(warnSpy).toHaveBeenCalledWith('Skipping collecting attachment img.png as it is already in the destination folder.');
@@ -674,7 +674,7 @@ describe('AttachmentCollector', () => {
 
       it('should name the collected file name setting when renaming is on and the template is empty', async () => {
         // The reporter's own configuration, and the one that makes the outcome inevitable: the
-        // Toggle says rename, the empty template says keep the name, so only the folder could differ.
+        // toggle says rename, the empty template says keep the name, so only the folder could differ.
         settings.shouldRenameCollectedAttachments = true;
         settings.collectedAttachmentFileName = '';
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
@@ -717,7 +717,7 @@ describe('AttachmentCollector', () => {
 
       it('should stay quiet when an attachment was skipped for another reason', async () => {
         // An excluded attachment is not one that is already in place, so a message saying everything
-        // Is already in place would be false. The examined and already-in-place counts disagree.
+        // is already in place would be false. The examined and already-in-place counts disagree.
         vi.mocked(settings.isExcludedFromAttachmentCollecting).mockReturnValue(true);
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
 
@@ -728,7 +728,7 @@ describe('AttachmentCollector', () => {
 
       it('should stay quiet when the note has no attachments at all', async () => {
         // Nothing was examined, so there is nothing to explain - the command found no attachment
-        // Rather than declining to move one.
+        // rather than declining to move one.
         mockGetLinks.mockReturnValue([]);
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
 
@@ -739,7 +739,7 @@ describe('AttachmentCollector', () => {
 
       it('should stay quiet outside a single-note run', async () => {
         // A folder-wide or vault-wide collect visits notes the user never singled out, so the same
-        // Report there would be a box per note.
+        // report there would be a box per note.
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
         mockIsFile.mockReturnValue(false);
         mockIsFolder.mockReturnValue(false);
@@ -768,7 +768,7 @@ describe('AttachmentCollector', () => {
 
       it('should move the attachment into the highest-priority referencing note', async () => {
         // The reporter's scenario: an image shared by a drawing and a markdown note, with markdown
-        // Ranked first, belongs to the markdown note.
+        // ranked first, belongs to the markdown note.
         settings.notePriorities = ['.md', '.excalidraw.md'];
 
         await runSingleFile(note);
@@ -780,7 +780,7 @@ describe('AttachmentCollector', () => {
 
       it('should move it into a note other than the one being collected', async () => {
         // The command runs on `note.md`, but the drawing outranks it, so the image goes to the
-        // Drawing's folder. That is the point of the setting, and why it is empty by default.
+        // drawing's folder. That is the point of the setting, and why it is empty by default.
         settings.notePriorities = ['.excalidraw.md', '.md'];
 
         await runSingleFile(note);
@@ -813,7 +813,7 @@ describe('AttachmentCollector', () => {
 
       it('should fall back to the mode when several notes tie on the best entry', async () => {
         // Two notes of equal priority is the ambiguity the mode setting already exists for, so the
-        // Priority list must not silently pick one of them.
+        // priority list must not silently pick one of them.
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md']));
         settings.notePriorities = ['.md'];
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
@@ -826,8 +826,8 @@ describe('AttachmentCollector', () => {
 
       it('should list only the tied notes in the dialog, not the ones ranked below them', async () => {
         // Issue #74: the drawing also ends with `.md`, but the longer entry demotes it. It cannot
-        // Resolve the tie between the two plain notes, so offering it is noise the reporter had to
-        // Read past.
+        // resolve the tie between the two plain notes, so offering it is noise the reporter had to
+        // read past.
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md', 'drawing.excalidraw.md']));
         settings.notePriorities = ['.md', '.excalidraw.md'];
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
@@ -845,7 +845,7 @@ describe('AttachmentCollector', () => {
 
       it('should name the same notes in the log as in the dialog', async () => {
         // A user reading the console must not see a note the box omitted, or the two disagree about
-        // What the ambiguity even is.
+        // what the ambiguity even is.
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md', 'drawing.excalidraw.md']));
         settings.notePriorities = ['.md', '.excalidraw.md'];
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
@@ -884,8 +884,8 @@ describe('AttachmentCollector', () => {
 
       it('should leave the attachment alone when the winning note already holds it', async () => {
         // Issue #73: the collected note outranks the drawing and already stores the image, so nothing
-        // Is ambiguous and nothing is left to do. An unambiguous collect must stay as quiet as a
-        // Singly-referenced one - the shared-attachment box reported an ambiguity that was settled.
+        // is ambiguous and nothing is left to do. An unambiguous collect must stay as quiet as a
+        // singly-referenced one - the shared-attachment box reported an ambiguity that was settled.
         settings.notePriorities = ['.md', '.excalidraw.md'];
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Skip;
         // Already in place for every note, which is what makes the destination null.
@@ -900,7 +900,7 @@ describe('AttachmentCollector', () => {
 
       it('should not cancel the run when the winning note already holds the attachment', async () => {
         // Cancel is the loudest mode: it aborted the whole run over an attachment that was already
-        // Exactly where the priority list wanted it.
+        // exactly where the priority list wanted it.
         settings.notePriorities = ['.md', '.excalidraw.md'];
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         getProperAttachmentPath.mockResolvedValue(null);
@@ -927,8 +927,8 @@ describe('AttachmentCollector', () => {
 
       it('should name the higher-priority note when the winner is not the collected note', async () => {
         // Issue #75: the image is handed to the drawing, which outranks `note.md`. Doing that in
-        // Silence leaves the user unable to see who really owns it - "allows user to see the notes of
-        // Higher priority that are referencing the image".
+        // silence leaves the user unable to see who really owns it - "allows user to see the notes of
+        // higher priority that are referencing the image".
         settings.notePriorities = ['.excalidraw.md', '.md'];
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
 
@@ -953,7 +953,7 @@ describe('AttachmentCollector', () => {
 
       it('should report the higher-priority note when it already holds the attachment', async () => {
         // The reporter's own screenshot: nothing moves, so without this the collect says nothing at
-        // All. Issue #73's silence was about the collected note BEING the winner, which is not this.
+        // all. Issue #73's silence was about the collected note BEING the winner, which is not this.
         settings.notePriorities = ['.excalidraw.md', '.md'];
         getProperAttachmentPath.mockResolvedValue(null);
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
@@ -974,7 +974,7 @@ describe('AttachmentCollector', () => {
 
       it('should stay quiet when the collected note is the winner', async () => {
         // Issue #73's rule, which issue #75 must not undo: nothing outranks the collected note, so
-        // There is nobody to name.
+        // there is nobody to name.
         settings.notePriorities = ['.md', '.excalidraw.md'];
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
 
@@ -985,7 +985,7 @@ describe('AttachmentCollector', () => {
 
       it('should stay quiet outside a single-note run', async () => {
         // A folder-wide or vault-wide collect visits notes the user never singled out, so the same
-        // Report there would be a box per attachment.
+        // report there would be a box per attachment.
         settings.notePriorities = ['.excalidraw.md', '.md'];
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
         mockIsFile.mockReturnValue(false);
@@ -1025,7 +1025,7 @@ describe('AttachmentCollector', () => {
 
       it('should move the whole folder instead of the single linked file', async () => {
         // The folder lands in the note's attachment folder under its own name, so the tree's internal
-        // Shape - and every relative link inside it - survives.
+        // shape - and every relative link inside it - survives.
         const unitFolder = strictProxy<TFolder>({ path: UNIT_FOLDER_PATH });
         getFolderByPath.mockReturnValue(unitFolder);
         mockGetLinks.mockReturnValue([createReference()]);
@@ -1043,7 +1043,7 @@ describe('AttachmentCollector', () => {
 
       it('should clean up the folder the unit folder vacated, not one carried away with it', async () => {
         // The attachment's own parent is carried away inside the tree, so cleaning it up sweeps a path
-        // That no longer exists and leaves the folder the unit folder actually left behind (issue #69).
+        // that no longer exists and leaves the folder the unit folder actually left behind (issue #69).
         getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: UNIT_FOLDER_PATH }));
         mockGetLinks.mockReturnValue([createReference()]);
         mockExtractLinkFile.mockReturnValue(createFile(`${UNIT_FOLDER_PATH}/img/logo.png`));
@@ -1060,7 +1060,7 @@ describe('AttachmentCollector', () => {
 
       it('should skip a second link that the first link already carried away inside the folder', async () => {
         // The link snapshot still names the old path, so without this the file reads as unresolvable
-        // And would be reported as a broken link rather than as work already done.
+        // and would be reported as a broken link rather than as work already done.
         getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: UNIT_FOLDER_PATH }));
         mockGetLinks.mockReturnValue([createReference(), createReference()]);
         mockExtractLinkFile
@@ -1118,7 +1118,7 @@ describe('AttachmentCollector', () => {
 
       it('should skip rather than copy a unit-folder attachment referenced by multiple notes', async () => {
         // Copying the lone file out of the folder produces exactly the broken attachment the unit
-        // Designation exists to prevent.
+        // designation exists to prevent.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
         getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: UNIT_FOLDER_PATH }));
         mockGetLinks.mockReturnValue([createReference()]);
@@ -1154,7 +1154,7 @@ describe('AttachmentCollector', () => {
 
       it('should not re-invoke selectMode in Cancel mode when the setting is not Cancel', async () => {
         // Setting is Prompt; selectMode resolves to Cancel. The recursive apply then logs the
-        // Cancel error but does NOT call selectMode again, since the setting itself is not Cancel.
+        // cancel error but does NOT call selectMode again, since the setting itself is not Cancel.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Prompt;
         mockSelectMode.mockResolvedValue({
           mode: CollectAttachmentUsedByMultipleNotesMode.Cancel,
@@ -1286,7 +1286,7 @@ describe('AttachmentCollector', () => {
 
       it('should return early on a subsequent link iteration once context becomes aborted', async () => {
         // Two links: the first triggers Cancel (aborting context), so the second link
-        // Iteration returns early before requesting its backlinks.
+        // iteration returns early before requesting its backlinks.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
         mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
@@ -1296,7 +1296,7 @@ describe('AttachmentCollector', () => {
 
       it('should collect normally when the only extra backlink is an excluded note', async () => {
         // Configured Cancel, but the second backlink matches the multiple-notes-check exclusion,
-        // So the effective count drops to one and the attachment is moved normally.
+        // so the effective count drops to one and the attachment is moved normally.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         vi.mocked(settings.isExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'other.md');
         mockRenameSafe.mockResolvedValue('attachments/img.png');
@@ -1312,7 +1312,7 @@ describe('AttachmentCollector', () => {
 
       it('should still handle multiple notes when only one of several backlinks is excluded', async () => {
         // Three backlinks, one is an excluded note; the two real notes still trigger the Cancel handling,
-        // And the modal lists only the two real notes.
+        // and the modal lists only the two real notes.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md', 'drawing.excalidraw.md']));
         vi.mocked(settings.isExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'drawing.excalidraw.md');
@@ -1328,7 +1328,7 @@ describe('AttachmentCollector', () => {
 
       it('should collect an attachment whose file type is exempt, however many notes reference it', async () => {
         // Issue #80: the point of the extension list is that a deliberately shared file type never asks the
-        // Question at all, so the configured Cancel is never reached and the attachment moves like any other.
+        // question at all, so the configured Cancel is never reached and the attachment moves like any other.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md', 'third.md']));
         vi.mocked(settings.isExtensionExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'img.png');
@@ -1356,7 +1356,7 @@ describe('AttachmentCollector', () => {
 
       it('should judge the exemption by the ATTACHMENT path, not by any of the referencing notes', async () => {
         // The two axes are easy to conflate, and conflating them here would exempt every attachment of a
-        // Note that happens to share the listed suffix.
+        // note that happens to share the listed suffix.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
 
         await runSingleFile(note);
@@ -1416,7 +1416,7 @@ describe('AttachmentCollector', () => {
 
       it('should ignore notes that reference the attachment via an indexed link', async () => {
         // The note holding the indexed backlink is skipped by the scan, so its own embed does not
-        // Count as a raw-path reference and the attachment is still collected.
+        // count as a raw-path reference and the attachment is still collected.
         getMarkdownFiles.mockReturnValue([createFile('note.md')]);
         cachedRead.mockResolvedValue('![[img.png]]');
         await runSingleFile(note);
@@ -1641,7 +1641,7 @@ describe('AttachmentCollector', () => {
 
     it('should return early for a later note once the shared context is aborted', async () => {
       // The first note triggers Cancel (aborting the shared context); the second note then
-      // Enters collectAttachments with context already aborted and returns before reading its cache.
+      // enters collectAttachments with context already aborted and returns before reading its cache.
       const noteFile1 = createFile('a.md');
       const noteFile2 = createFile('b.md');
       mockIsFile.mockReturnValue(true);
@@ -1659,13 +1659,13 @@ describe('AttachmentCollector', () => {
         await typed.processItem(noteFile2);
       });
       await runOperation([noteFile1, noteFile2]);
-      // GetCacheSafe runs only for the first note; the second returns early on the aborted context.
+      // getCacheSafe runs only for the first note; the second returns early on the aborted context.
       expect(mockGetCacheSafe).toHaveBeenCalledTimes(1);
     });
 
     it('should return when the shared context becomes aborted during the cache read', async () => {
       // The second note is awaiting its cache read when the first note aborts the shared context,
-      // So it returns right after the cache read without requesting any backlinks.
+      // so it returns right after the cache read without requesting any backlinks.
       const noteFile1 = createFile('a.md');
       const noteFile2 = createFile('b.md');
       mockIsFile.mockReturnValue(true);

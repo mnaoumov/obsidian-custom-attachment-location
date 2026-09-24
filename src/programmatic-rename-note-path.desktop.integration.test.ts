@@ -111,7 +111,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
         }
 
         // Neither the settings nor the read-back component is exposed publicly, so both are located by
-        // Walking the plugin's component tree (same approach as the other integration tests here).
+        // walking the plugin's component tree (same approach as the other integration tests here).
         function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -158,7 +158,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
         const holder: HandedOverSettingsHolder = foundHolder;
 
         // Mirrors this plugin's own absent-provider defaults, so only the value under test differs
-        // Between the two phases.
+        // between the two phases.
         function stubProvider(shouldRenameAttachmentFiles: boolean): void {
           holder.apiRef = {
             value: {

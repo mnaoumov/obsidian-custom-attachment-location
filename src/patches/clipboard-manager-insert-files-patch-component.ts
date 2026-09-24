@@ -33,8 +33,8 @@ export class ClipboardManagerInsertFilesPatchComponent extends MonkeyAroundCompo
         for (const importedAttachment of importedAttachments) {
           const arrayBuffer = await importedAttachment.data;
           // `insertFiles` is the clipboard-paste / editor insert sink. Image attachments are flagged
-          // By exact ArrayBuffer identity so `Attachment rename mode: Only pasted images` detects them
-          // Without depending on Obsidian's `Pasted image <timestamp>` naming, which is absent for a
+          // by exact ArrayBuffer identity so `Attachment rename mode: Only pasted images` detects them
+          // without depending on Obsidian's `Pasted image <timestamp>` naming, which is absent for a
           // Windows 11 Win+Shift+S screenshot backed by a real temp file. See issue #31.
           if (isImageExtension(importedAttachment.extension)) {
             this.arrayBufferMap.markAsPastedImage(arrayBuffer);

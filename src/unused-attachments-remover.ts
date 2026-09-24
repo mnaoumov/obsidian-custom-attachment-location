@@ -362,7 +362,7 @@ export class UnusedAttachmentsRemover {
     const noteFiles = [...noteFilesSet].sort((a, b) => a.path.localeCompare(b.path));
 
     // Compute the full set of attachments to trash BEFORE deleting anything, so the confirmation
-    // Modal lists exactly what will be removed.
+    // modal lists exactly what will be removed.
     const unusedAttachments = new Set<TFile>();
     // Keyed by path, so two notes reaching the same attachment unit folder queue it once.
     const unusedUnitFolderByPath = new Map<string, TFolder>();
@@ -817,14 +817,14 @@ export class UnusedAttachmentsRemover {
         timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
       });
       // An attachment is unused only when no OTHER note still references it. Notes matching the
-      // Multiple-notes-check exclusion are ignored, mirroring the Collect/Move commands, so a shared
-      // Attachment is never trashed. With no scanning note, `notePath` matches no backlink and every
-      // Reference counts, which is the safe way to be wrong.
+      // multiple-notes-check exclusion are ignored, mirroring the Collect/Move commands, so a shared
+      // attachment is never trashed. With no scanning note, `notePath` matches no backlink and every
+      // reference counts, which is the safe way to be wrong.
       //
       // `excludeExtensionsFromMultipleNotesCheck` is deliberately NOT consulted here, and the inconsistency
-      // Is the point rather than an oversight. There the list means "collect it anyway"; here the same list
-      // Would mean "stop counting the notes that still reference it", and this branch TRASHES what it
-      // Judges unused - so honoring it would delete exactly the shared files the setting exists to protect.
+      // is the point rather than an oversight. There the list means "collect it anyway"; here the same list
+      // would mean "stop counting the notes that still reference it", and this branch TRASHES what it
+      // judges unused - so honoring it would delete exactly the shared files the setting exists to protect.
       const relevantBacklinks = backlinks.keys().filter((backlink) => backlink !== notePath && !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(backlink));
       if (relevantBacklinks.length === 0) {
         unusedAttachments.push(candidate);
@@ -832,7 +832,7 @@ export class UnusedAttachmentsRemover {
     };
 
     // Same rule as the note-driven pass applies to its own notice: `loop` holds its notice for a minimum
-    // Two seconds, so putting one in front of a single candidate turns an instant answer into a slow one.
+    // two seconds, so putting one in front of a single candidate turns an instant answer into a slow one.
     if (params.shouldShowProgressBar && perFileCandidates.length > 1) {
       await loop({
         abortSignal,
@@ -845,7 +845,7 @@ export class UnusedAttachmentsRemover {
         shouldShowProgressBar: true
       });
       // `loop` returns quietly when the signal trips mid-run, so the abort has to be re-raised here or a
-      // Cancelled scan would go on to show a confirmation dialog built from a partial answer.
+      // cancelled scan would go on to show a confirmation dialog built from a partial answer.
       abortSignal.throwIfAborted();
     } else {
       for (const candidate of perFileCandidates) {

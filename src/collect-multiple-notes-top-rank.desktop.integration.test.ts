@@ -89,7 +89,7 @@ describe('The shared-attachment dialog lists only the top-ranked notes (issue #7
         }
 
         // Neither the settings nor the read-back component is exposed publicly, so both are located by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -141,7 +141,7 @@ describe('The shared-attachment dialog lists only the top-ranked notes (issue #7
         const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
 
         // Mirrors this plugin's own absent-provider defaults, so only the ranking under test differs
-        // From what a vault with no provider would see.
+        // from what a vault with no provider would see.
         function stubProvider(notePriorities: readonly string[]): void {
           holder.apiRef = {
             value: {
@@ -214,7 +214,7 @@ describe('The shared-attachment dialog lists only the top-ranked notes (issue #7
           await app.vault.create(drawingPath, `![[${imagePath}]]\n`);
 
           // All three embeds must be indexed, or the collector sees fewer referencing notes and the
-          // Tie this test is about never forms.
+          // tie this test is about never forms.
           await waitUntil({
             message: 'the three embeds were not indexed',
             predicate: () => {

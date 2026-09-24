@@ -38,7 +38,7 @@ describe('selfWriteRegistry', () => {
     selfWriteRegistry.register('abandoned.png');
 
     // Past the prune threshold: a write that never produced a `create` event must not keep a claim
-    // That would later swallow a genuinely foreign creation at the same path.
+    // that would later swallow a genuinely foreign creation at the same path.
     vi.advanceTimersByTime(60_001);
 
     expect(selfWriteRegistry.consume('abandoned.png')).toBe(false);

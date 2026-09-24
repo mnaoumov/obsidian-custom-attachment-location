@@ -74,7 +74,7 @@ describe('Collect attachments honors a destination of its own (issue #78)', () =
         const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
 
         // The settings are not exposed publicly, so the live object the collector reads is located by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findSettings(): CollectDestinationSettings | null {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -155,7 +155,7 @@ describe('Collect attachments honors a destination of its own (issue #78)', () =
             const note = await app.vault.create(notePath, `![[${imageFileName}]]\n`);
 
             // The embed must be indexed, or the collector walks a note with no links and moves nothing -
-            // Which would make this phase report the destination it never reached.
+            // which would make this phase report the destination it never reached.
             await waitUntil({
               message: 'the staged embed was not indexed',
               predicate: () => {
@@ -173,7 +173,7 @@ describe('Collect attachments honors a destination of its own (issue #78)', () =
             const newAttachmentPath = await app.vault.getAvailablePathForAttachments(`cd-new-${label}-${stamp}`, 'png', note);
 
             // The public surface rather than the command: the command acts on the ACTIVE file, which
-            // Would mean opening the note and waiting for the workspace to finish switching to it.
+            // would mean opening the note and waiting for the workspace to finish switching to it.
             collectAttachmentsInAbstractFiles.call(pluginRecord, [note]);
 
             await waitUntil({

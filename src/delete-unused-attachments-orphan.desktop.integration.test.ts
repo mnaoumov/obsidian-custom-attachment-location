@@ -79,7 +79,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
         }
 
         // The plugin does not expose its settings publicly, so locate the live settings object by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findSettings(): null | RemoverSettings {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -135,7 +135,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const rootFolder = `duo-assets-${stamp}`;
         // Named after a note that does NOT exist. That is the whole scenario: the note was deleted and
-        // Its attachment folder was left behind.
+        // its attachment folder was left behind.
         const ownerlessFolder = `${rootFolder}/duo-gone-${stamp}`;
         const liveFolder = `${rootFolder}/duo-live-${stamp}`;
         const orphanPath = `${ownerlessFolder}/lost.png`;
@@ -178,7 +178,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
 
         async function confirmTheDialog(): Promise<void> {
           // Confirm through the dialog's own button. Detaching the container would leave the queued
-          // Operation's promise unresolved and block everything queued behind it.
+          // operation's promise unresolved and block everything queued behind it.
           const buttonEls = [...activeDocument.querySelectorAll<HTMLButtonElement>(':scope .modal-content button')];
           const okButtonEl = buttonEls.find((buttonEl) => buttonEl.textContent === 'OK') ?? buttonEls[0];
           okButtonEl?.click();
@@ -196,7 +196,7 @@ describe('Delete unused attachments in entire vault, for attachments no note own
           await app.vault.createBinary(orphanPath, new ArrayBuffer(4));
           await app.vault.createBinary(keptPath, new ArrayBuffer(4));
           // The one live note embeds only `kept.png`. Nothing anywhere references `lost.png`, and no note
-          // Resolves to the folder holding it.
+          // resolves to the folder holding it.
           await app.vault.create(liveNotePath, `![[${keptPath}]]\n`);
           await sleep(SETTLE_DELAY_IN_MILLISECONDS);
 

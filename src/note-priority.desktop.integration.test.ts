@@ -96,7 +96,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
         }
 
         // Neither the settings nor the read-back component is exposed publicly, so both are located by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -150,7 +150,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
         const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
 
         // Mirrors this plugin's own absent-provider defaults, so only the value under test differs
-        // Between the two phases.
+        // between the two phases.
         function stubProvider(notePriorities: readonly string[]): void {
           holder.apiRef = {
             value: {
@@ -193,7 +193,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
             const drawingNote = await app.vault.create(drawingNotePath, `![[${imagePath}]]\n`);
 
             // Both embeds must be indexed, or the collector sees only one referencing note and the
-            // Multiple-notes path never runs at all.
+            // multiple-notes path never runs at all.
             await waitUntil({
               message: 'both embeds were not indexed',
               predicate: () => {
@@ -204,7 +204,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
             });
 
             // Run the command on the DRAWING. With `.md` ranked above `.excalidraw.md` the image is
-            // Still handed to the plain note, which is the surprising half of the feature.
+            // still handed to the plain note, which is the surprising half of the feature.
             await app.workspace.getLeaf(false).openFile(drawingNote);
             app.commands.executeCommandById(collectCommandId);
 
@@ -212,7 +212,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
             const expectedPath = `${winnerFolder}/np-img-${stamp}.png`;
 
             // Either it lands in the winner's folder, or nothing happens at all. Poll for the former
-            // And let the timeout report the latter.
+            // and let the timeout report the latter.
             let isMoved = false;
             const deadline = Date.now() + waitTimeoutInMilliseconds;
             while (Date.now() < deadline) {
@@ -265,7 +265,7 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
     expect(result.control.attachmentPath).toMatch(/^np-img-.*\.png$/);
 
     // Fix: the plain markdown note outranks the Excalidraw one and takes the image, even though the
-    // Command was run on the drawing.
+    // command was run on the drawing.
     expect(result.fix.movedIntoWinnerFolder).toBe(true);
     expect(result.fix.attachmentPath).toMatch(/^assets\/np-note-.*\/np-img-.*\.png$/);
   }, 180_000);

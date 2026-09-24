@@ -269,7 +269,7 @@ export class PluginSettings {
 
   private readonly _attachmentCollectingPaths = new PathSettings();
   // Only the exclude half is exposed: `isPathIgnored` then reduces to "matches one of these
-  // Patterns", which is what a designation list needs. Same shape as `_attachmentCollectingPaths`.
+  // patterns", which is what a designation list needs. Same shape as `_attachmentCollectingPaths`.
   private readonly _attachmentUnitFolderPaths = new PathSettings();
   // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
   private _customTokensStr = '';

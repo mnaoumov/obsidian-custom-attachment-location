@@ -51,7 +51,7 @@ describe('DeleteUnusedAttachmentsEntireVaultCommandHandler', () => {
   it('should construct with the correct command metadata', () => {
     expect(handler).toBeInstanceOf(DeleteUnusedAttachmentsEntireVaultCommandHandler);
     // A command id of its own: the per-note command keeps its meaning, so a hotkey bound to it can
-    // Never turn into a whole-vault deletion.
+    // never turn into a whole-vault deletion.
     expect(toTestable(handler).id).toBe('delete-unused-attachments-entire-vault');
     expect(toTestable(handler).icon).toBe('trash-2');
     expect(toTestable(handler).name).toBe('Delete unused attachments in entire vault');

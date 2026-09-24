@@ -137,7 +137,7 @@ export class NetworkImageDownloader {
 
     let newContent = content;
     // Splicing by position, and from the end backwards so the earlier offsets stay valid, keeps every occurrence separate: the same image
-    // Expression repeated twice is downloaded twice and each copy gets its own link, which a text-keyed replacement would collapse into one.
+    // expression repeated twice is downloaded twice and each copy gets its own link, which a text-keyed replacement would collapse into one.
     for (const replacement of replacements.reverse()) {
       newContent = newContent.slice(0, replacement.startIndex) + replacement.markdownLink + newContent.slice(replacement.endIndexExclusive);
     }
@@ -238,9 +238,9 @@ export class NetworkImageDownloader {
     const alias = link.alt.trim() ? link.alt : undefined;
 
     // Issue #50: going through `app.fileManager.generateMarkdownLink` is what honors the vault's "New link format" and "Use Wikilinks"
-    // Settings, applies the plugin's own patch, and escapes the destination. Obsidian does not add the embed prefix itself, so the caller
-    // Has to - otherwise the image would turn into a plain link. Another plugin patching the same method may already return an embed,
-    // Which must not be prefixed twice.
+    // settings, applies the plugin's own patch, and escapes the destination. Obsidian does not add the embed prefix itself, so the caller
+    // has to - otherwise the image would turn into a plain link. Another plugin patching the same method may already return an embed,
+    // which must not be prefixed twice.
     const markdownLink = this.app.fileManager.generateMarkdownLink(attachmentFile, noteFile.path, undefined, alias);
     return hasEmbedSyntax(markdownLink) ? markdownLink : `!${markdownLink}`;
   }

@@ -25,7 +25,7 @@ const SETTLE_TIMEOUT_IN_MILLISECONDS = 600;
 const SEARCH_SETTLE_TIMEOUT_IN_MILLISECONDS = 1200;
 
 // No `Deletion` page since 12.0.0: every row it held belonged to the rename/delete handler this plugin
-// Stopped registering, so the page emptied and was dropped rather than left as a bare label.
+// stopped registering, so the page emptied and was dropped rather than left as a bare label.
 const EXPECTED_PAGE_NAMES = [
   'Move/renames',
   'Special characters',
@@ -107,7 +107,7 @@ describe('Settings sub-pages (issue #68)', () => {
         const pageStackDepthAfterBack = setting.pageStack.length;
 
         // `JPEG Quality` lives on the `Images` sub-page, so a search that finds it proves Obsidian
-        // Indexes nested definitions rather than only the parent tab's own rows.
+        // indexes nested definitions rather than only the parent tab's own rows.
         setting.searchComponent.setValue('JPEG Quality');
         setting.searchComponent.onChanged();
         await sleep(searchSettleTimeoutInMilliseconds);

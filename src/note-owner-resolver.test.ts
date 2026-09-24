@@ -206,7 +206,7 @@ describe('NoteOwnerResolver', () => {
 
     it('should drop a note the list deliberately ranked lower', () => {
       // The reporter's case: the drawing also ends with `.md`, but the longer entry demotes it, so it
-      // Has no say in the ambiguity and must not be offered as if it had.
+      // has no say in the ambiguity and must not be offered as if it had.
       settings.notePriorities = ['.md', '.excalidraw.md'];
       expect(resolver.filterTopRankNotePaths(['a.md', 'b.md', 'drawing.excalidraw.md'])).toEqual(['a.md', 'b.md']);
     });
@@ -232,7 +232,7 @@ describe('NoteOwnerResolver', () => {
   describe('filterHigherPriorityNotePaths', () => {
     it('should keep a note the list ranks above the reference', () => {
       // The reporter's case: collecting from the drawing, the markdown note is the one that really
-      // Owns the image, so it is the note worth naming.
+      // owns the image, so it is the note worth naming.
       settings.notePriorities = ['.md', '.excalidraw.md'];
       expect(resolver.filterHigherPriorityNotePaths(['note.md'], 'drawing.excalidraw.md')).toEqual(['note.md']);
     });

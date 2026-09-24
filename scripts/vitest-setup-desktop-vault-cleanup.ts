@@ -178,7 +178,7 @@ afterAll(async () => {
     evalInObsidian({
       async callback({ app, stuckPrefix }): Promise<string[]> {
         // The callback is serialized and evaluated inside Obsidian, so it closes over nothing: every
-        // Constant and helper it uses has to be declared in here.
+        // constant and helper it uses has to be declared in here.
         const MODAL_DISMISS_SETTLE_IN_MILLISECONDS = 200;
         const PLUGIN_ID = 'obsidian-custom-attachment-location';
         const HANDLER_REGISTRATION_TIMEOUT_IN_MILLISECONDS = 10_000;
@@ -214,7 +214,7 @@ afterAll(async () => {
           for (const file of files) {
             try {
               // Force, so entries land nowhere: a vault-local `.trash` would accumulate exactly the
-              // Files this cleanup exists to get rid of.
+              // files this cleanup exists to get rid of.
               await app.vault.delete(file, true);
             } catch {
               // Already gone, taken by a parent folder deleted earlier in the same loop.
@@ -360,13 +360,13 @@ afterAll(async () => {
 
   if (report.some((entry) => entry.startsWith(STUCK_PREFIX))) {
     // A step that never settled leaves the instance in a state the next file cannot trust, and this file is what
-    // Left it there, so this file is the one that fails — while the instance is still up to say so.
+    // left it there, so this file is the one that fails — while the instance is still up to say so.
     throw new Error(`[vault-cleanup] this file left the instance unable to clean up: ${report.join(', ')}`);
   }
 
   if (report.length > 0) {
     // Not a failure on its own — the drain above absorbed it — but worth seeing, because it names the
-    // Suite that would otherwise have stalled the next one.
+    // suite that would otherwise have stalled the next one.
     console.warn(`[vault-cleanup] this file left behind: ${report.join(', ')}`);
   }
 });

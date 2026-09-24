@@ -88,7 +88,7 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
         }
 
         // Neither the settings nor the read-back component is exposed publicly, so both are located by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -140,7 +140,7 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
         const priorMode = settings.collectAttachmentUsedByMultipleNotesMode;
 
         // Mirrors this plugin's own absent-provider defaults, so only the ranking under test differs
-        // From what a vault with no provider would see.
+        // from what a vault with no provider would see.
         function stubProvider(notePriorities: readonly string[]): void {
           holder.apiRef = {
             value: {
@@ -194,7 +194,7 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
         try {
           settings.attachmentFolderPath = './assets/{{noteFileName}}';
           // Never reached on the winner path; set to the quietest mode so a regression fails on the
-          // Missing notice rather than hanging on a dialog.
+          // missing notice rather than hanging on a dialog.
           settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';
           /*
            * Longest-match ranks `*.excalidraw.md` below a plain `.md`, even though it ends with `.md`
@@ -207,7 +207,7 @@ describe('Collecting from an outranked note names the higher-priority notes (iss
           const drawingNote = await app.vault.create(drawingPath, `![[${imagePath}]]\n`);
 
           // Both embeds must be indexed, or the collector sees a single referencing note and the
-          // Priority list is never consulted at all.
+          // priority list is never consulted at all.
           await waitUntil({
             message: 'the two embeds were not indexed',
             predicate: () => {

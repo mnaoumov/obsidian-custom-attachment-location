@@ -55,7 +55,7 @@ describe('toTitleCase', () => {
 
   it('should preserve the exact whitespace it was given', () => {
     // Collapsing is `collapseWhitespace`'s job; doing it here as well would make the two impossible
-    // To compose in either order.
+    // to compose in either order.
     expect(toTitleCase('alpha   bravo')).toBe('Alpha   Bravo');
   });
 

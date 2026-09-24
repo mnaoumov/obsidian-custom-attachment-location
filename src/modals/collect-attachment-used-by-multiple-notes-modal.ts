@@ -90,7 +90,7 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
       text: t(($) => $.collectAttachmentUsedByMultipleNotesModal.noPriorityWinnerReason[reason], {
         // Qualified with the owning plugin since 12.0.0: the setting lives in Advanced Rename and Delete
         // Handler now, so naming it alone would send the user looking through this plugin's tab for a row
-        // That is not there. An arrow rather than a possessive, which reads the same in every locale.
+        // that is not there. An arrow rather than a possessive, which reads the same in every locale.
         settingName: `${ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME} → ${t(($) => $.pluginSettingsTab.notePriorities.name)}`
       })
     });
