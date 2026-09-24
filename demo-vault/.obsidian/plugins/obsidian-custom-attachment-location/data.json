@@ -1,5 +1,5 @@
 {
-  "attachmentFolderPath": "./assets/${noteFileName}",
+  "attachmentFolderPath": "./assets/{{noteFileName}}",
   "attachmentRenameMode": "Only pasted images",
   "attachmentUnitFolderPaths": [],
   "collectAttachmentUsedByMultipleNotesMode": "Skip",
@@ -14,7 +14,7 @@
   "excludeExtensionsFromMultipleNotesCheck": [],
   "excludePathsFromAttachmentCollecting": [],
   "excludePathsFromMultipleNotesCheck": [],
-  "generatedAttachmentFileName": "file-${date:{momentJsFormat:'YYYYMMDDHHmmssSSS'}}",
+  "generatedAttachmentFileName": "file-{{date:{momentJsFormat:'YYYYMMDDHHmmssSSS'}}}",
   "jpegQuality": 0.8,
   "markdownUrlFormat": "",
   "moveAttachmentToProperFolderUsedByMultipleNotesMode": "CopyAll",

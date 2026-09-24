@@ -34,7 +34,7 @@ By default collecting puts an attachment wherever a *new* attachment would go - 
 This is what makes a portable export possible without re-configuring the plugin twice per note. Keep new attachments in a shared working folder and collect into a folder beside the note:
 
 - **Location for new attachments**: `_Attachments`
-- **Collected attachment folder path**: `./${noteFileName}.assets`
+- **Collected attachment folder path**: `./{{noteFileName}}.assets`
 
 Running **Collect attachments in current note** then gathers that one note's attachments into `Example Note.assets/` next to `Example Note.md`, while pasting a new image still puts it in `_Attachments`. Convert the embeds to relative Markdown paths afterwards and the `.md` + `.assets` pair opens correctly outside Obsidian.
 
@@ -47,7 +47,7 @@ Two things worth knowing:
 
 1. Set **Location for new attachments** to `_Attachments` and leave **Collected attachment folder path** empty.
 2. Paste an image into a note and run **Collect attachments in current note** - the image stays in `_Attachments`, because both settings resolve to the same folder.
-3. Set **Collected attachment folder path** to `./${noteFileName}.assets` and run the command again - the image moves into `<note name>.assets/` beside the note.
+3. Set **Collected attachment folder path** to `./{{noteFileName}}.assets` and run the command again - the image moves into `<note name>.assets/` beside the note.
 4. Paste another image - it still lands in `_Attachments`, untouched by the collect destination.
 
 ## Safety net for non-standard references

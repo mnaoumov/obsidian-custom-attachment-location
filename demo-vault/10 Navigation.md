@@ -11,13 +11,13 @@ The folder is worked out from your **Attachment folder path** pattern, not from 
 Two cases the command has to answer for:
 
 - **The folder does not exist yet.** A note with no attachments has no folder. Rather than creating one behind your back, the command shows a notice naming the path with a **Create** button. Click it and the folder is created and revealed; ignore it and nothing is written.
-- **The pattern depends on the attachment.** If your **Attachment folder path** contains `${prompt}` or `${originalAttachmentFileName}`, the folder is decided per attachment, so the note has no single folder to go to. The command says so instead of guessing.
+- **The pattern depends on the attachment.** If your **Attachment folder path** contains `{{prompt}}` or `{{originalAttachmentFileName}}`, the folder is decided per attachment, so the note has no single folder to go to. The command says so instead of guessing.
 
 ## Custom Attachment Location: Go to owning note
 
 Run it on an attachment and the note that owns it opens.
 
-This is not the first command run backwards. A pattern cannot be un-applied — `${random}` and `${prompt}` throw away the information you would need — so the owner is found from the **links** instead: the notes that reference the attachment.
+This is not the first command run backwards. A pattern cannot be un-applied — `{{random}}` and `{{prompt}}` throw away the information you would need — so the owner is found from the **links** instead: the notes that reference the attachment.
 
 - **One note references it.** That note opens.
 - **Several do.** The **Note priorities** setting decides, exactly as it does when collecting (see [06 Settings](<./06 Settings.md>)). Put `.md` above `.excalidraw.md` and an image shared by both opens the markdown note.

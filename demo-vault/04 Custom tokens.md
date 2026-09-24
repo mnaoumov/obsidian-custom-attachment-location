@@ -17,19 +17,19 @@ registerCustomToken('bravo', async (ctx) => {
 });
 ```
 
-After registering them, you can use `${alpha}` and `${bravo:{formatKey:'charlie'}}` in any pattern - the same three settings that accept built-in tokens: `attachmentFolderPath`, `generatedAttachmentFileName`, and `markdownUrlFormat`.
+After registering them, you can use `{{alpha}}` and `{{bravo:{formatKey:'charlie'}}}` in any pattern - the same three settings that accept built-in tokens: `attachmentFolderPath`, `generatedAttachmentFileName`, and `markdownUrlFormat`.
 
 ## Try it
 
 1. Open **Settings -> Community plugins -> Custom Attachment Location -> Custom tokens** and paste a `registerCustomToken(...)` block.
-2. Set **Generated attachment file name** to a pattern using your token, e.g. `${alpha}`.
+2. Set **Generated attachment file name** to a pattern using your token, e.g. `{{alpha}}`.
 3. Paste an image (you supply the file) and watch the generated name.
 
 The `ctx` argument exposes the note, the attachment, the app, and a `ctx.fillTemplate(...)` helper that resolves a pattern of its own from inside your token:
 
 ```javascript
 registerCustomToken('bravo', async (ctx) => {
-  const filledTemplate = await ctx.fillTemplate('delta ${echo} foxtrot ${golf:{hotel:\'india\'}} juliett');
+  const filledTemplate = await ctx.fillTemplate('delta {{echo}} foxtrot {{golf:{hotel:\'india\'}}} juliett');
   return ctx.noteFileName + filledTemplate;
 });
 ```

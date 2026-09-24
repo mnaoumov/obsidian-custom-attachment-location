@@ -3,12 +3,12 @@
 The headline feature: **you** decide the folder each attachment is saved into, per note, using tokens. This vault is set to the plugin's default pattern:
 
 ```text
-./assets/${noteFileName}
+./assets/{{noteFileName}}
 ```
 
 A fresh install does not start here. It follows Obsidian's own attachment setting, so installing the plugin changes nothing until you turn off **Follow Obsidian attachment location** - see **Let Obsidian decide** below. This vault has already turned it off, so that the patterns on this page take effect.
 
-The `./` means "relative to the folder of the note you are editing", and `${noteFileName}` expands to the current note's name. So an attachment pasted here goes into a folder named after this note.
+The `./` means "relative to the folder of the note you are editing", and `{{noteFileName}}` expands to the current note's name. So an attachment pasted here goes into a folder named after this note.
 
 ## Try it
 
@@ -25,9 +25,9 @@ caption: Where would a pasted image go?
 await require('/demoSetup.ts').previewAttachmentPath(app);
 ```
 
-Manual equivalent: paste an image and look at where it landed. Try it from a different note and the answer changes - that is `${noteFileName}` at work.
+Manual equivalent: paste an image and look at where it landed. Try it from a different note and the answer changes - that is `{{noteFileName}}` at work.
 
-Paste another image into [02 Attachment file naming](<./02 Attachment file naming.md>) and notice it lands in a *different* per-note folder. That is `${noteFileName}` at work.
+Paste another image into [02 Attachment file naming](<./02 Attachment file naming.md>) and notice it lands in a *different* per-note folder. That is `{{noteFileName}}` at work.
 
 ## Change the location
 
@@ -37,7 +37,7 @@ Open **Settings -> Community plugins -> Custom Attachment Location** and edit **
   - one shared folder (an absolute, vault-root path, because there is no leading `./`).
 - `./attachments`
   - a folder next to each note.
-- `./assets/${noteFileName}/${date:{momentJsFormat:'YYYY'}}`
+- `./assets/{{noteFileName}}/{{date:{momentJsFormat:'YYYY'}}}`
   - per-note, then split by year.
 
 Each is a button, since token patterns are exactly the kind of string that is easy to mistype. Press one, then ask where a paste would go:
@@ -60,7 +60,7 @@ await require('/demoSetup.ts').changeSettings(app, { attachmentFolderPath: './at
 ---
 caption: Per-note, then split by year
 ---
-await require('/demoSetup.ts').changeSettings(app, { attachmentFolderPath: './assets/${noteFileName}/${date:{momentJsFormat:\'YYYY\'}}' });
+await require('/demoSetup.ts').changeSettings(app, { attachmentFolderPath: './assets/{{noteFileName}}/{{date:{momentJsFormat:\'YYYY\'}}}' });
 ```
 
 ```code-button

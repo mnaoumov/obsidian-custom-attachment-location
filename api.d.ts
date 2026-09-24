@@ -43,7 +43,7 @@ import type {
  * Both reads run in a context that never asks the user anything — unlike
  * {@link CustomAttachmentLocationApi.collectAttachments} and {@link CustomAttachmentLocationApi.migrateSettings},
  * which act and may ask. A folder or file-name template may hold a
- * `${prompt}` token, and an audit walking a vault must not raise one dialog per note. In that context the
+ * `{{prompt}}` token, and an audit walking a vault must not raise one dialog per note. In that context the
  * token resolves to Obsidian's own placeholder path segment instead of opening a dialog, so a template that
  * genuinely needs the user produces an answer carrying that placeholder rather than a hang. A consumer that
  * cares can spot it; a consumer that does not is still not blocked.
@@ -66,7 +66,7 @@ export interface CustomAttachmentLocationApi {
    * This is an action, not a read, and it behaves as the command does, dialogs included: several files or a
    * folder are confirmed with the user first, a note this plugin leaves alone is refused with a notice, an
    * attachment several notes share follows `collectAttachmentUsedByMultipleNotesMode` (which may be
-   * `Prompt`), and a template's `${prompt}` token asks. Do not call it from an audit that must stay silent.
+   * `Prompt`), and a template's `{{prompt}}` token asks. Do not call it from an audit that must stay silent.
    *
    * Added in contract version `1.2.0`.
    *
@@ -106,7 +106,7 @@ export interface CustomAttachmentLocationApi {
    *
    * The reference and the sequence number this needs are resolved here, from the note's backlinks and from
    * this plugin's own per-note numbering, so a caller supplies two paths and nothing else. That matters for
-   * `${sequenceNumber}`: which attachment of the note this is is a property of the note's link order, and a
+   * `{{sequenceNumber}}`: which attachment of the note this is is a property of the note's link order, and a
    * caller re-deriving it would be re-implementing this plugin.
    *
    * @param params - The note, and the attachment it references.
@@ -162,7 +162,7 @@ export interface GetAttachmentFolderPathParams {
    * The name of the attachment the folder is being asked about, extension included.
    *
    * Optional, and worth supplying whenever it is known: a folder template may read the attachment's name
-   * through `${originalAttachmentFileName}` or the tokens derived from it, so two attachments of the same
+   * through `{{originalAttachmentFileName}}` or the tokens derived from it, so two attachments of the same
    * note can legitimately belong in different folders. Left out, the folder is computed against Obsidian's
    * own placeholder name, which is what this plugin itself does when it has no attachment in hand.
    */
