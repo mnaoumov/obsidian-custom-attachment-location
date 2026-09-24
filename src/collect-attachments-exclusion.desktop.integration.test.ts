@@ -95,6 +95,11 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
         settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';
         const collectCommandId = 'obsidian-custom-attachment-location:collect-attachments-in-file';
 
+        /*
+         * Declares 11s of waiting and is called twice, so the closure declares 22s: under the transport's ~30s
+         * per-closure default. The project raises its command timeout past that, but only as a backstop — a
+         * closure that spends it dies as a bare transport timeout, never as the wait that overran.
+         */
         async function runPhase(activeSettings: MultipleNotesSettings, exclude: string[]): Promise<PhaseResult> {
           activeSettings.excludePathsFromMultipleNotesCheck = exclude;
 
@@ -110,7 +115,7 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
           // Wait for the metadata cache to resolve both embeds so the collector sees two backlinks.
           const imgFile = app.vault.getFileByPath(imgPath);
           let backlinkCount = 0;
-          const resolveDeadline = Date.now() + 8000;
+          const resolveDeadline = Date.now() + 3000;
           while (Date.now() < resolveDeadline) {
             backlinkCount = imgFile ? app.metadataCache.getBacklinksForFile(imgFile).keys().length : 0;
             if (backlinkCount >= 2) {
@@ -126,7 +131,7 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
            * Finished switching to it. Firing the command too early collects nothing, which surfaces
            * Much later as `movedOut: false` — indistinguishable from the exclusion not working.
            */
-          const activeDeadline = Date.now() + 8000;
+          const activeDeadline = Date.now() + 3000;
           while (Date.now() < activeDeadline && app.workspace.getActiveFile()?.path !== realNote.path) {
             await sleep(100);
           }
@@ -134,7 +139,7 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
           app.commands.executeCommandById(collectCommandId);
 
           // The collect runs on an internal queue; poll until the attachment leaves its original path.
-          const collectDeadline = Date.now() + 12_000;
+          const collectDeadline = Date.now() + 5000;
           while (Date.now() < collectDeadline) {
             if (!app.vault.getFileByPath(imgPath)) {
               break;

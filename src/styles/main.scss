@@ -8,6 +8,19 @@
     width: 20em;
   }
 
+  // The library's own rule for this component is a descendant selector, `.obsidian-dev-utils .multiple-dropdown-component`,
+  // but it puts both classes on the SAME control element, so the rule never matches. Obsidian's `.dropdown` height then
+  // shrinks the `<select multiple>` to one row that has no popup to open, and no plugin can be picked (issue #86).
+  &.obsidian-dev-utils.multiple-dropdown-component select {
+    height: auto;
+    padding-top: 3px;
+
+    option:checked {
+      background-color: var(--interactive-accent);
+      color: var(--text-on-accent);
+    }
+  }
+
   &.obsidian-dev-utils.code-highlighter-component textarea.custom-tokens-setting-control {
     height: 18em;
     width: 36em;

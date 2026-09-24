@@ -23,7 +23,24 @@ import {
  */
 
 const PLUGIN_ID = 'obsidian-custom-attachment-location';
-const WAIT_TIMEOUT_IN_MILLISECONDS = 30_000;
+/*
+ * Under the transport's ~30s per-closure default, not at it. The project raises its command timeout past that,
+ * but only as a backstop: a closure that spends it dies as a bare transport timeout, never as the unsettled
+ * relocation the closure reports by name. `writeForeignAttachment` is called twice and charges this once plus
+ * two 3000 ms settles each, so the closure declares ~22s. The relocation of one small file settles within
+ * moments.
+ *
+ * Consumed only inside the closure, as its `input`; no Node-side wait reads it.
+ */
+const WAIT_TIMEOUT_IN_MILLISECONDS = 5000;
+
+interface EditableViewLike {
+  readonly editor?: EditorLike;
+}
+
+interface EditorLike {
+  replaceSelection(text: string): void;
+}
 
 interface ProbeResult {
   readonly attachmentPathAfterDrawing: string;
@@ -157,6 +174,12 @@ describe('An attachment written by another plugin while a drawing is open is lef
           const pathsBefore = new Set(app.vault.getFiles().map((file) => file.path));
           await app.vault.createBinary(imageName, new ArrayBuffer(4));
           createdPaths.push(imageName);
+          /*
+           * ...and link it from the open file, as a plugin inserting an attachment does. A file nothing links
+           * to is never moved (issue #88), so both phases carry the embed and the drawing phase still tests
+           * the drawing gate rather than the missing link.
+           */
+          (app.workspace.getLeaf(false).view as EditableViewLike).editor?.replaceSelection(`![[${imageName}]]`);
 
           if (shouldExpectRelocation) {
             /*

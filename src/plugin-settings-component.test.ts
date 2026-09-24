@@ -54,12 +54,12 @@ class MockDataHandler implements DataHandler {
   }
 }
 
-async function createComponent(data: unknown = {}): Promise<PluginSettingsComponent> {
+async function createComponent(data: unknown = {}, dataHandler: DataHandler = new MockDataHandler(data)): Promise<PluginSettingsComponent> {
   const app = App.createConfigured__().asOriginalType__();
   const validatorWrapper = ValueWrapper.unset<TokenValidator>();
   const component = new PluginSettingsComponent({
     app,
-    dataHandler: new MockDataHandler(data),
+    dataHandler,
     handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
       isTreatedAsAttachment: (path) => path.endsWith('.excalidraw.md')
     }),
@@ -93,6 +93,34 @@ beforeEach(() => {
 });
 
 describe('PluginSettingsComponent', () => {
+  describe('loadFromFile', () => {
+    // A user who never saves a setting used to have no data.json at all, so a later default change moved
+    // Them silently: that is what 13.0.0's shouldFollowObsidianAttachmentLocation flip did.
+    it('should write the full settings record when no data.json exists', async () => {
+      const dataHandler = new MockDataHandler(null);
+      await createComponent(null, dataHandler);
+      const saved = await dataHandler.loadData() as Partial<PluginSettings>;
+      expect(saved.shouldFollowObsidianAttachmentLocation).toBe(true);
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      expect(saved.attachmentFolderPath).toBe('./assets/${noteFileName}');
+    });
+
+    it('should write the full settings record when loadData answers undefined', async () => {
+      const dataHandler = new MockDataHandler(undefined);
+      await createComponent(undefined, dataHandler);
+      const saved = await dataHandler.loadData() as Partial<PluginSettings>;
+      expect(saved.shouldFollowObsidianAttachmentLocation).toBe(true);
+    });
+
+    it('should keep a stored value the default now disagrees with', async () => {
+      const dataHandler = new MockDataHandler({ shouldFollowObsidianAttachmentLocation: false });
+      const component = await createComponent(undefined, dataHandler);
+      expect(component.settings.shouldFollowObsidianAttachmentLocation).toBe(false);
+      const saved = await dataHandler.loadData() as Partial<PluginSettings>;
+      expect(saved.shouldFollowObsidianAttachmentLocation).toBe(false);
+    });
+  });
+
   describe('isNoteEx', () => {
     it('should return false for a null path', async () => {
       const component = await createComponent();
@@ -347,6 +375,12 @@ describe('PluginSettingsComponent', () => {
   });
 
   describe('legacy settings converter', () => {
+    it('should keep the default attachmentFolderPath when the record has no such key', async () => {
+      const component = await createComponent({ shouldFollowObsidianAttachmentLocation: false });
+      // eslint-disable-next-line no-template-curly-in-string -- Valid token.
+      expect(component.settings.attachmentFolderPath).toBe('./assets/${noteFileName}');
+    });
+
     it('should map warningVersion into version', async () => {
       const component = await createComponent({ warningVersion: '8.0.0' });
       expect(component.settings.version).toBe('8.0.0');

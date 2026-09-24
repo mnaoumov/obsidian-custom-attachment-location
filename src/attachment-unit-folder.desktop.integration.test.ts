@@ -97,6 +97,12 @@ describe('Attachment unit folders travel whole (issue #56)', () => {
          * note never links to. That unlinked sibling is the whole point — it is what gets left behind
          * when only the linked file travels.
          */
+        /*
+         * Declares 12s of waiting, settle included, and is called twice, so the closure declares 24s: under the
+         * transport's ~30s per-closure default. The project raises its command timeout past that, but only as a
+         * backstop — a closure that spends it dies as a bare transport timeout, never as the wait that overran.
+         * The unit folder here holds two small files, so its move lands within moments.
+         */
         async function runPhase(shouldDesignateUnitFolder: boolean): Promise<PhaseResult> {
           const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
           const unitFolderPath = `source-${stamp}/page_files`;
@@ -114,7 +120,7 @@ describe('Attachment unit folders travel whole (issue #56)', () => {
 
           // Wait for the metadata cache to resolve the embed, or the collector sees no links at all.
           let embedCount = 0;
-          const resolveDeadline = Date.now() + 8000;
+          const resolveDeadline = Date.now() + 3000;
           while (Date.now() < resolveDeadline) {
             embedCount = app.metadataCache.getFileCache(note)?.embeds?.length ?? 0;
             if (embedCount > 0) {
@@ -133,7 +139,7 @@ describe('Attachment unit folders travel whole (issue #56)', () => {
            * move, and the next phase then rewrites the settings while the first is still running.
            */
           const expectedPath = shouldDesignateUnitFolder ? `assets/${noteName}/page_files/logo.png` : `assets/${noteName}/logo.png`;
-          const collectDeadline = Date.now() + 30_000;
+          const collectDeadline = Date.now() + 8000;
           while (Date.now() < collectDeadline) {
             if (app.vault.getFileByPath(expectedPath)) {
               break;

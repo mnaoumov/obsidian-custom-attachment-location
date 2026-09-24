@@ -17,6 +17,7 @@ import {
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 import { PluginNoticeComponent } from 'obsidian-dev-utils/obsidian/components/plugin-notice-component';
 import {
+  getAbstractFileOrNull,
   getFileOrNull,
   getPath,
   isNote
@@ -80,6 +81,7 @@ vi.mock('obsidian-dev-utils/obsidian/attachment-path', async (importOriginal) =>
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
+  getAbstractFileOrNull: vi.fn<typeof getAbstractFileOrNull>(),
   getFileOrNull: vi.fn<typeof getFileOrNull>(),
   getPath: vi.fn<typeof getPath>(),
   isNote: vi.fn<typeof isNote>()
@@ -107,6 +109,7 @@ vi.mock('./prompt-with-preview-modal.ts', async (importOriginal) => ({
 }));
 
 const mockGetAvailablePathForAttachments = vi.mocked(getAvailablePathForAttachments);
+const mockGetAbstractFileOrNull = vi.mocked(getAbstractFileOrNull);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const mockGetPath = vi.mocked(getPath);
 const mockIsNote = vi.mocked(isNote);
@@ -130,6 +133,7 @@ interface TestContext {
   exists: ReturnType<typeof vi.fn<Vault['exists']>>;
   getAvailablePath: ReturnType<typeof vi.fn<Vault['getAvailablePath']>>;
   getAvailablePathForAttachmentsOriginal: ReturnType<typeof vi.fn<Vault['getAvailablePathForAttachments']>>;
+  getConfig: ReturnType<typeof vi.fn<(name: string) => unknown>>;
   handedOverSettings: MutableHandedOverSettings;
   isNoteEx: ReturnType<typeof vi.fn<PluginSettingsComponent['isNoteEx']>>;
   isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
@@ -160,8 +164,10 @@ function createManager(): TestContext {
     attachmentFolderPath: 'assets',
     collectedAttachmentFileName: '',
     collectedAttachmentFolderPath: '',
+    duplicateNameSeparator: ' ',
     generatedAttachmentFileName: 'generated',
     renamedAttachmentFileName: '',
+    shouldFollowObsidianAttachmentLocation: false,
     shouldRenameCollectedAttachments: false,
     specialCharacters: '',
     specialCharactersReplacement: '-'
@@ -172,11 +178,13 @@ function createManager(): TestContext {
   const readBinary = vi.fn<Vault['readBinary']>().mockResolvedValue(new ArrayBuffer(0));
   const getAvailablePath = vi.fn<Vault['getAvailablePath']>().mockImplementation((path, extension) => extension ? `${path}.${extension}` : path);
   const getAvailablePathForAttachmentsOriginal = vi.fn<Vault['getAvailablePathForAttachments']>().mockResolvedValue('original-path');
+  const getConfig = vi.fn<(name: string) => unknown>().mockReturnValue('/');
 
   const vault = strictProxy<Vault>({
     create,
     exists,
     getAvailablePath,
+    getConfig: castTo<Vault['getConfig']>(getConfig),
     readBinary
   });
 
@@ -213,6 +221,7 @@ function createManager(): TestContext {
     exists,
     getAvailablePath,
     getAvailablePathForAttachmentsOriginal,
+    getConfig,
     handedOverSettings,
     isNoteEx,
     isPathIgnored,
@@ -248,6 +257,7 @@ beforeAll(async () => {
 beforeEach(() => {
   vi.clearAllMocks();
   noticeInstances.length = 0;
+  mockGetAbstractFileOrNull.mockReturnValue(null);
   mockGetFileOrNull.mockReturnValue(null);
   mockGetPath.mockImplementation((_app, pathOrFile) => typeof pathOrFile === 'string' ? pathOrFile : castTo<TFile>(pathOrFile).path);
   mockIsNote.mockReturnValue(true);
@@ -305,6 +315,59 @@ describe('AttachmentPathManager', () => {
         notePath: 'notes/note.md'
       });
       expect(result).toBe('_Attachments');
+    });
+
+    describe('when following Obsidian\'s own attachment location', () => {
+      async function resolveFor(configuredPath: unknown, notePath = 'notes/note.md', actionContext = ActionContext.SaveAttachment): Promise<string> {
+        context.settings.shouldFollowObsidianAttachmentLocation = true;
+        context.getConfig.mockReturnValue(configuredPath);
+        return await context.manager.getAttachmentFolderFullPathForPath({
+          actionContext,
+          attachmentFileName: 'img.png',
+          notePath
+        });
+      }
+
+      it('should resolve each of the four Obsidian modes the way Obsidian does', async () => {
+        expect(await resolveFor('/')).toBe('');
+        expect(await resolveFor('assets')).toBe('assets');
+        expect(await resolveFor('./')).toBe('notes');
+        expect(await resolveFor('.')).toBe('notes');
+        expect(await resolveFor('./attachments')).toBe('notes/attachments');
+        expect(context.getConfig).toHaveBeenCalledWith('attachmentFolderPath');
+      });
+
+      it('should resolve the note-relative modes for a note in the vault root', async () => {
+        expect(await resolveFor('./', 'note.md')).toBe('');
+        expect(await resolveFor('./attachments', 'note.md')).toBe('attachments');
+      });
+
+      it('should not run the template machinery over a folder name the user typed into Obsidian', async () => {
+        context.settings.specialCharacters = '#';
+        // eslint-disable-next-line no-template-curly-in-string -- A literal folder name that merely looks like a token.
+        const folderName = 'Media #1/${noteFileName}';
+        expect(await resolveFor(folderName)).toBe(folderName);
+        expect(context.validatePath).not.toHaveBeenCalled();
+      });
+
+      it('should treat a missing Obsidian setting as the vault root', async () => {
+        expect(await resolveFor(undefined)).toBe('');
+      });
+
+      it('should ignore the template while the mode is on', async () => {
+        context.settings.attachmentFolderPath = '_Attachments';
+        expect(await resolveFor('./attachments')).toBe('notes/attachments');
+      });
+
+      it('should let an explicit collected-attachment folder win for collecting', async () => {
+        context.settings.collectedAttachmentFolderPath = './exported';
+        expect(await resolveFor('./attachments', 'notes/note.md', ActionContext.CollectAttachments)).toBe('notes/exported');
+      });
+
+      it('should collect into Obsidian\'s location when no collected-attachment folder is set', async () => {
+        context.settings.collectedAttachmentFolderPath = '';
+        expect(await resolveFor('./attachments', 'notes/note.md', ActionContext.CollectAttachments)).toBe('notes/attachments');
+      });
     });
 
     it('should leave every other action context on the new attachment folder path', async () => {
@@ -636,6 +699,60 @@ describe('AttachmentPathManager', () => {
         sequenceNumber: 0
       });
       expect(result).toBeNull();
+    });
+  });
+
+  describe('getProperAttachmentPath, for an attachment parked under a duplicate suffix', () => {
+    function createParkedFile(basename: string): TFile {
+      return createTFile({
+        basename,
+        extension: 'png',
+        name: `${basename}.png`,
+        path: `assets/${basename}.png`,
+        stat: strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 })
+      });
+    }
+
+    async function getProperPath(attachmentFile: TFile): Promise<null | string> {
+      return await context.manager.getProperAttachmentPath({
+        actionContext: ActionContext.CollectAttachments,
+        attachmentFile,
+        noteFilePath: 'note.md',
+        reference: castTo<Reference>({ link: 'x', original: 'x' }),
+        sequenceNumber: 0
+      });
+    }
+
+    beforeEach(() => {
+      context.settings.shouldRenameCollectedAttachments = true;
+      context.settings.collectedAttachmentFileName = 'img';
+      context.settings.attachmentFolderPath = 'assets';
+    });
+
+    it('should leave it where it is while another file holds the proper path, so auto-collect converges', async () => {
+      mockGetAbstractFileOrNull.mockReturnValue(createTFile({ path: 'assets/img.png' }));
+
+      await expect(getProperPath(createParkedFile('img 1'))).resolves.toBeNull();
+      expect(mockGetAbstractFileOrNull).toHaveBeenCalledWith(expect.objectContaining({ pathOrFile: 'assets/img.png' }));
+    });
+
+    it('should move it onto the proper path once that path is free', async () => {
+      await expect(getProperPath(createParkedFile('img 1'))).resolves.toBe('assets/img.png');
+    });
+
+    it('should honour the configured duplicate separator', async () => {
+      context.settings.duplicateNameSeparator = '_';
+      mockGetAbstractFileOrNull.mockReturnValue(createTFile({ path: 'assets/img.png' }));
+
+      await expect(getProperPath(createParkedFile('img_2'))).resolves.toBeNull();
+      await expect(getProperPath(createParkedFile('img 2'))).resolves.toBe('assets/img.png');
+    });
+
+    it('should move a file whose name is not the proper name plus a suffix', async () => {
+      mockGetAbstractFileOrNull.mockReturnValue(createTFile({ path: 'assets/img.png' }));
+
+      await expect(getProperPath(createParkedFile('photo 1'))).resolves.toBe('assets/img.png');
+      await expect(getProperPath(createParkedFile('img copy'))).resolves.toBe('assets/img.png');
     });
   });
 

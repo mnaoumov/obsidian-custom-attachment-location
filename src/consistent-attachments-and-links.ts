@@ -22,6 +22,10 @@
  * command is a breaking change for it, so the release that gives collecting up cannot be a minor. Nothing
  * below `5.0.0` has shipped that removal yet, which is why every released version conflicts today.
  *
+ * `5.0.0` is also the release that hands its collect settings over through this plugin's `migrateSettings`, so
+ * from that version on the two plugins never both collect: the older one warns here, the newer one has
+ * stopped.
+ *
  * TODO: pin this to the real version once that release exists, and delete the declaration outright once
  * every version that still collects is old enough to have aged out.
  */

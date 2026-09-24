@@ -27,11 +27,19 @@ import {
  * Desktop-only: no Android emulator is available in this environment.
  */
 
+interface AttachmentWriterWindow extends Window {
+  writeAttachmentAsInstalledPlugin__?(path: string): Promise<unknown>;
+}
+
 /**
  * The window the installed plugin parks its writer on, so the test can call the plugin's own code.
  */
-interface AttachmentWriterWindow extends Window {
-  writeAttachmentAsInstalledPlugin__?(path: string): Promise<unknown>;
+interface EditableViewLike {
+  readonly editor?: EditorLike;
+}
+
+interface EditorLike {
+  replaceSelection(text: string): void;
 }
 
 interface InstalledPluginResult {
@@ -177,6 +185,11 @@ describe('An attachment written by a plugin Obsidian itself loaded (issue #77)',
           const foreignFolder = `installed-foreign-${stamp}`;
           await app.vault.createFolder(foreignFolder);
           await writeAsInstalledPlugin(`${foreignFolder}/installed-img-${stamp}.png`);
+          /*
+           * ...and link it from the note, as a plugin inserting an attachment does. A file no note links to is that
+           * plugin's own data and is never moved (issue #88), so without the embed there is nothing to test here.
+           */
+          (leaf.view as EditableViewLike).editor?.replaceSelection(`![[installed-img-${stamp}.png]]`);
 
           const properPath = `installed-${stamp}/installed-renamed-${stamp}.png`;
           const deadline = Date.now() + 15_000;

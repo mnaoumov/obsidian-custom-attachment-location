@@ -41,7 +41,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 ## What it does
 
-- **Choose the folder** each new attachment goes into, per note or per anything else a pattern can express — one folder beside every note, a folder per note, a folder per year. [01 Attachment folder location](<./demo-vault/01 Attachment folder location.md>)
+- **Choose the folder** each new attachment goes into, per note or per anything else a pattern can express — one folder beside every note, a folder per note, a folder per year. Or leave `shouldFollowObsidianAttachmentLocation` on, as a fresh install has it, and let Obsidian's own *Default location for new attachments* decide, keeping everything else this plugin does. Installing the plugin therefore moves nothing: attachments land where they always did until you switch that off and pick a pattern. While the plugin's pattern is in charge, Obsidian's own settings page says so instead of showing a value that is not in effect. [01 Attachment folder location](<./demo-vault/01 Attachment folder location.md>)
 - **Choose the file name**, so an attachment is called something that says where it came from instead of `Pasted image 20250101120000`. [02 Attachment file naming](<./demo-vault/02 Attachment file naming.md>)
 - **Patterns and tokens** — the vocabulary both of those are written in, including asking you for a value at paste time, reading one from the note's frontmatter, and defining your own tokens in JavaScript. [03 Tokens and patterns](<./demo-vault/03 Tokens and patterns.md>) · [04 Custom tokens](<./demo-vault/04 Custom tokens.md>) · [09 Token reference](<./demo-vault/09 Token reference.md>)
 - **Catch attachments other plugins create** — some plugins write an attachment into the vault under a name of their own instead of asking Obsidian where it belongs. Set `renameAttachmentsCreatedByOtherPluginsMode` and those files are moved and renamed too, just after they appear — for every plugin, or only for the ones you name, or for every plugin except the ones you name. Off by default. [06 Settings](<./demo-vault/06 Settings.md>)
@@ -89,7 +89,35 @@ This plugin patches that call, which makes it look like the seam you want. It is
 
 `getAttachmentFolderPath` is the read, asked once per note. It answers `null` when this plugin leaves that note alone entirely, which is your cue to fall back to Obsidian's own `attachmentFolderPath` — a different answer from this plugin not being installed, and deliberately so.
 
-Both members arrived in contract version `1.0.0`, and both are asynchronous: an attachment folder is the result of evaluating a user-written template whose tokens can read the note's frontmatter and the attachment's bytes, so there is no synchronous answer to hand back. Neither ever asks the user anything, so a whole-vault audit raises no dialogs.
+Both reads arrived in contract version `1.0.0`, and both are asynchronous: an attachment folder is the result of evaluating a user-written template whose tokens can read the note's frontmatter and the attachment's bytes, so there is no synchronous answer to hand back. Neither ever asks the user anything, so a whole-vault audit raises no dialogs.
+
+### Collecting a note's attachments
+
+`collectAttachments`, added in contract version `1.2.0` (ask for `'^1.2.0'`), collects the attachments of the notes and folders you name, the way the `Collect attachments` commands do, without opening the note first:
+
+```ts
+await apiRef.value?.collectAttachments({ pathsOrFiles: ['Notes/Alpha.md'] });
+```
+
+It is an action, not a read, so it asks what the command asks: it confirms several files or a folder with the user, and it follows the user's settings for an attachment several notes share. The promise settles once the collect has finished, queued behind any collect already running. It replaces reaching into the plugin instance for `collectAttachmentsInAbstractFiles`, which still works but is superseded.
+
+### Handing collect settings over
+
+A plugin that used to collect attachments itself hands its settings over through `migrateSettings`, added in contract version `1.1.0`, so ask for `'^1.1.0'`. It proposes the values it held, and this plugin shows the user each one that would change next to the value it holds now. Nothing is written unless the user approves, and `isApplied: false` means they cancelled, so keep the proposal pending. `api.d.ts` lists the settings that can be proposed. The shape matches `obsidian-dev-utils`' `SettingsMigrationApi`, so its `SettingsMigrationComponent` can run the whole offer:
+
+```ts
+this.addChild(new SettingsMigrationComponent<MigratableCollectSettings>({
+  apiVersionRange: '^1.1.0',
+  app,
+  getProposedSettings: () => settingsComponent.settings.proposedCollectSettings,
+  pluginSettingsComponent: settingsComponent,
+  providerPluginId: 'obsidian-custom-attachment-location',
+  retireProposedSettings: () => settingsComponent.editAndSave((settings) => {
+    settings.proposedCollectSettings = null;
+  }),
+  sourcePluginId: this.manifest.id
+}));
+```
 
 ## Installation
 

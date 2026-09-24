@@ -20,6 +20,7 @@ import {
   getAvailablePathForAttachments
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 import {
+  getAbstractFileOrNull,
   getFileOrNull,
   getPath,
   isNote
@@ -38,9 +39,11 @@ import {
 import {
   basename,
   dirname,
+  extname,
   join,
   makeFileName
 } from 'obsidian-dev-utils/path';
+import { escapeRegExp } from 'obsidian-dev-utils/reg-exp';
 import { trimStart } from 'obsidian-dev-utils/string';
 import { ensureNonNullable } from 'obsidian-dev-utils/type-guards';
 
@@ -198,6 +201,9 @@ export class AttachmentPathManager {
     }
 
     let attachmentPath: string;
+    // Plain `isNote`, not `isNoteEx`, on purpose: a drawing the user treats as an attachment still OWNS an
+    // Attachment folder, so an image pasted into it follows the configured template rather than Obsidian's
+    // Default location. Every other site asks `isNoteEx`; this one disagreeing is the decision, not a defect.
     if (!noteFilePath || !isNote(noteFilePath)) {
       attachmentPath = await getAvailablePathForAttachments({
         app: this.app,
@@ -434,6 +440,10 @@ export class AttachmentPathManager {
       return null;
     }
 
+    if (this.isParkedBesideProperPath(params.attachmentFile, newAttachmentPath)) {
+      return null;
+    }
+
     return newAttachmentPath;
   }
 
@@ -469,10 +479,15 @@ export class AttachmentPathManager {
      * NAME in `getGeneratedAttachmentFileBaseName`, so a user who never opens this setting sees no change.
      */
     const settings = this.pluginSettingsComponent.settings;
-    const template = substitutions.actionContext === ActionContext.CollectAttachments
-      ? settings.collectedAttachmentFolderPath || settings.attachmentFolderPath
-      : settings.attachmentFolderPath;
-    return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template });
+    if (substitutions.actionContext === ActionContext.CollectAttachments && settings.collectedAttachmentFolderPath) {
+      return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: settings.collectedAttachmentFolderPath });
+    }
+
+    if (settings.shouldFollowObsidianAttachmentLocation) {
+      return this.getObsidianAttachmentFolderPath(substitutions.noteFolderPath);
+    }
+
+    return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: settings.attachmentFolderPath });
   }
 
   private async getCursorLineAndSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<CursorLineAndSequenceNumber> {
@@ -491,6 +506,35 @@ export class AttachmentPathManager {
     };
   }
 
+  /**
+   * Resolves Obsidian's own *Default location for new attachments* for a note, the way Obsidian does.
+   *
+   * Deliberately NOT routed through {@link resolvePathTemplate}: the value is a folder the user typed into
+   * Obsidian, not a template, so a `${` in it is a folder name rather than a token, and the special-character
+   * cleaning must not rename a folder Obsidian itself would use as-is.
+   *
+   * The four shapes the setting stores are the vault root (`/`), a fixed folder (`assets`), the note's own
+   * folder (`./`), and a subfolder of it (`./attachments`).
+   *
+   * @param noteFolderPath - The note's folder, `''` for the vault root.
+   * @returns The attachment folder, `''` for the vault root.
+   */
+  private getObsidianAttachmentFolderPath(noteFolderPath: string): string {
+    const configuredValue = this.app.vault.getConfig('attachmentFolderPath');
+    const configuredPath = typeof configuredValue === 'string' ? configuredValue : '';
+    let folderPath: string;
+    if (configuredPath === '.' || configuredPath === './') {
+      folderPath = noteFolderPath;
+    } else if (configuredPath.startsWith('./')) {
+      folderPath = join(noteFolderPath, configuredPath.slice('./'.length));
+    } else {
+      folderPath = configuredPath;
+    }
+
+    // Obsidian's `normalizePath` spells the vault root `/`; this plugin spells it `''`.
+    return normalizePath(folderPath).replace(/^\/$/, '');
+  }
+
   private isGeneratedAttachmentFileNameSkipped(context: AttachmentPathContext, shouldSkipGeneratedAttachmentFileName: boolean | undefined): boolean {
     if (shouldSkipGeneratedAttachmentFileName) {
       return true;
@@ -504,6 +548,42 @@ export class AttachmentPathManager {
      * named as it is and moves only its folder.
      */
     return context === AttachmentPathContext.RenameNote && !this.handedOverSettingsComponent.settings.shouldRenameAttachmentFiles;
+  }
+
+  /**
+   * Whether the attachment already sits at its proper path under a duplicate suffix, because a different
+   * file holds the proper path itself.
+   *
+   * A move onto an occupied path lands on `<name><separator><n>`, which never equals the proper path. Without
+   * this check, every later collect sees that mismatch and moves the file again, to the next free suffix.
+   * With `Collect attachments automatically` on, each of those moves rewrites the note, which fires the next
+   * collect, and the file is renamed without end. A parked file whose proper path has since come FREE is not
+   * parked any more, and moving it there is a real improvement, so the proper path must still be occupied.
+   *
+   * @param attachmentFile - The attachment.
+   * @param properPath - Where it belongs.
+   * @returns `true` when there is nothing to move.
+   */
+  private isParkedBesideProperPath(attachmentFile: TFile, properPath: string): boolean {
+    // The proper path always keeps the attachment's own extension, so only the folder and the base name can differ.
+    if (dirname(attachmentFile.path) !== dirname(properPath)) {
+      return false;
+    }
+
+    const properBaseName = basename(properPath, extname(properPath));
+    const duplicateSuffixRegExp = new RegExp(
+      String.raw`^${escapeRegExp(properBaseName)}${escapeRegExp(this.pluginSettingsComponent.settings.duplicateNameSeparator)}\d+$`,
+      'u'
+    );
+    if (!duplicateSuffixRegExp.test(attachmentFile.basename)) {
+      return false;
+    }
+
+    return getAbstractFileOrNull({
+      app: this.app,
+      isCaseInsensitive: true,
+      pathOrFile: properPath
+    }) !== null;
   }
 
   private async resolvePathTemplate(params: AttachmentPathManagerResolvePathTemplateParams): Promise<string> {

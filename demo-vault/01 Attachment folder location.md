@@ -1,10 +1,12 @@
 # Attachment folder location
 
-The headline feature: **you** decide the folder each attachment is saved into, per note, using tokens. This vault ships with the plugin's default location setting:
+The headline feature: **you** decide the folder each attachment is saved into, per note, using tokens. This vault is set to the plugin's default pattern:
 
 ```text
 ./assets/${noteFileName}
 ```
+
+A fresh install does not start here. It follows Obsidian's own attachment setting, so installing the plugin changes nothing until you turn off **Follow Obsidian attachment location** - see **Let Obsidian decide** below. This vault has already turned it off, so that the patterns on this page take effect.
 
 The `./` means "relative to the folder of the note you are editing", and `${noteFileName}` expands to the current note's name. So an attachment pasted here goes into a folder named after this note.
 
@@ -76,5 +78,40 @@ await require('/demoSetup.ts').restoreDefaultPatterns(app);
 ```
 
 Manual equivalent for all of them: edit **Location for new attachments** in **Settings -> Community plugins -> Custom Attachment Location**.
+
+## Let Obsidian decide
+
+Obsidian has a folder setting of its own: **Settings -> Files and links -> Default location for new attachments**. While this plugin uses its own pattern, that setting is not in effect, and Obsidian's settings page says so - the row reads *Controlled by Custom Attachment Location*, with a button that opens this plugin's settings.
+
+Turn on **Follow Obsidian attachment location** (`shouldFollowObsidianAttachmentLocation`) - it is on in a fresh install - and it is the other way round: new attachments go wherever Obsidian's own setting says, Obsidian's settings page shows its own control again, and **Location for new attachments** is hidden and not used. The pattern you had is kept, so turning the mode off brings it back. Only the folder follows Obsidian - the file-name settings in [02 Attachment file naming](<./02 Attachment file naming.md>) still apply.
+
+Each of Obsidian's four options lands where Obsidian itself puts it:
+
+| Obsidian's option | Where an attachment for this note goes |
+| --- | --- |
+| Vault folder | the vault root |
+| In the folder specified below | that folder, e.g. `assets` |
+| Same folder as current file | this note's folder |
+| In subfolder under current folder | a subfolder of this note's folder, e.g. `attachments` |
+
+**Collect attachments** follows it too, unless you gave collecting a folder of its own (see [05 Collect attachments](<./05 Collect attachments.md>)).
+
+```code-button
+---
+caption: Follow Obsidian's own setting
+---
+await require('/demoSetup.ts').changeSettings(app, { shouldFollowObsidianAttachmentLocation: true });
+```
+
+```code-button
+---
+caption: Where would a paste go, following Obsidian?
+---
+await require('/demoSetup.ts').previewAttachmentPath(app);
+```
+
+To hand the folder back to this plugin's pattern, press **Restore this vault's default patterns** above - it turns the mode off too.
+
+Manual equivalent: toggle **Follow Obsidian attachment location** in **Settings -> Community plugins -> Custom Attachment Location**, then change **Default location for new attachments** in **Settings -> Files and links**.
 
 See [03 Tokens and patterns](<./03 Tokens and patterns.md>) for the full token list.

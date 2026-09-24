@@ -61,10 +61,17 @@ describe('The prompt token modal (issue #59)', () => {
           generatedAttachmentFileName: string;
         }
 
+        /*
+         * Together these declare ~23s — the modal and queue waits once, the abandon twice, plus two 500 ms
+         * settles — under the transport's ~30s per-closure default. The project raises its command timeout
+         * past that, but only as a backstop: a closure that spends it dies as a bare transport timeout
+         * rather than as the unfocused modal this test exists to report.
+         */
         // How long a cancelled `saveAttachment` is given to unwind before this gives up on it.
-        const ABANDON_TIMEOUT_IN_MILLISECONDS = 5000;
+        const ABANDON_TIMEOUT_IN_MILLISECONDS = 3000;
+        const PROMPT_MODAL_TIMEOUT_IN_MILLISECONDS = 8000;
         const QUEUE_DRAIN_POLL_IN_MILLISECONDS = 100;
-        const QUEUE_DRAIN_TIMEOUT_IN_MILLISECONDS = 15_000;
+        const QUEUE_DRAIN_TIMEOUT_IN_MILLISECONDS = 8000;
 
         const EMPTY_RESULT = {
           activeElementDescription: '',
@@ -119,7 +126,7 @@ describe('The prompt token modal (issue #59)', () => {
         }
 
         async function waitForPromptModal(): Promise<HTMLElement | null> {
-          const deadline = Date.now() + 15_000;
+          const deadline = Date.now() + PROMPT_MODAL_TIMEOUT_IN_MILLISECONDS;
           while (Date.now() < deadline) {
             // `addPluginCssClasses` marks the modal's `containerEl`, so the class is ON the
             // `.modal-container`, not on a descendant of it.

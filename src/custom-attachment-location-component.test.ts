@@ -116,6 +116,10 @@ vi.mock('./patches/clipboard-manager-insert-files-patch-component.ts', async () 
   ClipboardManagerInsertFilesPatchComponent: await createChildStub('ClipboardManagerInsertFilesPatchComponent')
 }));
 
+vi.mock('./patches/core-files-setting-tab-patch-component.ts', async () => ({
+  CoreFilesSettingTabPatchComponent: await createChildStub('CoreFilesSettingTabPatchComponent')
+}));
+
 vi.mock('./patches/file-array-buffer-patch-component.ts', async () => ({
   FileArrayBufferPatchComponent: await createChildStub('FileArrayBufferPatchComponent')
 }));
@@ -183,6 +187,7 @@ describe('CustomAttachmentLocationComponent', () => {
     const settings = strictProxy<PluginSettings>({
       // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
       customTokensStr: 'custom-tokens',
+      shouldFollowObsidianAttachmentLocation: false,
       version: ''
     });
 
@@ -277,6 +282,7 @@ describe('CustomAttachmentLocationComponent', () => {
       expect(types).toContain('VaultGetConfigPatchComponent');
       expect(types).toContain('FileManagerGenerateMarkdownLinkPatchComponent');
       expect(types).toContain('ShareReceiverImportFilesPatchComponent');
+      expect(types).toContain('CoreFilesSettingTabPatchComponent');
     });
 
     it('should add the web-utils patch child when web utils are available', async () => {
@@ -336,6 +342,29 @@ describe('CustomAttachmentLocationComponent', () => {
       handler(strictProxy<TFile>({ path: 'note.md' }));
       await vi.runAllTimersAsync();
       expect(component.currentAttachmentFolderPath).toBe('attachments/new');
+    });
+
+    it('should resolve nothing while the plugin follows Obsidian\'s own attachment location', async () => {
+      const component = createComponent();
+      context.settings.shouldFollowObsidianAttachmentLocation = true;
+      const handler = loadAndGetWorkspaceHandler(component, 'file-open');
+      handler(strictProxy<TFile>({ path: 'note.md' }));
+      await vi.runAllTimersAsync();
+      expect(component.currentAttachmentFolderPath).toBeNull();
+      expect(context.getAttachmentFolderFullPathForPathMock).not.toHaveBeenCalled();
+    });
+
+    it('should stop handing out a folder resolved before the mode was switched on', async () => {
+      const component = createComponent();
+      context.getAttachmentFolderFullPathForPathMock.mockResolvedValue('attachments/new');
+      const handler = loadAndGetWorkspaceHandler(component, 'file-open');
+      handler(strictProxy<TFile>({ path: 'note.md' }));
+      await vi.runAllTimersAsync();
+      expect(component.currentAttachmentFolderPath).toBe('attachments/new');
+
+      // eslint-disable-next-line require-atomic-updates -- The test is the only writer; the switch is the point of it.
+      context.settings.shouldFollowObsidianAttachmentLocation = true;
+      expect(component.currentAttachmentFolderPath).toBeNull();
     });
 
     it('should do nothing when the file is already the last opened file', async () => {

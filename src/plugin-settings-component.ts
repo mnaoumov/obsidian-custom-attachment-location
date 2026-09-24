@@ -196,7 +196,11 @@ ${commentOut(this.legacySettings.customTokensStr)}
 
   private convertDateTimeFormat(): void {
     const dateTimeFormat = this.legacySettings.dateTimeFormat ?? 'YYYYMMDDHHmmssSSS';
-    this.legacySettings.attachmentFolderPath = addDateTimeFormat({ $string: this.legacySettings.attachmentFolderPath ?? '', dateTimeFormat });
+    // An absent key stays absent, so the default fills it. Converting it to '' used to put the attachments of
+    // Any record written without this key, such as a hand-seeded `data.json`, at the vault root.
+    if (this.legacySettings.attachmentFolderPath !== undefined) {
+      this.legacySettings.attachmentFolderPath = addDateTimeFormat({ $string: this.legacySettings.attachmentFolderPath, dateTimeFormat });
+    }
 
     this.legacySettings.generatedAttachmentFileName = addDateTimeFormat({
       $string: this.legacySettings.generatedAttachmentFileName
@@ -222,7 +226,10 @@ ${commentOut(this.legacySettings.customTokensStr)}
   }
 
   private convertLegacyTokens(): void {
-    this.legacySettings.attachmentFolderPath = this.replaceLegacyTokens(this.legacySettings.attachmentFolderPath);
+    if (this.legacySettings.attachmentFolderPath !== undefined) {
+      this.legacySettings.attachmentFolderPath = this.replaceLegacyTokens(this.legacySettings.attachmentFolderPath);
+    }
+
     this.legacySettings.generatedAttachmentFileName = this.replaceLegacyTokens(this.legacySettings.generatedAttachmentFileName);
     this.legacySettings.markdownUrlFormat = this.replaceLegacyTokens(this.legacySettings.markdownUrlFormat);
   }
@@ -403,6 +410,28 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 
     const path = getPath(this.app, pathOrFile);
     return !this.handedOverSettingsComponent.isTreatedAsAttachment(path);
+  }
+
+  /**
+   * Loads the settings, and writes `data.json` the first time there is none.
+   *
+   * The base class returns early when nothing is stored, so a user who never saves a setting never gets a
+   * `data.json` and keeps running on whatever the defaults are TODAY. That is how 13.0.0's default change
+   * reached some existing users silently: nothing on disk told a fresh install apart from a user who had simply
+   * never opened the settings. Storing an empty record first lets the base class normalize it and save the
+   * full one, so from here on every user keeps the values they started with, and a later default change
+   * reaches new installs only.
+   *
+   * @param isInitialLoad - Whether the settings are being loaded for the first time.
+   * @returns A {@link Promise} that resolves when the settings are loaded.
+   */
+  public override async loadFromFile(isInitialLoad: boolean): Promise<void> {
+    const data: unknown = await this.dataHandler.loadData();
+    if (data === undefined || data === null) {
+      await this.dataHandler.saveData({});
+    }
+
+    await super.loadFromFile(isInitialLoad);
   }
 
   public replaceSpecialCharacters($string: string): string {

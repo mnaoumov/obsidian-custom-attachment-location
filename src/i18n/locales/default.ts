@@ -46,6 +46,10 @@ export const defaultTranslations = {
     goToOwningNote: 'Go to owning note',
     moveAttachmentToProperFolder: 'Move attachment to proper folder'
   },
+  coreFilesSettingTab: {
+    controlledByPlugin: 'Controlled by Custom Attachment Location, so the value stored here is not in effect. To let this setting decide again, turn on Follow Obsidian attachment location in that plugin.',
+    openPluginSettings: 'Open'
+  },
   deleteUnusedAttachments: {
     confirm: {
       andMore: '... and {{count}} more.',
@@ -120,6 +124,11 @@ export const defaultTranslations = {
     },
     noOwningNote: 'No note references the attachment \'{{attachmentPath}}\'.',
     notePathIsIgnored: 'Note path is ignored',
+    nothingToCollect: {
+      part1: 'Nothing to collect in \'{{noteFilePath}}\': every attachment it could move is already in its destination folder.',
+      part2: 'Collected attachments are set to be renamed, but',
+      part3: 'is empty, which keeps each attachment\'s current name, so there is nothing left for the collect to change.'
+    },
     noUnusedAttachments: 'No unused attachments found.'
   },
   pluginConflict: {
@@ -517,7 +526,7 @@ export const defaultTranslations = {
       description: {
         part1: 'Whether to apply the attachment folder and file name settings to attachments that OTHER plugins create.',
         part2: 'Some plugins write an attachment into the vault under a name of their own, without asking Obsidian where it belongs. When this is on, such a file is moved and renamed right after it appears.',
-        part3: 'Only files created while a note is open are touched, never files arriving from a sync or a vault import.',
+        part3: 'Only files created while a note is open, and linked from a note, are touched: a file no note links to is data another plugin keeps for itself and stays where it was written. Files arriving from a sync or a vault import are never touched.',
         part4: 'The creating plugin is identified from the call stack of the write. That is best-effort: no plugin is identified for a file written by Obsidian itself, by a sync client, or by a plugin that defers its write. Such a file counts as NOT being in the list below.'
       },
       name: 'Rename attachments created by other plugins'
@@ -535,9 +544,17 @@ export const defaultTranslations = {
       message: 'Are you sure you want to reset the custom tokens to the sample custom tokens? Your changes will be lost.',
       title: 'Reset to sample custom tokens'
     },
+    shouldCollectAttachmentsAutomatically: {
+      description: 'Collect a note\'s attachments each time the note changes, as if Collect attachments in current note had been run on it. This moves files without asking, on every save of the note, so it is off by default.',
+      name: 'Collect attachments automatically'
+    },
     shouldConvertPastedImagesToJpeg: {
       description: 'Whether to convert pasted images to JPEG. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
       name: 'Should convert pasted images to JPEG'
+    },
+    shouldFollowObsidianAttachmentLocation: {
+      description: 'If enabled, new attachments go wherever Obsidian\'s own Files and links > Default location for new attachments says, and Location for new attachments below is not used. The file name settings still apply.',
+      name: 'Follow Obsidian attachment location'
     },
     shouldPreserveImageMetadata: {
       description: {
@@ -619,5 +636,17 @@ export const defaultTranslations = {
         part5: 'for migration details.'
       }
     }
+  },
+  settingsMigrationModal: {
+    currentValue: 'Currently: {{value}}',
+    disabled: 'Disabled',
+    emptyList: '(empty)',
+    enabled: 'Enabled',
+    explanation: {
+      part1: '{{sourcePluginName}} used to collect attachments itself and no longer does. It proposes the settings it held, so this vault keeps behaving the way it did.',
+      part2: 'Each row shows what this plugin holds now and what is proposed. Edit a suggested value, or reset a row to keep the current one. Nothing is written until you press OK.'
+    },
+    resetTooltip: 'Reset to the current value, leaving this setting as it is',
+    title: 'Settings proposed by {{sourcePluginName}}'
   }
 } as const satisfies DefaultTranslationsBase;

@@ -19,6 +19,10 @@ import {
  * the API asked about the one that is not open. The patch must answer with the open note's folder for the
  * vault, and the API must answer with each note's own. Without the second reading, a read that simply returned
  * the same field would pass.
+ *
+ * The same staging then drives the acting member, `collectAttachments`: the open note's embedded image is
+ * collected through the registry handle, and is read at the proper path the moment the promise settles — which
+ * is what a consumer sequencing on the collect relies on, and what a promise that settled on queueing would fail.
  */
 
 const PLUGIN_ID = 'obsidian-custom-attachment-location';
@@ -36,6 +40,7 @@ interface ProbeResult {
   readonly apiFolderForOpenNote: null | string;
   readonly apiFound: boolean;
   readonly apiVersion: string;
+  readonly collectedImagePath: null | string;
   readonly contractMethodNames: readonly string[];
   readonly getConfigFolder: string;
   readonly properAttachmentPath: null | string;
@@ -62,7 +67,12 @@ describe('The published API answers per note, which the getConfig patch cannot',
           readonly notePath: string;
         }
 
+        interface CollectAttachmentsParams {
+          readonly pathsOrFiles: readonly string[];
+        }
+
         interface ApiLike {
+          collectAttachments(params: CollectAttachmentsParams): Promise<void>;
           getAttachmentFolderPath(params: GetAttachmentFolderPathParams): Promise<null | string>;
           getProperAttachmentPath(params: GetProperAttachmentPathParams): Promise<null | string>;
         }
@@ -100,6 +110,7 @@ describe('The published API answers per note, which the getConfig patch cannot',
           apiFolderForOpenNote: null,
           apiFound: false,
           apiVersion: '',
+          collectedImagePath: null,
           contractMethodNames: [],
           getConfigFolder: '',
           properAttachmentPath: null,
@@ -109,6 +120,7 @@ describe('The published API answers per note, which the getConfig patch cannot',
         function isApiLike(value: unknown): value is ApiLike {
           const record = value as null | Record<string, unknown>;
           return typeof value === 'object' && record !== null
+            && typeof record['collectAttachments'] === 'function'
             && typeof record['getAttachmentFolderPath'] === 'function'
             && typeof record['getProperAttachmentPath'] === 'function';
         }
@@ -234,23 +246,35 @@ describe('The published API answers per note, which the getConfig patch cannot',
             timeoutInMilliseconds: waitTimeoutInMilliseconds
           });
 
+          const apiFolderForClosedNote = await api.getAttachmentFolderPath({ notePath: `${closedNoteBaseName}.md` });
+          const apiFolderForOpenNote = await api.getAttachmentFolderPath({ notePath: `${openNoteBaseName}.md` });
+          const getConfigFolder = String(app.vault.getConfig('attachmentFolderPath'));
+          const properAttachmentPath = await api.getProperAttachmentPath({
+            attachmentPathOrFile: imageFileName,
+            notePath: `${openNoteBaseName}.md`
+          });
+
+          // Read the instant the promise settles, with no wait in between: that is the promise under test.
+          await api.collectAttachments({ pathsOrFiles: [`${openNoteBaseName}.md`] });
+          const collectedImagePath = properAttachmentPath !== null && app.vault.getFileByPath(properAttachmentPath) !== null
+            ? properAttachmentPath
+            : null;
+
           return {
-            apiFolderForClosedNote: await api.getAttachmentFolderPath({ notePath: `${closedNoteBaseName}.md` }),
-            apiFolderForOpenNote: await api.getAttachmentFolderPath({ notePath: `${openNoteBaseName}.md` }),
+            apiFolderForClosedNote,
+            apiFolderForOpenNote,
             apiFound: true,
             apiVersion: record.apiVersion,
+            collectedImagePath,
             contractMethodNames: Object.keys(record.contract).sort(),
-            getConfigFolder: String(app.vault.getConfig('attachmentFolderPath')),
-            properAttachmentPath: await api.getProperAttachmentPath({
-              attachmentPathOrFile: imageFileName,
-              notePath: `${openNoteBaseName}.md`
-            }),
+            getConfigFolder,
+            properAttachmentPath,
             settingsFound: true
           };
         } finally {
           settings.attachmentFolderPath = priorFolderPath;
           settings.shouldRenameCollectedAttachments = wasRenamingCollectedAttachments;
-          for (const path of [`${openNoteBaseName}.md`, `${closedNoteBaseName}.md`, imageFileName]) {
+          for (const path of [`${openNoteBaseName}.md`, `${closedNoteBaseName}.md`, imageFileName, `_/${openNoteBaseName}`]) {
             await trashIfExists(path);
           }
         }
@@ -267,8 +291,10 @@ describe('The published API answers per note, which the getConfig patch cannot',
     expect(result.settingsFound).toBe(true);
 
     // The record a consumer negotiates against.
-    expect(result.apiVersion).toBe('1.0.0');
-    expect(result.contractMethodNames).toEqual(['getAttachmentFolderPath', 'getProperAttachmentPath']);
+    // `1.1.0` added `migrateSettings` and `1.2.0` `collectAttachments`; the two reads are unchanged since `1.0.0`, so a
+    // `'^1'` consumer still matches.
+    expect(result.apiVersion).toBe('1.2.0');
+    expect(result.contractMethodNames).toEqual(['collectAttachments', 'getAttachmentFolderPath', 'getProperAttachmentPath', 'migrateSettings']);
 
     // The defect: one value for the whole vault, and it is the OPEN note's.
     expect(result.getConfigFolder).toMatch(/^_\/api-open-/);
@@ -280,5 +306,8 @@ describe('The published API answers per note, which the getConfig patch cannot',
 
     // The acting half: where the embedded attachment belongs, folder and file name both.
     expect(result.properAttachmentPath).toMatch(/^_\/api-open-.*\/api-img-.*\.png$/);
+
+    // And the acting member: collected through the registry handle, and already there when the promise settles.
+    expect(result.collectedImagePath).toBe(result.properAttachmentPath);
   }, 120_000);
 });

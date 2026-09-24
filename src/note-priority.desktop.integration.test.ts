@@ -23,7 +23,16 @@ import {
 
 const PLUGIN_ID = 'obsidian-custom-attachment-location';
 const COLLECT_COMMAND_ID = 'obsidian-custom-attachment-location:collect-attachments-in-file';
-const WAIT_TIMEOUT_IN_MILLISECONDS = 20_000;
+/*
+ * Under the transport's ~30s per-closure default, not at it. The project raises its command timeout past that,
+ * but only as a backstop: a closure that spends it dies as a bare transport timeout, never as the wait that
+ * overran. `runPhase` charges this twice and is called twice, so the closure declares ~24s; at 20_000 it
+ * declared 80s. The control phase expects nothing to move, so its second wait runs out on the passing path,
+ * which is why this is not smaller still: a collect in this small vault lands well inside it.
+ *
+ * Consumed only inside the closure, as its `input`; no Node-side wait reads it.
+ */
+const WAIT_TIMEOUT_IN_MILLISECONDS = 6000;
 
 interface PhaseResult {
   readonly attachmentPath: string;

@@ -15,6 +15,10 @@ Open the Command Palette (`Ctrl`/`Cmd` + `P`) and search for *Custom Attachment 
 
 There is also **Move attachment to proper folder**, which relocates a single attachment file to where the settings say it belongs.
 
+## Collecting automatically
+
+Turn on **Collect attachments automatically** (`shouldCollectAttachmentsAutomatically`) and the plugin collects a note's attachments every time the note changes, as if you had run **Collect attachments in current note** on it. Nothing happens while the link suggester is open, so a half-typed link is never acted on. It moves files without asking, on every save, so it is off by default.
+
 ## Try it
 
 1. Paste a couple of images into [01 Attachment folder location](<./01 Attachment folder location.md>) and [02 Attachment file naming](<./02 Attachment file naming.md>) (you supply the files).

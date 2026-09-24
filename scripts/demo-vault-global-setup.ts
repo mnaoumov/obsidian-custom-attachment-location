@@ -11,6 +11,7 @@ import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
   getAdvancedRenameAndDeleteHandlerPopulate
 } from './helpers/advanced-rename-and-delete-handler-seed.ts';
+import { getPluginSettingsPopulate } from './helpers/plugin-settings-seed.ts';
 
 // CodeScript Toolkit is what turns a ```code-button fence into a button, and its root-relative
 // `require('/demoSetup.ts')` into a call. In real use the in-vault `demo-vault-helper` installs it from
@@ -35,7 +36,8 @@ async function populate(): Promise<PopulateFilesParams> {
         pluginId: CODE_SCRIPT_TOOLKIT_PLUGIN_ID
       }]
     }),
-    ...await getAdvancedRenameAndDeleteHandlerPopulate()
+    ...await getAdvancedRenameAndDeleteHandlerPopulate(),
+    ...getPluginSettingsPopulate()
   };
 }
 

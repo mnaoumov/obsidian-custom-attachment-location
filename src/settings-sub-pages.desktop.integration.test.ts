@@ -144,6 +144,7 @@ describe('Settings sub-pages (issue #68)', () => {
 
     expect(result.parentTabNames).toEqual([
       'Core',
+      'Follow Obsidian attachment location',
       'Location for new attachments',
       'Generated attachment file name',
       ...EXPECTED_PAGE_NAMES

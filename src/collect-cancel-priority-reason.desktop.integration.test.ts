@@ -21,13 +21,15 @@ const COLLECT_COMMAND_ID = 'obsidian-custom-attachment-location:collect-attachme
 const REASON_SELECTOR = '.custom-attachment-location-no-priority-winner-reason';
 /*
  * Under the transport's ~30s per-closure cap, not at it.
- * The closure spends this ceiling four times over, so at 20_000 it declared 80s.
+ * The closure spends this ceiling EIGHT times: `readReason` waits three times and dismisses once, and it is
+ * called twice. At 6000 it declared 48s, at 20_000 160s.
+ * The project raises its command timeout past the cap, but only as a backstop, not a budget.
  * The eval is killed at the cap first and reported as a bare transport timeout.
  * That names the harness rather than the wait that overran.
  * Each step is a vault operation or a modal in a small temp vault, well under a second.
  * The constant feeds nothing but closure input, so no Node-side wait sees the change.
  */
-const WAIT_TIMEOUT_IN_MILLISECONDS = 6000;
+const WAIT_TIMEOUT_IN_MILLISECONDS = 3000;
 
 interface ProbeResult {
   readonly emptyListReason: string;

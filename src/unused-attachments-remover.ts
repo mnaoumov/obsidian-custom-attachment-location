@@ -1,5 +1,6 @@
 import type {
   App,
+  Reference,
   TAbstractFile,
   TFile,
   TFolder
@@ -11,6 +12,7 @@ import {
   setIcon,
   Vault
 } from 'obsidian';
+import { createFragmentAsync } from 'obsidian-dev-utils/html-element';
 import { findAttachmentUnitFolderPath } from 'obsidian-dev-utils/obsidian/attachment-unit-folder';
 import { getCanvasReferences } from 'obsidian-dev-utils/obsidian/canvas';
 import {
@@ -18,16 +20,19 @@ import {
   isFile,
   isFolder
 } from 'obsidian-dev-utils/obsidian/file-system';
-import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
 import { loop } from 'obsidian-dev-utils/obsidian/loop';
+import { renderInternalLink } from 'obsidian-dev-utils/obsidian/markdown';
 import {
   getBacklinksForFileSafe,
   getCacheSafe,
   getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
-import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
+import {
+  parseLinks,
+  toParseLinkReference
+} from 'obsidian-dev-utils/obsidian/parse-link';
 import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
 import {
   cleanupEmptyFolders,
@@ -39,6 +44,7 @@ import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import type { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { confirmMinimizable } from './modals/minimizable-confirm-modal.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 
 // The note's attachment folder path template rarely depends on the attachment file name (the default
@@ -258,8 +264,25 @@ export class UnusedAttachmentsRemover {
       return referencedAttachmentPaths;
     }
 
-    const references = isCanvasFile(note) ? await getCanvasReferences(this.app, note) : getLinks({ cache });
+    const references: Reference[] = isCanvasFile(note) ? [...await getCanvasReferences(this.app, note)] : [...getLinks({ cache })];
     abortSignal.throwIfAborted();
+
+    /*
+     * The note's own text, read for links too, because the cache alone can miss one (#89). Obsidian's
+     * parser folds `![[image.png]]` into a math block that directly follows a list, so the embed never
+     * reaches the cache, and deleting on the cache's word trashes a file the note still shows. A link the
+     * text scan finds and the cache does not — one inside a code block, say — can only KEEP a file, which is
+     * the safe way for a delete to be wrong.
+     */
+    if (!isCanvasFile(note)) {
+      const content = await this.app.vault.cachedRead(note);
+      abortSignal.throwIfAborted();
+      for (const parseLinkResult of parseLinks(content)) {
+        if (!parseLinkResult.isExternal) {
+          references.push(toParseLinkReference({ content, parseLinkResult }));
+        }
+      }
+    }
 
     for (const reference of references) {
       const referencedFile = extractLinkFile({
@@ -355,6 +378,38 @@ export class UnusedAttachmentsRemover {
      */
     const referencedAttachmentPaths = new Set<string>();
 
+    /**
+     * The subset of {@link referencedAttachmentPaths} whose referring note the multiple-notes check does NOT
+     * exclude — the references that keep ANOTHER note's attachment alive.
+     *
+     * Needed because a note judges its candidates by backlinks, and a reference the cache missed (#89) is
+     * missing from the backlink index too. So when note A's folder holds an image only note B embeds, and the
+     * parser misread B, A's scan calls the image unused. B's text scan found it; this set is how that answer
+     * reaches A's verdict. The exclusion mirrors the per-file rule, which ignores those notes' backlinks.
+     *
+     * Keyed by the referenced path, holding the paths of the notes that reference it, because the unit rule
+     * needs to know WHERE a reference comes from: a drawing inside a unit embedding its sibling is the unit
+     * describing itself, and must not keep it alive here any more than it does in the backlink check.
+     */
+    const referrerPathsByKeptAliveAttachmentPath = new Map<string, Set<string>>();
+
+    const recordReferences = (noteFile: TFile, paths: ReadonlySet<string>): void => {
+      const isKeepingAlive = !this.pluginSettingsComponent.settings.isExcludedFromMultipleNotesCheck(noteFile.path);
+      for (const path of paths) {
+        referencedAttachmentPaths.add(path);
+        if (!isKeepingAlive) {
+          continue;
+        }
+
+        const referrerPaths = referrerPathsByKeptAliveAttachmentPath.get(path);
+        if (referrerPaths) {
+          referrerPaths.add(noteFile.path);
+        } else {
+          referrerPathsByKeptAliveAttachmentPath.set(path, new Set([noteFile.path]));
+        }
+      }
+    };
+
     const scanNote = async (noteFile: TFile): Promise<void> => {
       abortSignal.throwIfAborted();
       if (this.handedOverSettingsComponent.isPathIgnored(noteFile.path)) {
@@ -366,9 +421,7 @@ export class UnusedAttachmentsRemover {
          * everything it holds alive as ownerless.
          */
         if (shouldScanOrphanAttachments) {
-          for (const referencedAttachmentPath of await this.collectReferencedAttachmentPaths(noteFile, abortSignal)) {
-            referencedAttachmentPaths.add(referencedAttachmentPath);
-          }
+          recordReferences(noteFile, await this.collectReferencedAttachmentPaths(noteFile, abortSignal));
         }
 
         return;
@@ -383,9 +436,7 @@ export class UnusedAttachmentsRemover {
         unusedUnitFolderByPath.set(unitFolder.path, unitFolder);
       }
 
-      for (const referencedAttachmentPath of scanResult.referencedAttachmentPaths) {
-        referencedAttachmentPaths.add(referencedAttachmentPath);
-      }
+      recordReferences(noteFile, scanResult.referencedAttachmentPaths);
     };
 
     /*
@@ -461,6 +512,24 @@ export class UnusedAttachmentsRemover {
       }
     }
 
+    /*
+     * The last word goes to the scanned notes' own references, over the backlink index (#89). A unit
+     * folder holding any file a note OUTSIDE it names is kept too, since a unit dies whole or not at all.
+     */
+    for (const attachment of unusedAttachments) {
+      if (referrerPathsByKeptAliveAttachmentPath.has(attachment.path)) {
+        unusedAttachments.delete(attachment);
+      }
+    }
+
+    for (const unitFolderPath of unusedUnitFolderByPath.keys()) {
+      const insidePathPrefix = `${unitFolderPath}/`;
+      const isReferencedFromOutside = [...referrerPathsByKeptAliveAttachmentPath].some(([path, referrerPaths]) => path.startsWith(insidePathPrefix) && [...referrerPaths].some((referrerPath) => !referrerPath.startsWith(insidePathPrefix)));
+      if (isReferencedFromOutside) {
+        unusedUnitFolderByPath.delete(unitFolderPath);
+      }
+    }
+
     const unitFoldersToDelete = [...unusedUnitFolderByPath.values()].sort((a, b) => a.path.localeCompare(b.path));
 
     /*
@@ -480,10 +549,15 @@ export class UnusedAttachmentsRemover {
       return;
     }
 
-    const isConfirmed = await confirm({
+    /*
+     * Minimizable, and every listed path is a link (#87). This dialog is the last gate before a delete, and
+     * the cheapest check on a wrong answer is to go and look at what it names — which a plain-text list in
+     * a dialog covering the workspace made impossible.
+     */
+    const isConfirmed = await confirmMinimizable({
       app: this.app,
       cancelButtonText: t(($) => $.obsidianDevUtils.buttons.cancel),
-      message: createFragment((f) => {
+      message: await createFragmentAsync(async (f) => {
         if (attachmentsToDelete.length > 0) {
           f.appendText(t(($) => $.deleteUnusedAttachments.confirm.part1));
           f.createEl('br');
@@ -494,7 +568,7 @@ export class UnusedAttachmentsRemover {
            */
           f.createEl('strong', { text: t(($) => $.deleteUnusedAttachments.confirm.count, { count: attachmentsToDelete.length }) });
           f.createEl('br');
-          appendPathList(f, attachmentsToDelete.map((attachment) => attachment.path));
+          await appendPathList(this.app, f, attachmentsToDelete);
         }
 
         /*
@@ -508,7 +582,7 @@ export class UnusedAttachmentsRemover {
           f.createEl('br');
           f.createEl('strong', { text: t(($) => $.deleteUnusedAttachments.confirm.unitFolderCount, { count: unitFoldersToDelete.length }) });
           f.createEl('br');
-          appendPathList(f, unitFoldersToDelete.map((unitFolder) => unitFolder.path));
+          await appendPathList(this.app, f, unitFoldersToDelete);
         }
 
         f.createEl('br');
@@ -623,6 +697,29 @@ export class UnusedAttachmentsRemover {
   }
 
   /**
+   * Whether any of the files is a real note with something written in it.
+   *
+   * Only notes are read, so a unit made of attachments alone costs no reads at all.
+   *
+   * @param files - The files to check.
+   * @returns `true` when at least one of them is a note whose text is not blank.
+   */
+  private async hasNoteWithContent(files: TFile[]): Promise<boolean> {
+    for (const file of files) {
+      if (!this.pluginSettingsComponent.isNoteEx(file)) {
+        continue;
+      }
+
+      const content = await this.app.vault.cachedRead(file);
+      if (content.trim() !== '') {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Decides which of a set of attachment candidates are unused, and which of their unit folders are.
    *
    * Shared by both passes, which differ only in how they FOUND the candidates. The note-driven pass names
@@ -692,8 +789,12 @@ export class UnusedAttachmentsRemover {
        * per-file rule, which can only ever reach attachments. Note that this also spares a unit that
        * happens to contain the scanning note itself, and — for the attachment-driven pass, which has no
        * scanning note — any unit a live note lives in.
+       *
+       * A note with no content does not count. That is the `Untitled.md` Obsidian leaves behind when a
+       * note is created and never written in; trashing it loses nothing, and letting it spare the unit left
+       * the whole folder behind for good (#83).
        */
-      if (unitFiles.some((unitFile) => this.pluginSettingsComponent.isNoteEx(unitFile))) {
+      if (await this.hasNoteWithContent(unitFiles)) {
         perFileCandidates.push(...unitCandidates);
         continue;
       }
@@ -764,22 +865,30 @@ export class UnusedAttachmentsRemover {
 }
 
 /**
- * Renders a capped, code-formatted list of vault paths into the confirmation dialog.
+ * Renders a capped list of links to vault items into the confirmation dialog.
  *
+ * A file link opens the file and reveals it in the file explorer. A folder link opens the folder's folder
+ * note when it has one, and otherwise reveals the folder: a unit folder only reaches this dialog when no
+ * note inside it has content, so opening "the first note in it" would show an empty page.
+ *
+ * @param app - The Obsidian app instance.
  * @param parentEl - The fragment to append the list to.
- * @param paths - The paths to list.
+ * @param abstractFiles - The files or folders to list.
  */
-function appendPathList(parentEl: DocumentFragment, paths: string[]): void {
-  parentEl.createEl('ul', {}, (ul) => {
-    for (const path of paths.slice(0, CONFIRM_LIST_LIMIT)) {
-      ul.createEl('li', {}, (li) => {
-        appendCodeBlock(li, path);
-      });
-    }
-    if (paths.length > CONFIRM_LIST_LIMIT) {
-      ul.createEl('li', {
-        text: t(($) => $.deleteUnusedAttachments.confirm.andMore, { count: paths.length - CONFIRM_LIST_LIMIT })
-      });
-    }
-  });
+async function appendPathList(app: App, parentEl: DocumentFragment, abstractFiles: readonly TAbstractFile[]): Promise<void> {
+  const ul = parentEl.createEl('ul');
+  for (const abstractFile of abstractFiles.slice(0, CONFIRM_LIST_LIMIT)) {
+    ul.createEl('li').append(
+      await renderInternalLink({
+        app,
+        pathOrAbstractFile: abstractFile,
+        shouldRevealFile: true
+      })
+    );
+  }
+  if (abstractFiles.length > CONFIRM_LIST_LIMIT) {
+    ul.createEl('li', {
+      text: t(($) => $.deleteUnusedAttachments.confirm.andMore, { count: abstractFiles.length - CONFIRM_LIST_LIMIT })
+    });
+  }
 }

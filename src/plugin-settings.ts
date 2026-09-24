@@ -170,6 +170,35 @@ export class PluginSettings {
 
   public renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.None;
   public renamedAttachmentFileName = '';
+
+  /**
+   * Whether a note's attachments are collected each time the note changes, as if
+   * `Collect attachments in current note` had been run on it.
+   *
+   * Off by default. Collecting moves files, and with this on it happens on every save of a note, without being
+   * asked. It is the setting Consistent Attachments and Links offered before it handed collecting over to this
+   * plugin, and it is migrated from there.
+   */
+  public shouldCollectAttachmentsAutomatically = false;
+
+  /**
+   * Whether a new attachment goes wherever Obsidian's own *Default location for new attachments* says.
+   *
+   * On, {@link attachmentFolderPath} is not consulted at all: the folder is Obsidian's setting, resolved the
+   * way Obsidian resolves it, and Obsidian's setting page stays the one place that decides. It is kept rather
+   * than cleared, so turning the mode off again restores the template the user had.
+   *
+   * A flag rather than a sentinel value inside the template, so a template can never be mistaken for the mode
+   * and the mode can never destroy the template. Only the FOLDER follows Obsidian; the file-name settings
+   * still apply. An explicit {@link collectedAttachmentFolderPath} still wins for the collecting commands, as
+   * it does over the template.
+   *
+   * On by default since 13.0.0, so a fresh install changes nothing about where attachments land until the user
+   * picks a pattern. The template default stays `./assets/${noteFileName}`, the default of every earlier
+   * release, so a user whose attachments moved on the upgrade switches this off and has the old behavior back.
+   */
+  public shouldFollowObsidianAttachmentLocation = true;
+
   public shouldPreserveImageMetadata = false;
   public shouldRenameCollectedAttachments = false;
   public shouldSetLinkDisplayTextToAttachmentFileName = false;

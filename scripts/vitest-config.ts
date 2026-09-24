@@ -89,6 +89,12 @@ const GLOBAL_SETUP_FILE = './scripts/vitest-global-setup.ts';
  *
  * Set above the largest per-test budget in the suite so vitest — which knows what was being awaited —
  * always reports the overrun. Nothing hangs longer as a result: vitest's own timeout is the backstop.
+ *
+ * **It is a backstop, NOT a budget a closure may spend.** Every closure in this repo is sized under the
+ * transport's 30s DEFAULT rather than under this, and each one that waits says so beside its ceiling. A closure
+ * written against this number would mean nothing on the Android project, which does not raise it, and would be
+ * red under `obsidian-dev-utils/no-over-cap-wait-in-eval-in-obsidian`, which enforces the default cap. The one
+ * exception is the `desktop-performance` project, whose closures are given their own explicit budget below.
  */
 const CDP_COMMAND_TIMEOUT_IN_MILLISECONDS = 240_000;
 

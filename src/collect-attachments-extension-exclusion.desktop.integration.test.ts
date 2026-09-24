@@ -105,6 +105,13 @@ describe('Collect attachments — exclude attachment extensions from the multipl
         settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';
         const collectCommandId = 'obsidian-custom-attachment-location:collect-attachments-in-file';
 
+        /*
+         * Declares 8s of waiting and is called THREE times, so the closure declares 24s: under the transport's
+         * ~30s per-closure default. The project raises its command timeout past that, but only as a backstop — a
+         * closure that spends it dies as a bare transport timeout, never as the wait that overran. Two of the
+         * three phases expect the attachment to STAY, so their collect wait runs out on the passing path; the
+         * collect itself finishes well inside it in this small vault.
+         */
         async function runPhase(activeSettings: MultipleNotesSettings, excludeExtensions: string[], attachmentExtension: string): Promise<PhaseResult> {
           activeSettings.excludeExtensionsFromMultipleNotesCheck = excludeExtensions;
 
@@ -120,7 +127,7 @@ describe('Collect attachments — exclude attachment extensions from the multipl
           // Wait for the metadata cache to resolve both embeds so the collector sees two backlinks.
           const attachmentFile = app.vault.getFileByPath(attachmentPath);
           let backlinkCount = 0;
-          const resolveDeadline = Date.now() + 8000;
+          const resolveDeadline = Date.now() + 2000;
           while (Date.now() < resolveDeadline) {
             backlinkCount = attachmentFile ? app.metadataCache.getBacklinksForFile(attachmentFile).keys().length : 0;
             if (backlinkCount >= 2) {
@@ -136,7 +143,7 @@ describe('Collect attachments — exclude attachment extensions from the multipl
            * Finished switching to it. Firing the command too early collects nothing, which surfaces
            * Much later as `movedOut: false` — indistinguishable from the exemption not working.
            */
-          const activeDeadline = Date.now() + 8000;
+          const activeDeadline = Date.now() + 2000;
           while (Date.now() < activeDeadline && app.workspace.getActiveFile()?.path !== firstNote.path) {
             await sleep(100);
           }
@@ -144,7 +151,7 @@ describe('Collect attachments — exclude attachment extensions from the multipl
           app.commands.executeCommandById(collectCommandId);
 
           // The collect runs on an internal queue; poll until the attachment leaves its original path.
-          const collectDeadline = Date.now() + 12_000;
+          const collectDeadline = Date.now() + 4000;
           while (Date.now() < collectDeadline) {
             if (!app.vault.getFileByPath(attachmentPath)) {
               break;

@@ -70,6 +70,8 @@ const NOTE_PATH = 'notes/my-note.md';
 const FOREIGN_ATTACHMENT_PATH = 'wherever/mx-img-abc.png';
 // Mirrors FRESHLY_CREATED_THRESHOLD_IN_MILLISECONDS in the component under test.
 const FRESHLY_CREATED_THRESHOLD_IN_MILLISECONDS = 10_000;
+// Mirrors NOTE_REFERENCE_WAIT_IN_MILLISECONDS in the component under test.
+const NOTE_REFERENCE_WAIT_IN_MILLISECONDS = 5000;
 
 const mockPrintError = vi.mocked(printError);
 
@@ -123,6 +125,14 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
       settings: createSettings(overrides?.settings)
     });
 
+    /*
+     * Obsidian always carries a link format; the mock models none, and link generation refuses an unknown
+     * one. `shortest` is Obsidian's own default.
+     */
+    getApp().vault.setConfig('newLinkFormat', 'shortest');
+    // Shortest-form link generation asks which files share the name; the mock models no such lookup.
+    // eslint-disable-next-line unicorn/name-replacements -- `getLinkpathDest` is Obsidian's own spelling; the stub has to answer to it.
+    getApp().metadataCache.getLinkpathDest = (linkpath: string): TFile[] => getApp().vault.getFiles().filter((file) => file.name === linkpath || file.basename === linkpath);
     await getApp().vault.createFolder('notes');
     await getApp().vault.create(NOTE_PATH, '');
     vi.spyOn(getApp().workspace, 'getActiveFile').mockReturnValue(getApp().vault.getFileByPath(NOTE_PATH));
@@ -148,11 +158,18 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
    * That single call is the whole simulation: `obsidian-test-mocks` stats the new file from the
    * adapter and fires `create` for it, exactly as the real vault does, so nothing here stamps a
    * `ctime` or fires the event by hand.
+   *
+   * The note links to the file unless `isLinked` is `false`: only a linked file is an attachment at all
+   * (issue #88), and every case but the ones about that boundary is about what happens to an attachment.
    */
-  async function createForeignAttachment(path = FOREIGN_ATTACHMENT_PATH): Promise<TFile> {
+  async function createForeignAttachment(path = FOREIGN_ATTACHMENT_PATH, isLinked = true): Promise<TFile> {
     const parentFolderPath = dirname(path);
     if (!await getApp().vault.exists(parentFolderPath)) {
       await getApp().vault.createFolder(parentFolderPath);
+    }
+
+    if (isLinked) {
+      getApp().metadataCache.resolvedLinks[NOTE_PATH] = { [path]: 1 };
     }
 
     const file = await getApp().vault.createBinary(path, new ArrayBuffer(4));
@@ -415,6 +432,8 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
      * an unsaved editor is not one of them — without the editor pass the note keeps pointing at a
      * path that no longer exists.
      */
+    // The link is regenerated in the vault's own format, so a full-path one needs the absolute format.
+    getApp().vault.setConfig('newLinkFormat', 'absolute');
     const editor = await openEditorWith(`intro\n![[${FOREIGN_ATTACHMENT_PATH}]]\noutro`);
 
     await createForeignAttachment();
@@ -478,11 +497,51 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
 
   it('should repoint a percent-encoded Markdown link too', async () => {
     await setUp();
+    getApp().vault.setConfig('newLinkFormat', 'absolute');
     const editor = await openEditorWith(`![](${encodeURI(FOREIGN_ATTACHMENT_PATH)})`);
 
     await createForeignAttachment();
 
     expect(editor.getValue()).toBe('![](notes/assets/renamed.png)');
+  });
+
+  it('should repoint a link spelled relative to the note without writing its folder twice (issue #82)', async () => {
+    await setUp();
+    /*
+     * The reporter's shape: the foreign file already sits in the note's attachment folder, the embed is
+     * spelled relative to the note, and the vault's link format is relative. Substituting the bare file
+     * name inside that link with a link text that carries the folder again produced
+     * `./assets/assets/renamed.png`, which resolves to nothing.
+     */
+    getApp().vault.setConfig('newLinkFormat', 'relative');
+    vi.spyOn(getApp().metadataCache, 'fileToLinktext').mockReturnValue('assets/renamed.png');
+    await getApp().vault.createFolder('notes/assets');
+    const editor = await openEditorWith('before ![](./assets/mx-img-abc.png) after');
+
+    await createForeignAttachment('notes/assets/mx-img-abc.png');
+
+    expect(editor.getValue()).toBe('before ![](./assets/renamed.png) after');
+  });
+
+  it('should leave a link to a different file with the same name alone', async () => {
+    await setUp();
+    const editor = await openEditorWith('![](elsewhere/mx-img-abc.png)');
+
+    await createForeignAttachment();
+
+    expect(editor.getValue()).toBe('![](elsewhere/mx-img-abc.png)');
+  });
+
+  it('should repoint a vault-absolute link and leave heading-only and external links on the line alone', async () => {
+    await setUp();
+    getApp().vault.setConfig('newLinkFormat', 'absolute');
+    const editor = await openEditorWith(
+      `[[#Intro]] ![](https://example.com/mx-img-abc.png) ![](/${FOREIGN_ATTACHMENT_PATH})`
+    );
+
+    await createForeignAttachment();
+
+    expect(editor.getValue()).toBe('[[#Intro]] ![](https://example.com/mx-img-abc.png) ![](/notes/assets/renamed.png)');
   });
 
   it('should leave an editor that does not mention the attachment untouched', async () => {
@@ -494,6 +553,47 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
 
     expect(transactionSpy).not.toHaveBeenCalled();
     expect(editor.getValue()).toBe('nothing to do with it');
+  });
+
+  it('should leave a file no note links to where its plugin wrote it (issue #88)', async () => {
+    /*
+     * The reporter's shape: a plugin keeps a JSON file of its own under its own folder and reads it back from
+     * that path. Nothing links to it, so it is that plugin's data rather than an attachment, and moving it
+     * broke the plugin.
+     */
+    vi.useFakeTimers();
+    try {
+      await setUp();
+      const promise = createForeignAttachment('Lingua Study/Transcripts/abc.json', false);
+      await vi.advanceTimersByTimeAsync(NOTE_REFERENCE_WAIT_IN_MILLISECONDS + 1000);
+      await promise;
+      await flush();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(renameFileSpy).not.toHaveBeenCalled();
+    expect(getApp().vault.getFileByPath('Lingua Study/Transcripts/abc.json')).not.toBeNull();
+  });
+
+  it('should wait for the creating plugin to insert its embed after the write', async () => {
+    vi.useFakeTimers();
+    try {
+      await setUp();
+      const editor = await openEditorWith('');
+      const promise = createForeignAttachment(FOREIGN_ATTACHMENT_PATH, false);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(renameFileSpy).not.toHaveBeenCalled();
+
+      editor.setValue('![[mx-img-abc.png]]');
+      await vi.advanceTimersByTimeAsync(1000);
+      await promise;
+      await flush();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(renameFileSpy).toHaveBeenCalledOnce();
   });
 
   it('should report a failed move instead of swallowing it', async () => {

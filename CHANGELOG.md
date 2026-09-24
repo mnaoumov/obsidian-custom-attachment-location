@@ -1,5 +1,48 @@
 # CHANGELOG
 
+## 13.0.0
+
+- docs(demo-vault): merge showing the Collect attachments automatically setting
+- refactor(patches): merge keeping the core Files tab id file-local
+- test: merge covering the per-note read API branches
+- fix: merge no longer offering Move attachment to proper folder on a note
+- docs(contributing): merge basing PRs on main, the repo default branch
+- fix(screenshots): merge importing sharp by its default export in both capture suites
+- test(integration): merge the bounded vault cleanup and the dead-instance report
+- fix(delete-unused): merge keeping an attachment the note text links to, re #89
+- fix(rename-by-plugin): merge leaving an unlinked foreign file in place, re #88
+- feat(delete-unused): merge the linked, minimizable confirmation, re #87
+- fix(settings): merge the expanded Plugins picker, re #86
+- test: merge the desktop closure wait sizing
+- feat(api): merge the published collectAttachments member
+- test: merge the wait-ceiling sizing for the rescue and dependency suites
+- test(delete): merge the reporter's second #70 vault layout suite
+- fix(delete-unused): an empty note no longer keeps an attachment unit folder alive
+- fix: re #82
+- docs: say why every test vault seeds pattern mode now that a fresh install follows Obsidian
+- feat(location)!: follow Obsidian by default; switch it off to get ./assets/${noteFileName} back
+- feat(collect): receive the collect settings Consistent Attachments and Links hands over
+- feat(location): follow Obsidian's own attachment location on request
+- feat(collect): say when a collect moved nothing, and name the setting that pinned it
+- docs: replace two labels a reader of this repo cannot resolve
+- feat: publish a per-note attachment-folder read API for other plugins
+- refactor: read the attachment-unit-folder designation through the library
+- feat: exempt chosen attachment file types from the multiple notes check
+- feat: give Collect attachments a destination of its own
+- docs(agents): find the handler's dialogs by title, not by a bare modal lookup
+- test(rescue): accept issue #71's tie dialog with both real plugins on one vault
+- fix(deps): float devalue to 5.9.4, clearing GHSA-9rgm-9g3h-6x36
+- chore(deps): drop the dead markdown-it override
+- chore(deps): drop the dead js-yaml override
+- fix(deps): override smol-toml to clear a denial-of-service advisory
+- docs: replace the private rule-id citations with what they assert
+- test: run the mobile file-drawer retry from Node, so its own diagnostic can fire
+- docs: name the library and the sibling plugins so a reader can resolve them
+- docs: replace the private tracker references with what they pointed at
+- test: bring eight in-closure wait ceilings under the transport's per-eval cap
+- feat!: require Advanced Rename and Delete Handler instead of suggesting it
+- feat: warn about the Consistent Attachments and Links collecting overlap
+
 ## 12.0.1
 
 - test: cover the three unused-attachments-remover paths the gate was short on

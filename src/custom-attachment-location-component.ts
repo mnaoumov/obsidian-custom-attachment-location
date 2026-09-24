@@ -28,6 +28,7 @@ import type { MarkdownUrlMap } from './markdown-url-map.ts';
 
 import { ExternallyCreatedAttachmentHandlerComponent } from './externally-created-attachment-handler-component.ts';
 import { ClipboardManagerInsertFilesPatchComponent } from './patches/clipboard-manager-insert-files-patch-component.ts';
+import { CoreFilesSettingTabPatchComponent } from './patches/core-files-setting-tab-patch-component.ts';
 import { FileArrayBufferPatchComponent } from './patches/file-array-buffer-patch-component.ts';
 import { FileManagerGenerateMarkdownLinkPatchComponent } from './patches/file-manager-generate-markdown-link-patch-component.ts';
 import { ShareReceiverImportFilesPatchComponent } from './patches/share-receiver-import-files-patch-component.ts';
@@ -57,7 +58,22 @@ interface CustomAttachmentLocationComponentConstructorParams {
 }
 
 export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
+  /**
+   * The folder the `getConfig` patch hands Obsidian as its `attachmentFolderPath`, or `null` to leave Obsidian's
+   * own value alone.
+   *
+   * Always `null` while the plugin follows Obsidian's own location. Otherwise the patch would feed Obsidian a
+   * value resolved FROM Obsidian's setting back as that very setting — a loop that is easy to write and hard to
+   * see. Checked here, at read time, rather than only when a note is opened, so a value cached before the mode
+   * was switched on cannot outlive the switch.
+   *
+   * @returns The resolved folder, or `null`.
+   */
   public get currentAttachmentFolderPath(): null | string {
+    if (this.pluginSettingsComponent.settings.shouldFollowObsidianAttachmentLocation) {
+      return null;
+    }
+
     return this._currentAttachmentFolderPath;
   }
 
@@ -160,6 +176,14 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       })
     );
 
+    this.addChild(
+      new CoreFilesSettingTabPatchComponent({
+        app: this.app,
+        pluginId: this.pluginId,
+        pluginSettingsComponent: this.pluginSettingsComponent
+      })
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Actually not available on some platforms.
     if (webUtils) {
       this.addChild(
@@ -232,7 +256,10 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   }
 
   private async handleFileOpen(file: null | TFile): Promise<void> {
-    if (file === null || this.handedOverSettingsComponent.isPathIgnored(file.path)) {
+    if (
+      file === null || this.handedOverSettingsComponent.isPathIgnored(file.path)
+      || this.pluginSettingsComponent.settings.shouldFollowObsidianAttachmentLocation
+    ) {
       this._currentAttachmentFolderPath = null;
       this.lastOpenFilePath = null;
       return;

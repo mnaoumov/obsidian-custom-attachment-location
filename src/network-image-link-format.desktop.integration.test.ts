@@ -154,14 +154,19 @@ describe('Network image link format (issue #50)', () => {
           await waitUntil({
             message: 'the staged note never became the active file',
             predicate: () => app.workspace.getActiveFile()?.path === note.path,
-            timeoutInMilliseconds: 10_000
+            timeoutInMilliseconds: 5000
           });
 
           app.commands.executeCommandById('obsidian-custom-attachment-location:collect-attachments-in-file');
 
-          // The download and rewrite run on an internal queue; poll until the note no longer holds the
-          // Network URL. Comfortably inside this suite's own 120s budget.
-          const deadline = Date.now() + 30_000;
+          /*
+           * The download and rewrite run on an internal queue; poll until the note no longer holds the
+           * Network URL. With the wait above, this closure declares ~20s, under the transport's ~30s
+           * Per-closure default: the project's raised command timeout is a backstop, not a budget, and a
+           * Closure that spends it dies as a bare transport timeout rather than as the wait that overran.
+           * The image is served from localhost, so the rewrite lands within moments.
+           */
+          const deadline = Date.now() + 15_000;
           let content = await app.vault.read(note);
           while (Date.now() < deadline && content.includes(url)) {
             await sleep(200);

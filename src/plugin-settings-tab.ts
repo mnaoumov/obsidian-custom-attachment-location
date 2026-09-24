@@ -391,12 +391,40 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             });
           });
         }
+      }),
+      this.settingEx({
+        desc: t(($) => $.pluginSettingsTab.shouldCollectAttachmentsAutomatically.description),
+        name: t(($) => $.pluginSettingsTab.shouldCollectAttachmentsAutomatically.name),
+        render: (setting) => {
+          setting.addToggle((toggle) => {
+            this.bind({
+              propertyName: 'shouldCollectAttachmentsAutomatically',
+              valueComponent: toggle
+            });
+          });
+        }
       })
     ];
   }
 
   private getCoreItems(): SettingDefinitionRender[] {
     return [
+      this.settingEx({
+        desc: t(($) => $.pluginSettingsTab.shouldFollowObsidianAttachmentLocation.description),
+        name: t(($) => $.pluginSettingsTab.shouldFollowObsidianAttachmentLocation.name),
+        render: (setting) => {
+          setting.addToggle((toggle) => {
+            this.bind({
+              onChanged: () => {
+                // Only the template row below reads this value, through its `visible` predicate.
+                this.refreshDomState();
+              },
+              propertyName: 'shouldFollowObsidianAttachmentLocation',
+              valueComponent: toggle
+            });
+          });
+        }
+      }),
       this.settingEx({
         desc: createFragment((f) => {
           f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part1));
@@ -433,7 +461,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               ...bindOptionsWithTrim
             });
           });
-        }
+        },
+        visible: () => !this.pluginSettingsComponent.settings.shouldFollowObsidianAttachmentLocation
       }),
       this.settingEx({
         desc: createFragment((f) => {

@@ -11,8 +11,19 @@ import {
   Component,
   TFile
 } from 'obsidian';
-import { convertAsyncToSync } from 'obsidian-dev-utils/async';
+import {
+  convertAsyncToSync,
+  setTimeoutAsync
+} from 'obsidian-dev-utils/async';
 import { printError } from 'obsidian-dev-utils/error';
+import {
+  splitSubpath,
+  updateLink
+} from 'obsidian-dev-utils/obsidian/link';
+import {
+  parseLinks,
+  toParseLinkReference
+} from 'obsidian-dev-utils/obsidian/parse-link';
 import { createFolderSafe } from 'obsidian-dev-utils/obsidian/vault';
 import {
   basename,
@@ -33,6 +44,8 @@ import { Substitutions } from './substitutions.ts';
 import { ActionContext } from './token-evaluator-context.ts';
 
 const FRESHLY_CREATED_THRESHOLD_IN_MILLISECONDS = 10_000;
+const NOTE_REFERENCE_POLL_INTERVAL_IN_MILLISECONDS = 100;
+const NOTE_REFERENCE_WAIT_IN_MILLISECONDS = 5000;
 
 interface ExternallyCreatedAttachmentHandlerComponentConstructorParams {
   readonly app: App;
@@ -184,11 +197,39 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
       return;
     }
 
+    if (!await this.waitForNoteReference(attachmentFile, noteFile)) {
+      return;
+    }
+
     try {
       await this.moveToProperPath(attachmentFile, noteFile);
     } catch (error) {
       printError(error);
     }
+  }
+
+  /**
+   * Tells whether any note links to the file right now.
+   *
+   * An open editor is read first, since that is where a creating plugin's freshly inserted embed sits before
+   * the note is saved and indexed. A link in an editor with no file of its own is resolved against the note
+   * the templates are evaluated for.
+   *
+   * @param attachmentFile - The file another plugin created.
+   * @param noteFile - The note the templates are evaluated against.
+   * @returns Whether a note links to the file.
+   */
+  private isReferencedByNote(attachmentFile: TFile, noteFile: TFile): boolean {
+    for (const leaf of this.app.workspace.getLeavesOfType(ViewType.Markdown)) {
+      const view = leaf.view as MarkdownView;
+      const sourcePath = view.file?.path ?? noteFile.path;
+      const text = view.editor.getValue();
+      if (parseLinks(text).some((parseLinkResult) => !parseLinkResult.isExternal && isLinkTo(parseLinkResult.url, attachmentFile.path, sourcePath))) {
+        return true;
+      }
+    }
+
+    return Object.values(this.app.metadataCache.resolvedLinks).some((links) => Object.hasOwn(links, attachmentFile.path));
   }
 
   private async moveToProperPath(attachmentFile: TFile, noteFile: TFile): Promise<void> {
@@ -247,7 +288,7 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
 
     const oldAttachmentPath = attachmentFile.path;
     await this.app.fileManager.renameFile(attachmentFile, newAttachmentPath);
-    this.repointUnsavedEditorLinks(oldAttachmentPath, newAttachmentPath, attachmentFile, noteFile);
+    this.repointUnsavedEditorLinks(oldAttachmentPath, attachmentFile, noteFile);
   }
 
   /**
@@ -260,52 +301,51 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
    * image rename* plugin closes by rewriting the current editor line by hand; every open markdown
    * editor is checked here, since the note being written into need not be the focused one.
    *
+   * Each LINK is resolved against the note and regenerated whole, rather than the old path being
+   * substituted as text. Text substitution is what issue #82 reported: a link spelled relative to the
+   * note (`./assets/<note>/<file>`) contains the vault path nowhere, so only its bare file name matched —
+   * and it was swapped for a link text that, under a relative or absolute link format, carries the
+   * folder again, so the link came out as `./assets/<note>/assets/<note>/<file>`.
+   *
    * Runs AFTER the rename, which is what makes the timing work: by then the creating plugin has had its
    * turn to insert.
    */
-  private repointUnsavedEditorLinks(oldPath: string, newPath: string, attachmentFile: TFile, noteFile: TFile): void {
-    /*
-     * Four spellings, longest first — replacing the full path before the bare file name matters, since
-     * the former contains the latter.
-     *
-     * The bare file name is not an edge case: Obsidian's shortest-form links are the DEFAULT, and Media
-     * Extended inserts exactly that — `![[<file name>|<alias>]]`, no folder at all — so a full-path-only
-     * rewrite left the reporter's note pointing at a file that no longer exists. Confirmed by driving
-     * the real plugin, which is the only reason it was caught.
-     */
-    const newLinkText = this.app.metadataCache.fileToLinktext(attachmentFile, noteFile.path);
-    const oldFileName = basename(oldPath);
-    /*
-     * An ORDERED list, not a `Map` — the order is part of the behavior, and a sorted-map lint rule would
-     * silently reorder it into a bug.
-     *
-     * A Markdown link percent-encodes the path where a wikilink does not, so both spellings are fixed.
-     */
-    const replacements: readonly (readonly [string, string])[] = [
-      [encodeURI(oldPath), encodeURI(newPath)],
-      [oldPath, newPath],
-      [encodeURI(oldFileName), encodeURI(newLinkText)],
-      [oldFileName, newLinkText]
-    ];
-
+  private repointUnsavedEditorLinks(oldPath: string, attachmentFile: TFile, noteFile: TFile): void {
     for (const leaf of this.app.workspace.getLeavesOfType(ViewType.Markdown)) {
       const { editor } = leaf.view as MarkdownView;
       const changes: EditorChange[] = [];
 
       for (let line = 0; line < editor.lineCount(); line++) {
         const text = editor.getLine(line);
-        let newText = text;
-        for (const [from, to] of replacements) {
-          newText = newText.split(from).join(to);
+        let newText = '';
+        let lastOffset = 0;
+
+        for (const parseLinkResult of parseLinks(text)) {
+          if (parseLinkResult.isExternal || !isLinkTo(parseLinkResult.url, oldPath, noteFile.path)) {
+            continue;
+          }
+
+          newText += text.slice(lastOffset, parseLinkResult.startOffset);
+          newText += updateLink({
+            app: this.app,
+            link: toParseLinkReference({ content: text, parseLinkResult }),
+            newSourcePathOrFile: noteFile,
+            newTargetPathOrFile: attachmentFile,
+            oldTargetPathOrFile: oldPath
+          });
+          lastOffset = parseLinkResult.endOffset;
         }
 
-        if (newText !== text) {
-          changes.push({
-            from: { ch: 0, line },
-            text: newText,
-            to: { ch: text.length, line }
-          });
+        if (lastOffset === 0) {
+          continue;
         }
+
+        newText += text.slice(lastOffset);
+        changes.push({
+          from: { ch: 0, line },
+          text: newText,
+          to: { ch: text.length, line }
+        });
       }
 
       if (changes.length > 0) {
@@ -314,4 +354,59 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
       }
     }
   }
+
+  /**
+   * Waits for a note to link to the file, which is what makes it an attachment at all (issue #88).
+   *
+   * A plugin writes files for its own use too — Lingua Study keeps a transcript JSON under its own folder and
+   * reads it back from that path — and moving one of those breaks that plugin. What tells the two apart is not
+   * the extension, the folder or the creating plugin but whether a note refers to the file: a user's attachment
+   * is embedded or linked, a plugin's private data is not. So a file nothing links to is left where it was
+   * written.
+   *
+   * The creating plugin inserts its embed AFTER its write resolves, which is after `create` fired, so the link
+   * is waited for rather than expected at once. Media Extended inserts within milliseconds; the window only
+   * delays the answer for a file that is never linked, and that file is never moved anyway.
+   *
+   * @param attachmentFile - The file another plugin created.
+   * @param noteFile - The note the templates are evaluated against.
+   * @returns Whether a note linked to the file within the window.
+   */
+  private async waitForNoteReference(attachmentFile: TFile, noteFile: TFile): Promise<boolean> {
+    const deadline = Date.now() + NOTE_REFERENCE_WAIT_IN_MILLISECONDS;
+    for (;;) {
+      if (this.isReferencedByNote(attachmentFile, noteFile)) {
+        return true;
+      }
+
+      if (Date.now() >= deadline) {
+        return false;
+      }
+
+      await setTimeoutAsync(NOTE_REFERENCE_POLL_INTERVAL_IN_MILLISECONDS);
+    }
+  }
+}
+
+/**
+ * Tells whether a link written in the note resolves to `targetPath`.
+ *
+ * The file has already moved, so Obsidian's own resolver cannot answer — it would find nothing at the
+ * old path. The spellings Obsidian accepts are checked instead: relative to the note's folder (which
+ * covers `./` and `../`), vault-absolute (with or without a leading `/`), and the bare file name, which
+ * is Obsidian's DEFAULT shortest form and exactly what Media Extended inserts.
+ */
+function isLinkTo(url: string, targetPath: string, notePath: string): boolean {
+  const { linkPath } = splitSubpath(url);
+  if (!linkPath) {
+    return false;
+  }
+
+  if (linkPath.startsWith('/')) {
+    return linkPath.slice(1) === targetPath;
+  }
+
+  return join(dirname(notePath), linkPath) === targetPath
+    || linkPath === targetPath
+    || linkPath === basename(targetPath);
 }

@@ -79,8 +79,8 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 // Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
-// 33 = 32 setting rows + the overlap banner row that rides at the top.
-const EXPECTED_ROW_COUNT = 33;
+// 35 = 34 setting rows + the overlap banner row that rides at the top.
+const EXPECTED_ROW_COUNT = 35;
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
@@ -542,7 +542,9 @@ describe('PluginSettingsTab', () => {
   });
 
   it('should render the expected settings', async () => {
-    const { names } = await createTab();
+    const { names } = await createTab((settings) => {
+      settings.shouldFollowObsidianAttachmentLocation = false;
+    });
     expect(names).toContain('Location for new attachments');
     expect(names).toContain('Generated attachment file name');
     expect(names).toContain('Duplicate name separator');
@@ -639,6 +641,40 @@ describe('PluginSettingsTab', () => {
     expect(refreshDomStateSpy).toHaveBeenCalled();
   });
 
+  it('should re-evaluate the predicates when the follow-Obsidian toggle changes', async () => {
+    const { tab, toggles } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = toggles.find((entry) => entry.name === 'Follow Obsidian attachment location');
+    expect(captured).toBeDefined();
+    // On by default, so switching it OFF is the change a user makes.
+    captured?.toggle.setValue(false);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should hide the location template by default, because a fresh install follows Obsidian', async () => {
+    const { names } = await createTab();
+    expect(names).toContain('Follow Obsidian attachment location');
+    expect(names).not.toContain('Location for new attachments');
+  });
+
+  it('should hide the location template while the plugin follows Obsidian\'s own location', async () => {
+    const { names } = await createTab((settings) => {
+      settings.shouldFollowObsidianAttachmentLocation = true;
+    });
+    expect(names).toContain('Follow Obsidian attachment location');
+    expect(names).not.toContain('Location for new attachments');
+  });
+
+  it('should show the location template while the plugin uses its own template', async () => {
+    const { names } = await createTab((settings) => {
+      settings.shouldFollowObsidianAttachmentLocation = false;
+    });
+    expect(names).toContain('Location for new attachments');
+  });
+
   it('should render the network image download timeout setting when downloading is enabled', async () => {
     const { names } = await createTab((settings) => {
       settings.downloadNetworkImages = true;
@@ -729,7 +765,9 @@ describe('PluginSettingsTab', () => {
   });
 
   it('should normalize and trim the attachment folder path when its value changes', async () => {
-    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const { pluginSettingsComponent, textLikeComponents } = await createTab((settings) => {
+      settings.shouldFollowObsidianAttachmentLocation = false;
+    });
     const component = findComponent(textLikeComponents, 'Location for new attachments');
     component.setValue('assets/folder   ');
     await waitForAllAsyncOperations();

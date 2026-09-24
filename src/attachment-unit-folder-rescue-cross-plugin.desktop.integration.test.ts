@@ -58,7 +58,19 @@ const HANDLER_PLUGIN_ID = ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID;
  */
 const HANDLER_VERSION = ADVANCED_RENAME_AND_DELETE_HANDLER_VERSION;
 
-const WAIT_TIMEOUT_IN_MILLISECONDS = 30_000;
+/*
+ * Under the transport's ~30s default per-closure cap, not at it. The project raises its CDP command timeout
+ * well past that, but only as a backstop: a closure that spends it dies as a bare transport timeout naming the
+ * harness, never the wait that overran. The one closure below charges this ceiling FIVE times — the handler's
+ * API, the settings dialog on the way in, the backlink index, the deletion, and the settings dialog on the way
+ * back — plus a one-second settle, and the whole callback is a single evaluation, so it is the sum that has to
+ * fit. Every one of those waits is for an event that fires within moments on a quiet machine; the ceiling is
+ * headroom for a loaded one, not a budget for slow work.
+ *
+ * Consumed only inside the closure. The Node-side budget is `TEST_TIMEOUT_IN_MILLISECONDS`, which the cap does
+ * not govern.
+ */
+const WAIT_TIMEOUT_IN_MILLISECONDS = 3500;
 const TEST_TIMEOUT_IN_MILLISECONDS = 180_000;
 const EXPECTED_BACKLINK_COUNT = 2;
 

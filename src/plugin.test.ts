@@ -267,6 +267,11 @@ interface MigrationParamsProbe {
   readonly sourcePluginId: string;
 }
 
+// `getPluginApis` is protected on the base, so a test reads it through a probe.
+interface PluginApisProbe {
+  getPluginApis(): unknown[];
+}
+
 // `getPluginConflicts` is protected on the base — the declaration is for the library, not for callers —
 // So a test reads it through a probe rather than widening the plugin's own surface.
 interface PluginConflictsProbe {
@@ -555,6 +560,19 @@ describe('Plugin', () => {
 
       expect(apiRef.value).toBeNull();
       consumerComponent.unload();
+      plugin.unload();
+    });
+
+    // The base asks for the declaration only right after `onloadImpl` has built the API, so no public path
+    // Reaches the empty answer; it is what the declaration says while the surface is down, asked directly.
+    it('should declare no API while the dependency is away', async () => {
+      const plugin = new Plugin(app, manifest);
+      await plugin.onload();
+      expect(castTo<PluginApisProbe>(plugin).getPluginApis()).toHaveLength(1);
+
+      unpublishProviderApi();
+
+      expect(castTo<PluginApisProbe>(plugin).getPluginApis()).toEqual([]);
       plugin.unload();
     });
   });

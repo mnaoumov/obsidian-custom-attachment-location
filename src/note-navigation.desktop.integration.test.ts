@@ -81,8 +81,14 @@ describe('Navigation between a note and its attachments', () => {
           return null;
         }
 
+        /*
+         * 24 x 250 ms = 6 000 ms per call, and it is called THREE times below, plus a 500 ms settle: 18 500 ms in
+         * all, under the transport's ~30s per-closure default. The project raises its command timeout past that,
+         * but only as a backstop — a closure that spends it dies as a bare transport timeout, never as the wait
+         * that overran. Each wait settles within moments on a quiet machine.
+         */
         async function waitUntil(checkIsSettled: () => boolean): Promise<void> {
-          for (let attempt = 0; attempt < 40 && !checkIsSettled(); attempt++) {
+          for (let attempt = 0; attempt < 24 && !checkIsSettled(); attempt++) {
             await sleep(250);
           }
         }

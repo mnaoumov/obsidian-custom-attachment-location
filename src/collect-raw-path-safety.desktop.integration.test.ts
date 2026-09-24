@@ -93,6 +93,11 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = 'Move';
         const collectCommandId = 'obsidian-custom-attachment-location:collect-attachments-in-file';
 
+        /*
+         * Declares 10s of waiting and is called twice, so the closure declares 20s: under the transport's ~30s
+         * per-closure default. The project raises its command timeout past that, but only as a backstop — a
+         * closure that spends it dies as a bare transport timeout, never as the wait that overran.
+         */
         async function runPhase(activeSettings: RawPathSettings, shouldSkip: boolean): Promise<PhaseResult> {
           activeSettings.shouldSkipCollectingAttachmentsReferencedByRawPath = shouldSkip;
 
@@ -109,7 +114,7 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
           // Wait for the metadata cache to resolve the indexed embed so the collector sees one backlink.
           const imgFile = app.vault.getFileByPath(imgPath);
           let backlinkCount = 0;
-          const resolveDeadline = Date.now() + 8000;
+          const resolveDeadline = Date.now() + 4000;
           while (Date.now() < resolveDeadline) {
             backlinkCount = imgFile ? app.metadataCache.getBacklinksForFile(imgFile).keys().length : 0;
             if (backlinkCount >= 1) {
@@ -122,7 +127,7 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
           app.commands.executeCommandById(collectCommandId);
 
           // The collect runs on an internal queue; poll until the attachment leaves its original path.
-          const collectDeadline = Date.now() + 12_000;
+          const collectDeadline = Date.now() + 6000;
           while (Date.now() < collectDeadline) {
             if (!app.vault.getFileByPath(imgPath)) {
               break;

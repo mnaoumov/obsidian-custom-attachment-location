@@ -24,6 +24,14 @@ import {
  * renaming this file to `*.cross-platform.integration.test.ts` lifts it to Android once one exists.
  */
 
+interface EditableViewLike {
+  readonly editor?: EditorLike;
+}
+
+interface EditorLike {
+  replaceSelection(text: string): void;
+}
+
 interface PluginListResult {
   readonly finalPaths: readonly string[];
   readonly settingsFound: boolean;
@@ -130,6 +138,11 @@ describe('Scoping the foreign-attachment rename to named plugins (issue #77)', (
           `return vault.createBinary(path, new ArrayBuffer(8));\n//# sourceURL=plugin:${fakePluginId}\n`
         ) as (vault: typeof app.vault, path: string) => Promise<unknown>;
         await writeAsPlugin(app.vault, foreignPath);
+        /*
+         * ...and link it from the note, as a plugin inserting an attachment does. A file no note links to is that
+         * plugin's own data and is never moved (issue #88), so without the embed there is nothing to test here.
+         */
+        (leaf.view as EditableViewLike).editor?.replaceSelection(`![[scoped-img-${stamp}.png]]`);
 
         const properPath = `scoped-${stamp}/scoped-renamed-${stamp}.png`;
         const deadline = Date.now() + 15_000;

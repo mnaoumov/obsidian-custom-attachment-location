@@ -10,6 +10,7 @@ const PLUGIN_ID = 'obsidian-custom-attachment-location';
 interface DemoSettingsPatch {
   attachmentFolderPath?: string;
   generatedAttachmentFileName?: string;
+  shouldFollowObsidianAttachmentLocation?: boolean;
   shouldRenameAttachmentFiles?: boolean;
 }
 
@@ -47,14 +48,15 @@ export async function changeSettings(app: App, patch: DemoSettingsPatch): Promis
 }
 
 /**
- * Restores the two patterns this vault ships with.
+ * Restores the two patterns this vault ships with, and puts the plugin back in charge of the folder.
  *
- * Manual equivalent: set **Location for new attachments** back to `./assets/${noteFileName}` and the
- * generated file name back to its default.
+ * Manual equivalent: turn **Follow Obsidian attachment location** off, set **Location for new attachments**
+ * back to `./assets/${noteFileName}` and the generated file name back to its default.
  */
 export async function restoreDefaultPatterns(app: App): Promise<void> {
   await changeSettings(app, {
     attachmentFolderPath: './assets/${noteFileName}',
-    generatedAttachmentFileName: 'file-${date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}'
+    generatedAttachmentFileName: 'file-${date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}',
+    shouldFollowObsidianAttachmentLocation: false
   });
 }

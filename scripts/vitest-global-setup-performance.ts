@@ -5,6 +5,7 @@ import {
   getAdvancedRenameAndDeleteHandlerPopulate
 } from './helpers/advanced-rename-and-delete-handler-seed.ts';
 import { generatePerformanceVault } from './helpers/generate-performance-vault.ts';
+import { getPluginSettingsPopulate } from './helpers/plugin-settings-seed.ts';
 
 /**
  * Vitest global setup for the `integration-tests:desktop-performance` project: it
@@ -19,6 +20,7 @@ export const { setup, teardown } = createSetup({
   enableCommunityPlugins: [ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID],
   populate: async () => ({
     ...generatePerformanceVault(),
-    ...await getAdvancedRenameAndDeleteHandlerPopulate()
+    ...await getAdvancedRenameAndDeleteHandlerPopulate(),
+    ...getPluginSettingsPopulate()
   })
 });

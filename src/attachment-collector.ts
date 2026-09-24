@@ -17,6 +17,7 @@ import {
   Vault
 } from 'obsidian';
 import { abortSignalAny } from 'obsidian-dev-utils/abort-controller';
+import { noop } from 'obsidian-dev-utils/function';
 import {
   createElAsync,
   createFragmentAsync
@@ -48,7 +49,10 @@ import {
   getLinks
 } from 'obsidian-dev-utils/obsidian/metadata-cache';
 import { confirm } from 'obsidian-dev-utils/obsidian/modals/confirm';
-import { addToQueue } from 'obsidian-dev-utils/obsidian/queue';
+import {
+  addToQueue,
+  addToQueueAndWait
+} from 'obsidian-dev-utils/obsidian/queue';
 import {
   isCanvasTextNodeReference,
   referenceToFileChange
@@ -111,6 +115,13 @@ interface AttachmentCollectorPrepareAttachmentToMoveParams {
   readonly sequenceNumberByAttachmentPath: ReadonlyMap<string, number>;
 }
 
+interface AttachmentCollectorReportNothingCollectedParams {
+  readonly alreadyInPlaceAttachmentPaths: ReadonlySet<string>;
+  readonly context: CollectAttachmentContext;
+  readonly examinedAttachmentPaths: ReadonlySet<string>;
+  readonly notePath: string;
+}
+
 interface AttachmentCollectorRewriteMovedCanvasReferencesParams {
   readonly abortSignal: AbortSignal;
   readonly canvasReferenceTargets: readonly CanvasReferenceTarget[];
@@ -144,15 +155,23 @@ interface CollectAttachmentContext {
   isAborted?: boolean;
 
   /**
-   * Whether to name the higher-priority notes when the priority list hands an attachment to a note
-   * other than the one being collected (issue #75).
+   * Whether this run was started by an edit to the note rather than by the user, which happens when
+   * `Collect attachments automatically` is on.
    *
-   * Set only for a run over a single note - the `Collect attachments in current note` command - where
-   * the user is asking about that one note and the answer is worth a notice. A folder-wide or
-   * vault-wide run visits notes the user never singled out, so the same report there would be a box
-   * per attachment.
+   * Such a run shows no progress notice, because it repeats on every save of the note.
    */
-  shouldReportHigherPriorityNotes?: boolean;
+  isAutomaticRun?: boolean;
+
+  /**
+   * Whether this run targets a single note - the `Collect attachments in current note` command.
+   *
+   * It is the condition every per-note REPORT hangs off, rather than a flag per report, because they
+   * all answer the same question the same way: the user singled out one note and is owed an answer
+   * about it, while a folder-wide or vault-wide run visits notes they never named, where the same
+   * report would be a box per attachment. Two reports read it today - the higher-priority notes the
+   * list handed an attachment to (issue #75), and a run that moved nothing at all (issue #81).
+   */
+  isSingleNoteRun?: boolean;
 }
 
 interface MovedAttachment {
@@ -191,6 +210,32 @@ export class AttachmentCollector {
     });
   }
 
+  /**
+   * Collects the attachments of a note that has just changed, for `Collect attachments automatically`.
+   *
+   * Queued like the commands, so it cannot interleave with a collect the user started. A note this plugin
+   * leaves alone is skipped without the notice the command shows, since nobody asked for this run.
+   *
+   * @param note - The note that changed.
+   */
+  public collectAttachmentsAutomatically(note: TFile): void {
+    if (this.handedOverSettingsComponent.isPathIgnored(note.path)) {
+      return;
+    }
+
+    addToQueue({
+      abortSignal: this.abortSignalComponent.abortSignal,
+      operationFunction: (abortSignal) =>
+        this.collectAttachments({
+          abortSignal,
+          context: { isAutomaticRun: true },
+          note
+        }),
+      operationName: t(($) => $.menuItems.collectAttachmentsInFile),
+      timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
+    });
+  }
+
   public collectAttachmentsEntireVault(): void {
     addToQueue({
       abortSignal: this.abortSignalComponent.abortSignal,
@@ -206,6 +251,22 @@ export class AttachmentCollector {
 
   public collectAttachmentsInAbstractFiles(abstractFiles: TAbstractFile[]): void {
     addToQueue({
+      abortSignal: this.abortSignalComponent.abortSignal,
+      operationFunction: (abortSignal) => this.collectAttachmentsInAbstractFilesImpl(abstractFiles, abortSignal),
+      operationName: t(($) => $.menuItems.collectAttachmentsInFile),
+      timeoutInMilliseconds: this.pluginSettingsComponent.settings.getTimeoutInMilliseconds()
+    });
+  }
+
+  /**
+   * The same queued collect as {@link collectAttachmentsInAbstractFiles}, settling once it has finished — the
+   * shape the published API hands another plugin, so it can sequence on the collect.
+   *
+   * @param abstractFiles - The notes, or folders of notes, to collect attachments for.
+   * @returns A promise that settles once the collect has finished.
+   */
+  public async collectAttachmentsInAbstractFilesAndWait(abstractFiles: TAbstractFile[]): Promise<void> {
+    await addToQueueAndWait({
       abortSignal: this.abortSignalComponent.abortSignal,
       operationFunction: (abortSignal) => this.collectAttachmentsInAbstractFilesImpl(abstractFiles, abortSignal),
       operationName: t(($) => $.menuItems.collectAttachmentsInFile),
@@ -253,6 +314,37 @@ export class AttachmentCollector {
     });
   }
 
+  /**
+   * Explains a `Collect attachments in current note` run that moved nothing (issue #81).
+   *
+   * The command legitimately does nothing when every attachment already sits where this note would
+   * put it, and it used to say so only to the console - the reporter read the run as inert and filed
+   * a bug against it. The second half names the one configuration that makes the outcome inevitable
+   * rather than incidental: renaming collected attachments is ON while the template that would give
+   * them a new name is EMPTY, which pins each name to the one it already has, leaving the folder as
+   * the only thing that could ever differ.
+   *
+   * @param notePath - The note the run was over.
+   * @returns The notice content.
+   */
+  private buildNothingToCollectNoticeMessage(notePath: string): DocumentFragment {
+    const settings = this.pluginSettingsComponent.settings;
+    return createFragment((f) => {
+      f.appendText(t(($) => $.notice.nothingToCollect.part1, { noteFilePath: notePath }));
+
+      if (!settings.shouldRenameCollectedAttachments || settings.collectedAttachmentFileName) {
+        return;
+      }
+
+      f.createEl('br');
+      f.appendText(t(($) => $.notice.nothingToCollect.part2));
+      f.appendText(' ');
+      appendCodeBlock(f, t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name));
+      f.appendText(' ');
+      f.appendText(t(($) => $.notice.nothingToCollect.part3));
+    });
+  }
+
   private async collectAttachments(params: AttachmentCollectorCollectAttachmentsParams): Promise<void> {
     const app = this.app;
     const pluginNoticeComponent = this.pluginNoticeComponent;
@@ -264,9 +356,7 @@ export class AttachmentCollector {
       return;
     }
 
-    const notice = this.pluginNoticeComponent.showNotice(t(($) => $.notice.collectingAttachments, { noteFilePath: params.note.path }), {
-      isPermanent: true
-    });
+    const hideCollectingNotice = this.showCollectingNotice(params.context, params.note.path);
 
     try {
       const isCanvas = isCanvasFile(params.note);
@@ -319,6 +409,11 @@ export class AttachmentCollector {
       // One folder holds many attachments, so the remaining links into it are already satisfied.
       const movedUnitFolderPaths = new Map<string, string>();
 
+      // The attachments this note examined, and those of them left exactly where they already were.
+      // `shouldReportNothingCollected` compares the two at the end of the run.
+      const examinedAttachmentPaths = new Set<string>();
+      const alreadyInPlaceAttachmentPaths = new Set<string>();
+
       for (const link of links) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Could be changed in await call.
         if (params.context.isAborted) {
@@ -337,6 +432,8 @@ export class AttachmentCollector {
         if (!attachmentMoveResult) {
           continue;
         }
+
+        examinedAttachmentPaths.add(attachmentMoveResult.oldAttachmentPath);
 
         if (this.pluginSettingsComponent.settings.isExcludedFromAttachmentCollecting(attachmentMoveResult.oldAttachmentPath)) {
           console.warn(`Skipping collecting attachment ${attachmentMoveResult.oldAttachmentPath} as it is excluded from attachment collecting.`);
@@ -406,7 +503,7 @@ export class AttachmentCollector {
                * Every note ranked above the collected one is named, not only the winner, because the
                * question being answered is "who outranks me?" rather than "who won?".
                */
-              const higherPriorityNotePaths = params.context.shouldReportHigherPriorityNotes
+              const higherPriorityNotePaths = params.context.isSingleNoteRun
                 ? this.noteOwnerResolver.filterHigherPriorityNotePaths(backlinksSorted, params.note.path)
                 : [];
               if (higherPriorityNotePaths.length > 0) {
@@ -467,6 +564,7 @@ export class AttachmentCollector {
               }
               case CollectAttachmentUsedByMultipleNotesMode.Copy: {
                 if (!result.newAttachmentPath) {
+                  alreadyInPlaceAttachmentPaths.add(result.oldAttachmentPath);
                   console.warn(`Skipping collecting attachment ${result.oldAttachmentPath} as it is already in the destination folder.`);
                   return false;
                 }
@@ -525,6 +623,7 @@ export class AttachmentCollector {
               }
               case CollectAttachmentUsedByMultipleNotesMode.Move: {
                 if (!result.newAttachmentPath) {
+                  alreadyInPlaceAttachmentPaths.add(result.oldAttachmentPath);
                   console.warn(`Skipping collecting attachment ${result.oldAttachmentPath} as it is already in the destination folder.`);
                   return false;
                 }
@@ -572,6 +671,7 @@ export class AttachmentCollector {
           }
         } else {
           params.abortSignal.throwIfAborted();
+          this.reportAttachmentAlreadyInPlace(attachmentMoveResult, alreadyInPlaceAttachmentPaths);
           await registerMoveAttachment();
           params.abortSignal.throwIfAborted();
         }
@@ -656,8 +756,21 @@ export class AttachmentCollector {
       });
 
       await this.networkImageDownloader.downloadNetworkImagesForNote(params.note);
+
+      /*
+       * A run that moved nothing reported itself only to the console, which is what made the command
+       * read as inert (issue #81). The notice does not hide on click, because a message explaining an
+       * absence of change, and naming a setting to check, is worth more than the few seconds an
+       * ordinary notice lasts.
+       */
+      this.reportNothingCollected({
+        alreadyInPlaceAttachmentPaths,
+        context: params.context,
+        examinedAttachmentPaths,
+        notePath: params.note.path
+      });
     } finally {
-      notice.hide();
+      hideCollectingNotice();
     }
   }
 
@@ -719,7 +832,7 @@ export class AttachmentCollector {
     const noteFiles = [...noteFilesSet];
     noteFiles.sort((a, b) => a.path.localeCompare(b.path));
 
-    const context: CollectAttachmentContext = { shouldReportHigherPriorityNotes: !!singleFile };
+    const context: CollectAttachmentContext = { isSingleNoteRun: !!singleFile };
     const abortController = new AbortController();
 
     const combinedAbortSignal = abortSignalAny(abortController.signal, this.abortSignalComponent.abortSignal);
@@ -864,6 +977,52 @@ export class AttachmentCollector {
     };
   }
 
+  /**
+   * Records, and reports to the console, an attachment left exactly where it already was.
+   *
+   * The singly-referenced path used to say NOTHING here - not even a console line, while both
+   * multiple-notes branches warned (issue #81). It is the commonest attachment of all, so a user
+   * reading the console to find out why the command did nothing met the one case that had never
+   * reported itself.
+   *
+   * @param result - The attachment's move result; a null `newAttachmentPath` is what says it stays.
+   * @param alreadyInPlaceAttachmentPaths - The run's set of attachments left where they were.
+   */
+  private reportAttachmentAlreadyInPlace(result: AttachmentMoveResult, alreadyInPlaceAttachmentPaths: Set<string>): void {
+    if (result.newAttachmentPath) {
+      return;
+    }
+
+    alreadyInPlaceAttachmentPaths.add(result.oldAttachmentPath);
+    console.warn(`Skipping collecting attachment ${result.oldAttachmentPath} as it is already in the destination folder.`);
+  }
+
+  /**
+   * Tells the user a finished run collected nothing, when that is the whole story (issue #81).
+   *
+   * Reported only when EVERY attachment the note examined was left exactly where it already was, and
+   * only for a run the user singled this note out for - the same reasoning every other per-note
+   * report here follows, see {@link CollectAttachmentContext.isSingleNoteRun}. Any other skip reason
+   * - excluded from collecting, referenced by a raw path, shared with several notes, handed to a
+   * higher-priority one - leaves the two sets different sizes, and a message claiming everything is
+   * already in place would then be false; each of those reasons reports itself anyway. A note holding
+   * no attachment at all says nothing either: there the command found none rather than declining to
+   * move one.
+   *
+   * @param params - The parameters.
+   */
+  private reportNothingCollected(params: AttachmentCollectorReportNothingCollectedParams): void {
+    if (!params.context.isSingleNoteRun) {
+      return;
+    }
+
+    if (params.alreadyInPlaceAttachmentPaths.size === 0 || params.alreadyInPlaceAttachmentPaths.size !== params.examinedAttachmentPaths.size) {
+      return;
+    }
+
+    this.pluginNoticeComponent.showNotice(this.buildNothingToCollectNoticeMessage(params.notePath), { shouldHideOnClick: false });
+  }
+
   private async rewriteMovedCanvasReferences(params: AttachmentCollectorRewriteMovedCanvasReferencesParams): Promise<void> {
     // Rewrite every canvas reference pointing to a moved attachment.
     // Text-node embeds always need rewriting (Obsidian core never touches them).
@@ -914,6 +1073,29 @@ export class AttachmentCollector {
    * toward NOT moving, since a false positive merely leaves it un-collected while a false negative
    * could relocate a still-used attachment and lose it. Does NOT rewrite the non-standard reference.
    */
+  /**
+   * Shows the notice that stays up while a note is being collected.
+   *
+   * An automatic run shows none. It fires on every save of the note, so a permanent notice would flash on each
+   * one, and the user did not ask for this run and is not waiting for it.
+   *
+   * @param context - The run's context.
+   * @param notePath - The note being collected.
+   * @returns What hides the notice again.
+   */
+  private showCollectingNotice(context: CollectAttachmentContext, notePath: string): () => void {
+    if (context.isAutomaticRun) {
+      return noop;
+    }
+
+    const notice = this.pluginNoticeComponent.showNotice(t(($) => $.notice.collectingAttachments, { noteFilePath: notePath }), {
+      isPermanent: true
+    });
+    return () => {
+      notice.hide();
+    };
+  }
+
   private async skipAttachmentReferencedByRawPath(params: AttachmentCollectorSkipAttachmentReferencedByRawPathParams): Promise<boolean> {
     if (!this.pluginSettingsComponent.settings.shouldSkipCollectingAttachmentsReferencedByRawPath) {
       return false;

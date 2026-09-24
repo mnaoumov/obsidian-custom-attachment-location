@@ -85,7 +85,18 @@ const MIGRATION_MODAL_TITLE_PREFIX = 'Settings proposed by ';
  */
 const CHOSEN_BUTTON_TEXT = 'Move to Alpha.md';
 
-const WAIT_TIMEOUT_IN_MILLISECONDS = 30_000;
+/*
+ * Under the transport's ~30s default per-closure cap, not at it. The project raises its CDP command timeout
+ * well past that, but only as a backstop: a closure that spends it dies as a bare transport timeout naming the
+ * harness, never the wait that overran. The one closure below charges this ceiling SEVEN times — the handler's
+ * API, the settings dialog on the way in and on the way back, the backlink index, the ambiguity dialog opening,
+ * its list of notes, and the deletion — plus a one-second settle, and the whole callback is a single
+ * evaluation, so it is the sum that has to fit. Every one of those waits is for an event that fires within moments on a quiet machine.
+ *
+ * Consumed only inside the closure. The Node-side budget is `TEST_TIMEOUT_IN_MILLISECONDS`, which the cap does
+ * not govern.
+ */
+const WAIT_TIMEOUT_IN_MILLISECONDS = 3000;
 const TEST_TIMEOUT_IN_MILLISECONDS = 180_000;
 const EXPECTED_BACKLINK_COUNT = 3;
 const TIED_NOTE_COUNT = 2;

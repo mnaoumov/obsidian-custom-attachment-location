@@ -74,18 +74,22 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
-  protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
-    if (!super.canExecute()) {
-      return false;
-    }
-
-    for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && this.pluginSettingsComponent.isNoteEx(abstractFile)) {
-        return false;
-      }
-    }
-
-    return true;
+  /**
+   * Whether the command may run for one file or folder.
+   *
+   * This is the PER-FILE predicate, and it is the one all three surfaces reach: the base routes the
+   * command palette (`canExecute`), the single-file menu and — by composing this over every entry — the
+   * multi-select menu through it. A `canExecuteAbstractFiles` override was doing the work for the last of
+   * those alone, so the palette and the file menu offered the command on a note, whose walk in
+   * `executeAbstractFiles` then filtered it out and did nothing. It also opened with `super.canExecute()`,
+   * which tests the ACTIVE file: a condition that has nothing to do with a menu built from the files the
+   * user clicked.
+   *
+   * @param abstractFile - The file or folder.
+   * @returns Whether the command may run for it. A folder always may — the walk inside it filters.
+   */
+  protected override canExecuteAbstractFile(abstractFile: TAbstractFile): boolean {
+    return !isFile(abstractFile) || !this.pluginSettingsComponent.isNoteEx(abstractFile);
   }
 
   protected override executeAbstractFile(abstractFile: TAbstractFile): Promisable<void> {
