@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #55: converting an image to JPEG re-encodes it through a
  * canvas, which keeps only the pixels — so EXIF, GPS and the rest are dropped by construction. The
@@ -71,7 +73,7 @@ interface PathModuleLike {
 describe('Image metadata is preserved across the JPEG conversion (issue #55)', () => {
   async function roundTrip(shouldPreserveImageMetadata: boolean): Promise<MetadataRoundTripResult> {
     return await evalInObsidian({
-      async callback({ app, shouldPreserveImageMetadata: shouldPreserve }): Promise<MetadataRoundTripResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent, shouldPreserveImageMetadata: shouldPreserve }): Promise<MetadataRoundTripResult> {
         interface ConversionSettings {
           attachmentFolderPath: string;
           convertImagesToJpegMode: string;
@@ -234,42 +236,6 @@ describe('Image metadata is preserved across the JPEG conversion (issue #55)', (
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        function findSettings(): ConversionSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isConversionSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
         const EMPTY: MetadataRoundTripResult = {
           makeSurvived: false,
           orientation: -1,
@@ -279,12 +245,10 @@ describe('Image metadata is preserved across the JPEG conversion (issue #55)', (
           sourceOrientation: -1
         };
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isConversionSettings);
+        if (!settingsComponent) {
           return EMPTY;
         }
-        // A narrowed `let`/`const` does not stay narrowed inside a function declaration below it.
-        const settings: ConversionSettings = foundSettings;
 
         /*
          * The desktop suite shares one Obsidian and one temporary vault, so a test that leaves the
@@ -292,20 +256,16 @@ describe('Image metadata is preserved across the JPEG conversion (issue #55)', (
          * there before finishing, whatever happens in between.
          */
         const previousSettings = {
-          attachmentFolderPath: settings.attachmentFolderPath,
-          convertImagesToJpegMode: settings.convertImagesToJpegMode,
-          shouldPreserveImageMetadata: settings.shouldPreserveImageMetadata
+          attachmentFolderPath: settingsComponent.settings.attachmentFolderPath,
+          convertImagesToJpegMode: settingsComponent.settings.convertImagesToJpegMode,
+          shouldPreserveImageMetadata: settingsComponent.settings.shouldPreserveImageMetadata
         };
 
-        function restoreSettings(): void {
-          settings.attachmentFolderPath = previousSettings.attachmentFolderPath;
-          settings.convertImagesToJpegMode = previousSettings.convertImagesToJpegMode;
-          settings.shouldPreserveImageMetadata = previousSettings.shouldPreserveImageMetadata;
-        }
-
-        settings.convertImagesToJpegMode = 'All images';
-        settings.attachmentFolderPath = './';
-        settings.shouldPreserveImageMetadata = shouldPreserve;
+        await settingsComponent.editAndSave((settings) => {
+          settings.convertImagesToJpegMode = 'All images';
+          settings.attachmentFolderPath = './';
+          settings.shouldPreserveImageMetadata = shouldPreserve;
+        });
 
         try {
           const sourceBuffer = createJpegWithExif();
@@ -400,10 +360,14 @@ describe('Image metadata is preserved across the JPEG conversion (issue #55)', (
             sourceOrientation: source.orientation
           };
         } finally {
-          restoreSettings();
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = previousSettings.attachmentFolderPath;
+            settings.convertImagesToJpegMode = previousSettings.convertImagesToJpegMode;
+            settings.shouldPreserveImageMetadata = previousSettings.shouldPreserveImageMetadata;
+          });
         }
       },
-      input: { shouldPreserveImageMetadata },
+      input: { findPluginSettingsComponent, shouldPreserveImageMetadata },
       vaultPath: getTemporaryVault().path
     });
   }

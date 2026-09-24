@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #59's fourth ask: the name cleaning Advanced Note Composer does
  * -- exactly one space between words, no leading or trailing spaces, and title case that leaves an
@@ -35,7 +37,7 @@ interface ProbeResult {
 describe('Name cleaning is available as a token format (issue #59)', () => {
   it('collapses whitespace and title-cases a generated name, sparing an acronym', async () => {
     const result = await evalInObsidian({
-      async callback({ app, pluginId, raggedBaseName }): Promise<ProbeResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent, pluginId, raggedBaseName }): Promise<ProbeResult> {
         interface NameSettings {
           attachmentFolderPath: string;
         }
@@ -45,50 +47,13 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object by
-        // walking the plugin's component tree.
-        function findSettings(): NameSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isNameSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const foundSettings = findSettings();
-        if (!foundSettings) {
+        const foundSettingsComponent = findSettingsComponent(app.plugins.getPlugin(pluginId), isNameSettings);
+        if (!foundSettingsComponent) {
           return { cleanedPath: '', settingsFound: false, untouchedPath: '' };
         }
-        const settings: NameSettings = foundSettings;
-        const priorFolderPath = settings.attachmentFolderPath;
+        // A narrowed `let`/`const` does not stay narrowed inside a function declaration below it.
+        const settingsComponent = foundSettingsComponent;
+        const priorFolderPath = settingsComponent.settings.attachmentFolderPath;
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
         const notePath = `nct-note-${stamp}.md`;
@@ -99,7 +64,9 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
           await sleep(300);
 
           async function resolveWith(pattern: string): Promise<string> {
-            settings.attachmentFolderPath = pattern;
+            await settingsComponent.editAndSave((settings) => {
+              settings.attachmentFolderPath = pattern;
+            });
             await sleep(200);
             return await app.vault.getAvailablePathForAttachments(raggedBaseName, 'png', note);
           }
@@ -111,8 +78,9 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
 
           return { cleanedPath, settingsFound: true, untouchedPath };
         } finally {
-          // eslint-disable-next-line require-atomic-updates -- Restoring a value captured before the awaits; nothing else in this vault writes it.
-          settings.attachmentFolderPath = priorFolderPath;
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = priorFolderPath;
+          });
           const note = app.vault.getAbstractFileByPath(notePath);
           if (note) {
             await app.fileManager.trashFile(note);
@@ -120,6 +88,7 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
         }
       },
       input: {
+        findPluginSettingsComponent,
         pluginId: PLUGIN_ID,
         raggedBaseName: RAGGED_BASE_NAME
       },

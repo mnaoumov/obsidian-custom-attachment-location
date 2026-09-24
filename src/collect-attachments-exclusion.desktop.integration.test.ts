@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #33: `excludePathsFromMultipleNotesCheck` must make the
  * "Collect attachments in current note" command ignore backlink notes whose path matches the
@@ -33,7 +35,7 @@ interface ProbeResult {
 describe('Collect attachments — exclude notes from the multiple-notes check (issue #33)', () => {
   it('ignores excluded backlink notes so a shared attachment is still collected', async () => {
     const result = await evalInObsidian({
-      async callback({ app }): Promise<ProbeResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ProbeResult> {
         interface MultipleNotesSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
           excludePathsFromMultipleNotesCheck: string[];
@@ -45,46 +47,8 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
             && typeof (value as Record<string, unknown>)['isExcludedFromMultipleNotesCheck'] === 'function';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): MultipleNotesSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isMultipleNotesSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isMultipleNotesSettings);
+        if (!settingsComponent) {
           return {
             control: { backlinkCount: -1, movedOut: false, newPaths: [] },
             fix: { backlinkCount: -1, movedOut: false, newPaths: [] },
@@ -92,7 +56,13 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
           };
         }
 
-        settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';
+        // A narrowed `const` does not stay narrowed inside a function declaration below it.
+        const component = settingsComponent;
+        const priorMode = component.settings.collectAttachmentUsedByMultipleNotesMode;
+        const priorExclude = [...component.settings.excludePathsFromMultipleNotesCheck];
+        await component.editAndSave((settings) => {
+          settings.collectAttachmentUsedByMultipleNotesMode = 'Skip';
+        });
         const collectCommandId = 'obsidian-custom-attachment-location:collect-attachments-in-file';
 
         /*
@@ -100,8 +70,10 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
          * per-closure default. The project raises its command timeout past that, but only as a backstop — a
          * closure that spends it dies as a bare transport timeout, never as the wait that overran.
          */
-        async function runPhase(activeSettings: MultipleNotesSettings, exclude: string[]): Promise<PhaseResult> {
-          activeSettings.excludePathsFromMultipleNotesCheck = exclude;
+        async function runPhase(exclude: string[]): Promise<PhaseResult> {
+          await component.editAndSave((settings) => {
+            settings.excludePathsFromMultipleNotesCheck = exclude;
+          });
 
           const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
           const imgPath = `img-${stamp}.png`;
@@ -158,11 +130,18 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
           };
         }
 
-        const control = await runPhase(settings, []);
-        const fix = await runPhase(settings, [String.raw`/\.excalidraw\.md$/`]);
-        return { control, fix, settingsFound: true };
+        try {
+          const control = await runPhase([]);
+          const fix = await runPhase([String.raw`/\.excalidraw\.md$/`]);
+          return { control, fix, settingsFound: true };
+        } finally {
+          await component.editAndSave((settings) => {
+            settings.collectAttachmentUsedByMultipleNotesMode = priorMode;
+            settings.excludePathsFromMultipleNotesCheck = priorExclude;
+          });
+        }
       },
-      input: {},
+      input: { findPluginSettingsComponent },
       vaultPath: getTemporaryVault().path
     });
 

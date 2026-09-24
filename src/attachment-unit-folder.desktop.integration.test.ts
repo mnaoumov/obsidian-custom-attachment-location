@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #56: a folder listed in `attachmentUnitFolderPaths` is one
  * attachment. When "Collect attachments in current note" moves a link into such a folder, the whole
@@ -32,7 +34,7 @@ interface ProbeResult {
 describe('Attachment unit folders travel whole (issue #56)', () => {
   it('moves the entire folder with the linked attachment, and only the file without the setting', async () => {
     const result = await evalInObsidian({
-      async callback({ app }): Promise<ProbeResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ProbeResult> {
         interface UnitFolderSettings {
           attachmentUnitFolderPaths: string[];
           isAttachmentUnitFolder: (path: string) => boolean;
@@ -43,52 +45,17 @@ describe('Attachment unit folders travel whole (issue #56)', () => {
             && typeof (value as Record<string, unknown>)['isAttachmentUnitFolder'] === 'function';
         }
 
-        // The plugin does not expose its settings publicly, so locate the live settings object
-        // (the one the attachment collector reads) by walking the plugin's component tree.
-        function findSettings(): null | UnitFolderSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isUnitFolderSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
         const EMPTY_PHASE: PhaseResult = { diagnostics: '', leftBehindPaths: [], movedPaths: [], noteFolder: '' };
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
+        const foundSettingsComponent = findSettingsComponent(
+          app.plugins.getPlugin('obsidian-custom-attachment-location'),
+          isUnitFolderSettings
+        );
+        if (!foundSettingsComponent) {
           return { control: EMPTY_PHASE, fix: EMPTY_PHASE, settingsFound: false };
         }
         // A narrowed `const` does not stay narrowed inside a function declaration below it.
-        const settings: UnitFolderSettings = foundSettings;
+        const settingsComponent = foundSettingsComponent;
 
         const collectCommandId = 'obsidian-custom-attachment-location:collect-attachments-in-file';
 
@@ -114,7 +81,9 @@ describe('Attachment unit folders travel whole (issue #56)', () => {
           await app.vault.createBinary(linkedPath, new ArrayBuffer(4));
           await app.vault.create(siblingPath, 'body {}');
 
-          settings.attachmentUnitFolderPaths = shouldDesignateUnitFolder ? [unitFolderPath] : [];
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentUnitFolderPaths = shouldDesignateUnitFolder ? [unitFolderPath] : [];
+          });
 
           const note = await app.vault.create(`${noteName}.md`, `![[${linkedPath}]]`);
 
@@ -180,17 +149,18 @@ describe('Attachment unit folders travel whole (issue #56)', () => {
           };
         }
 
-        const previousUnitFolderPaths = settings.attachmentUnitFolderPaths;
+        const previousUnitFolderPaths = settingsComponent.settings.attachmentUnitFolderPaths;
         try {
           const control = await runPhase(false);
           const fix = await runPhase(true);
           return { control, fix, settingsFound: true };
         } finally {
-          // eslint-disable-next-line require-atomic-updates -- Restoring a value captured before the awaits; nothing else in this vault writes it.
-          settings.attachmentUnitFolderPaths = previousUnitFolderPaths;
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentUnitFolderPaths = previousUnitFolderPaths;
+          });
         }
       },
-      input: {},
+      input: { findPluginSettingsComponent },
       vaultPath: getTemporaryVault().path
     });
 

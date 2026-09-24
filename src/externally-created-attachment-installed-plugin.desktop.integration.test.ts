@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * The last thing the fabricated-stack suites cannot prove.
  *
@@ -60,7 +62,7 @@ const INSTALLED_PLUGIN_ID = 't753-installed-writer';
 describe('An attachment written by a plugin Obsidian itself loaded (issue #77)', () => {
   async function run(mode: string, listedPluginIds: string[]): Promise<InstalledPluginResult> {
     return await evalInObsidian({
-      async callback({ app, listedPluginIds: listed, mode: renameMode, pluginId }): Promise<InstalledPluginResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent, listedPluginIds: listed, mode: renameMode, pluginId }): Promise<InstalledPluginResult> {
         const WRITER_GLOBAL_NAME = 'writeAttachmentAsInstalledPlugin__';
 
         function isScopedSettings(value: unknown): value is ScopedSettings {
@@ -71,56 +73,20 @@ describe('An attachment written by a plugin Obsidian itself loaded (issue #77)',
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        function findSettings(): null | ScopedSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isScopedSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isScopedSettings);
+        if (!settingsComponent) {
           return { finalPaths: [], isPluginLoaded: false, settingsFound: false };
         }
 
         /*
-         * One Obsidian instance is shared with every other integration file, and this is the LIVE settings
-         * object. Snapshot it and put it back, or the next suite in the run inherits this scoping.
+         * One Obsidian instance is shared with every other integration file, and these are the LIVE, saved
+         * settings. Snapshot them and put them back, or the next suite in the run inherits this scoping.
          */
         const originalSettings = {
-          attachmentFolderPath: settings.attachmentFolderPath,
-          generatedAttachmentFileName: settings.generatedAttachmentFileName,
-          otherPluginIdsForAttachmentRename: settings.otherPluginIdsForAttachmentRename,
-          renameAttachmentsCreatedByOtherPluginsMode: settings.renameAttachmentsCreatedByOtherPluginsMode
+          attachmentFolderPath: settingsComponent.settings.attachmentFolderPath,
+          generatedAttachmentFileName: settingsComponent.settings.generatedAttachmentFileName,
+          otherPluginIdsForAttachmentRename: settingsComponent.settings.otherPluginIdsForAttachmentRename,
+          renameAttachmentsCreatedByOtherPluginsMode: settingsComponent.settings.renameAttachmentsCreatedByOtherPluginsMode
         };
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
@@ -171,10 +137,12 @@ describe('An attachment written by a plugin Obsidian itself loaded (issue #77)',
             return { finalPaths: [], isPluginLoaded: false, settingsFound: true };
           }
 
-          settings.renameAttachmentsCreatedByOtherPluginsMode = renameMode;
-          settings.otherPluginIdsForAttachmentRename = listed;
-          settings.attachmentFolderPath = `./installed-${stamp}`;
-          settings.generatedAttachmentFileName = `installed-renamed-${stamp}`;
+          await settingsComponent.editAndSave((settings) => {
+            settings.renameAttachmentsCreatedByOtherPluginsMode = renameMode;
+            settings.otherPluginIdsForAttachmentRename = listed;
+            settings.attachmentFolderPath = `./installed-${stamp}`;
+            settings.generatedAttachmentFileName = `installed-renamed-${stamp}`;
+          });
 
           const note = await app.vault.create(`installed-note-${stamp}.md`, '');
           const leaf = app.workspace.getLeaf(false);
@@ -209,10 +177,12 @@ describe('An attachment written by a plugin Obsidian itself loaded (issue #77)',
           leaf.detach();
           return { finalPaths, isPluginLoaded: true, settingsFound: true };
         } finally {
-          settings.attachmentFolderPath = originalSettings.attachmentFolderPath;
-          settings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
-          settings.otherPluginIdsForAttachmentRename = originalSettings.otherPluginIdsForAttachmentRename;
-          settings.renameAttachmentsCreatedByOtherPluginsMode = originalSettings.renameAttachmentsCreatedByOtherPluginsMode;
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = originalSettings.attachmentFolderPath;
+            settings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
+            settings.otherPluginIdsForAttachmentRename = originalSettings.otherPluginIdsForAttachmentRename;
+            settings.renameAttachmentsCreatedByOtherPluginsMode = originalSettings.renameAttachmentsCreatedByOtherPluginsMode;
+          });
 
           await app.plugins.disablePlugin(pluginId);
           for (const path of createdPaths.reverse()) {
@@ -225,7 +195,7 @@ describe('An attachment written by a plugin Obsidian itself loaded (issue #77)',
         }
       },
       // The enum's values ARE the display strings; this code runs inside Obsidian and cannot import them.
-      input: { listedPluginIds, mode, pluginId: INSTALLED_PLUGIN_ID },
+      input: { findPluginSettingsComponent, listedPluginIds, mode, pluginId: INSTALLED_PLUGIN_ID },
       vaultPath: getTemporaryVault().path
     });
   }

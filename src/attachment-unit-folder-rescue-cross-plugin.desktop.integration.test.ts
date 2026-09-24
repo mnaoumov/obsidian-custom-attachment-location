@@ -10,6 +10,7 @@ import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
   ADVANCED_RENAME_AND_DELETE_HANDLER_VERSION
 } from '../scripts/helpers/advanced-rename-and-delete-handler-seed.ts';
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
 
 /*
  * The acceptance run for issue #70, with BOTH real plugins on one live vault.
@@ -116,6 +117,7 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
       async callback({
         app,
         backlinkCount,
+        findPluginSettingsComponent: findSettingsComponent,
         handlerPluginId,
         lib: { waitUntil },
         pluginId,
@@ -160,46 +162,6 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
         function isUnitFolderSettings(value: unknown): value is UnitFolderSettings {
           return typeof value === 'object' && value !== null
             && typeof (value as Record<string, unknown>)['isAttachmentUnitFolder'] === 'function';
-        }
-
-        /*
-         * The plugin does not expose its settings publicly, so the live object the patch component reads is
-         * located by walking the plugin's component tree — the same walk the designation suite uses.
-         */
-        function findSettings(): null | UnitFolderSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin(pluginId)];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isUnitFolderSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
         }
 
         function hasApi(candidate: object): candidate is PluginWithApiLike {
@@ -252,8 +214,8 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
           }
         }
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin(pluginId), isUnitFolderSettings);
+        if (!settingsComponent) {
           return {
             diagnostics: 'this plugin\'s live settings object was not found',
             doesDeletedFolderStillExist: false,
@@ -263,9 +225,6 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
             survivingRelativePaths: []
           };
         }
-
-        // A narrowed `const` does not stay narrowed inside a function declaration below it.
-        const settings: UnitFolderSettings = foundSettings;
 
         /*
          * One Obsidian instance is shared with every other integration file, so every path is stamped and
@@ -280,8 +239,8 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
         const ownerNotePath = `${deletedFolderPath}/Owner.md`;
         const survivorNotePath = `${root}/a/A.md`;
 
-        const priorAttachmentFolderPath = settings.attachmentFolderPath;
-        const priorUnitFolderPaths = settings.attachmentUnitFolderPaths;
+        const priorAttachmentFolderPath = settingsComponent.settings.attachmentFolderPath;
+        const priorUnitFolderPaths = settingsComponent.settings.attachmentUnitFolderPaths;
         const priorAlwaysUpdateLinks = app.vault.getConfig('alwaysUpdateLinks');
         let handlerApi: HandlerApiLike | null = null;
         let priorHandlerSettings: MigratableSettingsLike | null = null;
@@ -330,17 +289,19 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
            */
           app.vault.setConfig('alwaysUpdateLinks', true);
 
-          /*
-           * A subfolder of each note's OWN folder, so the deleted note and the survivor resolve to different
-           * attachment folders and the rescue actually has somewhere to move the unit to.
-           */
-          settings.attachmentFolderPath = './assets';
+          await settingsComponent.editAndSave((settings) => {
+            /*
+             * A subfolder of each note's OWN folder, so the deleted note and the survivor resolve to different
+             * attachment folders and the rescue actually has somewhere to move the unit to.
+             */
+            settings.attachmentFolderPath = './assets';
 
-          /*
-           * The designation is published for real, off this plugin's own setting, rather than stubbed onto
-           * the patched function. That is the whole point of this file.
-           */
-          settings.attachmentUnitFolderPaths = [unitFolderPath];
+            /*
+             * The designation is published for real, off this plugin's own setting, rather than stubbed onto
+             * the patched function. That is the whole point of this file.
+             */
+            settings.attachmentUnitFolderPaths = [unitFolderPath];
+          });
 
           await app.vault.createFolder(unitFolderPath);
           await app.vault.createFolder(`${root}/a`);
@@ -389,8 +350,10 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
               .sort((left, right) => left.localeCompare(right))
           };
         } finally {
-          settings.attachmentFolderPath = priorAttachmentFolderPath;
-          settings.attachmentUnitFolderPaths = priorUnitFolderPaths;
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = priorAttachmentFolderPath;
+            settings.attachmentUnitFolderPaths = priorUnitFolderPaths;
+          });
           app.vault.setConfig('alwaysUpdateLinks', priorAlwaysUpdateLinks);
 
           /*
@@ -409,6 +372,7 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
       },
       input: {
         backlinkCount: EXPECTED_BACKLINK_COUNT,
+        findPluginSettingsComponent,
         handlerPluginId: HANDLER_PLUGIN_ID,
         pluginId: PLUGIN_ID,
         waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS

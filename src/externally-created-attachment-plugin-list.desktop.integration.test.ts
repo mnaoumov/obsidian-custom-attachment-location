@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #77: the rename of an attachment another plugin created can be scoped to
  * a named set of plugins, in either polarity.
@@ -49,7 +51,7 @@ const FAKE_PLUGIN_ID = 'fake-attribution-plugin';
 describe('Scoping the foreign-attachment rename to named plugins (issue #77)', () => {
   async function run(mode: string, listedPluginIds: string[]): Promise<PluginListResult> {
     return await evalInObsidian({
-      async callback({ app, fakePluginId, listedPluginIds: listed, mode: renameMode }): Promise<PluginListResult> {
+      async callback({ app, fakePluginId, findPluginSettingsComponent: findSettingsComponent, listedPluginIds: listed, mode: renameMode }): Promise<PluginListResult> {
         function isScopedSettings(value: unknown): value is ScopedSettings {
           return typeof value === 'object' && value !== null
             && typeof (value as Record<string, unknown>)['renameAttachmentsCreatedByOtherPluginsMode'] === 'string'
@@ -58,117 +60,88 @@ describe('Scoping the foreign-attachment rename to named plugins (issue #77)', (
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        function findSettings(): null | ScopedSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isScopedSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isScopedSettings);
+        if (!settingsComponent) {
           return { finalPaths: [], settingsFound: false };
         }
 
         /*
-         * One Obsidian instance is shared with every other integration file, and this is the LIVE settings
-         * object. Snapshot it and put it back, or the next suite in the run inherits this scoping.
+         * One Obsidian instance is shared with every other integration file, and these are the LIVE, saved
+         * settings. Snapshot them and put them back, or the next suite in the run inherits this scoping.
          */
         const originalSettings = {
-          attachmentFolderPath: settings.attachmentFolderPath,
-          generatedAttachmentFileName: settings.generatedAttachmentFileName,
-          otherPluginIdsForAttachmentRename: settings.otherPluginIdsForAttachmentRename,
-          renameAttachmentsCreatedByOtherPluginsMode: settings.renameAttachmentsCreatedByOtherPluginsMode
+          attachmentFolderPath: settingsComponent.settings.attachmentFolderPath,
+          generatedAttachmentFileName: settingsComponent.settings.generatedAttachmentFileName,
+          otherPluginIdsForAttachmentRename: settingsComponent.settings.otherPluginIdsForAttachmentRename,
+          renameAttachmentsCreatedByOtherPluginsMode: settingsComponent.settings.renameAttachmentsCreatedByOtherPluginsMode
         };
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
-        settings.renameAttachmentsCreatedByOtherPluginsMode = renameMode;
-        settings.otherPluginIdsForAttachmentRename = listed;
-        settings.attachmentFolderPath = `./scoped-${stamp}`;
-        settings.generatedAttachmentFileName = `scoped-renamed-${stamp}`;
+        await settingsComponent.editAndSave((settings) => {
+          settings.renameAttachmentsCreatedByOtherPluginsMode = renameMode;
+          settings.otherPluginIdsForAttachmentRename = listed;
+          settings.attachmentFolderPath = `./scoped-${stamp}`;
+          settings.generatedAttachmentFileName = `scoped-renamed-${stamp}`;
+        });
 
-        const note = await app.vault.create(`scoped-note-${stamp}.md`, '');
-        const leaf = app.workspace.getLeaf(false);
-        await leaf.openFile(note);
-        await app.workspace.revealLeaf(leaf);
-        await sleep(500);
+        try {
+          const note = await app.vault.create(`scoped-note-${stamp}.md`, '');
+          const leaf = app.workspace.getLeaf(false);
+          await leaf.openFile(note);
+          await app.workspace.revealLeaf(leaf);
+          await sleep(500);
 
-        const foreignFolder = `scoped-foreign-${stamp}`;
-        await app.vault.createFolder(foreignFolder);
-        const foreignPath = `${foreignFolder}/scoped-img-${stamp}.png`;
+          const foreignFolder = `scoped-foreign-${stamp}`;
+          await app.vault.createFolder(foreignFolder);
+          const foreignPath = `${foreignFolder}/scoped-img-${stamp}.png`;
 
-        /*
-         * The whole point of the suite. Compiling a function body with a `//# sourceURL=plugin:<id>`
-         * trailer is what Obsidian's `Plugins.loadPlugin` does to every community plugin's `main.js`, so
-         * the frames this function produces are indistinguishable from that plugin's own — which is what
-         * the attribution reads. Calling `vault.createBinary` from anywhere else carries no plugin id.
-         */
-        const writeAsPlugin = new Function(
-          'vault',
-          'path',
-          `return vault.createBinary(path, new ArrayBuffer(8));\n//# sourceURL=plugin:${fakePluginId}\n`
-        ) as (vault: typeof app.vault, path: string) => Promise<unknown>;
-        await writeAsPlugin(app.vault, foreignPath);
-        /*
-         * ...and link it from the note, as a plugin inserting an attachment does. A file no note links to is that
-         * plugin's own data and is never moved (issue #88), so without the embed there is nothing to test here.
-         */
-        (leaf.view as EditableViewLike).editor?.replaceSelection(`![[scoped-img-${stamp}.png]]`);
+          /*
+           * The whole point of the suite. Compiling a function body with a `//# sourceURL=plugin:<id>`
+           * trailer is what Obsidian's `Plugins.loadPlugin` does to every community plugin's `main.js`, so
+           * the frames this function produces are indistinguishable from that plugin's own — which is what
+           * the attribution reads. Calling `vault.createBinary` from anywhere else carries no plugin id.
+           */
+          const writeAsPlugin = new Function(
+            'vault',
+            'path',
+            `return vault.createBinary(path, new ArrayBuffer(8));\n//# sourceURL=plugin:${fakePluginId}\n`
+          ) as (vault: typeof app.vault, path: string) => Promise<unknown>;
+          await writeAsPlugin(app.vault, foreignPath);
+          /*
+           * ...and link it from the note, as a plugin inserting an attachment does. A file no note links to is that
+           * plugin's own data and is never moved (issue #88), so without the embed there is nothing to test here.
+           */
+          (leaf.view as EditableViewLike).editor?.replaceSelection(`![[scoped-img-${stamp}.png]]`);
 
-        const properPath = `scoped-${stamp}/scoped-renamed-${stamp}.png`;
-        const deadline = Date.now() + 15_000;
-        while (Date.now() < deadline) {
-          if (app.vault.getFileByPath(properPath)) {
-            break;
+          const properPath = `scoped-${stamp}/scoped-renamed-${stamp}.png`;
+          const deadline = Date.now() + 15_000;
+          while (Date.now() < deadline) {
+            if (app.vault.getFileByPath(properPath)) {
+              break;
+            }
+            await sleep(300);
           }
-          await sleep(300);
+
+          // A settled read: when the plugin is out of scope, nothing should ever have moved.
+          await sleep(1000);
+          const finalPaths = app.vault.getFiles()
+            .map((file) => file.path)
+            .filter((path) => path.includes(stamp) && path.endsWith('.png'));
+
+          leaf.detach();
+
+          return { finalPaths, settingsFound: true };
+        } finally {
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = originalSettings.attachmentFolderPath;
+            settings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
+            settings.otherPluginIdsForAttachmentRename = originalSettings.otherPluginIdsForAttachmentRename;
+            settings.renameAttachmentsCreatedByOtherPluginsMode = originalSettings.renameAttachmentsCreatedByOtherPluginsMode;
+          });
         }
-
-        // A settled read: when the plugin is out of scope, nothing should ever have moved.
-        await sleep(1000);
-        const finalPaths = app.vault.getFiles()
-          .map((file) => file.path)
-          .filter((path) => path.includes(stamp) && path.endsWith('.png'));
-
-        leaf.detach();
-        settings.attachmentFolderPath = originalSettings.attachmentFolderPath;
-        settings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
-        settings.otherPluginIdsForAttachmentRename = originalSettings.otherPluginIdsForAttachmentRename;
-        settings.renameAttachmentsCreatedByOtherPluginsMode = originalSettings.renameAttachmentsCreatedByOtherPluginsMode;
-
-        return { finalPaths, settingsFound: true };
       },
       // The enum's values ARE the display strings; this code runs inside Obsidian and cannot import them.
-      input: { fakePluginId: FAKE_PLUGIN_ID, listedPluginIds, mode },
+      input: { fakePluginId: FAKE_PLUGIN_ID, findPluginSettingsComponent, listedPluginIds, mode },
       vaultPath: getTemporaryVault().path
     });
   }

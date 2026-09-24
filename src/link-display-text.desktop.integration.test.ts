@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #24 (an already-merged feature of this plugin): with
  * `shouldSetLinkDisplayTextToAttachmentFileName` ON, generating a link to an ATTACHMENT (via the
@@ -33,7 +35,7 @@ interface LinkDisplayResult {
 describe('Link display text = attachment file name (issue #24)', () => {
   it('sets attachment link display text to the base name, excludes notes, and respects the toggle', async () => {
     const result = await evalInObsidian({
-      async callback({ app }): Promise<LinkDisplayResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<LinkDisplayResult> {
         interface DisplayTextSettings {
           attachmentFolderPath: string;
           shouldSetLinkDisplayTextToAttachmentFileName: boolean;
@@ -45,44 +47,8 @@ describe('Link display text = attachment file name (issue #24)', () => {
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        function findSettings(): DisplayTextSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isDisplayTextSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isDisplayTextSettings);
+        if (!settingsComponent) {
           return {
             attachmentLinkOff: '',
             attachmentLinkOn: '',
@@ -99,25 +65,37 @@ describe('Link display text = attachment file name (issue #24)', () => {
         const otherNote = await app.vault.create(`ldt-other-${stamp}.md`, '');
         const pdf = await app.vault.createBinary(`ldt-doc-${stamp}.pdf`, new ArrayBuffer(4));
 
-        settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
-        const attachmentLinkOn = app.fileManager.generateMarkdownLink(pdf, note.path);
-        const noteLinkOn = app.fileManager.generateMarkdownLink(otherNote, note.path);
-        const attachmentWithAliasOn = app.fileManager.generateMarkdownLink(pdf, note.path, undefined, 'explicit-alias');
+        const wasSettingLinkDisplayText = settingsComponent.settings.shouldSetLinkDisplayTextToAttachmentFileName;
+        await settingsComponent.editAndSave((settings) => {
+          settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
+        });
 
-        settings.shouldSetLinkDisplayTextToAttachmentFileName = false;
-        const attachmentLinkOff = app.fileManager.generateMarkdownLink(pdf, note.path);
+        try {
+          const attachmentLinkOn = app.fileManager.generateMarkdownLink(pdf, note.path);
+          const noteLinkOn = app.fileManager.generateMarkdownLink(otherNote, note.path);
+          const attachmentWithAliasOn = app.fileManager.generateMarkdownLink(pdf, note.path, undefined, 'explicit-alias');
 
-        return {
-          attachmentLinkOff,
-          attachmentLinkOn,
-          attachmentWithAliasOn,
-          noteBaseName: otherNote.basename,
-          noteLinkOn,
-          pdfBaseName: pdf.basename,
-          settingsFound: true
-        };
+          await settingsComponent.editAndSave((settings) => {
+            settings.shouldSetLinkDisplayTextToAttachmentFileName = false;
+          });
+          const attachmentLinkOff = app.fileManager.generateMarkdownLink(pdf, note.path);
+
+          return {
+            attachmentLinkOff,
+            attachmentLinkOn,
+            attachmentWithAliasOn,
+            noteBaseName: otherNote.basename,
+            noteLinkOn,
+            pdfBaseName: pdf.basename,
+            settingsFound: true
+          };
+        } finally {
+          await settingsComponent.editAndSave((settings) => {
+            settings.shouldSetLinkDisplayTextToAttachmentFileName = wasSettingLinkDisplayText;
+          });
+        }
       },
-      input: {},
+      input: { findPluginSettingsComponent },
       vaultPath: getTemporaryVault().path
     });
 

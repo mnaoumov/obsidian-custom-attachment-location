@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #31 (an already-merged feature of this plugin): in
  * "Attachment rename mode: Only pasted images", an image inserted through the clipboard `insertFiles`
@@ -60,7 +62,7 @@ interface PathModuleLike {
 describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issue #31)', () => {
   it('renames a non-"Pasted image"-named clipboard image via the generated pattern', async () => {
     const result = await evalInObsidian({
-      async callback({ app }): Promise<ClipboardRenameResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ClipboardRenameResult> {
         interface RenameSettings {
           attachmentFolderPath: string;
           attachmentRenameMode: string;
@@ -75,111 +77,88 @@ describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issu
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        function findSettings(): null | RenameSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isRenameSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const settings = findSettings();
-        if (!settings) {
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isRenameSettings);
+        if (!settingsComponent) {
           return { originalNameSurvived: true, renamedPaths: [], settingsFound: false };
         }
 
-        settings.attachmentRenameMode = 'Only pasted images';
-        settings.attachmentFolderPath = './';
-        settings.generatedAttachmentFileName = 'pasted-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}';
-
-        const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
-        const note = await app.vault.create(`clip-note-${stamp}.md`, '');
-        const leaf = app.workspace.getLeaf(false);
-        await leaf.openFile(note);
-        await app.workspace.revealLeaf(leaf);
-        await sleep(500);
-
-        // The clipboard manager whose `insertFiles` this plugin patches lives on the active markdown view.
-        const viewUnknown: unknown = leaf.view;
-        const view = viewUnknown as MarkdownViewLike;
-        const clipboardManager = view.editMode?.clipboardManager;
-        if (!clipboardManager) {
-          return { originalNameSurvived: true, renamedPaths: [], settingsFound: true };
-        }
-
-        // A genuine clipboard image whose source name is NOT `Pasted image <timestamp>` (the exact
-        // Win+Shift+S regression): a real temp file OUTSIDE the vault backs it (so the plugin's
-        // `trySetByPath` stat succeeds), and only the ArrayBuffer-identity flag can mark it pasted.
-        const originalBaseName = `screenshot-original-${stamp}`;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
-        const os = require('node:os') as OsModuleLike;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
-        const nodePath = require('node:path') as PathModuleLike;
-        const temporaryFilePath = nodePath.join(os.tmpdir(), `${originalBaseName}.png`);
-        const adapterUnknown: unknown = app.vault.adapter;
-        const fsPromises = (adapterUnknown as AdapterWithFsPromises).fsPromises;
-        await fsPromises.writeFile(temporaryFilePath, new Uint8Array(8));
-
-        const importedAttachment = {
-          data: Promise.resolve(new ArrayBuffer(8)),
-          extension: 'png',
-          filepath: temporaryFilePath,
-          name: `${originalBaseName}.png`
-        };
-        await clipboardManager.insertFiles([importedAttachment]);
-
-        // The save runs through the plugin's saveAttachment patch; poll until a PNG appears in the vault.
-        let renamedPaths: string[] = [];
-        const deadline = Date.now() + 15_000;
-        while (Date.now() < deadline) {
-          renamedPaths = app.vault.getFiles()
-            .map((file) => file.path)
-            .filter((path) => /pasted-\d+\.png$/.test(path));
-          if (renamedPaths.length > 0) {
-            break;
-          }
-          await sleep(300);
-        }
-
-        const isOriginalNameSurvived = app.vault.getFiles().some((file) => file.path.includes(originalBaseName));
-        await fsPromises.unlink(temporaryFilePath).catch(() => {
-          // Best-effort temp cleanup.
+        const priorAttachmentRenameMode = settingsComponent.settings.attachmentRenameMode;
+        const priorAttachmentFolderPath = settingsComponent.settings.attachmentFolderPath;
+        const priorGeneratedAttachmentFileName = settingsComponent.settings.generatedAttachmentFileName;
+        await settingsComponent.editAndSave((settings) => {
+          settings.attachmentRenameMode = 'Only pasted images';
+          settings.attachmentFolderPath = './';
+          settings.generatedAttachmentFileName = 'pasted-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}';
         });
 
-        // Detach the opened leaf so it does not keep the workspace focused on this note's editor.
-        leaf.detach();
+        try {
+          const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
+          const note = await app.vault.create(`clip-note-${stamp}.md`, '');
+          const leaf = app.workspace.getLeaf(false);
+          await leaf.openFile(note);
+          await app.workspace.revealLeaf(leaf);
+          await sleep(500);
 
-        return { originalNameSurvived: isOriginalNameSurvived, renamedPaths, settingsFound: true };
+          // The clipboard manager whose `insertFiles` this plugin patches lives on the active markdown view.
+          const viewUnknown: unknown = leaf.view;
+          const view = viewUnknown as MarkdownViewLike;
+          const clipboardManager = view.editMode?.clipboardManager;
+          if (!clipboardManager) {
+            return { originalNameSurvived: true, renamedPaths: [], settingsFound: true };
+          }
+
+          // A genuine clipboard image whose source name is NOT `Pasted image <timestamp>` (the exact
+          // Win+Shift+S regression): a real temp file OUTSIDE the vault backs it (so the plugin's
+          // `trySetByPath` stat succeeds), and only the ArrayBuffer-identity flag can mark it pasted.
+          const originalBaseName = `screenshot-original-${stamp}`;
+          // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+          const os = require('node:os') as OsModuleLike;
+          // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+          const nodePath = require('node:path') as PathModuleLike;
+          const temporaryFilePath = nodePath.join(os.tmpdir(), `${originalBaseName}.png`);
+          const adapterUnknown: unknown = app.vault.adapter;
+          const fsPromises = (adapterUnknown as AdapterWithFsPromises).fsPromises;
+          await fsPromises.writeFile(temporaryFilePath, new Uint8Array(8));
+
+          const importedAttachment = {
+            data: Promise.resolve(new ArrayBuffer(8)),
+            extension: 'png',
+            filepath: temporaryFilePath,
+            name: `${originalBaseName}.png`
+          };
+          await clipboardManager.insertFiles([importedAttachment]);
+
+          // The save runs through the plugin's saveAttachment patch; poll until a PNG appears in the vault.
+          let renamedPaths: string[] = [];
+          const deadline = Date.now() + 15_000;
+          while (Date.now() < deadline) {
+            renamedPaths = app.vault.getFiles()
+              .map((file) => file.path)
+              .filter((path) => /pasted-\d+\.png$/.test(path));
+            if (renamedPaths.length > 0) {
+              break;
+            }
+            await sleep(300);
+          }
+
+          const isOriginalNameSurvived = app.vault.getFiles().some((file) => file.path.includes(originalBaseName));
+          await fsPromises.unlink(temporaryFilePath).catch(() => {
+            // Best-effort temp cleanup.
+          });
+
+          // Detach the opened leaf so it does not keep the workspace focused on this note's editor.
+          leaf.detach();
+
+          return { originalNameSurvived: isOriginalNameSurvived, renamedPaths, settingsFound: true };
+        } finally {
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentRenameMode = priorAttachmentRenameMode;
+            settings.attachmentFolderPath = priorAttachmentFolderPath;
+            settings.generatedAttachmentFileName = priorGeneratedAttachmentFileName;
+          });
+        }
       },
-      input: {},
+      input: { findPluginSettingsComponent },
       vaultPath: getTemporaryVault().path
     });
 

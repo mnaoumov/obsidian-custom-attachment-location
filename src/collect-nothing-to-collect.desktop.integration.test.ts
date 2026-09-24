@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #81: `Collect attachments in current note` must say so when it moves
  * nothing, instead of leaving the user looking at a command that did nothing at all.
@@ -55,6 +57,7 @@ describe('A collect that moves nothing says so (issue #81)', () => {
       async callback({
         app,
         attachmentFolderPath,
+        findPluginSettingsComponent: findSettingsComponent,
         lib: { waitUntil },
         nothingToCollectPrefix,
         pluginId,
@@ -80,58 +83,20 @@ describe('A collect that moves nothing says so (issue #81)', () => {
 
         const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
 
-        // The settings are not exposed publicly, so the live object the collector reads is located by
-        // walking the plugin's component tree.
-        function findSettings(): NothingToCollectSettings | null {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [pluginRecord];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isNothingToCollectSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
-        const foundSettings = findSettings();
+        const foundSettingsComponent = findSettingsComponent(pluginRecord, isNothingToCollectSettings);
         const foundCollect = pluginRecord?.['collectAttachmentsInAbstractFiles'];
-        if (!foundSettings || typeof foundCollect !== 'function') {
+        if (!foundSettingsComponent || typeof foundCollect !== 'function') {
           const emptyPhase: PhaseResult = { attachmentStillInPlace: false, noteStem: '', noticeText: '' };
           return { hint: emptyPhase, plain: emptyPhase, probesFound: false };
         }
         // A narrowed `const` does not stay narrowed inside a function declaration below it.
-        const settings: NothingToCollectSettings = foundSettings;
+        const settingsComponent = foundSettingsComponent;
         const collectAttachmentsInAbstractFiles = foundCollect as CollectAttachmentsInAbstractFilesFunction;
 
-        const priorFolderPath = settings.attachmentFolderPath;
-        const priorCollectedFolderPath = settings.collectedAttachmentFolderPath;
-        const priorCollectedFileName = settings.collectedAttachmentFileName;
-        const wasRenamingCollectedAttachments = settings.shouldRenameCollectedAttachments;
+        const priorFolderPath = settingsComponent.settings.attachmentFolderPath;
+        const priorCollectedFolderPath = settingsComponent.settings.collectedAttachmentFolderPath;
+        const priorCollectedFileName = settingsComponent.settings.collectedAttachmentFileName;
+        const wasRenamingCollectedAttachments = settingsComponent.settings.shouldRenameCollectedAttachments;
 
         /*
          * Best-effort cleanup, so it must tolerate an entry that is already gone: the collect pass
@@ -173,7 +138,9 @@ describe('A collect that moves nothing says so (issue #81)', () => {
         }
 
         async function runPhase(shouldRenameCollectedAttachments: boolean, label: string): Promise<PhaseResult> {
-          settings.shouldRenameCollectedAttachments = shouldRenameCollectedAttachments;
+          await settingsComponent.editAndSave((settings) => {
+            settings.shouldRenameCollectedAttachments = shouldRenameCollectedAttachments;
+          });
 
           const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
           const noteStem = `ntc-${label}-${stamp}`;
@@ -221,11 +188,13 @@ describe('A collect that moves nothing says so (issue #81)', () => {
         }
 
         try {
-          settings.attachmentFolderPath = attachmentFolderPath;
-          // Both empty, so the collect destination is the new-attachment one and the collected name is
-          // the name the file already has - which is what makes every move a no-op.
-          settings.collectedAttachmentFolderPath = '';
-          settings.collectedAttachmentFileName = '';
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = attachmentFolderPath;
+            // Both empty, so the collect destination is the new-attachment one and the collected name is
+            // the name the file already has - which is what makes every move a no-op.
+            settings.collectedAttachmentFolderPath = '';
+            settings.collectedAttachmentFileName = '';
+          });
 
           const hint = await runPhase(true, 'hint');
           const plain = await runPhase(false, 'plain');
@@ -233,16 +202,17 @@ describe('A collect that moves nothing says so (issue #81)', () => {
         } finally {
           removeOpenNotices();
           await trashIfExists(attachmentFolderPath);
-          /* eslint-disable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
-          settings.attachmentFolderPath = priorFolderPath;
-          settings.collectedAttachmentFolderPath = priorCollectedFolderPath;
-          settings.collectedAttachmentFileName = priorCollectedFileName;
-          settings.shouldRenameCollectedAttachments = wasRenamingCollectedAttachments;
-          /* eslint-enable require-atomic-updates -- Restoring values captured before the awaits; nothing else in this vault writes them. */
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = priorFolderPath;
+            settings.collectedAttachmentFolderPath = priorCollectedFolderPath;
+            settings.collectedAttachmentFileName = priorCollectedFileName;
+            settings.shouldRenameCollectedAttachments = wasRenamingCollectedAttachments;
+          });
         }
       },
       input: {
         attachmentFolderPath: ATTACHMENT_FOLDER_PATH,
+        findPluginSettingsComponent,
         nothingToCollectPrefix: NOTHING_TO_COLLECT_PREFIX,
         pluginId: PLUGIN_ID,
         waitTimeoutInMilliseconds: WAIT_TIMEOUT_IN_MILLISECONDS

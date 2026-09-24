@@ -6,6 +6,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
+
 interface ObsidianDevUtilsGlobal {
   readonly __obsidianDevUtils?: Record<string, OperationQueueWrapper | undefined>;
 }
@@ -54,7 +56,7 @@ interface PromptFocusResult {
 describe('The prompt token modal (issue #59)', () => {
   it('opens focused with the default value selected, names the rename, and saves what is typed', async () => {
     const result = await evalInObsidian({
-      async callback({ app }): Promise<PromptFocusResult> {
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<PromptFocusResult> {
         interface PromptSettings {
           attachmentFolderPath: string;
           attachmentRenameMode: string;
@@ -89,42 +91,6 @@ describe('The prompt token modal (issue #59)', () => {
             && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string';
         }
 
-        function findSettings(): null | PromptSettings {
-          const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
-          const seen = new Set<unknown>();
-          const queue: unknown[] = [app.plugins.getPlugin('obsidian-custom-attachment-location')];
-          let budget = 12_000;
-          while (queue.length > 0 && budget-- > 0) {
-            const current = queue.shift();
-            if (current === null || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) {
-              continue;
-            }
-            seen.add(current);
-            const record = current as Record<string, unknown>;
-            if (isPromptSettings(record['settings'])) {
-              return record['settings'];
-            }
-            let values: unknown[] = [];
-            if (Array.isArray(current)) {
-              values = current;
-            } else if (current instanceof Map) {
-              values = [...current.values()];
-            } else {
-              for (const [key, value] of Object.entries(record)) {
-                if (!block.has(key)) {
-                  values.push(value);
-                }
-              }
-            }
-            for (const value of values) {
-              if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-                queue.push(value);
-              }
-            }
-          }
-          return null;
-        }
-
         async function waitForPromptModal(): Promise<HTMLElement | null> {
           const deadline = Date.now() + PROMPT_MODAL_TIMEOUT_IN_MILLISECONDS;
           while (Date.now() < deadline) {
@@ -152,34 +118,38 @@ describe('The prompt token modal (issue #59)', () => {
           return null;
         }
 
-        const foundSettings = findSettings();
-        if (!foundSettings) {
+        const foundSettingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isPromptSettings);
+        if (!foundSettingsComponent) {
           return { ...EMPTY_RESULT, settingsFound: false };
         }
 
         // A narrowed `const` does not stay narrowed inside a function declaration below it.
-        const settings: PromptSettings = foundSettings;
+        const settingsComponent: NonNullable<typeof foundSettingsComponent> = foundSettingsComponent;
 
         /*
-         * These tests share one Obsidian instance with every other integration file, and the settings
-         * object is the live one. Snapshot it and put it back — a leaked `{{prompt}}` template would
-         * block the next test behind a modal nobody answers.
+         * These tests share one Obsidian instance with every other integration file. Snapshot the settings
+         * and put them back — a leaked `{{prompt}}` template would block the next test behind a modal nobody
+         * answers.
          */
         const originalSettings = {
-          attachmentFolderPath: settings.attachmentFolderPath,
-          attachmentRenameMode: settings.attachmentRenameMode,
-          generatedAttachmentFileName: settings.generatedAttachmentFileName
+          attachmentFolderPath: settingsComponent.settings.attachmentFolderPath,
+          attachmentRenameMode: settingsComponent.settings.attachmentRenameMode,
+          generatedAttachmentFileName: settingsComponent.settings.generatedAttachmentFileName
         };
-        function restoreSettings(currentSettings: PromptSettings): void {
-          currentSettings.attachmentFolderPath = originalSettings.attachmentFolderPath;
-          currentSettings.attachmentRenameMode = originalSettings.attachmentRenameMode;
-          currentSettings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
+        async function restoreSettings(): Promise<void> {
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = originalSettings.attachmentFolderPath;
+            settings.attachmentRenameMode = originalSettings.attachmentRenameMode;
+            settings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
+          });
         }
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
-        settings.attachmentRenameMode = 'All';
-        settings.attachmentFolderPath = './';
-        settings.generatedAttachmentFileName = '{{prompt}}';
+        await settingsComponent.editAndSave((settings) => {
+          settings.attachmentRenameMode = 'All';
+          settings.attachmentFolderPath = './';
+          settings.generatedAttachmentFileName = '{{prompt}}';
+        });
 
         const note = await app.vault.create(`prompt-note-${stamp}.md`, '');
         const leaf = app.workspace.getLeaf(false);
@@ -224,7 +194,7 @@ describe('The prompt token modal (issue #59)', () => {
             closeEl.click();
           }
           await Promise.race([savePromise.catch(() => undefined), sleep(ABANDON_TIMEOUT_IN_MILLISECONDS)]);
-          restoreSettings(settings);
+          await restoreSettings();
         }
 
         const modalEl = await waitForPromptModal();
@@ -267,7 +237,7 @@ describe('The prompt token modal (issue #59)', () => {
           .filter((path) => path.includes(stamp) && path.endsWith('.png'));
 
         leaf.detach();
-        restoreSettings(settings);
+        await restoreSettings();
 
         return {
           activeElementDescription,
@@ -279,7 +249,7 @@ describe('The prompt token modal (issue #59)', () => {
           value
         };
       },
-      input: {},
+      input: { findPluginSettingsComponent },
       vaultPath: getTemporaryVault().path
     });
 
