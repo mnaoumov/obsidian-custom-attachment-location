@@ -201,6 +201,9 @@ export class AttachmentPathManager {
     }
 
     let attachmentPath: string;
+    // Plain `isNote`, not `isNoteEx`, on purpose: a drawing the user treats as an attachment still OWNS an
+    // Attachment folder, so an image pasted into it follows the configured template rather than Obsidian's
+    // Default location. Every other site asks `isNoteEx`; this one disagreeing is the decision, not a defect.
     if (!noteFilePath || !isNote(noteFilePath)) {
       attachmentPath = await getAvailablePathForAttachments({
         app: this.app,
