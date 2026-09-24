@@ -30,6 +30,7 @@
     "find-overexposed:fix": "jiti scripts/find-overexposed-fix.ts",
     "format": "jiti scripts/format.ts",
     "format:check": "jiti scripts/format-check.ts",
+    "gate": "jiti scripts/gate.ts",
     "lint": "jiti scripts/lint.ts",
     "lint:fix": "jiti scripts/lint-fix.ts",
     "lint:md": "jiti scripts/lint-md.ts",
