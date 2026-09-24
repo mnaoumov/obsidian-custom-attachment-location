@@ -30,8 +30,7 @@ import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
   isCanvasFile,
   isFile,
-  isFolder,
-  isNote
+  isFolder
 } from 'obsidian-dev-utils/obsidian/file-system';
 import { appendCodeBlock } from 'obsidian-dev-utils/obsidian/html-element';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
@@ -702,14 +701,23 @@ export class AttachmentCollector {
     this.consoleDebugComponent.consoleDebug(`Collect attachments in files:\n${abstractFiles.map((abstractFile) => abstractFile.path).join('\n')}`);
     const noteFilesSet = new Set<TFile>();
 
+    /*
+     * `isNoteEx`, not the plain extension-based `isNote`: a file listed in `treatAsAttachmentExtensions`
+     * is Markdown on disk but is really an attachment, and scanning one as a SOURCE note rewrites the
+     * references stored inside it — which is exactly what issue #151 forbids, because that is where
+     * Excalidraw keeps its embedded-image links. Collecting an attachment IS a move plus a rewrite of the
+     * referencing file, so there was never a middle option where a drawing's attachments travel and the
+     * drawing itself is left alone. This is the single choke point for every collect entry (vault, folder,
+     * file, auto-collect), so filtering here covers all of them.
+     */
     for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && isNote(abstractFile)) {
+      if (isFile(abstractFile) && this.pluginSettingsComponent.isNoteEx(abstractFile)) {
         noteFilesSet.add(abstractFile);
       }
 
       if (isFolder(abstractFile)) {
         Vault.recurseChildren(abstractFile, (child) => {
-          if (isFile(child) && isNote(child)) {
+          if (isFile(child) && this.pluginSettingsComponent.isNoteEx(child)) {
             noteFilesSet.add(child);
           }
         });

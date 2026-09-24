@@ -32,8 +32,7 @@ import { applyFileChanges } from 'obsidian-dev-utils/obsidian/file-change';
 import {
   isCanvasFile,
   isFile,
-  isFolder,
-  isNote
+  isFolder
 } from 'obsidian-dev-utils/obsidian/file-system';
 import { initI18N } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import {
@@ -142,8 +141,7 @@ vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/file-system')>(),
   isCanvasFile: vi.fn(),
   isFile: vi.fn(),
-  isFolder: vi.fn(),
-  isNote: vi.fn()
+  isFolder: vi.fn()
 }));
 
 vi.mock('obsidian-dev-utils/obsidian/link', async (importOriginal) => ({
@@ -200,7 +198,6 @@ const mockAbortSignalAny = vi.mocked(abortSignalAny);
 const mockIsCanvasFile = vi.mocked(isCanvasFile);
 const mockIsFile = vi.mocked(isFile);
 const mockIsFolder = vi.mocked(isFolder);
-const mockIsNote = vi.mocked(isNote);
 const mockEditLinks = vi.mocked(editLinks);
 const mockExtractLinkFile = vi.mocked(extractLinkFile);
 const mockUpdateLink = vi.mocked(updateLink);
@@ -1340,6 +1337,14 @@ describe('AttachmentCollector', () => {
     beforeEach(() => {
       mockAbortSignalAny.mockReturnValue(new AbortController().signal);
       mockLoop.mockResolvedValue(undefined);
+      /*
+       * Issue #151. The walk asks `isNoteEx`, not the extension-based `isNote`, so these cases drive that
+       * predicate instead. A `.md` suffix stands for a note and anything else for an attachment — which
+       * also keeps the OPPOSITE direction answering correctly in the cases that run a whole `processItem`:
+       * `prepareAttachmentToMove` asks the same predicate about each link's TARGET, and a blanket `true`
+       * would make every attachment read as a note link and be skipped.
+       */
+      vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((pathOrFile) => !!pathOrFile && castTo<TFile>(pathOrFile).path.endsWith('.md'));
     });
 
     it('should throw when the signal is already aborted', async () => {
@@ -1371,7 +1376,6 @@ describe('AttachmentCollector', () => {
       const childNote = createFile('folder/c.md');
       mockIsFile.mockImplementation((f) => f === noteFile || f === childNote);
       mockIsFolder.mockImplementation((f) => f === folder);
-      mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         callback(childNote);
@@ -1391,7 +1395,6 @@ describe('AttachmentCollector', () => {
       const childNonNote = createFile('folder/img.png');
       mockIsFile.mockReturnValue(false);
       mockIsFolder.mockImplementation((f) => f === folder);
-      mockIsNote.mockReturnValue(false);
       mockConfirm.mockResolvedValue(true);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         callback(childNonNote);
@@ -1406,20 +1409,58 @@ describe('AttachmentCollector', () => {
     });
 
     it('should not collect a single file that is not a note', async () => {
-      const fileNote = createFile('a.md');
+      const attachmentFile = createFile('img.png');
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(false);
       mockConfirm.mockResolvedValue(true);
-      await runOperation([fileNote]);
+      await runOperation([attachmentFile]);
       const loopOptions = castTo<LoopOptionsLike>(mockLoop.mock.calls[0]?.[0]);
       expect(loopOptions.items).toEqual([]);
+    });
+
+    /*
+     * Issue #151, the direct-file arm. A `.excalidraw.md` IS a Markdown file, so the extension-based
+     * `isNote` this walk used to ask called it a note and scanned it — moving the images the drawing
+     * embeds and rewriting the references Excalidraw keeps inside the file, which stops it rendering.
+     * The test drives the predicate the way `treatAsAttachmentExtensions` does, by path rather than by
+     * extension, so a swap back to `isNote` fails it.
+     */
+    it('should not collect a drawing the user treats as an attachment', async () => {
+      const drawingFile = createFile('drawing.excalidraw.md');
+      mockIsFile.mockReturnValue(true);
+      vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((pathOrFile) => castTo<TFile>(pathOrFile).path !== 'drawing.excalidraw.md');
+      mockConfirm.mockResolvedValue(true);
+      await runOperation([drawingFile]);
+      const loopOptions = castTo<LoopOptionsLike>(mockLoop.mock.calls[0]?.[0]);
+      expect(loopOptions.items).toEqual([]);
+    });
+
+    // Issue #151, the `Vault.recurseChildren` arm: a folder or whole-vault collect must skip it too, and
+    // The plain note beside it proves the walk is still running rather than refusing everything.
+    it('should skip a drawing during folder recursion and keep the plain note beside it', async () => {
+      const folder = strictProxy<TAbstractFile>({ path: 'folder' });
+      const childNote = createFile('folder/c.md');
+      const childDrawing = createFile('folder/drawing.excalidraw.md');
+      mockIsFile.mockImplementation((f) => f === childNote || f === childDrawing);
+      mockIsFolder.mockImplementation((f) => f === folder);
+      vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((pathOrFile) => castTo<TFile>(pathOrFile).path !== 'folder/drawing.excalidraw.md');
+      mockConfirm.mockResolvedValue(true);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(childNote);
+        callback(childDrawing);
+      });
+      try {
+        await runOperation([folder]);
+      } finally {
+        recurseSpy.mockRestore();
+      }
+      const loopOptions = castTo<LoopOptionsLike>(mockLoop.mock.calls[0]?.[0]);
+      expect(loopOptions.items).toEqual([childNote]);
     });
 
     it('should skip an ignored note inside loop processItem', async () => {
       const noteFile = createFile('a.md');
       const otherFile = createFile('b.md');
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
       vi.mocked(settings.isPathIgnored).mockImplementation((path: string) => path === 'a.md');
       mockLoop.mockImplementation(async (options) => {
@@ -1453,7 +1494,6 @@ describe('AttachmentCollector', () => {
       const noteFile1 = createFile('a.md');
       const noteFile2 = createFile('b.md');
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
       mockIsCanvasFile.mockReturnValue(false);
       mockGetLinks.mockReturnValue([createReference()]);
@@ -1477,7 +1517,6 @@ describe('AttachmentCollector', () => {
       const noteFile1 = createFile('a.md');
       const noteFile2 = createFile('b.md');
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
       mockIsCanvasFile.mockReturnValue(false);
       mockGetLinks.mockReturnValue([createReference()]);
@@ -1513,7 +1552,6 @@ describe('AttachmentCollector', () => {
     it('should build progress bar and notice messages', async () => {
       const noteFile = createFile('a.md');
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
       mockConfirm.mockResolvedValue(true);
       let noticeMessage: string | undefined;
       mockLoop.mockImplementation(async (options) => {
