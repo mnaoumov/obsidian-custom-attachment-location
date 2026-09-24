@@ -9,56 +9,10 @@ import {
   findLegacyToken,
   LegacyTokenSyntaxError,
   migrateLegacyTokenSyntax,
-  parseFormatObject,
   parseTokenFormat,
   scanTokens,
   TokenSyntax
 } from './token-parser.ts';
-
-describe('parseFormatObject', () => {
-  it('should parse a JSON5 object', () => {
-    expect(parseFormatObject({
-      formatText: '{ a: 1, b: "x" }',
-      tokenName: 'token'
-    })).toStrictEqual({ a: 1, b: 'x' });
-  });
-
-  it('should throw on invalid JSON5', () => {
-    expect(() =>
-      parseFormatObject({
-        formatText: '{ a: }',
-        tokenName: 'token'
-      })
-    ).toThrow('Invalid JSON5');
-  });
-
-  it('should throw when the parsed value is null', () => {
-    expect(() =>
-      parseFormatObject({
-        formatText: 'null',
-        tokenName: 'token'
-      })
-    ).toThrow('Format for token \'token\' must be a JSON5 object');
-  });
-
-  it('should throw when the parsed value is not an object', () => {
-    expect(() =>
-      parseFormatObject({
-        formatText: '42',
-        tokenName: 'token'
-      })
-    ).toThrow('Format for token \'token\' must be a JSON5 object');
-  });
-
-  it('should throw when the parsed value is an array', () => {
-    expect(() =>
-      parseFormatObject({
-        formatText: '[1, 2]',
-        tokenName: 'token'
-      })
-    ).toThrow('Format for token \'token\' must be a JSON5 object');
-  });
-});
 
 describe('parseTokenFormat', () => {
   it('should return null for a token without a format', () => {
@@ -70,7 +24,23 @@ describe('parseTokenFormat', () => {
   });
 
   it('should parse an object format', () => {
-    expect(parseTokenFormat({ formatText: '{ a: 1 }', isScalarFormat: false, token: 'date' })).toStrictEqual({ a: 1 });
+    expect(parseTokenFormat({ formatText: '{ a: 1, b: "x" }', isScalarFormat: false, token: 'date' })).toStrictEqual({ a: 1, b: 'x' });
+  });
+
+  it('should throw on invalid JSON5', () => {
+    expect(() => parseTokenFormat({ formatText: '{ a: }', isScalarFormat: false, token: 'date' })).toThrow('Invalid JSON5');
+  });
+
+  it('should throw when an object format parses to null', () => {
+    expect(() => parseTokenFormat({ formatText: 'null', isScalarFormat: false, token: 'date' })).toThrow('Format for token \'date\' must be a JSON5 object');
+  });
+
+  it('should throw when an object format parses to a non-object', () => {
+    expect(() => parseTokenFormat({ formatText: '42', isScalarFormat: false, token: 'date' })).toThrow('Format for token \'date\' must be a JSON5 object');
+  });
+
+  it('should throw when an object format parses to an array', () => {
+    expect(() => parseTokenFormat({ formatText: '[1, 2]', isScalarFormat: false, token: 'date' })).toThrow('Format for token \'date\' must be a JSON5 object');
   });
 });
 
