@@ -92,9 +92,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       // The overlap banner has to travel as a ROW: Obsidian renders the declarative definitions and never
       // Calls `display()` once `getSettingDefinitions()` is non-empty, so there is no container to write into
       // Otherwise. The row body is emptied first, leaving the Setting element as a bare host for the banner.
-      // It cannot take a `visible` predicate yet: the library version this plugin compiles against renders the
-      // Banner but does not expose whether there is one to render, so the row is hidden after the fact when
-      // Nothing was written into it. Swap this for a predicate once the floor moves.
+      // The row exists only while a warning conflict holds, since the library renders nothing otherwise and an
+      // Empty row is still a divider and a block of padding.
       //
       // There is no row for Advanced Rename and Delete Handler: it is a declared dependency, so while it is
       // Missing this tab is never registered at all and the library's own blocked tab explains what to install.
@@ -103,11 +102,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         render: (setting) => {
           setting.settingEl.empty();
           this.getPluginGateComponent().renderConflictWarningBanner(setting.settingEl);
-          if (!setting.settingEl.hasChildNodes()) {
-            setting.settingEl.hide();
-          }
         },
-        searchable: false
+        searchable: false,
+        visible: () => this.getPluginGateComponent().hasActiveWarningConflicts()
       }),
       this.settingGroupEx({
         heading: t(($) => $.pluginSettingsTab.groups.core),

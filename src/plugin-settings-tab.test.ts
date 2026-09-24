@@ -84,9 +84,10 @@ const EXPECTED_ROW_COUNT = 35;
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
-// The overlap banner's single input. Whether it writes anything is what decides the row's fate, since the
-// Row hides itself when the library renders nothing.
+// The overlap banner's two inputs: what the library writes into the row, and whether a warning conflict
+// Holds at all, which is what decides whether the row exists.
 const renderConflictWarningBannerMock = vi.fn<(containerEl: HTMLElement) => void>();
+const hasActiveWarningConflictsMock = vi.fn<() => boolean>();
 
 interface CapturedMultipleValueComponent {
   name: string;
@@ -286,6 +287,7 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   const tab = new PluginSettingsTab({
     getPluginGateComponent: (): PluginGateComponent =>
       strictProxy<PluginGateComponent>({
+        hasActiveWarningConflicts: hasActiveWarningConflictsMock,
         renderConflictWarningBanner: renderConflictWarningBannerMock
       }),
     plugin: obsidianPlugin,
@@ -480,6 +482,7 @@ describe('PluginSettingsTab', () => {
     // `clearAllMocks` drops the recorded calls but keeps any implementation set by an earlier test, and
     // Whether this one writes into the container is exactly what the overlap row's tests differ on.
     renderConflictWarningBannerMock.mockReset();
+    hasActiveWarningConflictsMock.mockReset();
   });
 
   afterEach(() => {
@@ -503,27 +506,30 @@ describe('PluginSettingsTab', () => {
 
     // The library renders nothing when no overlap holds, and an empty row is still a row — a divider and a
     // Block of padding with nothing in it.
-    it('should hide itself when the gate renders no banner', async () => {
+    it('should hide itself when no warning conflict holds', async () => {
+      hasActiveWarningConflictsMock.mockReturnValue(false);
       const { tab } = await createTab();
-      const setting = new SettingEx(tab.containerEl);
 
-      findConflictRow(tab).render(setting, castTo<SettingGroup>(null));
-
-      // `isShown()` reads `offsetParent`, which jsdom never populates, so the display style is what a test
-      // Can actually see here.
-      expect(setting.settingEl.style.display).toBe('none');
+      expect(isRowVisible(tab, '')).toBe(false);
     });
 
-    it('should stay visible once the gate has rendered a banner', async () => {
-      renderConflictWarningBannerMock.mockImplementation((containerEl) => {
-        containerEl.createDiv({ text: 'Overlap' });
-      });
+    it('should show itself while a warning conflict holds', async () => {
+      hasActiveWarningConflictsMock.mockReturnValue(true);
       const { tab } = await createTab();
-      const setting = new SettingEx(tab.containerEl);
 
-      findConflictRow(tab).render(setting, castTo<SettingGroup>(null));
+      expect(isRowVisible(tab, '')).toBe(true);
+    });
 
-      expect(setting.settingEl.style.display).toBe('');
+    // A function, not a value: the gate re-evaluates as plugins are enabled and disabled while the tab is open,
+    // And the tab re-reads a function form on every render.
+    it('should re-read the gate on every evaluation', async () => {
+      const { tab } = await createTab();
+      hasActiveWarningConflictsMock.mockReturnValue(false);
+      expect(isRowVisible(tab, '')).toBe(false);
+
+      hasActiveWarningConflictsMock.mockReturnValue(true);
+
+      expect(isRowVisible(tab, '')).toBe(true);
     });
 
     it('should stay out of the settings search', async () => {
