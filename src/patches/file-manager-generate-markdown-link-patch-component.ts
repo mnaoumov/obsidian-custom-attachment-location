@@ -4,7 +4,6 @@ import type {
 } from 'obsidian';
 
 import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
-import { isNote } from 'obsidian-dev-utils/obsidian/file-system';
 import {
   generateMarkdownLink,
   hasAngleBrackets,
@@ -53,9 +52,10 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
           const imageSize = this.imageSizeMap.getAndDelete(file.path);
           if (imageSize) {
             alias = imageSize;
-          } else if (this.pluginSettingsComponent.settings.shouldSetLinkDisplayTextToAttachmentFileName && !isNote(file)) {
+          } else if (this.pluginSettingsComponent.settings.shouldSetLinkDisplayTextToAttachmentFileName && !this.pluginSettingsComponent.isNoteEx(file)) {
             // Issue #24: use the attachment's base name (without extension) as the link display text.
             // Notes are excluded so wiki/markdown links between notes keep Obsidian's default behavior.
+            // A drawing the user treats as an attachment is not a note here, as it is not one when collected.
             alias = file.basename;
           }
         }

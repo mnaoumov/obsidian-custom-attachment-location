@@ -37,6 +37,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
   beforeEach(() => {
     const appMock = App.createConfigured__({
       files: {
+        'folder/drawing.excalidraw.md': '',
         'folder/image.png': '',
         'folder/target.md': ''
       }
@@ -60,6 +61,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
       get: vi.fn().mockReturnValue(null)
     });
     pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
+      isNoteEx: (file: TFile): boolean => file.extension === 'md' && !file.path.endsWith('.excalidraw.md'),
       settings
     });
 
@@ -130,6 +132,17 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     invoke();
 
     expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(targetFile, 'note.md', undefined, undefined);
+  });
+
+  it('should set the base-name alias for a drawing treated as an attachment when the setting is enabled', () => {
+    settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
+    const drawingFile = ensureNonNullable(app.vault.getFileByPath('folder/drawing.excalidraw.md'));
+    const component = createComponent();
+    component.load();
+
+    fileManager.generateMarkdownLink(drawingFile, 'note.md');
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(drawingFile, 'note.md', undefined, 'drawing.excalidraw');
   });
 
   it('should not set a base-name alias when the setting is disabled', () => {
