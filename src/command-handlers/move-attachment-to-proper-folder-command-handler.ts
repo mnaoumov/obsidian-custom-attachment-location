@@ -240,7 +240,8 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
           attachmentFile,
           newAttachmentPath,
           notePath: relinkedNotePath,
-          references: backlinks.get(relinkedNotePath) ?? []
+          // Every relinked path is one of the backlink keys, so its references are always there.
+          references: ensureNonNullable(backlinks.get(relinkedNotePath))
         });
       }
     }

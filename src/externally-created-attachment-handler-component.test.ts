@@ -589,6 +589,21 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
     expect(renameFileSpy).toHaveBeenCalledOnce();
   });
 
+  it('should resolve a link in an editor with no file of its own against the note', async () => {
+    await setUp();
+    const leaf = app.workspace.getLeaf(true);
+    await leaf.setViewState({ state: { file: NOTE_PATH }, type: ViewType.Markdown });
+    const view = MarkdownView.fromOriginalType7__(leaf.view as MarkdownViewOriginal);
+    // The view stays a markdown view once its file is unloaded, so the note the templates are evaluated for is the only source path left.
+    await view.loadFile(null);
+    view.editor.setValue('![](../wherever/mx-img-abc.png)');
+
+    // Unlinked in the metadata cache, so only the editor can tell the handler the note refers to the file.
+    await createForeignAttachment(FOREIGN_ATTACHMENT_PATH, false);
+
+    expect(renameFileSpy).toHaveBeenCalledOnce();
+  });
+
   it('should report a failed move instead of swallowing it', async () => {
     await setUp();
     renameFileSpy.mockRejectedValue(new Error('boom'));
