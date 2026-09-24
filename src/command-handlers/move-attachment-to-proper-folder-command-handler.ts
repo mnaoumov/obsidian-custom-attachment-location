@@ -1,5 +1,6 @@
 import type {
   App,
+  Reference,
   TAbstractFile,
   TFile
 } from 'obsidian';
@@ -45,8 +46,24 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly resourceLockComponent: null | ResourceLockComponent;
 }
 
+interface MoveAttachmentToProperFolderCommandHandlerRelinkNoteParams {
+  readonly attachmentFile: TFile;
+  readonly newAttachmentPath: string;
+  readonly notePath: string;
+  readonly references: readonly Reference[];
+}
+
 interface MoveAttachmentToProperFolderContext {
   mode?: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
+}
+
+/**
+ * One copy of the attachment: the note whose attachment folder decides where it goes, and the notes whose links are
+ * pointed at that copy.
+ */
+interface MovePlanEntry {
+  readonly destinationNotePath: string;
+  readonly relinkedNotePaths: readonly string[];
 }
 
 export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileCommandHandler {
@@ -171,31 +188,40 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     // Same rule, and same reason, as the Collect attachments branch in `attachment-collector.ts`.
     const isMultipleNotesCheckSkippedByExtension = this.pluginSettingsComponent.settings.isExtensionExcludedFromMultipleNotesCheck(attachmentFile.path);
 
-    if (
-      !isMultipleNotesCheckSkippedByExtension && relevantBacklinkKeys.length > 1
-      && !await shouldContinueWithMode(context.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)
-    ) {
-      return false;
+    let movePlan: MovePlanEntry[];
+    if (!isMultipleNotesCheckSkippedByExtension && relevantBacklinkKeys.length > 1) {
+      if (!await shouldContinueWithMode(context.mode ?? this.pluginSettingsComponent.settings.moveAttachmentToProperFolderUsedByMultipleNotesMode)) {
+        return false;
+      }
+      movePlan = backlinksToCopy.map((backlink) => ({ destinationNotePath: backlink, relinkedNotePaths: [backlink] }));
+    } else {
+      /*
+       * Not a multiple-notes case, so the mode is never consulted and no modal is raised: this is a plain move. One note
+       * decides the destination, and every note linking to the attachment follows it there, so the original ends up
+       * unused and is deleted below. Before this branch existed nothing filled the plan here, and the command did nothing
+       * at all for an attachment used by a single note - the common case.
+       */
+      const ownerCandidates = relevantBacklinkKeys.length > 0 ? relevantBacklinkKeys : backlinks.keys();
+      const destinationNotePath = ensureNonNullable([...ownerCandidates].sort((a, b) => a.localeCompare(b))[0]);
+      movePlan = [{ destinationNotePath, relinkedNotePaths: backlinks.keys() }];
     }
 
-    for (const backlink of backlinksToCopy) {
-      const backlinkFile = this.app.vault.getFileByPath(backlink);
-      if (!backlinkFile) {
+    for (const { destinationNotePath, relinkedNotePaths } of movePlan) {
+      if (!this.app.vault.getFileByPath(destinationNotePath)) {
         continue;
       }
 
-      const references = ensureNonNullable(backlinks.get(backlink));
-      const link = references[0];
-      if (!link) {
+      const reference = backlinks.get(destinationNotePath)?.[0];
+      if (!reference) {
         continue;
       }
 
-      const sequenceNumberByAttachmentPath = await this.attachmentPathManager.getSequenceNumberMap(backlink);
+      const sequenceNumberByAttachmentPath = await this.attachmentPathManager.getSequenceNumberMap(destinationNotePath);
       const newAttachmentPath = await this.attachmentPathManager.getProperAttachmentPath({
         actionContext: ActionContext.MoveAttachmentToProperFolder,
         attachmentFile,
-        noteFilePath: backlink,
-        reference: link,
+        noteFilePath: destinationNotePath,
+        reference,
         sequenceNumber: sequenceNumberByAttachmentPath.get(attachmentFile.path) ?? 0
       });
       if (!newAttachmentPath) {
@@ -203,31 +229,20 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         continue;
       }
 
-      const linkJsons = new Set(references.map((reference) => toJson(reference)));
-
       await copySafe({
         app: this.app,
         newPath: newAttachmentPath,
         oldPathOrFile: attachmentFile
       });
-      await editLinks({
-        app: this.app,
-        linkConverter: (link2) => {
-          const linkJson = toJson(link2);
-          return linkJsons.has(linkJson)
-            ? updateLink({
-              app: this.app,
-              link: link2,
-              newSourcePathOrFile: backlinkFile,
-              newTargetPathOrFile: newAttachmentPath,
-              oldTargetPathOrFile: attachmentFile
-            })
-            : undefined;
-        },
-        pathOrFile: backlinkFile,
-        pluginNoticeComponent: this.pluginNoticeComponent,
-        resourceLockComponent: this.resourceLockComponent
-      });
+
+      for (const relinkedNotePath of relinkedNotePaths) {
+        await this.relinkNote({
+          attachmentFile,
+          newAttachmentPath,
+          notePath: relinkedNotePath,
+          references: backlinks.get(relinkedNotePath) ?? []
+        });
+      }
     }
 
     backlinks = await getBacklinksForFileSafe({
@@ -286,5 +301,33 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         }
       }
     }
+  }
+
+  private async relinkNote(params: MoveAttachmentToProperFolderCommandHandlerRelinkNoteParams): Promise<void> {
+    const noteFile = this.app.vault.getFileByPath(params.notePath);
+    if (!noteFile) {
+      return;
+    }
+
+    const linkJsons = new Set(params.references.map((reference) => toJson(reference)));
+
+    await editLinks({
+      app: this.app,
+      linkConverter: (link) => {
+        const linkJson = toJson(link);
+        return linkJsons.has(linkJson)
+          ? updateLink({
+            app: this.app,
+            link,
+            newSourcePathOrFile: noteFile,
+            newTargetPathOrFile: params.newAttachmentPath,
+            oldTargetPathOrFile: params.attachmentFile
+          })
+          : undefined;
+      },
+      pathOrFile: noteFile,
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      resourceLockComponent: this.resourceLockComponent
+    });
   }
 }
