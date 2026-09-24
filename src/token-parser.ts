@@ -174,20 +174,6 @@ export function migrateLegacyTokenSyntax($string: string): string {
   return out;
 }
 
-export function parseFormatObject(params: ParseFormatObjectParams): Record<string, unknown> {
-  let parsed: unknown;
-  try {
-    parsed = parse(params.formatText);
-  } catch (error) {
-    throw new Error('Invalid JSON5', { cause: error });
-  }
-
-  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error(`Format for token '${params.tokenName}' must be a JSON5 object`);
-  }
-  return parsed as Record<string, unknown>;
-}
-
 /**
  * Turns a scanned token's format text into the value its format schema receives.
  *
@@ -269,6 +255,20 @@ function closeToken(closeParams: CloseTokenParams): null | ScannedToken {
 
 function missingCloseError(params: MissingCloseErrorParams): Error {
   return new Error(`Token '${params.tokenName}' is missing closing '${params.syntaxDefinition.close}'`);
+}
+
+function parseFormatObject(params: ParseFormatObjectParams): Record<string, unknown> {
+  let parsed: unknown;
+  try {
+    parsed = parse(params.formatText);
+  } catch (error) {
+    throw new Error('Invalid JSON5', { cause: error });
+  }
+
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`Format for token '${params.tokenName}' must be a JSON5 object`);
+  }
+  return parsed as Record<string, unknown>;
 }
 
 function parseHeadAt(params: ParseHeadAtParams): null | ParseHeadAtResult {
