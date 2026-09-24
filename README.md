@@ -69,7 +69,9 @@ Moved to [06 Settings](<./demo-vault/06 Settings.md>), under `markdownUrlFormat`
 
 Everything this plugin offers another plugin is declared in one hand-written file — [api.d.ts](./api.d.ts) at the repository root. It imports from `obsidian` and nothing else, so you can copy it into your own code or reference it where it sits, with no build-time dependency on this repository.
 
-The API is published through the `obsidian-dev-utils` plugin registry under the plugin id `obsidian-custom-attachment-location`, so you get version negotiation, a handle that is revoked when this plugin unloads, and a wait that ends when it loads rather than a lookup that returns `undefined` because it ran first:
+The API is published through the `obsidian-dev-utils` plugin registry under the plugin id `obsidian-custom-attachment-location`, so you get version negotiation, a handle that is revoked when this plugin unloads, and a wait that ends when it loads rather than a lookup that returns `undefined` because it ran first. The contract version is `1.2.0` and moves independently of the plugin's own version, so pin a range against the contract, not against a release.
+
+If your plugin already uses [`obsidian-dev-utils`](https://mnaoumov.dev/obsidian-dev-utils/guides/cross-plugin-apis/), `watchPluginApi` is the whole of it:
 
 ```ts
 const apiRef = watchPluginApi<CustomAttachmentLocationApi>({
@@ -82,6 +84,8 @@ const apiRef = watchPluginApi<CustomAttachmentLocationApi>({
 const folder = await apiRef.value?.getAttachmentFolderPath({ notePath: 'Notes/Alpha.md' });
 const properPath = await apiRef.value?.getProperAttachmentPath({ attachmentPathOrFile: 'image.png', notePath: 'Notes/Alpha.md' });
 ```
+
+If your plugin does not use `obsidian-dev-utils` — and is not going to — you still need no dependency on anything. The registry, and the two events a plugin announces itself through, are a documented wire protocol reachable with the `obsidian` module alone; [Plugin API protocol](https://mnaoumov.dev/obsidian-dev-utils/guides/plugin-api-protocol/) is that route written out, and `api.d.ts` types it just as well, since nothing in that file imports the library either. Look the API up each time you use it rather than keeping it in a field: the raw object does not know when this plugin has unloaded.
 
 ### Do not read `vault.getConfig('attachmentFolderPath')`
 
