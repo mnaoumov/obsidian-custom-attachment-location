@@ -333,10 +333,7 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
-    // TODO: Drop the disposal below once obsidian-dev-utils ties commands registered from `onloadImpl` to the
-    // Feature surface. Today they go through the base's universal command component, so they outlive the
-    // Surface: with the dependency gone they would stay in the palette, calling into torn-down components.
-    const commandHandlersDisposable = await this.commandHandlerComponent.registerCommandHandlers(() => [
+    await this.commandHandlerComponent.registerCommandHandlers(() => [
       new CollectAttachmentsInFileCommandHandler({
         attachmentCollector
       }),
@@ -382,9 +379,6 @@ export class Plugin extends PluginBase {
         pluginVersion: this.manifest.version
       })
     ]);
-    featureSurfaceLifetimeComponent.register(() => {
-      commandHandlersDisposable.dispose();
-    });
 
     this.addChild(
       new AppSaveAttachmentPatchComponent({

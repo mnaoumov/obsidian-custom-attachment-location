@@ -18,7 +18,6 @@ import type { PluginApiContract } from 'obsidian-dev-utils/obsidian/plugin/plugi
 import type { Mock } from 'vitest';
 
 import { Component } from 'obsidian';
-import { waitForAllAsyncOperations } from 'obsidian-dev-utils/async';
 import {
   noop,
   noopAsync
@@ -246,9 +245,7 @@ vi.mock('./unused-attachments-remover.ts', () => ({
 import { Plugin } from './plugin.ts';
 
 // The base pre-wires `commandHandlerComponent`; stub its `registerCommandHandlers` so the plugin's registration is asserted without exercising the mocked command handlers.
-// What it hands back is disposed when the feature surface unloads, so the double carries a `dispose` to observe.
-const disposeCommandHandlersMock = vi.fn();
-vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers').mockResolvedValue(castTo<DisposableEx>({ dispose: disposeCommandHandlersMock }));
+vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers').mockResolvedValue(castTo<DisposableEx>({ dispose: vi.fn() }));
 
 interface AppGlobal {
   app: AppOriginal;
@@ -601,20 +598,6 @@ describe('Plugin', () => {
       expect(PluginSettingsComponent).not.toHaveBeenCalled();
       expect(AttachmentCollector).not.toHaveBeenCalled();
       expect(AppSaveAttachmentPatchComponent).not.toHaveBeenCalled();
-      plugin.unload();
-    });
-
-    // The commands are registered through the base's universal command component, which outlives the
-    // Feature surface; left alone they would stay in the palette, calling into torn-down components.
-    it('should withdraw its own commands once the dependency goes away', async () => {
-      const plugin = new Plugin(app, manifest);
-      await plugin.onload();
-      expect(disposeCommandHandlersMock).not.toHaveBeenCalled();
-
-      unpublishProviderApi();
-      await waitForAllAsyncOperations();
-
-      expect(disposeCommandHandlersMock).toHaveBeenCalledOnce();
       plugin.unload();
     });
   });
