@@ -317,9 +317,8 @@ describe('UnusedAttachmentsRemover', () => {
 
     /*
      * A `.excalidraw.md` is Markdown on disk, so the extension-based `isNote` this walk used to ask called
-     * it a note and scanned it as one. The sweep learns what a note references from the metadata cache,
-     * and a drawing keeps its references where the cache does not carry them, so that scan returns
-     * NOTHING — and every file in the attachment folder the drawing owns becomes a candidate to trash.
+     * it a note and scanned it as one. A drawing is an attachment of the note embedding it, not an owner
+     * of an attachment folder, so that scan judged the folder its path resolves to as if it owned it.
      * The plain note beside it is what proves the walk is still running rather than refusing everything.
      */
     it('should skip a drawing the user treats as an attachment while still scanning a plain note', async () => {
