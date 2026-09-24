@@ -37,7 +37,7 @@ describe('Collect attachments — exclude notes from the multiple-notes check (i
         interface MultipleNotesSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
           excludePathsFromMultipleNotesCheck: string[];
-          isExcludedFromMultipleNotesCheck(path: string): boolean;
+          isExcludedFromMultipleNotesCheck: (path: string) => boolean;
         }
 
         function isMultipleNotesSettings(value: unknown): value is MultipleNotesSettings {

@@ -27,11 +27,7 @@ export class VaultGetConfigPatchComponent extends MonkeyAroundComponent {
         fallback,
         originalArguments: [name]
       }) => {
-        if (name !== 'attachmentFolderPath' || this.customAttachmentLocationComponent.currentAttachmentFolderPath === null) {
-          return fallback();
-        }
-
-        return this.customAttachmentLocationComponent.currentAttachmentFolderPath;
+        return name !== 'attachmentFolderPath' || this.customAttachmentLocationComponent.currentAttachmentFolderPath === null ? fallback() : this.customAttachmentLocationComponent.currentAttachmentFolderPath;
       }
     });
   }

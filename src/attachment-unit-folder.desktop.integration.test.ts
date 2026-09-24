@@ -35,7 +35,7 @@ describe('Attachment unit folders travel whole (issue #56)', () => {
       async callback({ app }): Promise<ProbeResult> {
         interface UnitFolderSettings {
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder(path: string): boolean;
+          isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         function isUnitFolderSettings(value: unknown): value is UnitFolderSettings {

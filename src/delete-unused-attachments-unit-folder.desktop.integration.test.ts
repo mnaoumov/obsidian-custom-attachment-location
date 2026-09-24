@@ -66,7 +66,7 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
         interface UnitFolderSettings {
           attachmentFolderPath: string;
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder(path: string): boolean;
+          isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         /*
@@ -77,9 +77,9 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
          * PREDICATE's answer, supplied by a stub parked on the read-back component's live ref.
          */
         interface HandedOverProvider {
-          getSettings(): Record<string, unknown>;
-          isPathIgnored(path: string): boolean;
-          isTreatedAsAttachment(path: string): boolean;
+          getSettings: () => Record<string, unknown>;
+          isPathIgnored: (path: string) => boolean;
+          isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {

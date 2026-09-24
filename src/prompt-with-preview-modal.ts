@@ -27,13 +27,13 @@ interface PromptWithPreviewModalConstructorParams {
   readonly context: TokenEvaluatorContext;
   readonly defaultValue: string;
   readonly promiseResolve: PromiseResolve<null | string>;
-  valueValidator(this: void, value: string): Promise<null | string>;
+  readonly valueValidator: (this: void, value: string) => Promise<null | string>;
 }
 
 interface PromptWithPreviewParams {
   readonly context: TokenEvaluatorContext;
   readonly defaultValue: string;
-  valueValidator(this: void, value: string): Promise<null | string>;
+  readonly valueValidator: (this: void, value: string) => Promise<null | string>;
 }
 
 class PreviewModal extends Modal {

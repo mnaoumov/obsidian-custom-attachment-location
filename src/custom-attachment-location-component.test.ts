@@ -62,7 +62,7 @@ interface GenerateMarkdownLinkHolder {
 }
 
 interface LayoutReadyTrigger {
-  setLayoutReady__(): void;
+  setLayoutReady__: () => void;
 }
 
 interface MarkdownLeafEditMode {
@@ -71,11 +71,11 @@ interface MarkdownLeafEditMode {
 
 interface MarkdownLeafView {
   editMode: MarkdownLeafEditMode;
-  getViewType(): string;
+  getViewType: () => string;
 }
 
 interface MenuItemLike {
-  callback?(): void;
+  callback?: () => void;
   iconEl: HTMLElement;
 }
 

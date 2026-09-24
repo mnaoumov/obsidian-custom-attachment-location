@@ -68,9 +68,9 @@ describe('Note priorities decide which note owns a shared attachment (issue #57)
          * plugin installed in the vault.
          */
         interface HandedOverProvider {
-          getSettings(): Record<string, unknown>;
-          isPathIgnored(path: string): boolean;
-          isTreatedAsAttachment(path: string): boolean;
+          getSettings: () => Record<string, unknown>;
+          isPathIgnored: (path: string) => boolean;
+          isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {

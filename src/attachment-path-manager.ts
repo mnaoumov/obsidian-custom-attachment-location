@@ -436,15 +436,7 @@ export class AttachmentPathManager {
     });
     const newAttachmentPath = join(newAttachmentFolderPath, newAttachmentName);
 
-    if (params.attachmentFile.path === newAttachmentPath) {
-      return null;
-    }
-
-    if (this.isParkedBesideProperPath(params.attachmentFile, newAttachmentPath)) {
-      return null;
-    }
-
-    return newAttachmentPath;
+    return params.attachmentFile.path === newAttachmentPath || this.isParkedBesideProperPath(params.attachmentFile, newAttachmentPath) ? null : newAttachmentPath;
   }
 
   /**
@@ -483,11 +475,7 @@ export class AttachmentPathManager {
       return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: settings.collectedAttachmentFolderPath });
     }
 
-    if (settings.shouldFollowObsidianAttachmentLocation) {
-      return this.getObsidianAttachmentFolderPath(substitutions.noteFolderPath);
-    }
-
-    return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: settings.attachmentFolderPath });
+    return settings.shouldFollowObsidianAttachmentLocation ? this.getObsidianAttachmentFolderPath(substitutions.noteFolderPath) : await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: settings.attachmentFolderPath });
   }
 
   private async getCursorLineAndSequenceNumber(noteFilePath: string, oldAttachmentPathOrFile: PathOrFile): Promise<CursorLineAndSequenceNumber> {
@@ -536,10 +524,6 @@ export class AttachmentPathManager {
   }
 
   private isGeneratedAttachmentFileNameSkipped(context: AttachmentPathContext, shouldSkipGeneratedAttachmentFileName: boolean | undefined): boolean {
-    if (shouldSkipGeneratedAttachmentFileName) {
-      return true;
-    }
-
     /*
      * A note rename must not rename the attachment when the user turned that off. The setting reaches
      * dev-utils' `RenameDeleteHandlerComponent` only, so a plugin calling `getAttachmentFilePath` directly
@@ -547,7 +531,8 @@ export class AttachmentPathManager {
      * renamed note (issue #259 in Advanced Note Composer). Skipping the generated name leaves the file
      * named as it is and moves only its folder.
      */
-    return context === AttachmentPathContext.RenameNote && !this.handedOverSettingsComponent.settings.shouldRenameAttachmentFiles;
+    return shouldSkipGeneratedAttachmentFileName === true
+      || (context === AttachmentPathContext.RenameNote && !this.handedOverSettingsComponent.settings.shouldRenameAttachmentFiles);
   }
 
   /**
@@ -575,15 +560,11 @@ export class AttachmentPathManager {
       String.raw`^${escapeRegExp(properBaseName)}${escapeRegExp(this.pluginSettingsComponent.settings.duplicateNameSeparator)}\d+$`,
       'u'
     );
-    if (!duplicateSuffixRegExp.test(attachmentFile.basename)) {
-      return false;
-    }
-
-    return getAbstractFileOrNull({
-      app: this.app,
-      isCaseInsensitive: true,
-      pathOrFile: properPath
-    }) !== null;
+    return duplicateSuffixRegExp.test(attachmentFile.basename) && getAbstractFileOrNull({
+          app: this.app,
+          isCaseInsensitive: true,
+          pathOrFile: properPath
+        }) !== null;
   }
 
   private async resolvePathTemplate(params: AttachmentPathManagerResolvePathTemplateParams): Promise<string> {

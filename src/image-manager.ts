@@ -70,30 +70,24 @@ export class ImageManager {
       }
     }
 
-    if (shouldConvertImageToJpeg && mimeType) {
-      return {
+    return shouldConvertImageToJpeg && mimeType
+      ? {
         attachmentFileContent: await blobToJpegArrayBuffer(
           new Blob([params.attachmentFileContent], { type: mimeType }),
           this.pluginSettingsComponent.settings.jpegQuality,
           { shouldPreserveMetadata: this.pluginSettingsComponent.settings.shouldPreserveImageMetadata }
         ),
         attachmentFileExtension: 'jpg'
+      }
+      : {
+        attachmentFileContent: params.attachmentFileContent,
+        attachmentFileExtension: params.attachmentFileExtension
       };
-    }
-
-    return {
-      attachmentFileContent: params.attachmentFileContent,
-      attachmentFileExtension: params.attachmentFileExtension
-    };
   }
 
   public async getImageSize(params: ImageManagerGetImageSizeParams): Promise<null | string> {
     const mimeType = getImageMimeType(params.extension);
-    if (!mimeType) {
-      return null;
-    }
-
-    if (!this.pluginSettingsComponent.settings.defaultImageSize) {
+    if (!mimeType || !this.pluginSettingsComponent.settings.defaultImageSize) {
       return null;
     }
 
@@ -110,7 +104,6 @@ export class ImageManager {
     let width: number;
 
     const PX = 'px';
-    const PERCENTAGE = '%';
 
     if (this.pluginSettingsComponent.settings.defaultImageSize.endsWith(PX)) {
       const dimensionInPixels = Number(trimEnd({
@@ -119,6 +112,7 @@ export class ImageManager {
       }));
       width = this.pluginSettingsComponent.settings.defaultImageSizeDimension === DefaultImageSizeDimension.Width ? dimensionInPixels : Math.trunc(dimensionInPixels / image.height * image.width);
     } else {
+      const PERCENTAGE = '%';
       const percentage = Number(trimEnd({
         $string: this.pluginSettingsComponent.settings.defaultImageSize,
         suffix: PERCENTAGE

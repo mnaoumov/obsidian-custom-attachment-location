@@ -477,12 +477,8 @@ export class UnusedAttachmentsRemover {
      */
     const orphanCandidates = [...orphanCandidateFilesSet]
       .filter((candidate) => {
-        if (referencedAttachmentPaths.has(candidate.path)) {
-          return false;
-        }
-
-        // Already judged by the note that owns it, whose answer is the better-informed one.
-        if (unusedAttachments.has(candidate)) {
+        // A referenced one is in use, and one already judged by the note that owns it has the better-informed answer.
+        if (referencedAttachmentPaths.has(candidate.path) || unusedAttachments.has(candidate)) {
           return false;
         }
 

@@ -130,7 +130,7 @@ export interface TokenEvaluatorContext {
   /**
    * Fills a template with the current context.
    */
-  fillTemplate(template: string): Promise<string>;
+  fillTemplate: (template: string) => Promise<string>;
 
   /**
    * The format of the token.
@@ -166,7 +166,7 @@ export interface TokenEvaluatorContext {
    * @returns A {@link Promise} that resolves to the content of the attachment file, or `undefined`
    * when there is no attachment file to read.
    */
-  getAttachmentFileContent(): Promise<ArrayBuffer | undefined>;
+  getAttachmentFileContent: () => Promise<ArrayBuffer | undefined>;
 
   /**
    * A name of the note file.

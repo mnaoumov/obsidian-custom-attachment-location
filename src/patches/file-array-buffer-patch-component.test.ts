@@ -18,7 +18,7 @@ import type { ArrayBufferMap } from '../array-buffer-map.ts';
 import { FileArrayBufferPatchComponent } from './file-array-buffer-patch-component.ts';
 
 interface WebUtilsMock {
-  getPathForFile(file: File): string;
+  getPathForFile: (file: File) => string;
 }
 
 interface WebUtilsModule {

@@ -72,9 +72,9 @@ describe('The published API answers per note, which the getConfig patch cannot',
         }
 
         interface ApiLike {
-          collectAttachments(params: CollectAttachmentsParams): Promise<void>;
-          getAttachmentFolderPath(params: GetAttachmentFolderPathParams): Promise<null | string>;
-          getProperAttachmentPath(params: GetProperAttachmentPathParams): Promise<null | string>;
+          collectAttachments: (params: CollectAttachmentsParams) => Promise<void>;
+          getAttachmentFolderPath: (params: GetAttachmentFolderPathParams) => Promise<null | string>;
+          getProperAttachmentPath: (params: GetProperAttachmentPathParams) => Promise<null | string>;
         }
 
         interface ApiRecord {

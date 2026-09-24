@@ -5,7 +5,10 @@ import type {
   GetAvailablePathForAttachmentsFunctionExtended
 } from 'obsidian-dev-utils/obsidian/attachment-path';
 
-import { evalInObsidian } from 'obsidian-integration-testing';
+import {
+  evalInObsidian,
+  pollInObsidian
+} from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
   describe,
@@ -76,16 +79,26 @@ const fatAttachmentPaths: string[] = Array.from({ length: FAT_NOTE_LINK_COUNT },
 
 describe('Attachment-path bottleneck', () => {
   it('attributes the per-call cost to the wasted binary read, not the handler', async () => {
+    /*
+     * Obsidian's startup scan of the pre-populated vault takes far longer than one evaluation may run, so it is
+     * waited for here, in Node, one short read at a time. The timed work below starts only once it is done.
+     */
+    await pollInObsidian({
+      intervalInMilliseconds: INDEX_POLL_IN_MS,
+      poll: ({ app }) => app.vault.getFiles().length,
+      timeoutInMilliseconds: INDEX_WAIT_IN_MS,
+      timeoutMessage: `The vault was not indexed within ${String(INDEX_WAIT_IN_MS)} ms`,
+      until: (fileCount) => fileCount >= PERFORMANCE_VAULT_TOTAL_FILE_COUNT,
+      vaultPath: getTemporaryVault().path
+    });
+
     const result = await evalInObsidian({
       async callback({
         app,
         CONSUMER_CONTEXT: consumerContext,
-        EXPECTED_FILE_COUNT: expectedFileCount,
         FAT_NOTE_PATH: fatNotePath,
         fatAttachmentPaths: fatAttachments,
         HANDLER_ITERATIONS: handlerIterations,
-        INDEX_POLL_IN_MS: pollMs,
-        INDEX_WAIT_IN_MS: waitMs,
         largePairs: largeNotes,
         PLUGIN_ID: pluginId,
         SETTLE_DELAY_IN_MS: settleMs,
@@ -117,13 +130,7 @@ describe('Attachment-path bottleneck', () => {
         // Bind the narrowed (non-undefined) handler so the hoisted timing helpers can invoke it.
         const invokeExtended = extendedFunction;
 
-        // Wait for Obsidian's startup scan to index the whole pre-populated vault.
-        const deadline = Date.now() + waitMs;
-        let fileCount = app.vault.getFiles().length;
-        while (fileCount < expectedFileCount && Date.now() < deadline) {
-          await sleep(pollMs);
-          fileCount = app.vault.getFiles().length;
-        }
+        const fileCount = app.vault.getFiles().length;
         // Let the metadata cache resolve the embeds so the handler's link walk is realistic.
         await sleep(settleMs);
 
@@ -181,10 +188,7 @@ describe('Attachment-path bottleneck', () => {
         function resolvePair(pair: NoteAttachmentPair): null | ResolvedNoteAttachment {
           const noteFile = app.vault.getFileByPath(pair.note);
           const attachmentFile = app.vault.getFileByPath(pair.attachment);
-          if (!noteFile || !attachmentFile) {
-            return null;
-          }
-          return { attachmentFile, noteFile };
+          return !noteFile || !attachmentFile ? null : { attachmentFile, noteFile };
         }
 
         function buildParams(noteFile: TFile, attachmentFile: TFile, content: ArrayBuffer | undefined): GetAvailablePathForAttachmentsExtendedFunctionParams {
@@ -236,12 +240,9 @@ describe('Attachment-path bottleneck', () => {
       },
       input: {
         CONSUMER_CONTEXT,
-        EXPECTED_FILE_COUNT: PERFORMANCE_VAULT_TOTAL_FILE_COUNT,
         FAT_NOTE_PATH,
         fatAttachmentPaths,
         HANDLER_ITERATIONS,
-        INDEX_POLL_IN_MS,
-        INDEX_WAIT_IN_MS,
         largePairs,
         PLUGIN_ID,
         SETTLE_DELAY_IN_MS,

@@ -214,17 +214,15 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         app: this.app,
         linkConverter: (link2) => {
           const linkJson = toJson(link2);
-          if (!linkJsons.has(linkJson)) {
-            return;
-          }
-
-          return updateLink({
-            app: this.app,
-            link: link2,
-            newSourcePathOrFile: backlinkFile,
-            newTargetPathOrFile: newAttachmentPath,
-            oldTargetPathOrFile: attachmentFile
-          });
+          return linkJsons.has(linkJson)
+            ? updateLink({
+              app: this.app,
+              link: link2,
+              newSourcePathOrFile: backlinkFile,
+              newTargetPathOrFile: newAttachmentPath,
+              oldTargetPathOrFile: attachmentFile
+            })
+            : undefined;
         },
         pathOrFile: backlinkFile,
         pluginNoticeComponent: this.pluginNoticeComponent,

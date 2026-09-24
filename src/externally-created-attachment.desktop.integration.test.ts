@@ -21,11 +21,11 @@ import {
 
 interface EditableViewLike {
   readonly editor?: EditorLike;
-  save?(): Promise<void>;
+  save?: () => Promise<void>;
 }
 
 interface EditorLike {
-  replaceSelection(text: string): void;
+  replaceSelection: (text: string) => void;
 }
 
 interface ForeignAttachmentResult {

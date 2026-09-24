@@ -61,7 +61,7 @@ import { confirmMinimizable } from './modals/minimizable-confirm-modal.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 interface QueueParamsLike {
-  operationFunction(abortSignal: AbortSignal): Promise<void>;
+  operationFunction: (abortSignal: AbortSignal) => Promise<void>;
   operationName: string;
 }
 
@@ -71,11 +71,11 @@ interface RenderInternalLinkParamsLike {
 
 interface SettingsLike {
   emptyFolderBehavior: EmptyFolderBehavior;
-  getTimeoutInMilliseconds(): number;
-  isAttachmentUnitFolder(path: string): boolean;
-  isExcludedFromMultipleNotesCheck(path: string): boolean;
-  isOrphanAttachmentScanCandidate(path: string): boolean;
-  isPathIgnored(path: string): boolean;
+  getTimeoutInMilliseconds: () => number;
+  isAttachmentUnitFolder: (path: string) => boolean;
+  isExcludedFromMultipleNotesCheck: (path: string) => boolean;
+  isOrphanAttachmentScanCandidate: (path: string) => boolean;
+  isPathIgnored: (path: string) => boolean;
 }
 
 vi.mock('obsidian-dev-utils/obsidian/canvas', async (importOriginal) => ({

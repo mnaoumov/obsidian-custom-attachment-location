@@ -39,7 +39,7 @@ interface EditableViewLike {
 }
 
 interface EditorLike {
-  replaceSelection(text: string): void;
+  replaceSelection: (text: string) => void;
 }
 
 interface ProbeResult {
@@ -68,9 +68,9 @@ describe('An attachment written by another plugin while a drawing is open is lef
          * ref rather than by installing the other plugin into the vault.
          */
         interface HandedOverProvider {
-          getSettings(): Record<string, unknown>;
-          isPathIgnored(path: string): boolean;
-          isTreatedAsAttachment(path: string): boolean;
+          getSettings: () => Record<string, unknown>;
+          isPathIgnored: (path: string) => boolean;
+          isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {

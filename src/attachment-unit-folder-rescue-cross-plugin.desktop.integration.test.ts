@@ -124,7 +124,7 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
         interface UnitFolderSettings {
           attachmentFolderPath: string;
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder(path: string): boolean;
+          isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         interface MigratableSettingsLike {
@@ -149,8 +149,8 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
         }
 
         interface HandlerApiLike {
-          getSettings(): HandedOverSettingsLike;
-          migrateSettings(params: MigrateSettingsParamsLike): Promise<MigrateSettingsResultLike>;
+          getSettings: () => HandedOverSettingsLike;
+          migrateSettings: (params: MigrateSettingsParamsLike) => Promise<MigrateSettingsResultLike>;
         }
 
         interface PluginWithApiLike {

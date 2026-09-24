@@ -81,11 +81,7 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
           });
         }
 
-        if (hasAngleBrackets(defaultLink)) {
-          return defaultLink.replace(/\]\(<.+?>\)/, () => `](<${markdownUrl}>)`);
-        }
-
-        return defaultLink.replace(/\]\(.+?\)/, () => `](${encodeUrl(markdownUrl)})`);
+        return hasAngleBrackets(defaultLink) ? defaultLink.replace(/\]\(<.+?>\)/, () => `](<${markdownUrl}>)`) : defaultLink.replace(/\]\(.+?\)/, () => `](${encodeUrl(markdownUrl)})`);
       }
     });
   }

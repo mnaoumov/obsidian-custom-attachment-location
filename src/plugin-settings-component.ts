@@ -355,17 +355,15 @@ ${commentOut(this.legacySettings.customTokensStr)}
   }
 
   private replaceLegacyTokens($string: string | undefined): string {
-    if ($string === undefined) {
-      return '';
-    }
-
-    return replaceAll({
-      $string,
-      replacer: ({ capturedGroupArguments: [token, momentJsFormat] }) => {
-        return `\${${ensureNonNullable(token)}:{momentJsFormat:'${ensureNonNullable(momentJsFormat)}'}}`;
-      },
-      searchValue: /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi
-    });
+    return $string === undefined
+      ? ''
+      : replaceAll({
+        $string,
+        replacer: ({ capturedGroupArguments: [token, momentJsFormat] }) => {
+          return `\${${ensureNonNullable(token)}:{momentJsFormat:'${ensureNonNullable(momentJsFormat)}'}}`;
+        },
+        searchValue: /\$\{(?<Token>date|noteFileCreationDate|noteFileModificationDate|originalAttachmentFileCreationDate|originalAttachmentFileModificationDate):(?<MomentJsFormat>\s*[^{]+?)\}/gi
+      });
   }
 }
 

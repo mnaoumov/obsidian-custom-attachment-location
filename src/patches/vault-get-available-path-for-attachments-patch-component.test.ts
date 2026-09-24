@@ -25,11 +25,11 @@ import type { PluginSettings } from '../plugin-settings.ts';
 import { VaultGetAvailablePathForAttachmentsPatchComponent } from './vault-get-available-path-for-attachments-patch-component.ts';
 
 interface PatchedMethodWithExtended {
-  extended(): Promise<string>;
+  extended: () => Promise<string>;
 }
 
 interface SettingsLike {
-  isAttachmentUnitFolder(path: string): boolean;
+  isAttachmentUnitFolder: (path: string) => boolean;
 }
 
 describe('VaultGetAvailablePathForAttachmentsPatchComponent', () => {

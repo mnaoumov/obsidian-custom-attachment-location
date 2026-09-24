@@ -63,7 +63,7 @@ describe('Follow Obsidian attachment location', () => {
         }
 
         interface FollowSettingsComponent {
-          editAndSave(settingsEditor: (settings: FollowSettings) => void): Promise<void>;
+          editAndSave: (settingsEditor: (settings: FollowSettings) => void) => Promise<void>;
           readonly settings: FollowSettings;
         }
 

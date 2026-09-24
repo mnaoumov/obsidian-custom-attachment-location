@@ -16,7 +16,7 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { CollectAttachmentsEntireVaultCommandHandler } from './collect-attachments-entire-vault-command-handler.ts';
 
 interface TestableHandler {
-  execute(): Promise<void>;
+  execute: () => Promise<void>;
   icon: string;
   id: string;
   name: string;

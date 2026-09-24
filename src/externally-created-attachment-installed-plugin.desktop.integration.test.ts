@@ -28,7 +28,7 @@ import {
  */
 
 interface AttachmentWriterWindow extends Window {
-  writeAttachmentAsInstalledPlugin__?(path: string): Promise<unknown>;
+  writeAttachmentAsInstalledPlugin__?: (path: string) => Promise<unknown>;
 }
 
 /**
@@ -39,7 +39,7 @@ interface EditableViewLike {
 }
 
 interface EditorLike {
-  replaceSelection(text: string): void;
+  replaceSelection: (text: string) => void;
 }
 
 interface InstalledPluginResult {

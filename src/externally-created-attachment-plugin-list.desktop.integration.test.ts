@@ -29,7 +29,7 @@ interface EditableViewLike {
 }
 
 interface EditorLike {
-  replaceSelection(text: string): void;
+  replaceSelection: (text: string) => void;
 }
 
 interface PluginListResult {

@@ -44,7 +44,7 @@ describe('Collect attachments — exclude attachment extensions from the multipl
         interface MultipleNotesSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
           excludeExtensionsFromMultipleNotesCheck: string[];
-          isExtensionExcludedFromMultipleNotesCheck(path: string): boolean;
+          isExtensionExcludedFromMultipleNotesCheck: (path: string) => boolean;
         }
 
         function isMultipleNotesSettings(value: unknown): value is MultipleNotesSettings {

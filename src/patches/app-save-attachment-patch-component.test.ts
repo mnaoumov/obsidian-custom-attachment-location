@@ -15,7 +15,7 @@ import type { AttachmentSaver } from '../attachment-saver.ts';
 import { AppSaveAttachmentPatchComponent } from './app-save-attachment-patch-component.ts';
 
 interface AppWithSaveAttachment {
-  saveAttachment(name: string, extension: string, data: ArrayBuffer): unknown;
+  saveAttachment: (name: string, extension: string, data: ArrayBuffer) => unknown;
 }
 
 describe('AppSaveAttachmentPatchComponent', () => {

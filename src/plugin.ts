@@ -109,17 +109,15 @@ export class Plugin extends PluginBase {
    * @returns The declaration, or none while the feature surface is down.
    */
   protected override getPluginApis(): PluginApiDeclaration[] {
-    if (!this.pluginApi) {
-      return [];
-    }
-
-    return [
-      {
-        api: this.pluginApi,
-        apiVersion: PLUGIN_API_VERSION,
-        contract: PLUGIN_API_CONTRACT
-      }
-    ];
+    return this.pluginApi
+      ? [
+        {
+          api: this.pluginApi,
+          apiVersion: PLUGIN_API_VERSION,
+          contract: PLUGIN_API_CONTRACT
+        }
+      ]
+      : [];
   }
 
   protected override getPluginConflicts(): PluginConflict[] {

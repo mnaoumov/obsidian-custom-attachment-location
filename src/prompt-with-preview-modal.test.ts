@@ -115,19 +115,11 @@ function getButtonText(button: ButtonComponent): string {
 }
 
 function getInputEl(textComponent: TextComponent | undefined): HTMLInputElement | undefined {
-  if (!textComponent) {
-    return undefined;
-  }
-
-  return TextComponentClass.fromOriginalType4__(textComponent).inputEl;
+  return textComponent ? TextComponentClass.fromOriginalType4__(textComponent).inputEl : undefined;
 }
 
 function isButtonDisabled(button: ButtonComponent | undefined): boolean {
-  if (!button) {
-    return false;
-  }
-
-  return ButtonComponentClass.fromOriginalType2__(button).disabled;
+  return button ? ButtonComponentClass.fromOriginalType2__(button).disabled : false;
 }
 
 beforeAll(async () => {

@@ -43,7 +43,7 @@ describe('The attachment unit folder designation is published on the vault', () 
       }): ProbeResult {
         interface UnitFolderSettings {
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder(path: string): boolean;
+          isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         function isUnitFolderSettings(value: unknown): value is UnitFolderSettings {
@@ -111,21 +111,19 @@ describe('The attachment unit folder designation is published on the vault', () 
             app.vault.getAvailablePathForAttachments,
             'checkIsAttachmentUnitFolder'
           ) as CheckIsAttachmentUnitFolderFunction | undefined;
-          if (!checkIsAttachmentUnitFolder) {
-            return {
+          return checkIsAttachmentUnitFolder
+            ? {
+              isDesignatedFolderReported: checkIsAttachmentUnitFolder(designatedFolderPath),
+              isDesignationPublished: true,
+              isPlainFolderReported: checkIsAttachmentUnitFolder(plainFolderPath),
+              settingsFound: true
+            }
+            : {
               isDesignatedFolderReported: false,
               isDesignationPublished: false,
               isPlainFolderReported: false,
               settingsFound: true
             };
-          }
-
-          return {
-            isDesignatedFolderReported: checkIsAttachmentUnitFolder(designatedFolderPath),
-            isDesignationPublished: true,
-            isPlainFolderReported: checkIsAttachmentUnitFolder(plainFolderPath),
-            settingsFound: true
-          };
         } finally {
           settings.attachmentUnitFolderPaths = priorUnitFolderPaths;
         }

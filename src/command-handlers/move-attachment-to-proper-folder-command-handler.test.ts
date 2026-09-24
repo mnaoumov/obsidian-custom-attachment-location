@@ -61,9 +61,9 @@ interface LoopBuildNoticeMessageParamsLike {
 
 interface LoopParams {
   readonly abortSignal: AbortSignal;
-  buildNoticeMessage(params: LoopBuildNoticeMessageParamsLike): string;
+  readonly buildNoticeMessage: (params: LoopBuildNoticeMessageParamsLike) => string;
   readonly items: TFile[];
-  processItem(item: TFile): Promise<void>;
+  readonly processItem: (item: TFile) => Promise<void>;
   readonly progressBarTitle: string;
   readonly shouldContinueOnError: boolean;
   readonly shouldShowProgressBar: boolean;
@@ -74,16 +74,16 @@ interface PluginNameHolder {
 }
 
 interface TestableHandler {
-  canExecute(): boolean;
-  canExecuteAbstractFile(abstractFile: TAbstractFile): boolean;
-  canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean;
-  executeAbstractFile(abstractFile: TAbstractFile): Promise<void>;
-  executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void>;
+  canExecute: () => boolean;
+  canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
+  canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
+  executeAbstractFile: (abstractFile: TAbstractFile) => Promise<void>;
+  executeAbstractFiles: (abstractFiles: TAbstractFile[]) => Promise<void>;
   icon: string;
   id: string;
   name: string;
-  shouldAddToAbstractFileMenu(): boolean;
-  shouldAddToAbstractFilesMenu(): boolean;
+  shouldAddToAbstractFileMenu: () => boolean;
+  shouldAddToAbstractFilesMenu: () => boolean;
 }
 
 vi.mock('obsidian-dev-utils/abort-controller', async (importOriginal) => ({

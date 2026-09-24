@@ -32,12 +32,12 @@ interface ActiveFileProviderHolder {
 }
 
 interface TestableHandler {
-  canExecuteFile(file: TFile): boolean;
-  executeFile(file: TFile): Promise<void>;
+  canExecuteFile: (file: TFile) => boolean;
+  executeFile: (file: TFile) => Promise<void>;
   icon: string;
   id: string;
   name: string;
-  shouldAddToFileMenu(): boolean;
+  shouldAddToFileMenu: () => boolean;
 }
 
 vi.mock('obsidian-dev-utils/obsidian/modals/select-item', async (importOriginal) => ({

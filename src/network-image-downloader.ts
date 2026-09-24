@@ -131,15 +131,17 @@ export class NetworkImageDownloader {
       }
     }
 
-    if (replacements.length > 0) {
-      let newContent = content;
-      // Splicing by position, and from the end backwards so the earlier offsets stay valid, keeps every occurrence separate: the same image
-      // Expression repeated twice is downloaded twice and each copy gets its own link, which a text-keyed replacement would collapse into one.
-      for (const replacement of replacements.reverse()) {
-        newContent = newContent.slice(0, replacement.startIndex) + replacement.markdownLink + newContent.slice(replacement.endIndexExclusive);
-      }
-      await this.app.vault.modify(noteFile, newContent);
+    if (replacements.length === 0) {
+      return;
     }
+
+    let newContent = content;
+    // Splicing by position, and from the end backwards so the earlier offsets stay valid, keeps every occurrence separate: the same image
+    // Expression repeated twice is downloaded twice and each copy gets its own link, which a text-keyed replacement would collapse into one.
+    for (const replacement of replacements.reverse()) {
+      newContent = newContent.slice(0, replacement.startIndex) + replacement.markdownLink + newContent.slice(replacement.endIndexExclusive);
+    }
+    await this.app.vault.modify(noteFile, newContent);
   }
 
   private detectExtension(content: ArrayBuffer, contentType: null | string): string {

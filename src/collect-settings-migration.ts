@@ -70,7 +70,7 @@ export interface MigratableSettingDescriptor {
    * The setting's name, spelled exactly as the settings tab spells it, so the dialog and the tab name the
    * same thing the same way.
    */
-  getName(): string;
+  getName: () => string;
 
   /**
    * How the value is edited and validated.

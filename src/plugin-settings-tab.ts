@@ -65,7 +65,7 @@ interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstr
    *
    * @returns The plugin gate component.
    */
-  getPluginGateComponent(this: void): PluginGateComponent;
+  readonly getPluginGateComponent: (this: void) => PluginGateComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
@@ -544,18 +544,14 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             button.setButtonText(t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title));
             button.setDestructive();
             button.onClick(convertAsyncToSync(async () => {
-              if (this.pluginSettingsComponent.settings.customTokensStr === SAMPLE_CUSTOM_TOKENS) {
-                return;
-              }
-
               if (
-                this.pluginSettingsComponent.settings.customTokensStr !== '' && !await confirm({
+                (this.pluginSettingsComponent.settings.customTokensStr === SAMPLE_CUSTOM_TOKENS) || (this.pluginSettingsComponent.settings.customTokensStr !== '' && !await confirm({
                   app: this.app,
                   cancelButtonText: t(($) => $.obsidianDevUtils.buttons.cancel),
                   message: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.message),
                   okButtonText: t(($) => $.obsidianDevUtils.buttons.ok),
                   title: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title)
-                })
+                }))
               ) {
                 return;
               }
