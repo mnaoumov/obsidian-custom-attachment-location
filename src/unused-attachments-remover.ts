@@ -314,18 +314,18 @@ export class UnusedAttachmentsRemover {
        * — `.excalidraw.md` by default — is Markdown on disk, so `isNote` calls it a note and this sweep
        * used to scan it as one. Two things are wrong with that, and the first is the dangerous one:
        *
-       * - The sweep learns what a note references from the metadata cache, and a drawing keeps its
-       *   references where the cache does not carry them (Excalidraw ships `compress: true`, so they live
-       *   inside a `compressed-json` block — see
-       *   `externally-created-attachment-drawing-owner.desktop.integration.test.ts`). Scanning one
-       *   therefore yields an EMPTY reference set, and every file in the attachment folder it owns becomes
-       *   a candidate to TRASH. Having no evidence is not the same as having evidence of nothing.
+       * - A drawing is an attachment of the note that embeds it, not a note with an attachment folder of
+       *   its own. Scanning it as one makes every file in the folder its path resolves to a candidate to
+       *   TRASH, judged as if the drawing owned them.
        * - One walk would otherwise put the same file in BOTH sets: a note to scan by `isNote`, and an
        *   orphan attachment to trash by `!isNoteEx`. A file cannot be its own attachment.
        *
        * The cost is deliberate and worth stating: an attachment folder reached only through a drawing is
        * no longer visited by the note-driven pass. The orphan pass still reaches its files for a user who
-       * has opted into orphan scanning, and judges them on backlinks rather than on a note's say-so.
+       * has opted into orphan scanning, and judges them on backlinks rather than on a note's say-so. That
+       * is enough for what a drawing shows: Excalidraw writes each image as a plain `[[path]]` line under
+       * `## Embedded Files`, outside the `compressed-json` block, and Obsidian indexes it even inside a `%%`
+       * comment (`delete-unused-attachments-drawing.desktop.integration.test.ts`).
        */
       const isNoteFile = this.pluginSettingsComponent.isNoteEx(file);
       if (isNoteFile) {
