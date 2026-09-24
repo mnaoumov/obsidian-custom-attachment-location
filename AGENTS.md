@@ -12,6 +12,20 @@ Consequences for anyone touching the tests:
 - **Unit tests publish a stand-in API.** `src/plugin.test.ts` publishes an empty API for the dependency in `beforeEach`; without it the gate never opens and nothing past the base loads. `unpublishProviderApi()` withdraws it, which is how the blocked path and the surface teardown are tested.
 - **`onloadImpl` runs again each time the gate reopens.** Anything it stores outside its children has to be reset when the surface unloads — `attachmentCollector` and `pluginApi` both are, because `collectAttachmentsInAbstractFiles` and the published API are reachable from outside and would otherwise drive torn-down components.
 
+## A command gate belongs on `canExecuteAbstractFile`; `canExecuteAbstractFiles` answers one surface out of three
+
+`AbstractFileCommandHandler` exposes two overridable gates, and they are not interchangeable:
+
+- `canExecuteAbstractFile(abstractFile)` is the per-file predicate. The **command palette** reaches it through `canExecute()` (`shouldAddToCommandPalette() && !!activeFile && this.canExecuteAbstractFile(activeFile)`), the **single-file menu** calls it directly, and the base's `canExecuteAbstractFiles` composes it over every entry.
+- `canExecuteAbstractFiles(abstractFiles)` is reached by the **multi-select menu alone**.
+
+So a handler that overrides only the second, leaving the first at its base `return true`, gates one surface out of three — and the other two offer a command that then walks its own filter and does nothing. All three of this repo's gated handlers were that shape, and it was caught only because `excalidraw-source-note-skip.desktop.integration.test.ts` asks `checkCallback(true)` — the same availability question Obsidian asks before listing a command. Every unit test passed while the palette was still offering it, because the unit tests called the override.
+
+Two consequences for anyone adding or changing one:
+
+- **Put the predicate on `canExecuteAbstractFile` and let the base compose it.** All three gated handlers are worked examples: `collect-attachments-in-file-command-handler.ts` (plain `isNote`, so a drawing is still collected from), `delete-unused-attachments-in-file-command-handler.ts` and `move-attachment-to-proper-folder-command-handler.ts` (both `isNoteEx`).
+- **Do not open such an override with `super.canExecute()`.** The three handlers used to, and it tests the ACTIVE file — a condition with nothing to do with a menu built from the files the user clicked, and one that turns into a real false negative the moment `canExecuteAbstractFile` is implemented, hiding the multi-select item whenever an unrelated file is open.
+
 ## The published reads are non-interactive, and a new interactive token must say so
 
 `src/plugin-api-impl.ts` answers a consumer's questions by driving the same `AttachmentPathManager` the commands drive, under `ActionContext.ReadApi`. That context exists for one reason: **a read has no user to ask.** A consumer auditing a whole vault calls `getAttachmentFolderPath` once per note, and a folder template holding `${prompt}` would raise one dialog per note.

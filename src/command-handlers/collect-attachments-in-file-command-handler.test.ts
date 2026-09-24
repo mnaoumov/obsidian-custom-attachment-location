@@ -30,6 +30,8 @@ interface ActiveFileProviderHolder {
 }
 
 interface TestableHandler {
+  canExecute(): boolean;
+  canExecuteAbstractFile(abstractFile: TAbstractFile): boolean;
   canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean;
   executeAbstractFile(abstractFile: TAbstractFile): Promise<void>;
   executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void>;
@@ -95,32 +97,69 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
     expect(toTestable(handler).name).toBe('Collect attachments in current note');
   });
 
-  describe('canExecuteAbstractFiles', () => {
-    it('should return false when the base canExecute returns false', () => {
-      setActiveFile(handler, null);
-      expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('a.md')])).toBe(false);
-      expect(mockIsFile).not.toHaveBeenCalled();
+  describe('canExecuteAbstractFile', () => {
+    it('should accept a note', () => {
+      mockIsFile.mockReturnValue(true);
+      mockIsNote.mockReturnValue(true);
+      expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('a.md'))).toBe(true);
     });
 
+    it('should reject an attachment', () => {
+      mockIsFile.mockReturnValue(true);
+      mockIsNote.mockReturnValue(false);
+      expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('image.png'))).toBe(false);
+    });
+
+    it('should accept a folder without asking the predicate, because the walk inside it filters', () => {
+      mockIsFile.mockReturnValue(false);
+      expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('folder'))).toBe(true);
+      expect(mockIsNote).not.toHaveBeenCalled();
+    });
+  });
+
+  /*
+   * The base composes the per-file predicate over every entry, and this handler no longer overrides that.
+   * The cases below are here because the override it replaced was the ONLY gate the multi-select menu had,
+   * so a future re-override has to keep answering them.
+   */
+  describe('canExecuteAbstractFiles', () => {
     it('should return true when all files are notes', () => {
-      setActiveFile(handler, createFile('active.md'));
       mockIsFile.mockReturnValue(true);
       mockIsNote.mockReturnValue(true);
       expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('a.md'), createAbstractFile('b.md')])).toBe(true);
     });
 
     it('should return false when one of the files is not a note', () => {
-      setActiveFile(handler, createFile('active.md'));
       mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(false);
-      expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('image.png')])).toBe(false);
+      mockIsNote.mockImplementation((file) => castTo<TFile>(file).path !== 'image.png');
+      expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('a.md'), createAbstractFile('image.png')])).toBe(false);
+    });
+  });
+
+  /*
+   * The command-palette path, and the reason the gate moved onto the per-file predicate: `canExecute`
+   * asks `canExecuteAbstractFile` about the ACTIVE file and never consults `canExecuteAbstractFiles`, so
+   * while the gate lived only on the latter the palette offered this command on an attachment and it then
+   * did nothing.
+   */
+  describe('canExecute', () => {
+    it('should refuse when no file is open', () => {
+      setActiveFile(handler, null);
+      expect(toTestable(handler).canExecute()).toBe(false);
     });
 
-    it('should return true when none of the abstract files are files', () => {
+    it('should offer the command while a note is open', () => {
       setActiveFile(handler, createFile('active.md'));
-      mockIsFile.mockReturnValue(false);
-      expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('folder')])).toBe(true);
-      expect(mockIsNote).not.toHaveBeenCalled();
+      mockIsFile.mockReturnValue(true);
+      mockIsNote.mockReturnValue(true);
+      expect(toTestable(handler).canExecute()).toBe(true);
+    });
+
+    it('should refuse while an attachment is open', () => {
+      setActiveFile(handler, createFile('image.png'));
+      mockIsFile.mockReturnValue(true);
+      mockIsNote.mockReturnValue(false);
+      expect(toTestable(handler).canExecute()).toBe(false);
     });
   });
 

@@ -30,18 +30,26 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
     this.attachmentCollector = params.attachmentCollector;
   }
 
-  protected override canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean {
-    if (!super.canExecute()) {
-      return false;
-    }
-
-    for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && !isNote(abstractFile)) {
-        return false;
-      }
-    }
-
-    return true;
+  /**
+   * Whether the command may run for one file or folder.
+   *
+   * The plain extension-based `isNote`, not `isNoteEx`, on purpose: a file listed in
+   * `treatAsAttachmentExtensions` (`.excalidraw.md` by default) is still collected FROM. Issues #57 and #75
+   * both ship running this command on a drawing as their defining scenario — the image it embeds is handed
+   * to whichever note outranks it — so the collector's walk scans such a file, and this gate agrees with it.
+   *
+   * This is the PER-FILE predicate, and it is the one all three surfaces reach: the base routes the
+   * command palette (`canExecute`), the single-file menu and — by composing this over every entry — the
+   * multi-select menu through it. A `canExecuteAbstractFiles` override was doing the work for the last of
+   * those alone, so the palette and the file menu offered the command on an attachment the walk then
+   * filtered out. It also opened with `super.canExecute()`, which tests the ACTIVE file: a condition that
+   * has nothing to do with a menu built from the files the user clicked.
+   *
+   * @param abstractFile - The file or folder.
+   * @returns Whether the command may run for it. A folder always may — the walk inside it filters.
+   */
+  protected override canExecuteAbstractFile(abstractFile: TAbstractFile): boolean {
+    return !isFile(abstractFile) || isNote(abstractFile);
   }
 
   protected override executeAbstractFile(abstractFile: TAbstractFile): Promisable<void> {

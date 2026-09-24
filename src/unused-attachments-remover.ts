@@ -18,8 +18,7 @@ import { getCanvasReferences } from 'obsidian-dev-utils/obsidian/canvas';
 import {
   isCanvasFile,
   isFile,
-  isFolder,
-  isNote
+  isFolder
 } from 'obsidian-dev-utils/obsidian/file-system';
 import { t } from 'obsidian-dev-utils/obsidian/i18n/i18n';
 import { extractLinkFile } from 'obsidian-dev-utils/obsidian/link';
@@ -310,18 +309,37 @@ export class UnusedAttachmentsRemover {
     const orphanCandidateFilesSet = new Set<TFile>();
 
     const collectFile = (file: TFile): void => {
-      if (isNote(file)) {
+      /*
+       * `isNoteEx`, not the plain extension-based `isNote`. A file listed in `treatAsAttachmentExtensions`
+       * — `.excalidraw.md` by default — is Markdown on disk, so `isNote` calls it a note and this sweep
+       * used to scan it as one. Two things are wrong with that, and the first is the dangerous one:
+       *
+       * - The sweep learns what a note references from the metadata cache, and a drawing keeps its
+       *   references where the cache does not carry them (Excalidraw ships `compress: true`, so they live
+       *   inside a `compressed-json` block — see
+       *   `externally-created-attachment-drawing-owner.desktop.integration.test.ts`). Scanning one
+       *   therefore yields an EMPTY reference set, and every file in the attachment folder it owns becomes
+       *   a candidate to TRASH. Having no evidence is not the same as having evidence of nothing.
+       * - One walk would otherwise put the same file in BOTH sets: a note to scan by `isNote`, and an
+       *   orphan attachment to trash by `!isNoteEx`. A file cannot be its own attachment.
+       *
+       * The cost is deliberate and worth stating: an attachment folder reached only through a drawing is
+       * no longer visited by the note-driven pass. The orphan pass still reaches its files for a user who
+       * has opted into orphan scanning, and judges them on backlinks rather than on a note's say-so.
+       */
+      const isNoteFile = this.pluginSettingsComponent.isNoteEx(file);
+      if (isNoteFile) {
         noteFilesSet.add(file);
       }
 
       /*
-       * The mode check comes first so a user who never opted in pays nothing — it short-circuits before
-       * `isNoteEx`, which asks the other plugin whether the extension is treated as an attachment.
+       * Asked once and reused, so the two sets cannot disagree and the answer — which reaches the other
+       * plugin to ask whether the extension is treated as an attachment — is paid for once per file.
        */
       if (
         shouldScanOrphanAttachments
+        && !isNoteFile
         && this.pluginSettingsComponent.settings.isOrphanAttachmentScanCandidate(file.path)
-        && !this.pluginSettingsComponent.isNoteEx(file)
       ) {
         orphanCandidateFilesSet.add(file);
       }

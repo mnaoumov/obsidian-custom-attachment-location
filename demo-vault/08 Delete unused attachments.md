@@ -20,6 +20,7 @@ It is deliberately careful, because it deletes your data:
 - A confirmation dialog **before** anything happens states **how many** attachments will go, then names them - the first 50, and a count of the rest, because vault-wide the list can run to thousands and a wall of paths is not something you can weigh.
 - Files go to the **trash** (recoverable), honoring your Obsidian "Deleted files" setting.
 - Notes under an ignored path are skipped, on both scopes.
+- **A file you have listed in `treatAsAttachmentExtensions` is never swept as a note**, on either scope, and the per-note command is not offered while one is the active file. `.excalidraw.md` is the default entry, and the reason is the one [02 Attachment file naming](<./02 Attachment file naming.md>) gives: a drawing keeps its references where Obsidian cannot read them, so asking what it still uses comes back empty - and an empty answer here would mark every file in the folder it owns as unused. Having no evidence is not evidence of nothing. Such a drawing is still an attachment the sweep can *judge*, and still keeps the files it references alive where its links are ordinary indexed ones.
 
 ## Try it
 

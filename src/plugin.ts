@@ -343,6 +343,7 @@ export class Plugin extends PluginBase {
         attachmentCollector
       }),
       new DeleteUnusedAttachmentsInFileCommandHandler({
+        pluginSettingsComponent,
         unusedAttachmentsRemover
       }),
       new CollectAttachmentsInCurrentFolderCommandHandler({
