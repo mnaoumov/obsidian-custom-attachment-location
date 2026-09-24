@@ -529,6 +529,60 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
     });
 
+    it('should move into an excluded note when every note linking to the attachment is excluded', async () => {
+      // A drawing is excluded from the multiple-notes count, but an attachment only a drawing uses still has to go somewhere.
+      const attachment = createFile('attachment.png');
+      const drawingReference = createReference('[[attachment]]d');
+      const drawingFile = createFile('drawing.excalidraw.md');
+      mockIsExcludedFromMultipleNotesCheck.mockReturnValue(true);
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(new Map([['drawing.excalidraw.md', [drawingReference]]])))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      getFileByPath.mockReturnValue(drawingFile);
+      mockGetProperAttachmentPath.mockResolvedValue('drawing-assets/attachment.png');
+      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+        await linkConverter(drawingReference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockGetProperAttachmentPath).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ noteFilePath: 'drawing.excalidraw.md', reference: drawingReference })
+      );
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'drawing-assets/attachment.png', oldPathOrFile: attachment });
+      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ link: drawingReference, newSourcePathOrFile: drawingFile }));
+    });
+
+    it('should skip relinking a note that no longer resolves to a file and still move into the one that does', async () => {
+      // A backlink key the vault cannot resolve, such as a note deleted after the backlinks were read, has no links to rewrite.
+      const attachment = createFile('attachment.png');
+      const noteReference = createReference('[[attachment]]n');
+      const noteFile = createFile('note1.md');
+      mockIsExcludedFromMultipleNotesCheck.mockImplementation((path) => path === 'gone.md');
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['gone.md', [createReference('[[attachment]]g')]],
+            ['note1.md', [noteReference]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      getFileByPath.mockImplementation((path) => path === 'note1.md' ? noteFile : null);
+      mockGetProperAttachmentPath.mockResolvedValue('note1-assets/attachment.png');
+      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+        await linkConverter(noteReference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'note1-assets/attachment.png', oldPathOrFile: attachment });
+      expect(mockEditLinks).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ pathOrFile: noteFile }));
+      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ link: noteReference, newSourcePathOrFile: noteFile }));
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
+    });
+
     it('should move an exempt-type attachment into the first of its notes by path and relink every note', async () => {
       // Issue #80: the file type is deliberately shared, so there is no question to ask, and one copy serves all notes.
       const attachment = createFile('attachment.af');

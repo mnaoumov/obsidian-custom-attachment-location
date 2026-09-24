@@ -396,7 +396,7 @@ describe('promptWithPreview', () => {
     await promise;
   });
 
-  it('should not load an embed in the preview modal when there is no embeddable creator', async () => {
+  it('should disable the Preview button when there is no embeddable creator', async () => {
     const promise = promptWithPreview({
       context: createContext({
         app: createApp({
@@ -408,9 +408,41 @@ describe('promptWithPreview', () => {
       valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
     });
     await flushOnOpen();
+    expect(isButtonDisabled(captured.buttons[2])).toBe(true);
     clickButton(captured.buttons[2]);
     await flushOnOpen();
     expect(hoisted.embedComponent.load).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(0);
+    await promise;
+  });
+
+  it('should not load an embed when the embeddable creator is unregistered after the prompt opened', async () => {
+    const embeddableCreator = vi.fn<EmbedCreator>(() => castTo<ReturnType<EmbedCreator>>(hoisted.embedComponent));
+    const embedRegistry = createEmbedRegistry({ png: embeddableCreator });
+    const createBinary = vi.fn((path: string): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ name: 'temp', path })));
+    const vault = castTo<App['vault']>({
+      createBinary,
+      getConfig: vi.fn((): boolean => true)
+    });
+    const promise = promptWithPreview({
+      context: createContext({
+        app: createApp({
+          embedRegistry,
+          vault
+        }),
+        getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(new ArrayBuffer(8))
+      }),
+      defaultValue: 'default-value',
+      valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
+    });
+    await flushOnOpen();
+    expect(isButtonDisabled(captured.buttons[2])).toBe(false);
+    // The plugin that registered the extension unloads while the prompt is still open.
+    Reflect.deleteProperty(embedRegistry.embedByExtension, 'png');
+    clickButton(captured.buttons[2]);
+    await flushOnOpen();
+    expect(createBinary).not.toHaveBeenCalled();
+    expect(embeddableCreator).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(0);
     await promise;
   });
