@@ -174,7 +174,7 @@ describe('Deleting a folder whose shared attachment ties at the top of the note-
       }): Promise<ProbeResult> {
         interface AttachmentFolderSettings {
           attachmentFolderPath: string;
-          isAttachmentUnitFolder(path: string): boolean;
+          isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         interface MigratableSettingsLike {
@@ -201,8 +201,8 @@ describe('Deleting a folder whose shared attachment ties at the top of the note-
         }
 
         interface HandlerApiLike {
-          getSettings(): HandedOverSettingsLike;
-          migrateSettings(params: MigrateSettingsParamsLike): Promise<MigrateSettingsResultLike>;
+          getSettings: () => HandedOverSettingsLike;
+          migrateSettings: (params: MigrateSettingsParamsLike) => Promise<MigrateSettingsResultLike>;
         }
 
         interface PluginWithApiLike {

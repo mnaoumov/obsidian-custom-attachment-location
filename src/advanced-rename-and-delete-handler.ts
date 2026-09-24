@@ -36,7 +36,7 @@ export interface AdvancedRenameAndDeleteHandlerApi extends SettingsMigrationApi<
    *
    * @returns The current values.
    */
-  getSettings(): HandedOverSettings;
+  getSettings: () => HandedOverSettings;
 
   /**
    * Whether a path is one the handler leaves alone entirely.
@@ -48,7 +48,7 @@ export interface AdvancedRenameAndDeleteHandlerApi extends SettingsMigrationApi<
    * @param path - The vault-relative path.
    * @returns Whether the path is ignored.
    */
-  isPathIgnored(path: string): boolean;
+  isPathIgnored: (path: string) => boolean;
 
   /**
    * Whether a file is an attachment even though its extension says otherwise — `.excalidraw.md` being the
@@ -58,7 +58,7 @@ export interface AdvancedRenameAndDeleteHandlerApi extends SettingsMigrationApi<
    * @param path - The vault-relative path.
    * @returns Whether the file is treated as an attachment.
    */
-  isTreatedAsAttachment(path: string): boolean;
+  isTreatedAsAttachment: (path: string) => boolean;
 }
 
 /**

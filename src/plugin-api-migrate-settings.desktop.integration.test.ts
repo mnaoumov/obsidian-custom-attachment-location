@@ -66,7 +66,7 @@ describe('migrateSettings', () => {
         }
 
         interface ApiLike {
-          migrateSettings(params: MigrateSettingsParams): Promise<MigrateSettingsResult>;
+          migrateSettings: (params: MigrateSettingsParams) => Promise<MigrateSettingsResult>;
         }
 
         interface ApiRecord {

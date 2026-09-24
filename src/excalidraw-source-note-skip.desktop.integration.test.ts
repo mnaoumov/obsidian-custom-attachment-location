@@ -59,13 +59,13 @@ describe('A .excalidraw.md is never swept as a note, and is still collected from
         pluginId
       }): Promise<ProbeResult> {
         interface AvailabilityCheckableCommand {
-          checkCallback?(isChecking: boolean): boolean | undefined;
+          checkCallback?: (isChecking: boolean) => boolean | undefined;
         }
 
         interface HandedOverProvider {
-          getSettings(): Record<string, unknown>;
-          isPathIgnored(path: string): boolean;
-          isTreatedAsAttachment(path: string): boolean;
+          getSettings: () => Record<string, unknown>;
+          isPathIgnored: (path: string) => boolean;
+          isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {

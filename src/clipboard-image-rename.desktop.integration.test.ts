@@ -27,12 +27,12 @@ interface ClipboardRenameResult {
 }
 
 interface FsPromisesLike {
-  unlink(path: string): Promise<void>;
-  writeFile(path: string, data: Uint8Array): Promise<void>;
+  unlink: (path: string) => Promise<void>;
+  writeFile: (path: string, data: Uint8Array) => Promise<void>;
 }
 
 interface InsertFilesClipboardManager {
-  insertFiles(importedAttachments: unknown[]): Promise<void>;
+  insertFiles: (importedAttachments: unknown[]) => Promise<void>;
 }
 
 interface MarkdownEditModeLike {
@@ -44,11 +44,11 @@ interface MarkdownViewLike {
 }
 
 interface OsModuleLike {
-  tmpdir(): string;
+  tmpdir: () => string;
 }
 
 interface PathModuleLike {
-  join(...parts: string[]): string;
+  join: (...parts: string[]) => string;
 }
 
 /*
@@ -65,7 +65,7 @@ describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issu
           attachmentFolderPath: string;
           attachmentRenameMode: string;
           generatedAttachmentFileName: string;
-          isPathIgnored(path: string): boolean;
+          isPathIgnored: (path: string) => boolean;
         }
 
         function isRenameSettings(value: unknown): value is RenameSettings {

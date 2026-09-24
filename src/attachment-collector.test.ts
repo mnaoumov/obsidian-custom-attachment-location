@@ -102,13 +102,13 @@ interface LoopBuildNoticeMessageParamsLike {
 }
 
 interface LoopOptionsLike {
-  buildNoticeMessage(params: LoopBuildNoticeMessageParamsLike): string;
+  buildNoticeMessage: (params: LoopBuildNoticeMessageParamsLike) => string;
   items: TFile[];
-  processItem(item: TFile): Promise<void>;
+  processItem: (item: TFile) => Promise<void>;
 }
 
 interface QueueParamsLike {
-  operationFunction(abortSignal: AbortSignal): Promise<void>;
+  operationFunction: (abortSignal: AbortSignal) => Promise<void>;
   operationName: string;
 }
 
@@ -120,12 +120,12 @@ interface SettingsLike {
   collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode;
   collectedAttachmentFileName: string;
   emptyFolderBehavior: EmptyFolderBehavior;
-  getTimeoutInMilliseconds(): number;
-  isAttachmentUnitFolder(path: string): boolean;
-  isExcludedFromAttachmentCollecting(path: string): boolean;
-  isExcludedFromMultipleNotesCheck(path: string): boolean;
-  isExtensionExcludedFromMultipleNotesCheck(path: string): boolean;
-  isPathIgnored(path: string): boolean;
+  getTimeoutInMilliseconds: () => number;
+  isAttachmentUnitFolder: (path: string) => boolean;
+  isExcludedFromAttachmentCollecting: (path: string) => boolean;
+  isExcludedFromMultipleNotesCheck: (path: string) => boolean;
+  isExtensionExcludedFromMultipleNotesCheck: (path: string) => boolean;
+  isPathIgnored: (path: string) => boolean;
   notePriorities: readonly string[];
   shouldRenameCollectedAttachments: boolean;
   shouldSkipCollectingAttachmentsReferencedByRawPath: boolean;

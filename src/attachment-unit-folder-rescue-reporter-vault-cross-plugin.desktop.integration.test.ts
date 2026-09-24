@@ -111,7 +111,7 @@ describe('Deleting a folder on the layout of the reporter\'s second sample vault
         interface UnitFolderSettings {
           attachmentFolderPath: string;
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder(path: string): boolean;
+          isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         interface MigratableSettingsLike {
@@ -136,8 +136,8 @@ describe('Deleting a folder on the layout of the reporter\'s second sample vault
         }
 
         interface HandlerApiLike {
-          getSettings(): HandedOverSettingsLike;
-          migrateSettings(params: MigrateSettingsParamsLike): Promise<MigrateSettingsResultLike>;
+          getSettings: () => HandedOverSettingsLike;
+          migrateSettings: (params: MigrateSettingsParamsLike) => Promise<MigrateSettingsResultLike>;
         }
 
         interface PluginWithApiLike {

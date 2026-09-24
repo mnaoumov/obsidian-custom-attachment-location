@@ -102,11 +102,7 @@ export class TokenValidator {
       return `File name "${params.fileName}" contains more than two dots`;
     }
 
-    if (TRAILING_DOTS_REG_EXP.test(cleanFileName)) {
-      return `File name "${params.fileName}" contains trailing dots`;
-    }
-
-    return '';
+    return TRAILING_DOTS_REG_EXP.test(cleanFileName) ? `File name "${params.fileName}" contains trailing dots` : '';
   }
 
   public async validatePath(params: TokenValidatorValidatePathParams): Promise<string> {

@@ -125,51 +125,36 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
     }
 
     const noteFile = (mostRecentLeaf?.view as MarkdownView | undefined)?.file ?? null;
-    if (!noteFile || !this.pluginSettingsComponent.isNoteEx(noteFile)) {
-      return null;
-    }
-
-    return noteFile;
+    return !noteFile || !this.pluginSettingsComponent.isNoteEx(noteFile) ? null : noteFile;
   }
 
   private async handleCreate(abstractFile: TAbstractFile): Promise<void> {
     const { settings } = this.pluginSettingsComponent;
-    if (settings.renameAttachmentsCreatedByOtherPluginsMode === RenameAttachmentsCreatedByOtherPluginsMode.None) {
-      return;
-    }
-
-    if (!(abstractFile instanceof TFile)) {
+    if (settings.renameAttachmentsCreatedByOtherPluginsMode === RenameAttachmentsCreatedByOtherPluginsMode.None || !(abstractFile instanceof TFile)) {
       return;
     }
 
     const attachmentFile = abstractFile;
 
-    /*
-     * The plugin's own writes claim their path before writing it. Consuming the claim here is what
-     * stops a `${prompt}` template prompting a second time for every attachment the plugin saves.
-     */
-    if (selfWriteRegistry.consume(attachmentFile.path)) {
-      return;
-    }
-
-    if (this.pluginSettingsComponent.isNoteEx(attachmentFile)) {
-      return;
-    }
-
-    /*
-     * Only files created just now. A vault opening, a sync catching up or a folder import all replay
-     * `create` for files that already existed, and none of those are an attachment the user is adding
-     * to the note in front of them.
-     *
-     * A fixed window rather than the `timeoutInSeconds` setting: that one means "wait indefinitely"
-     * at 0, which here would silently disable the guard and let a whole synced folder be renamed.
-     * The value matches the pasted-image freshness threshold in `AttachmentSaver`.
-     */
-    if (Date.now() - attachmentFile.stat.ctime > FRESHLY_CREATED_THRESHOLD_IN_MILLISECONDS) {
-      return;
-    }
-
-    if (this.handedOverSettingsComponent.isPathIgnored(attachmentFile.path)) {
+    if (
+      /*
+       * The plugin's own writes claim their path before writing it. Consuming the claim here is what
+       * stops a `${prompt}` template prompting a second time for every attachment the plugin saves.
+       */
+      selfWriteRegistry.consume(attachmentFile.path)
+      || this.pluginSettingsComponent.isNoteEx(attachmentFile)
+      /*
+       * Only files created just now. A vault opening, a sync catching up or a folder import all replay
+       * `create` for files that already existed, and none of those are an attachment the user is adding
+       * to the note in front of them.
+       *
+       * A fixed window rather than the `timeoutInSeconds` setting: that one means "wait indefinitely"
+       * at 0, which here would silently disable the guard and let a whole synced folder be renamed.
+       * The value matches the pasted-image freshness threshold in `AttachmentSaver`.
+       */
+      || Date.now() - attachmentFile.stat.ctime > FRESHLY_CREATED_THRESHOLD_IN_MILLISECONDS
+      || this.handedOverSettingsComponent.isPathIgnored(attachmentFile.path)
+    ) {
       return;
     }
 
@@ -189,15 +174,7 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
 
     const noteFile = this.findNoteFile();
     // The templates are relative to a note. Without one there is nothing to resolve them against.
-    if (!noteFile) {
-      return;
-    }
-
-    if (this.handedOverSettingsComponent.isPathIgnored(noteFile.path)) {
-      return;
-    }
-
-    if (!await this.waitForNoteReference(attachmentFile, noteFile)) {
+    if (!noteFile || this.handedOverSettingsComponent.isPathIgnored(noteFile.path) || !await this.waitForNoteReference(attachmentFile, noteFile)) {
       return;
     }
 
@@ -402,11 +379,9 @@ function isLinkTo(url: string, targetPath: string, notePath: string): boolean {
     return false;
   }
 
-  if (linkPath.startsWith('/')) {
-    return linkPath.slice(1) === targetPath;
-  }
-
-  return join(dirname(notePath), linkPath) === targetPath
-    || linkPath === targetPath
-    || linkPath === basename(targetPath);
+  return linkPath.startsWith('/')
+    ? linkPath.slice(1) === targetPath
+    : join(dirname(notePath), linkPath) === targetPath
+      || linkPath === targetPath
+      || linkPath === basename(targetPath);
 }

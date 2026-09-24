@@ -47,11 +47,7 @@ export class AutomaticAttachmentCollectorComponent extends LayoutReadyComponent 
   }
 
   private handleMetadataCacheChanged(file: TFile): void {
-    if (!this.pluginSettingsComponent.settings.shouldCollectAttachmentsAutomatically) {
-      return;
-    }
-
-    if (!this.pluginSettingsComponent.isNoteEx(file)) {
+    if (!this.pluginSettingsComponent.settings.shouldCollectAttachmentsAutomatically || !this.pluginSettingsComponent.isNoteEx(file)) {
       return;
     }
 

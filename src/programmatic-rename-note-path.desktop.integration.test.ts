@@ -40,7 +40,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
     const result = await evalInObsidian({
       async callback({ app }): Promise<ProgrammaticRenameResult> {
         interface ExtendedResolver {
-          extended(params: ResolveParams): Promise<string>;
+          extended: (params: ResolveParams) => Promise<string>;
         }
 
         interface RenameNoteSettings {
@@ -56,9 +56,9 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
          * which exercises the real read path without needing the other plugin installed in the vault.
          */
         interface HandedOverProvider {
-          getSettings(): Record<string, unknown>;
-          isPathIgnored(path: string): boolean;
-          isTreatedAsAttachment(path: string): boolean;
+          getSettings: () => Record<string, unknown>;
+          isPathIgnored: (path: string) => boolean;
+          isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {

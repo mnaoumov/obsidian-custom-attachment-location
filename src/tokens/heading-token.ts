@@ -44,14 +44,18 @@ export class HeadingToken extends TokenBase<Format> {
       const headingLevel = String(heading.level) as HeadingLevel;
 
       const lastLine = lastLines.get(headingLevel) ?? -1;
-      if (heading.position.start.line > lastLine) {
-        headingsInfo.set(headingLevel, heading.heading);
-        lastLines.set(headingLevel, heading.position.start.line);
-        if (heading.position.start.line > (lastLines.get('any') ?? -1)) {
-          lastLines.set('any', heading.position.start.line);
-          headingsInfo.set('any', heading.heading);
-        }
+      if (heading.position.start.line <= lastLine) {
+        continue;
       }
+
+      headingsInfo.set(headingLevel, heading.heading);
+      lastLines.set(headingLevel, heading.position.start.line);
+      if (heading.position.start.line <= (lastLines.get('any') ?? -1)) {
+        continue;
+      }
+
+      lastLines.set('any', heading.position.start.line);
+      headingsInfo.set('any', heading.heading);
     }
 
     return headingsInfo;

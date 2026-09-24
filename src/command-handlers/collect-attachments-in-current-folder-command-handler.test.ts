@@ -18,7 +18,7 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './collect-attachments-in-current-folder-command-handler.ts';
 
 interface TestableHandler {
-  executeFolder(folder: TFolder): void;
+  executeFolder: (folder: TFolder) => void;
   icon: string;
   id: string;
   name: string;

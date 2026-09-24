@@ -15,7 +15,7 @@ import {
  */
 
 interface FileExplorerLike {
-  revealInFolder(abstractFile: TAbstractFile): void;
+  revealInFolder: (abstractFile: TAbstractFile) => void;
 }
 
 interface NavigationResult {

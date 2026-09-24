@@ -15,6 +15,7 @@ import type { CustomAttachmentLocationComponent } from '../custom-attachment-loc
 import { VaultGetConfigPatchComponent } from './vault-get-config-patch-component.ts';
 
 interface VaultWithGetConfig {
+  // eslint-disable-next-line @typescript-eslint/method-signature-style -- A method signature relaxes the parameter check, which is what lets the real `Vault`, whose `getConfig` takes a narrower `ConfigItem`, be called with an arbitrary name.
   getConfig(name: string): unknown;
 }
 

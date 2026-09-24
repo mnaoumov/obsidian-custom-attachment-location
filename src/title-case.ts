@@ -60,11 +60,7 @@ export function toTitleCase(value: string): string {
         return unit;
       }
 
-      if (unit.length >= MIN_ACRONYM_LENGTH && unit === unit.toUpperCase()) {
-        return unit;
-      }
-
-      return unit.charAt(0).toUpperCase() + unit.slice(1).toLowerCase();
+      return unit.length >= MIN_ACRONYM_LENGTH && unit === unit.toUpperCase() ? unit : unit.charAt(0).toUpperCase() + unit.slice(1).toLowerCase();
     })
     .join('');
 }

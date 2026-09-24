@@ -30,16 +30,16 @@ interface ActiveFileProviderHolder {
 }
 
 interface TestableHandler {
-  canExecute(): boolean;
-  canExecuteAbstractFile(abstractFile: TAbstractFile): boolean;
-  canExecuteAbstractFiles(abstractFiles: TAbstractFile[]): boolean;
-  executeAbstractFile(abstractFile: TAbstractFile): Promise<void>;
-  executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void>;
+  canExecute: () => boolean;
+  canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
+  canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
+  executeAbstractFile: (abstractFile: TAbstractFile) => Promise<void>;
+  executeAbstractFiles: (abstractFiles: TAbstractFile[]) => Promise<void>;
   icon: string;
   id: string;
   name: string;
-  shouldAddToAbstractFileMenu(): boolean;
-  shouldAddToAbstractFilesMenu(): boolean;
+  shouldAddToAbstractFileMenu: () => boolean;
+  shouldAddToAbstractFilesMenu: () => boolean;
 }
 
 vi.mock('obsidian-dev-utils/obsidian/file-system', async (importOriginal) => ({

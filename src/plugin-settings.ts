@@ -327,11 +327,7 @@ export class PluginSettings {
     const lowerCasePath = path.toLowerCase();
     return this.excludeExtensionsFromMultipleNotesCheck.some((extension) => {
       const normalizedExtension = extension.trim().replace(/^\./, '').toLowerCase();
-      if (normalizedExtension === '' || /^\.*$/.test(normalizedExtension)) {
-        return false;
-      }
-
-      return lowerCasePath.endsWith(`.${normalizedExtension}`);
+      return normalizedExtension !== '' && !/^\.*$/.test(normalizedExtension) && lowerCasePath.endsWith(`.${normalizedExtension}`);
     });
   }
 
@@ -346,19 +342,13 @@ export class PluginSettings {
    */
   public isOrphanAttachmentScanCandidate(path: string): boolean {
     const mode = this.orphanAttachmentScanMode;
-    if (mode === OrphanAttachmentScanMode.None) {
-      return false;
-    }
 
     /*
-     * Ifs rather than an exhaustive `switch`: `default-case` demands a branch no enum value can reach, and
-     * an unreachable branch is exactly what the coverage bar forbids.
+     * Comparisons rather than an exhaustive `switch`: `default-case` demands a branch no enum value can reach,
+     * and an unreachable branch is exactly what the coverage bar forbids.
      */
-    if (mode === OrphanAttachmentScanMode.EntireVault) {
-      return true;
-    }
-
-    return this._orphanAttachmentScanPaths.isPathIgnored(path);
+    return mode !== OrphanAttachmentScanMode.None
+      && (mode === OrphanAttachmentScanMode.EntireVault || this._orphanAttachmentScanPaths.isPathIgnored(path));
   }
 
   /**

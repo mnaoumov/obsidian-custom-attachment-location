@@ -25,10 +25,8 @@ export class WebUtilsGetPathForFilePatchComponent extends MonkeyAroundComponent 
         originalArguments: [file]
       }) => {
         const fileEx = file as Partial<FileEx>;
-        if (fileEx.path) {
-          return fileEx.path;
-        }
-        return fallback();
+        // An empty `path` names no file on disk, so it falls back exactly as a missing one does.
+        return fileEx.path === undefined || fileEx.path === '' ? fallback() : fileEx.path;
       }
     });
   }

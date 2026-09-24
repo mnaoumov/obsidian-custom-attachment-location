@@ -54,15 +54,15 @@ interface GetAttachmentFolderFullPathForPathParams {
 }
 
 interface SettingsOverrides {
-  isPathIgnored?(path: string): boolean;
+  isPathIgnored?: (path: string) => boolean;
   otherPluginIdsForAttachmentRename?: string[];
   renameAttachmentsCreatedByOtherPluginsMode?: RenameAttachmentsCreatedByOtherPluginsMode;
 }
 
 interface SetupOverrides {
   generatedAttachmentFileBaseName?: string;
-  isNoteEx?(pathOrFile: unknown): boolean;
-  onGetAttachmentFolderFullPathForPath?(params: GetAttachmentFolderFullPathForPathParams): void;
+  isNoteEx?: (pathOrFile: unknown) => boolean;
+  onGetAttachmentFolderFullPathForPath?: (params: GetAttachmentFolderFullPathForPathParams) => void;
   settings?: SettingsOverrides;
 }
 
@@ -419,10 +419,12 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
     // `obsidian-test-mocks` puts neither a file nor an `activeTime` on a leaf, so stand both up.
     const view: unknown = leaf?.view;
     (view as FileViewLike).file = getApp().vault.getFileByPath(notePath);
-    if (activeTime !== undefined) {
-      const leafValue: unknown = leaf;
-      (leafValue as ActiveTimeLike).activeTime = activeTime;
+    if (activeTime === undefined) {
+      return;
     }
+
+    const leafValue: unknown = leaf;
+    (leafValue as ActiveTimeLike).activeTime = activeTime;
   }
 
   it('should repoint a link the creating plugin left unsaved in an editor', async () => {

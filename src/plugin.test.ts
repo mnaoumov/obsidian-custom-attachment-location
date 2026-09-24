@@ -261,26 +261,26 @@ interface CustomAttachmentLocationParamsProbe {
 interface MigrationParamsProbe {
   readonly apiVersionRange: string;
   readonly contract: PluginApiContract;
-  getProposedSettings(): MigratableSettings | null;
+  getProposedSettings: () => MigratableSettings | null;
   readonly providerPluginId: string;
-  retireProposedSettings(): Promise<void>;
+  retireProposedSettings: () => Promise<void>;
   readonly sourcePluginId: string;
 }
 
 // `getPluginApis` is protected on the base, so a test reads it through a probe.
 interface PluginApisProbe {
-  getPluginApis(): unknown[];
+  getPluginApis: () => unknown[];
 }
 
 // `getPluginConflicts` is protected on the base — the declaration is for the library, not for callers —
 // So a test reads it through a probe rather than widening the plugin's own surface.
 interface PluginConflictsProbe {
-  getPluginConflicts(): PluginConflict[];
+  getPluginConflicts: () => PluginConflict[];
 }
 
 // `getPluginDependencies` is protected on the base, so a test reads it through a probe.
 interface PluginDependenciesProbe {
-  getPluginDependencies(): PluginDependency[];
+  getPluginDependencies: () => PluginDependency[];
 }
 
 interface PluginGateProbe {
@@ -288,7 +288,7 @@ interface PluginGateProbe {
 }
 
 interface SettingsTabParamsProbe {
-  getPluginGateComponent(): PluginGateComponent;
+  getPluginGateComponent: () => PluginGateComponent;
 }
 
 function getMigrationParams(): MigrationParamsProbe {

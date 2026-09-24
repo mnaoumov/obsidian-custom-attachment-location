@@ -25,7 +25,7 @@ import {
 } from './share-receiver-import-files-patch-component.ts';
 
 interface CapacitorApi {
-  convertFileSrc(uri: string): string;
+  convertFileSrc: (uri: string) => string;
 }
 
 interface CapacitorGlobal {

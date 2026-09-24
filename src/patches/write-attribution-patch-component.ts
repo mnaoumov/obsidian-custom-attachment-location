@@ -106,11 +106,7 @@ export class WriteAttributionPatchComponent extends MonkeyAroundComponent {
    * @param path - The vault path being written.
    */
   private attributeWrite(path: string): void {
-    if (!this.pluginSettingsComponent.settings.needsCreatingPluginAttribution()) {
-      return;
-    }
-
-    if (extname(path).toLowerCase() === NOTE_FILE_EXTENSION) {
+    if (!this.pluginSettingsComponent.settings.needsCreatingPluginAttribution() || extname(path).toLowerCase() === NOTE_FILE_EXTENSION) {
       return;
     }
 

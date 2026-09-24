@@ -25,10 +25,6 @@ export class OriginalAttachmentFileCreationDateToken extends TokenBase<Format> {
       return formatDate(context.attachmentFileStats.ctime, format);
     }
 
-    if (format.valueWhenUnknown === 'now') {
-      return formatNow(format);
-    }
-
-    return '';
+    return format.valueWhenUnknown === 'now' ? formatNow(format) : '';
   }
 }

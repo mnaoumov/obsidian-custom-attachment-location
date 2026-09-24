@@ -29,7 +29,7 @@ interface CreateContextParams {
 interface PromptWithPreviewParams {
   readonly context: TokenEvaluatorContext;
   readonly defaultValue: string;
-  valueValidator(value: string): Promise<null | string>;
+  readonly valueValidator: (value: string) => Promise<null | string>;
 }
 
 type ValidatePathFunction = TokenValidator['validatePath'];

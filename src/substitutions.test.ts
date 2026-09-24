@@ -40,7 +40,7 @@ interface SubstitutionsOverrides {
   attachmentFileContent?: ArrayBuffer;
   cursorLine?: number;
   noteFilePath?: string;
-  readAttachmentFileContent?(): Promise<ArrayBuffer>;
+  readAttachmentFileContent?: () => Promise<ArrayBuffer>;
 }
 
 const mockPrintError = vi.mocked(printError);

@@ -29,12 +29,12 @@ interface ExifTags {
 }
 
 interface FsPromisesLike {
-  unlink(path: string): Promise<void>;
-  writeFile(path: string, data: Uint8Array): Promise<void>;
+  unlink: (path: string) => Promise<void>;
+  writeFile: (path: string, data: Uint8Array) => Promise<void>;
 }
 
 interface InsertFilesClipboardManager {
-  insertFiles(importedAttachments: unknown[]): Promise<void>;
+  insertFiles: (importedAttachments: unknown[]) => Promise<void>;
 }
 
 interface MarkdownEditModeLike {
@@ -55,11 +55,11 @@ interface MetadataRoundTripResult {
 }
 
 interface OsModuleLike {
-  tmpdir(): string;
+  tmpdir: () => string;
 }
 
 interface PathModuleLike {
-  join(...parts: string[]): string;
+  join: (...parts: string[]) => string;
 }
 
 /*
@@ -75,7 +75,7 @@ describe('Image metadata is preserved across the JPEG conversion (issue #55)', (
         interface ConversionSettings {
           attachmentFolderPath: string;
           convertImagesToJpegMode: string;
-          isPathIgnored(path: string): boolean;
+          isPathIgnored: (path: string) => boolean;
           jpegQuality: number;
           shouldPreserveImageMetadata: boolean;
         }

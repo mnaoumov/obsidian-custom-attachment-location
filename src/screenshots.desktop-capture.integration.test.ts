@@ -44,7 +44,7 @@ import {
  */
 interface CollapsibleFileItem {
   collapsed?: boolean;
-  setCollapsed?(this: void, isCollapsed: boolean): Promise<void>;
+  setCollapsed?: (this: void, isCollapsed: boolean) => Promise<void>;
 }
 
 /**
@@ -59,7 +59,7 @@ interface FileExplorerView {
  * declare. Setting the config alone changes nothing on screen.
  */
 interface InlineTitleApp {
-  updateInlineTitleDisplay(this: void): void;
+  updateInlineTitleDisplay: (this: void) => void;
 }
 
 const WIDTH_IN_PIXELS = 1200;

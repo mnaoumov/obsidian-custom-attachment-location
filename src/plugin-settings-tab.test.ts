@@ -90,7 +90,7 @@ const renderConflictWarningBannerMock = vi.fn<(containerEl: HTMLElement) => void
 
 interface CapturedMultipleValueComponent {
   name: string;
-  setValue(value: readonly string[]): unknown;
+  setValue: (value: readonly string[]) => unknown;
 }
 
 interface CapturedToggle {
@@ -101,7 +101,7 @@ interface CapturedToggle {
 interface CapturedValueComponent {
   inputEl?: HTMLInputElement | HTMLTextAreaElement;
   name: string;
-  setValue(value: string): unknown;
+  setValue: (value: string) => unknown;
 }
 
 interface CreatedTab {
@@ -149,11 +149,7 @@ const originalSetName = SettingEx.prototype.setName;
  * @returns The resolved value.
  */
 function checkPredicate(predicate: (() => boolean) | boolean | undefined, shouldDefaultTo: boolean): boolean {
-  if (typeof predicate === 'function') {
-    return predicate();
-  }
-
-  return predicate ?? shouldDefaultTo;
+  return typeof predicate === 'function' ? predicate() : predicate ?? shouldDefaultTo;
 }
 
 async function createTab(configure?: (settings: PluginSettings) => void): Promise<CreatedTab> {

@@ -114,20 +114,18 @@ export class PluginApiImpl implements CustomAttachmentLocationApi {
    * @returns The folder path, or `null` when this plugin leaves the note alone.
    */
   public async getAttachmentFolderPath(params: PluginApiImplGetAttachmentFolderPathParams): Promise<null | string> {
-    if (this.handedOverSettingsComponent.isPathIgnored(params.notePath)) {
-      return null;
-    }
-
     /*
      * `DUMMY_PATH` for a caller that named no attachment, matching what the plugin itself passes when it has
      * none in hand — the folder template may read the attachment's name, and Obsidian's own placeholder is
      * what every other probe in this plugin resolves that with.
      */
-    return await this.attachmentPathManager.getAttachmentFolderFullPathForPath({
-      actionContext: ActionContext.ReadApi,
-      attachmentFileName: params.attachmentFileName ?? DUMMY_PATH,
-      notePath: params.notePath
-    });
+    return this.handedOverSettingsComponent.isPathIgnored(params.notePath)
+      ? null
+      : await this.attachmentPathManager.getAttachmentFolderFullPathForPath({
+        actionContext: ActionContext.ReadApi,
+        attachmentFileName: params.attachmentFileName ?? DUMMY_PATH,
+        notePath: params.notePath
+      });
   }
 
   /**

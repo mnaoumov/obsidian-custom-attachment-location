@@ -24,7 +24,7 @@ import { AutomaticAttachmentCollectorComponent } from './automatic-attachment-co
 import { PluginSettings } from './plugin-settings.ts';
 
 interface LayoutReadyTrigger {
-  onLayoutReady(): void;
+  onLayoutReady: () => void;
 }
 
 describe('AutomaticAttachmentCollectorComponent', () => {

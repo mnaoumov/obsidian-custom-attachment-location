@@ -73,11 +73,7 @@ export class HandedOverSettingsComponent extends ComponentEx {
    */
   public isTreatedAsAttachment(path: string): boolean {
     const api = this.apiRef?.value;
-    if (api) {
-      return api.isTreatedAsAttachment(path);
-    }
-
-    return DEFAULT_HANDED_OVER_SETTINGS.treatAsAttachmentExtensions.some((extension) => path.endsWith(extension));
+    return api ? api.isTreatedAsAttachment(path) : DEFAULT_HANDED_OVER_SETTINGS.treatAsAttachmentExtensions.some((extension) => path.endsWith(extension));
   }
 
   public override onload(): void {

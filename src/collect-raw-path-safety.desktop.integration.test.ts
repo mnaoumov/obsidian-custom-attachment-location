@@ -33,7 +33,7 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
       async callback({ app }): Promise<ProbeResult> {
         interface RawPathSettings {
           collectAttachmentUsedByMultipleNotesMode: string;
-          isExcludedFromMultipleNotesCheck(path: string): boolean;
+          isExcludedFromMultipleNotesCheck: (path: string) => boolean;
           shouldSkipCollectingAttachmentsReferencedByRawPath: boolean;
         }
 

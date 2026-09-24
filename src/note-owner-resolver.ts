@@ -138,14 +138,12 @@ export class NoteOwnerResolver {
    */
   public pickOwnerNotePath(notePaths: readonly string[]): null | string {
     const entries = this.handedOverSettingsComponent.settings.notePriorities;
-    if (entries.length === 0) {
-      return null;
-    }
-
-    return pickHighestPriorityNotePath({
-      notePaths,
-      rank: (notePath) => this.rankNote(entries, notePath)
-    });
+    return entries.length === 0
+      ? null
+      : pickHighestPriorityNotePath({
+        notePaths,
+        rank: (notePath) => this.rankNote(entries, notePath)
+      });
   }
 
   /**
