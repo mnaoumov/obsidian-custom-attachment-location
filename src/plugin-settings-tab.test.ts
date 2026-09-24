@@ -85,7 +85,7 @@ const EXPECTED_ROW_COUNT = 35;
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
 // The overlap banner's two inputs: what the library writes into the row, and whether a warning conflict
-// Holds at all, which is what decides whether the row exists.
+// holds at all, which is what decides whether the row exists.
 const renderConflictWarningBannerMock = vi.fn<(containerEl: HTMLElement) => void>();
 const hasActiveWarningConflictsMock = vi.fn<() => boolean>();
 
@@ -158,7 +158,7 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   const originalApp = app.asOriginalType__();
 
   // The plugin picker builds its options from the installed manifests; the strict proxy throws on an
-  // Unassigned property, so seed them on the raw target the way the plugin suite does.
+  // unassigned property, so seed them on the raw target the way the plugin suite does.
   seedOnRawTarget(originalApp, 'plugins', {
     manifests: {
       // This plugin must never offer ITSELF as something that creates attachments for it to rename.
@@ -480,7 +480,7 @@ describe('PluginSettingsTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // `clearAllMocks` drops the recorded calls but keeps any implementation set by an earlier test, and
-    // Whether this one writes into the container is exactly what the overlap row's tests differ on.
+    // whether this one writes into the container is exactly what the overlap row's tests differ on.
     renderConflictWarningBannerMock.mockReset();
     hasActiveWarningConflictsMock.mockReset();
   });
@@ -505,7 +505,7 @@ describe('PluginSettingsTab', () => {
     });
 
     // The library renders nothing when no overlap holds, and an empty row is still a row — a divider and a
-    // Block of padding with nothing in it.
+    // block of padding with nothing in it.
     it('should hide itself when no warning conflict holds', async () => {
       hasActiveWarningConflictsMock.mockReturnValue(false);
       const { tab } = await createTab();
@@ -521,7 +521,7 @@ describe('PluginSettingsTab', () => {
     });
 
     // A function, not a value: the gate re-evaluates as plugins are enabled and disabled while the tab is open,
-    // And the tab re-reads a function form on every render.
+    // and the tab re-reads a function form on every render.
     it('should re-read the gate on every evaluation', async () => {
       const { tab } = await createTab();
       hasActiveWarningConflictsMock.mockReturnValue(false);
@@ -573,7 +573,7 @@ describe('PluginSettingsTab', () => {
   it('should keep Core inline and expose every other group as a navigable sub-page', async () => {
     const { tab } = await createTab();
     // The overlap banner rides at the top as a bare ROW: Obsidian never calls `display()` once the declarative
-    // Definitions are non-empty, so there is nowhere else to put it.
+    // definitions are non-empty, so there is nowhere else to put it.
     const [conflictBanner, coreGroup, ...pages] = tab.getSettingDefinitions();
     expect(castTo<SettingDefinitionRender>(conflictBanner).name).toBe('');
 

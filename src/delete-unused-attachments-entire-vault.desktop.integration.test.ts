@@ -64,7 +64,7 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
         }
 
         // The plugin does not expose its settings publicly, so locate the live settings object by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findSettings(): null | RemoverSettings {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -145,7 +145,7 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
           const openNote = await app.vault.create(openNotePath, 'unrelated\n');
 
           // Open the OTHER note. The per-note command run here would find nothing at all; only a
-          // Vault-wide sweep reaches the far note's attachment folder.
+          // vault-wide sweep reaches the far note's attachment folder.
           await app.workspace.getLeaf(false).openFile(openNote);
           await sleep(SETTLE_DELAY_IN_MILLISECONDS);
 
@@ -169,7 +169,7 @@ describe('Delete unused attachments in entire vault (issue #64)', () => {
           const confirmText = activeDocument.querySelector('.modal-content')?.textContent ?? '';
 
           // Confirm through the dialog's own button. Detaching the container would leave the queued
-          // Operation's promise unresolved and block everything queued behind it.
+          // operation's promise unresolved and block everything queued behind it.
           const buttonEls = [...activeDocument.querySelectorAll<HTMLButtonElement>(':scope .modal-content button')];
           const okButtonEl = buttonEls.find((buttonEl) => buttonEl.textContent === 'OK') ?? buttonEls[0];
           okButtonEl?.click();

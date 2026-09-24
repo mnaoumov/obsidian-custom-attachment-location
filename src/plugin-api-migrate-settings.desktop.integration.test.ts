@@ -127,7 +127,7 @@ describe('migrateSettings', () => {
         const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
 
         // The settings are not exposed publicly, so the live object is located by walking the plugin's
-        // Component tree.
+        // component tree.
         function findSettings(): CollectSettings | null {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();

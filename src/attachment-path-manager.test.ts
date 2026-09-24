@@ -120,7 +120,7 @@ const mockCreateFolderSafe = vi.mocked(createFolderSafe);
 const mockPromptWithPreview = vi.mocked(promptWithPreview);
 
 // The handed-over settings live in Advanced Rename and Delete Handler since 12.0.0. Mutable here so a test
-// Can still change one mid-run, exactly as it used to change .
+// can still change one mid-run, exactly as it used to change .
 interface MutableHandedOverSettings {
   emptyFolderBehavior: EmptyFolderBehavior;
   notePriorities: readonly string[];
@@ -1238,7 +1238,7 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: true
       });
       // `old.png` is the 2nd distinct attachment, and the number now comes from exactly ONE `getCacheSafe`
-      // Walk (previously two — one per the collapsed getCursorLine/getSequenceNumber).
+      // walk (previously two — one per the collapsed getCursorLine/getSequenceNumber).
       expect(result).toBe('assets/2.png');
       expect(mockGetCacheSafe).toHaveBeenCalledTimes(1);
     });
@@ -1271,8 +1271,8 @@ describe('AttachmentPathManager', () => {
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: true
       });
-      // CursorLine 4 flows into the heading token, whose cutoff (line <= 4) selects "Early" (line 2),
-      // Not "Late" (line 6).
+      // cursorLine 4 flows into the heading token, whose cutoff (line <= 4) selects "Early" (line 2),
+      // not "Late" (line 6).
       expect(result).toBe('assets/Early.png');
     });
 
@@ -1307,7 +1307,7 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: true
       });
       // The first match (line 0) wins, so cursorLine is 0 → the heading token treats it as "no cursor" and
-      // Emits nothing. A last-match regression would pick line 5 → cutoff line <= 5 → "Later" (line 3).
+      // emits nothing. A last-match regression would pick line 5 → cutoff line <= 5 → "Later" (line 3).
       expect(result).toBe('assets/.png');
     });
   });

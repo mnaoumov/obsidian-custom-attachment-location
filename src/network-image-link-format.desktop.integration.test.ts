@@ -123,7 +123,7 @@ describe('Network image link format (issue #50)', () => {
         }
 
         // The temp vault is shared by every suite in this project, so each mutated setting has to be put back
-        // Afterwards - otherwise this test silently reconfigures link generation for the tests that follow.
+        // afterwards - otherwise this test silently reconfigures link generation for the tests that follow.
         const didDownloadNetworkImages = settings.downloadNetworkImages;
         const originalAttachmentFolderPath = settings.attachmentFolderPath;
         const originalUseMarkdownLinks = app.vault.getConfig('useMarkdownLinks');
@@ -196,7 +196,7 @@ describe('Network image link format (issue #50)', () => {
     expect(result.downloadedPaths[0]).toMatch(/^Research Notes .*\/assets\/.*\.png$/);
 
     // It is still an embed, the alt text survived, and the destination is relative to the note rather than
-    // The vault-relative save path the old code wrote verbatim.
+    // the vault-relative save path the old code wrote verbatim.
     expect(result.content).toMatch(/^!\[Diagram]\(assets\/\S+\.png\)$/);
     expect(result.content).not.toContain('Research Notes');
     expect(result.content).not.toContain(' ');

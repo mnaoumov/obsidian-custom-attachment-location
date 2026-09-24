@@ -90,13 +90,13 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     return [
       // The overlap banner has to travel as a ROW: Obsidian renders the declarative definitions and never
-      // Calls `display()` once `getSettingDefinitions()` is non-empty, so there is no container to write into
-      // Otherwise. The row body is emptied first, leaving the Setting element as a bare host for the banner.
+      // calls `display()` once `getSettingDefinitions()` is non-empty, so there is no container to write into
+      // otherwise. The row body is emptied first, leaving the Setting element as a bare host for the banner.
       // The row exists only while a warning conflict holds, since the library renders nothing otherwise and an
-      // Empty row is still a divider and a block of padding.
+      // empty row is still a divider and a block of padding.
       //
       // There is no row for Advanced Rename and Delete Handler: it is a declared dependency, so while it is
-      // Missing this tab is never registered at all and the library's own blocked tab explains what to install.
+      // missing this tab is never registered at all and the library's own blocked tab explains what to install.
       this.settingEx({
         name: '',
         render: (setting) => {
@@ -507,7 +507,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         name: t(($) => $.pluginSettingsTab.customTokens.name),
         render: (setting) => {
           // Render-time setup: the builder must stay pure, because Obsidian calls it at plugin load to
-          // Index the settings for search. `hide()` clears the flag again.
+          // index the settings for search. `hide()` clears the flag again.
           this.pluginSettingsComponent2.shouldDebounceCustomTokensValidation = true;
           // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
           const registerCustomTokensDebounced = debounce((customTokensStr: string) => {

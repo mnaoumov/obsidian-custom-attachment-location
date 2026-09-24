@@ -103,7 +103,7 @@ vi.mock('obsidian-dev-utils/obsidian/metadata-cache', async (importOriginal) => 
 }));
 
 // The real renderer goes through Obsidian's markdown renderer; a bare anchor naming the path is all the
-// Dialog's text needs.
+// dialog's text needs.
 vi.mock('obsidian-dev-utils/obsidian/markdown', async (importOriginal) => ({
   ...await importOriginal<typeof import('obsidian-dev-utils/obsidian/markdown')>(),
   renderInternalLink: vi.fn(async (params: RenderInternalLinkParamsLike) => {
@@ -362,7 +362,7 @@ describe('UnusedAttachmentsRemover', () => {
     });
 
     // A folder inside a walked folder arrives through the same callback as a file. It is skipped here and
-    // Reached on its own, so a nested folder is never mistaken for a note and never scanned as one.
+    // reached on its own, so a nested folder is never mistaken for a note and never scanned as one.
     it('should skip a folder child while recursing', async () => {
       const folder = strictProxy<TAbstractFile>({ path: 'folder' });
       const childFolder = strictProxy<TAbstractFile>({ path: 'folder/nested' });
@@ -464,7 +464,7 @@ describe('UnusedAttachmentsRemover', () => {
       mockExtractLinkFile.mockReturnValue(referenced);
       mockIsFile.mockImplementation((f) => f !== subFolder);
       // One predicate answers both halves now: `note` is the note the sweep scans, and `noteInFolder` is a
-      // Note sitting INSIDE the attachment folder, which is therefore never a candidate to trash.
+      // note sitting INSIDE the attachment folder, which is therefore never a candidate to trash.
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note || f === noteInFolder);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         callback(subFolder);
@@ -508,7 +508,7 @@ describe('UnusedAttachmentsRemover', () => {
         callback(unused);
       });
       // `note.md` is the source note (self-reference) and `drawing.excalidraw.md` is excluded, so the
-      // Effective backlink count is zero and the attachment is treated as unused.
+      // effective backlink count is zero and the attachment is treated as unused.
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'drawing.excalidraw.md']));
       vi.mocked(settings.isExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'drawing.excalidraw.md');
       mockConfirm.mockResolvedValue(true);
@@ -796,7 +796,7 @@ describe('UnusedAttachmentsRemover', () => {
 
     it('should trash a unit folder once when several notes reach it', async () => {
       // Every note whose attachment folder holds the unit reports it, so it has to be deduplicated
-      // Before the trash loop: trashing the same folder twice throws on the second call.
+      // before the trash loop: trashing the same folder twice throws on the second call.
       const otherNote = createFile('other-note.md');
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note || f === otherNote);
       backlinksByPath.set(image.path, [drawing.path]);
@@ -924,7 +924,7 @@ describe('UnusedAttachmentsRemover', () => {
 
     // An attachment at the top level of the vault has no parent folder to clean up: `dirname` answers `.`,
     // A path no folder in the vault has, and the empty-folder cleanup walks UPWARDS from whatever it is
-    // Handed. Recording it would send that walk above the vault root.
+    // handed. Recording it would send that walk above the vault root.
     it('should not record the vault root as a folder to clean up', async () => {
       const unusedRoot = createFile('root.png');
       vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
@@ -975,7 +975,7 @@ describe('UnusedAttachmentsRemover', () => {
 
     it('should cap the list and summarize the rest', async () => {
       // Vault-wide this dialog can be handed thousands of paths; an unbounded list is a wall the user
-      // Scrolls past rather than a safety check.
+      // scrolls past rather than a safety check.
       const many = Array.from({ length: 60 }, (_unused, index) => createFile(`${ATTACHMENT_FOLDER_PATH}/many-${index.toString().padStart(2, '0')}.png`));
       vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         for (const file of many) {
@@ -1169,8 +1169,8 @@ describe('UnusedAttachmentsRemover', () => {
     });
 
     // More than one candidate is what turns this pass's progress bar on and what makes the ordering
-    // Observable at all: the candidates are sorted by path so the confirmation lists them the same way
-    // Twice running, rather than in whatever order the vault walk happened to yield them.
+    // observable at all: the candidates are sorted by path so the confirmation lists them the same way
+    // twice running, rather than in whatever order the vault walk happened to yield them.
     it('should judge several unowned attachments in path order, behind a progress bar', async () => {
       const later = createFile(`${ORPHAN_FOLDER_PATH}/b-later.png`);
       const earlier = createFile(`${ORPHAN_FOLDER_PATH}/a-earlier.png`);

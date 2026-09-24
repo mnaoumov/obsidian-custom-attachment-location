@@ -87,7 +87,7 @@ describe('A .excalidraw.md is never swept as a note, and is still collected from
         const pluginUnknown: unknown = app.plugins.getPlugin(pluginId);
 
         // The read-back component is not exposed publicly, so it is located by walking the plugin's
-        // Component tree.
+        // component tree.
         function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -170,7 +170,7 @@ describe('A .excalidraw.md is never swept as a note, and is still collected from
             };
           } finally {
             // The desktop suite shares one vault, and sibling suites enumerate it and assert on exactly
-            // Which files survive. Take the drawing back out.
+            // which files survive. Take the drawing back out.
             const existing = app.vault.getAbstractFileByPath(drawingPath);
             if (existing) {
               await app.fileManager.trashFile(existing);
@@ -199,12 +199,12 @@ describe('A .excalidraw.md is never swept as a note, and is still collected from
     expect(result.probesFound).toBe(true);
 
     // Without the extension treated as an attachment, the drawing is an ordinary note: both commands are
-    // Offered on it.
+    // offered on it.
     expect(result.control.isCollectCommandOfferedOnDrawing).toBe(true);
     expect(result.control.isDeleteUnusedCommandOfferedOnDrawing).toBe(true);
 
     // With it treated as an attachment, the sweep is refused rather than offered and then doing nothing —
-    // While the collect stays offered, because #57 and #75 collect FROM a drawing.
+    // while the collect stays offered, because #57 and #75 collect FROM a drawing.
     expect(result.fix.isCollectCommandOfferedOnDrawing).toBe(true);
     expect(result.fix.isDeleteUnusedCommandOfferedOnDrawing).toBe(false);
   }, 180_000);

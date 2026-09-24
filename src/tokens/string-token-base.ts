@@ -24,7 +24,7 @@ type StringFormat = z.infer<typeof stringFormatSchema>;
 
 export function formatString(value: string, format: StringFormat): string {
   // First, because it normalizes the raw value: truncating or converting to a slug a name whose whitespace has
-  // Not been collapsed yet would carry the ragged spacing into the result.
+  // not been collapsed yet would carry the ragged spacing into the result.
   if (format.collapseWhitespace) {
     value = collapseWhitespace(value);
   }

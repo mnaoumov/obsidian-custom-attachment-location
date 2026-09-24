@@ -81,7 +81,7 @@ describe('A collect that moves nothing says so (issue #81)', () => {
         const pluginRecord = app.plugins.getPlugin(pluginId) as null | Record<string, unknown>;
 
         // The settings are not exposed publicly, so the live object the collector reads is located by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findSettings(): NothingToCollectSettings | null {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -188,7 +188,7 @@ describe('A collect that moves nothing says so (issue #81)', () => {
             const note = await app.vault.create(notePath, `![[${imageFileName}]]\n`);
 
             // The embed must be indexed, or the collector walks a note with no links and reports
-            // Nothing examined - which looks exactly like the regression this asserts against.
+            // nothing examined - which looks exactly like the regression this asserts against.
             await waitUntil({
               message: 'the staged embed was not indexed',
               predicate: () => {
@@ -199,7 +199,7 @@ describe('A collect that moves nothing says so (issue #81)', () => {
             });
 
             // The public surface rather than the command: the command acts on the ACTIVE file, which
-            // Would mean opening the note and waiting for the workspace to finish switching to it.
+            // would mean opening the note and waiting for the workspace to finish switching to it.
             collectAttachmentsInAbstractFiles.call(pluginRecord, [note]);
 
             await waitUntil({
@@ -223,7 +223,7 @@ describe('A collect that moves nothing says so (issue #81)', () => {
         try {
           settings.attachmentFolderPath = attachmentFolderPath;
           // Both empty, so the collect destination is the new-attachment one and the collected name is
-          // The name the file already has - which is what makes every move a no-op.
+          // the name the file already has - which is what makes every move a no-op.
           settings.collectedAttachmentFolderPath = '';
           settings.collectedAttachmentFileName = '';
 

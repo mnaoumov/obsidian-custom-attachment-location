@@ -115,7 +115,7 @@ beforeEach(() => {
 describe('PluginSettingsComponent', () => {
   describe('loadFromFile', () => {
     // A user who never saves a setting used to have no data.json at all, so a later default change moved
-    // Them silently: that is what 13.0.0's shouldFollowObsidianAttachmentLocation flip did.
+    // them silently: that is what 13.0.0's shouldFollowObsidianAttachmentLocation flip did.
     it('should write the full settings record when no data.json exists', async () => {
       const dataHandler = new MockDataHandler(null);
       await createComponent(null, dataHandler);
@@ -270,7 +270,7 @@ describe('PluginSettingsComponent', () => {
       const component = await createComponent();
       const settings = createSettings();
       // Both shapes in one list: a plain path, which the validator skips, and a regular expression, which
-      // It compiles.
+      // it compiles.
       settings.excludePathsFromMultipleNotesCheck = ['plain/path', String.raw`/\.excalidraw\.md$/`];
       const result = await component.validate(settings);
       expect(result.excludePathsFromMultipleNotesCheck).toBeUndefined();
@@ -279,7 +279,7 @@ describe('PluginSettingsComponent', () => {
     it('should reject an invalid regular expression in an exclude list', async () => {
       const component = await createComponent();
       // The real PluginSettings setter eagerly compiles the regex and would throw, so the getter is
-      // Overridden to feed the validator an invalid pattern directly.
+      // overridden to feed the validator an invalid pattern directly.
       const settings = createSettings();
       Object.defineProperty(settings, 'excludePathsFromMultipleNotesCheck', {
         configurable: true,

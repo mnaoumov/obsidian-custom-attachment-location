@@ -78,8 +78,8 @@ export class HandedOverSettingsComponent extends ComponentEx {
 
   public override onload(): void {
     // A watch rather than `whenAvailable()`: that wait blocks for ten seconds and then throws when the
-    // Plugin is simply not installed, which would stall this plugin's load for every user who declined the
-    // Suggestion. The ref costs nothing while the provider is absent and becomes live the moment it appears.
+    // plugin is simply not installed, which would stall this plugin's load for every user who declined the
+    // suggestion. The ref costs nothing while the provider is absent and becomes live the moment it appears.
     this.apiRef = watchPluginApi<AdvancedRenameAndDeleteHandlerApi>({
       apiVersionRange: ADVANCED_RENAME_AND_DELETE_HANDLER_API_VERSION_RANGE,
       app: this.app,

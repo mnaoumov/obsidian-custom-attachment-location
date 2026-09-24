@@ -46,7 +46,7 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
         }
 
         // The plugin does not expose its settings publicly, so locate the live settings object by
-        // Walking the plugin's component tree.
+        // walking the plugin's component tree.
         function findSettings(): NameSettings | null {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -105,7 +105,7 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
           }
 
           // The control: the same token with no cleaning, so any difference below is the new format
-          // And not something else in the pipeline.
+          // and not something else in the pipeline.
           const untouchedPath = await resolveWith('{{originalAttachmentFileName}}');
           const cleanedPath = await resolveWith('{{originalAttachmentFileName:{case:\'title\',collapseWhitespace:true}}}');
 
@@ -129,12 +129,12 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
     expect(result.settingsFound).toBe(true);
 
     // Without the format the ragged spacing survives into the resolved folder. Asserted as a
-    // Substring rather than an exact name: a trailing space is separately unusable as a folder name
-    // On Windows and is dropped elsewhere, which is not what this test is about.
+    // substring rather than an exact name: a trailing space is separately unusable as a folder name
+    // on Windows and is dropped elsewhere, which is not what this test is about.
     expect(result.untouchedPath.split('/').slice(0, -1).join('/')).toContain('my   REPORT about  api');
 
     // With it: one space between words, no leading or trailing spaces, first letter of each word
-    // Capitalized, and `REPORT` left alone because it is already entirely upper case.
+    // capitalized, and `REPORT` left alone because it is already entirely upper case.
     expect(result.cleanedPath.split('/').slice(0, -1).join('/')).toBe('My REPORT About Api');
 
     // The file name is untouched in both, because only the folder pattern carries the token here.

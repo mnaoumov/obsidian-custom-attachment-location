@@ -199,7 +199,7 @@ describe('Substitutions', () => {
 
     it('should carry the template part into a nested fill', async () => {
       // A token reaching back through `ctx.fillTemplate` must not silently drop to the default —
-      // This is the path `{{prompt}}` takes when it resolves its own `defaultValueTemplate`.
+      // this is the path `{{prompt}}` takes when it resolves its own `defaultValueTemplate`.
       Substitutions.registerCustomTokens(
         'registerCustomToken("part", (ctx) => ctx.templatePart);'
           + `registerCustomToken("nested", (ctx) => ctx.fillTemplate('${tk('part')}'));`

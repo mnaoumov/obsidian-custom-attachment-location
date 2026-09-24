@@ -566,8 +566,8 @@ export class AttachmentCollector {
                 }
                 if (result.unitFolderPath) {
                   // Copying the lone file out of a unit folder produces exactly the broken attachment
-                  // The unit designation exists to prevent, and copying the whole tree behind the
-                  // Other notes' backs is worse. Leave it where every note can still reach it.
+                  // the unit designation exists to prevent, and copying the whole tree behind the
+                  // other notes' backs is worse. Leave it where every note can still reach it.
                   console.warn(
                     `Skipping collecting attachment ${result.oldAttachmentPath} as it belongs to the attachment unit folder ${result.unitFolderPath}`
                       + ` and is referenced by multiple notes.\n${backlinksString}`
@@ -894,8 +894,8 @@ export class AttachmentCollector {
     params.oldAttachmentPaths.add(oldAttachmentFile.path);
 
     // An earlier link in this same note may have already carried this attachment away inside its unit
-    // Folder. The link snapshot still names the old path, so without this the file reads as
-    // Unresolvable and would be reported as a broken link rather than as work already done.
+    // folder. The link snapshot still names the old path, so without this the file reads as
+    // unresolvable and would be reported as a broken link rather than as work already done.
     for (const movedUnitFolderPath of params.movedUnitFolderPaths.keys()) {
       if (oldAttachmentFile.path.startsWith(`${movedUnitFolderPath}/`)) {
         return null;

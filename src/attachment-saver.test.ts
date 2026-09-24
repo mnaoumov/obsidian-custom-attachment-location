@@ -212,7 +212,7 @@ describe('AttachmentSaver', () => {
     });
 
     // Regression for issue #31: a clipboard image whose ArrayBuffer was flagged by the `insertFiles`
-    // Interception is renamed in OnlyPastedImages mode even when its base name is not a
+    // interception is renamed in OnlyPastedImages mode even when its base name is not a
     // `Pasted image <timestamp>` name (e.g. a Windows 11 Win+Shift+S screenshot from a temp file).
     it('should rename a clipboard-flagged image in OnlyPastedImages mode despite a non-pasted base name', async () => {
       context.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;

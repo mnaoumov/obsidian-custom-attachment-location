@@ -221,7 +221,7 @@ describe('selectMode', () => {
 
   it('should say nothing about priority when the list did name an owner', async () => {
     // Reaching the modal WITH a winner means something else stopped the move; claiming a priority
-    // Failure there would be simply wrong.
+    // failure there would be simply wrong.
     const promise = selectMode({ app: createApp(), attachmentPath: 'attachment.png', backlinks: ['a.md', 'b.md'] });
     await flushOnOpen();
     expect(getReasonText()).toBeNull();

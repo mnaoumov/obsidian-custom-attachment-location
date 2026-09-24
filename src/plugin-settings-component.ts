@@ -168,7 +168,7 @@ class LegacySettingsConverter {
     this.convertTokenSyntax();
 
     // LAST, and it must stay last: it reads the rename/delete keys the converters above normalize, so
-    // Running it earlier would gather the raw legacy names instead of the values they convert into.
+    // running it earlier would gather the raw legacy names instead of the values they convert into.
     this.convertRenameDeleteSettingsToProposal();
   }
 
@@ -213,7 +213,7 @@ ${commentOut(this.legacySettings.customTokensStr)}
   private convertDateTimeFormat(): void {
     const dateTimeFormat = this.legacySettings.dateTimeFormat ?? 'YYYYMMDDHHmmssSSS';
     // An absent key stays absent, so the default fills it. Converting it to '' used to put the attachments of
-    // Any record written without this key, such as a hand-seeded `data.json`, at the vault root.
+    // any record written without this key, such as a hand-seeded `data.json`, at the vault root.
     if (this.legacySettings.attachmentFolderPath !== undefined) {
       this.legacySettings.attachmentFolderPath = addDateTimeFormat({ $string: this.legacySettings.attachmentFolderPath, dateTimeFormat });
     }

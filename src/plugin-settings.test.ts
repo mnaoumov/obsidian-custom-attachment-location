@@ -167,7 +167,7 @@ describe('PluginSettings', () => {
 
     it('should match a folder name anywhere via a regular expression', () => {
       // This is the form the feature request asked for -- designating a folder by NAME. A plain entry
-      // Is anchored at the vault root, so a name-anywhere match has to be written as a regexp.
+      // is anchored at the vault root, so a name-anywhere match has to be written as a regexp.
       const settings = new PluginSettings();
       settings.attachmentUnitFolderPaths = [String.raw`/(^|\/)[^/]+_files(\/|$)/`];
       expect(settings.isAttachmentUnitFolder('assets/page_files')).toBe(true);

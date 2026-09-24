@@ -199,7 +199,7 @@ describe('Delete unused attachments (issue #23)', () => {
     expect(result.sharedBacklinkCount).toBe(1);
 
     // The confirmation modal was really shown and driven through the DOM. On failure the message
-    // Carries what the plugin did instead, which a bare `false` never could.
+    // carries what the plugin did instead, which a bare `false` never could.
     expect(
       result.modalShown,
       `no confirmation modal; command dispatched: ${String(result.commandDispatched)}; notices: ${JSON.stringify(result.noticeTexts)}`

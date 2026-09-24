@@ -8,7 +8,7 @@ import {
 } from 'vitest';
 
 // Declared here rather than imported from `tokenized-string-language.ts`: this file runs in Node,
-// And that module pulls in `obsidian`, which only resolves inside the app.
+// and that module pulls in `obsidian`, which only resolves inside the app.
 const TOKENIZED_STRING_LANGUAGE = 'custom-attachment-location-tokenized-string';
 
 describe('tokenized-string language', () => {
@@ -38,7 +38,7 @@ describe('tokenized-string language', () => {
     });
 
     // The settings tab's code-highlighter fields render exactly this markup, so this asserts what the
-    // User sees: each part of the tokenized string carries its own token class.
+    // user sees: each part of the tokenized string carries its own token class.
     expect(result.plainHtml).toContain('class="token important"');
     expect(result.plainHtml).toContain('class="token operator entity"');
     expect(result.plainHtml).toContain('class="token prefix regex"');
@@ -46,7 +46,7 @@ describe('tokenized-string language', () => {
     expect(result.plainHtml).toContain('class="token suffix regex"');
 
     // The `{{token:{...}}}` format block nests the real `javascript` grammar, which is the whole reason the
-    // Grammar is built through the factory form. A nested JavaScript string proves the nesting is live.
+    // grammar is built through the factory form. A nested JavaScript string proves the nesting is live.
     expect(result.nestedJavaScriptHtml).toContain('class="token formatDelimiter regex"');
     expect(result.nestedJavaScriptHtml).toContain('language-javascript');
     expect(result.nestedJavaScriptHtml).toContain('class="token string"');
@@ -58,7 +58,7 @@ describe('tokenized-string language', () => {
     expect(result.plainHtml).not.toContain('language-javascript');
 
     // A `{{...}}` template nested in a format object stays inside that object's JavaScript string, rather than
-    // Being taken for a second placeholder: the whole token is ONE `expressionWithFormat`.
+    // being taken for a second placeholder: the whole token is ONE `expressionWithFormat`.
     expect(result.nestedTemplateHtml.match(/class="token expressionWithFormat"/g)).toHaveLength(1);
     expect(result.nestedTemplateHtml).toContain('class="token string"');
     expect(result.nestedTemplateHtml.match(/class="token prefix regex"/g)).toHaveLength(1);

@@ -105,7 +105,7 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
         }
 
         // Neither the settings nor the read-back component is exposed publicly, so both are located by
-        // Walking the plugin's component tree, keyed off members this plugin still owns.
+        // walking the plugin's component tree, keyed off members this plugin still owns.
         function findInPluginTree<T>(match: (record: Record<string, unknown>) => null | T): null | T {
           const block = new Set(['app', 'containerEl', 'dom', 'metadataCache', 'plugins', 'vault', 'workspace']);
           const seen = new Set<unknown>();
@@ -221,11 +221,11 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
           await app.vault.createBinary(keptOrphanPath, new ArrayBuffer(4));
 
           // The drawing embeds its own sibling. That is the unit describing itself, and it is the
-          // Backlink that keeps the unit alive forever under the per-file rule.
+          // backlink that keeps the unit alive forever under the per-file rule.
           await app.vault.create(drawingPath, `![[${selfReferencingImagePath}]]\n`);
 
           // The note reaches into the OTHER unit only, so `page_files` is referenced by nothing
-          // Outside itself while `kept_files` is.
+          // outside itself while `kept_files` is.
           await app.vault.create(notePath, `![[${keptImagePath}]]\n`);
 
           await sleep(SETTLE_DELAY_IN_MILLISECONDS);
@@ -259,7 +259,7 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
           const confirmText = activeDocument.querySelector('.modal-content')?.textContent ?? '';
 
           // Confirm through the dialog's own button. Detaching the container would leave the queued
-          // Operation's promise unresolved and block everything queued behind it.
+          // operation's promise unresolved and block everything queued behind it.
           const buttonEls = [...activeDocument.querySelectorAll<HTMLButtonElement>(':scope .modal-content button')];
           const okButtonEl = buttonEls.find((buttonEl) => buttonEl.textContent === 'OK') ?? buttonEls[0];
           okButtonEl?.click();
