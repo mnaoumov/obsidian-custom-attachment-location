@@ -1,4 +1,5 @@
 import type {
+  MarkdownView as MarkdownViewOriginal,
   TAbstractFile,
   TFile
 } from 'obsidian';
@@ -39,14 +40,6 @@ import { selfWriteRegistry } from './self-write-registry.ts';
 vi.mock('obsidian-dev-utils/error', () => ({
   printError: vi.fn<(error: unknown) => void>()
 }));
-
-interface ActiveTimeLike {
-  activeTime: number;
-}
-
-interface FileViewLike {
-  file: null | TFile;
-}
 
 interface GetAttachmentFolderFullPathForPathParams {
   readonly notePath?: string | undefined;
@@ -397,14 +390,14 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
   });
 
   /**
-   * Opens a markdown leaf holding `content`, standing in for the note a foreign plugin has just
-   * inserted its embed into but whose editor has not saved yet.
+   * Opens `notePath` in a markdown leaf holding `content`, standing in for the note a foreign plugin has
+   * just inserted its embed into but whose editor has not saved yet.
    */
-  async function openEditorWith(content: string): Promise<Editor> {
+  async function openEditorWith(content: string, notePath = NOTE_PATH): Promise<Editor> {
     const leaf = app.workspace.getLeaf(true);
-    const view = MarkdownView.create2__(leaf);
-    await leaf.open(view.asOriginalType7__());
-    await leaf.setViewState({ type: ViewType.Markdown });
+    // A markdown view state with no `file` is the empty view, as in Obsidian, so the leaf has to open the note.
+    await leaf.setViewState({ state: { file: notePath }, type: ViewType.Markdown });
+    const view = MarkdownView.fromOriginalType7__(leaf.view as MarkdownViewOriginal);
     view.editor.setValue(content);
     return view.editor;
   }
@@ -414,17 +407,15 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
    * the ACTIVE file is not a note at all.
    */
   async function openNoteLeaf(notePath = NOTE_PATH, activeTime?: number): Promise<void> {
-    await openEditorWith('');
-    const leaf = getApp().workspace.getLeavesOfType(ViewType.Markdown).at(-1);
-    // `obsidian-test-mocks` puts neither a file nor an `activeTime` on a leaf, so stand both up.
-    const view: unknown = leaf?.view;
-    (view as FileViewLike).file = getApp().vault.getFileByPath(notePath);
+    await openEditorWith('', notePath);
     if (activeTime === undefined) {
       return;
     }
 
-    const leafValue: unknown = leaf;
-    (leafValue as ActiveTimeLike).activeTime = activeTime;
+    const leaf = getApp().workspace.getLeavesOfType(ViewType.Markdown).at(-1);
+    if (leaf) {
+      leaf.activeTime = activeTime;
+    }
   }
 
   it('should repoint a link the creating plugin left unsaved in an editor', async () => {

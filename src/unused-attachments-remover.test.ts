@@ -325,7 +325,8 @@ describe('UnusedAttachmentsRemover', () => {
     it('should skip a drawing the user treats as an attachment while still scanning a plain note', async () => {
       const note = createFile('note.md');
       const drawing = createFile('drawing.excalidraw.md');
-      mockIsFile.mockReturnValue(true);
+      // `recurseChildren` visits the attachment folder itself first, as Obsidian does, so it must not pass for a file.
+      mockIsFile.mockImplementation((f) => f !== attachmentFolder);
       mockIsFolder.mockReturnValue(false);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note);
       mockGetCacheSafe.mockResolvedValue(null);
@@ -407,7 +408,8 @@ describe('UnusedAttachmentsRemover', () => {
 
     beforeEach(() => {
       note = createFile('note.md');
-      mockIsFile.mockReturnValue(true);
+      // `recurseChildren` visits the attachment folder itself first, as Obsidian does, so it must not pass for a file.
+      mockIsFile.mockImplementation((f) => f !== attachmentFolder);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note);
       mockIsFolder.mockReturnValue(false);
       mockIsCanvasFile.mockReturnValue(false);

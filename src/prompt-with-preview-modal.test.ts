@@ -294,6 +294,8 @@ describe('promptWithPreview', () => {
     });
     await flushOnOpen();
     captured.textComponents[0]?.setValue('updated-value');
+    // `setValue` alone does not fire `onChange` in Obsidian; the user's typing raises the input event that does.
+    getInputEl(captured.textComponents[0])?.dispatchEvent(new Event('input'));
     clickButton(captured.buttons[0]);
     const result = await promise;
     expect(result).toBe('updated-value');
