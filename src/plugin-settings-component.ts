@@ -39,6 +39,8 @@ import {
 import { CustomToken } from './tokens/custom-token.ts';
 
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
+const EXCALIDRAW_EXTENSION = '.excalidraw.md';
+const EXCALIDRAW_PROPERTY_ENTRY = 'property:excalidraw-plugin';
 
 // Every setting evaluated as a template, so every one the `{{...}}` syntax migration rewrites.
 const TOKENIZED_SETTINGS_KEYS = [
@@ -310,7 +312,7 @@ ${commentOut(this.legacySettings.customTokensStr)}
     copyIfPresent('shouldRenameAttachmentFiles', legacySettings.shouldRenameAttachmentFiles);
     copyIfPresent('shouldRenameAttachmentFolder', legacySettings.shouldRenameAttachmentFolder);
     copyIfPresent('shouldRescueSharedAttachments', legacySettings.shouldRescueSharedAttachments);
-    copyIfPresent('treatAsAttachmentExtensions', legacySettings.treatAsAttachmentExtensions);
+    copyIfPresent('treatAsAttachmentExtensions', addExcalidrawPropertyEntry(legacySettings.treatAsAttachmentExtensions));
 
     if (Object.keys(proposedSettings).length === 0) {
       return;
@@ -554,6 +556,25 @@ function addDateTimeFormat(params: AddDateTimeFormatParams): string {
   const { $string, dateTimeFormat } = params;
   // eslint-disable-next-line no-template-curly-in-string -- Valid token.
   return $string.replaceAll('${date}', () => `\${date:{momentJsFormat:'${dateTimeFormat}'}}`);
+}
+
+/**
+ * Carries a historic `treatAsAttachmentExtensions` list over to Advanced Rename and Delete Handler without losing
+ * what that plugin now adds to it (#90).
+ *
+ * This plugin's list could only hold extensions, so a user who kept `.excalidraw.md` in it meant "an Excalidraw
+ * drawing is an attachment". The handler says the same thing since 2.1.0 with a second entry,
+ * `property:excalidraw-plugin`, which also catches a drawing saved as a plain `.md`. Proposed as it was, the
+ * historic list would show up as a row that REMOVES that entry from the handler's default, and a user approving it
+ * would lose the new behaviour without being told. A list without `.excalidraw.md` is a user who opted out of
+ * treating drawings as attachments, and is proposed unchanged.
+ *
+ * @param extensions - The historic list, or `undefined` when the user never saved one.
+ * @returns The list to propose.
+ */
+function addExcalidrawPropertyEntry(extensions: readonly string[] | undefined): readonly string[] | undefined {
+  const shouldAdd = extensions?.includes(EXCALIDRAW_EXTENSION) === true && !extensions.includes(EXCALIDRAW_PROPERTY_ENTRY);
+  return shouldAdd ? [...extensions, EXCALIDRAW_PROPERTY_ENTRY] : extensions;
 }
 
 function commentOut($string: string): string {
