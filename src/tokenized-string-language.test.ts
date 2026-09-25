@@ -24,6 +24,7 @@ interface PrismLike {
 }
 
 interface PrismTokenWithInside {
+  alias?: string;
   inside: unknown;
   pattern: RegExp;
 }
@@ -80,20 +81,30 @@ describe('tokenized-string language', () => {
     expect(prism.languages[TOKENIZED_STRING_LANGUAGE]).toBeUndefined();
   });
 
-  it('should nest the javascript grammar into the format half', async () => {
+  it('should nest the javascript grammar into an object format and read a scalar format as a string', async () => {
     const prism = createPrism(true);
     const grammar = await registerGrammar(prism);
-    expect(grammar['expressionWithFormat']?.inside['format']?.inside).toBe(prism.languages['javascript']);
+    const formatInside = castTo<Record<string, PrismTokenWithInside | undefined>>(
+      grammar['expressionWithFormat']?.inside['format']?.inside
+    );
+    expect(Object.keys(formatInside)).toStrictEqual(['objectFormat', 'scalarFormat']);
+    expect(formatInside['objectFormat']?.inside).toBe(prism.languages['javascript']);
+    expect(formatInside['objectFormat']?.alias).toBe('language-javascript');
+    expect(formatInside['scalarFormat']?.alias).toBe('string');
   });
 
   it('should anchor every part inside a placeholder with a format, so an object format is never split', async () => {
     const grammar = await registerGrammar(createPrism(true));
     const inside = grammar['expressionWithFormat']?.inside ?? {};
-    expect(Object.keys(inside)).toStrictEqual(['prefix', 'token', 'formatDelimiter', 'format', 'scalarFormat', 'suffix']);
-    for (const key of ['prefix', 'token', 'formatDelimiter', 'format', 'scalarFormat']) {
+    expect(Object.keys(inside)).toStrictEqual(['prefix', 'token', 'formatDelimiter', 'format', 'suffix']);
+    for (const key of ['prefix', 'token', 'formatDelimiter', 'format']) {
       expect(inside[key]?.pattern.source.startsWith('^'), key).toBe(true);
     }
     expect(inside['suffix']?.pattern.source.endsWith('$')).toBe(true);
+    const formatInside = castTo<Record<string, PrismTokenWithInside | undefined>>(inside['format']?.inside);
+    for (const key of ['objectFormat', 'scalarFormat']) {
+      expect(formatInside[key]?.pattern.source.startsWith('^'), key).toBe(true);
+    }
   });
 
   it('should add the two path tokens', async () => {
