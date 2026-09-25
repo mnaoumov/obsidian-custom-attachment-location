@@ -2,7 +2,6 @@ import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PathOrAbstractFile } from 'obsidian-dev-utils/obsidian/file-system';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 import type { MaybeReturn } from 'obsidian-dev-utils/type';
-import type { GenericObject } from 'obsidian-dev-utils/type-guards';
 import type { ValueWrapper } from 'obsidian-dev-utils/value-wrapper';
 
 import {
@@ -40,8 +39,6 @@ import {
 import { CustomToken } from './tokens/custom-token.ts';
 
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
-// The prefix obsidian-dev-utils' private-property transformer skips, and that marks a backing field of `PluginSettings`.
-const PRIVATE_PROPERTY_PREFIX = '_';
 
 // Every setting evaluated as a template, so every one the `{{...}}` syntax migration rewrites.
 const TOKENIZED_SETTINGS_KEYS = [
@@ -472,30 +469,6 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
 
     $string = $string.replace(this.settings.specialCharactersRegExp, () => this.settings.specialCharactersReplacement);
     return $string;
-  }
-
-  /**
-   * Leaves the settings class's private backing fields (`_customTokensStr`, `_attachmentCollectingPaths`, ...)
-   * out of the record, so that loading a `data.json` this component wrote finds nothing to write back.
-   *
-   * The base class lists every writable field as a setting, and its private-property transformer turns
-   * the `_` ones into keys holding `undefined`. JSON drops those keys, so the record written to disk never
-   * deep-equals the record the next load computes, and EVERY load saved `data.json` again. Obsidian can report
-   * that save back as an external change, which reloads, which saves: a loop measured at ~15 rewrites a
-   * second, for as long as the plugin stayed loaded. Each reload also replaced the live settings object, so
-   * whatever a caller had just changed in memory was lost.
-   *
-   * @param record - The record about to be transformed and written.
-   * @returns A {@link Promise} that resolves once the record is ready.
-   */
-  // TODO: Drop this override once obsidian-dev-utils' transformer omits a key whose transformed value is `undefined`.
-  protected override async onSavingRecord(record: GenericObject): Promise<void> {
-    await super.onSavingRecord(record);
-    for (const key of Object.keys(record)) {
-      if (key.startsWith(PRIVATE_PROPERTY_PREFIX)) {
-        Reflect.deleteProperty(record, key);
-      }
-    }
   }
 
   protected override registerLegacySettingsConverters(): void {
