@@ -35,11 +35,10 @@ export class DeleteUnusedAttachmentsInFileCommandHandler extends AbstractFileCom
    * Whether the command may run for one file or folder.
    *
    * `isNoteEx`, not the plain extension-based `isNote` its collect twin keeps on purpose, for a reason of
-   * the sweep's own: it learns what a note references from the metadata cache, and a drawing keeps its
-   * references where the cache does not carry them, so scanning one yields an EMPTY reference set and
-   * every file in the folder it owns becomes a candidate to trash. The walk in
-   * `unused-attachments-remover.ts` skips such a file for that reason, so offering the command on one
-   * would offer a command that does nothing.
+   * the sweep's own: the walk in `unused-attachments-remover.ts` never scans a file listed in
+   * `treatAsAttachmentExtensions` as a note — a drawing is an attachment of the note that embeds it, and
+   * judging the folder its path resolves to as if the drawing owned it would put that folder's files up for
+   * trashing. Offering the command on such a file would offer a command that does nothing.
    *
    * The PER-FILE predicate for the same reason its twin in
    * `collect-attachments-in-file-command-handler.ts` is: it is the one the palette, the single-file menu

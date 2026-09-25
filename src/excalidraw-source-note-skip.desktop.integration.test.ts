@@ -11,10 +11,10 @@ import {
  * (default `['.excalidraw.md']`), and why they answer it DIFFERENTLY.
  *
  *   - `Delete unused attachments in current note` is refused on such a file, and its sweep never scans one
- *     as a note. That sweep learns what a note references from the metadata cache, and a drawing keeps its
- *     references where the cache does not carry them (Excalidraw ships `compress: true` — see
- *     `externally-created-attachment-drawing-owner.desktop.integration.test.ts`), so scanning one returns an
- *     EMPTY reference set and every file in the folder it owns becomes a candidate to TRASH.
+ *     as a note. A drawing is an attachment of the note that embeds it, and scanning it as a note would judge
+ *     every file in the folder its path resolves to as if the drawing owned them — candidates to TRASH. The
+ *     images a drawing shows are safe regardless: they are backlinks, which the metadata cache carries,
+ *     compressed or not (`delete-unused-attachments-drawing.desktop.integration.test.ts`).
  *   - `Collect attachments in current note` is still OFFERED on it. Issues #57 and #75 both ship collecting
  *     FROM a drawing as their defining scenario (`note-priority.desktop.integration.test.ts`,
  *     `collect-higher-priority-notes.desktop.integration.test.ts`), so the collect-side skip that Consistent
@@ -28,8 +28,8 @@ import {
  *
  * `treatAsAttachmentExtensions` belongs to Advanced Rename and Delete Handler since 12.0.0 and this plugin
  * asks `isTreatedAsAttachment(path)` rather than reading the array, so what each phase swaps is a stub
- * parked on the read-back component's live `apiRef` — the technique the drawing-owner suite already uses,
- * and the reason the other plugin does not have to be reconfigured to run this.
+ * parked on the read-back component's live `apiRef`, which is the reason the other plugin does not have to be
+ * reconfigured to run this.
  *
  * Desktop-only (the file name alone picks the project). The behavior itself is platform-agnostic.
  */
