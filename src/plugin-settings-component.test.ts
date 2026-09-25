@@ -455,6 +455,34 @@ describe('PluginSettingsComponent', () => {
       expect(component.settings.proposedRenameDeleteSettings?.shouldHandleDeletions).toBe(true);
     });
 
+    /*
+     * The handler's default since 2.1.0 is `.excalidraw.md` plus `property:excalidraw-plugin` (#90). The historic
+     * list proposed as it was would be a row removing the property entry, so it is added for a user who kept
+     * drawings as attachments.
+     */
+    it('should add the excalidraw-plugin property entry to a historic list holding .excalidraw.md', async () => {
+      const component = await createComponent({ treatAsAttachmentExtensions: ['.excalidraw.md', '.canvas'] });
+      expect(component.settings.proposedRenameDeleteSettings?.treatAsAttachmentExtensions).toEqual([
+        '.excalidraw.md',
+        '.canvas',
+        'property:excalidraw-plugin'
+      ]);
+    });
+
+    it('should not add the excalidraw-plugin property entry twice', async () => {
+      const component = await createComponent({ treatAsAttachmentExtensions: ['property:excalidraw-plugin', '.excalidraw.md'] });
+      expect(component.settings.proposedRenameDeleteSettings?.treatAsAttachmentExtensions).toEqual([
+        'property:excalidraw-plugin',
+        '.excalidraw.md'
+      ]);
+    });
+
+    // A user who removed `.excalidraw.md` opted out of treating drawings as attachments.
+    it('should propose a historic list without .excalidraw.md unchanged', async () => {
+      const component = await createComponent({ treatAsAttachmentExtensions: ['.canvas'] });
+      expect(component.settings.proposedRenameDeleteSettings?.treatAsAttachmentExtensions).toEqual(['.canvas']);
+    });
+
     it('should map renameCollectedFiles into shouldRenameCollectedAttachments', async () => {
       const component = await createComponent({ renameCollectedFiles: true });
       expect(component.settings.shouldRenameCollectedAttachments).toBe(true);

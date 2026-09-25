@@ -155,8 +155,25 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
           migrateSettings: (params: MigrateSettingsParamsLike) => Promise<MigrateSettingsResultLike>;
         }
 
-        interface PluginWithApiLike {
-          readonly api: HandlerApiLike;
+        interface ApiRecord {
+          readonly api: unknown;
+          readonly isRevoked: boolean;
+        }
+
+        interface ObsidianDevUtilsWrapper {
+          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        }
+
+        interface ObsidianDevUtilsState {
+          readonly pluginApiRegistry?: RegistryWrapper;
+        }
+
+        interface RegistryWrapper {
+          readonly value?: RegistryValue;
+        }
+
+        interface RegistryValue {
+          readonly records?: Record<string, ApiRecord[]>;
         }
 
         function isUnitFolderSettings(value: unknown): value is UnitFolderSettings {
@@ -164,8 +181,15 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
             && typeof (value as Record<string, unknown>)['isAttachmentUnitFolder'] === 'function';
         }
 
-        function hasApi(candidate: object): candidate is PluginWithApiLike {
-          return 'api' in candidate;
+        /*
+         * The handler publishes its API through the plugin API registry alone since 2.0.0, which removed the
+         * `api` getter on its plugin instance.
+         */
+        function findHandlerApi(): HandlerApiLike | null {
+          const registryState = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils;
+          const api = registryState?.pluginApiRegistry?.value?.records?.[handlerPluginId]?.find((candidate) => !candidate.isRevoked)?.api;
+          const record = api as null | Record<string, unknown> | undefined;
+          return record && typeof record['migrateSettings'] === 'function' ? api as HandlerApiLike : null;
         }
 
         /**
@@ -250,14 +274,13 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
           await waitUntil({
             message: 'the handler plugin never published its API',
             predicate: () => {
-              const candidate = app.plugins.plugins[handlerPluginId];
-              return candidate !== undefined && hasApi(candidate);
+              return findHandlerApi() !== null;
             },
             timeoutInMilliseconds: waitTimeoutInMilliseconds
           });
 
-          const handlerPlugin = app.plugins.plugins[handlerPluginId];
-          if (!handlerPlugin || !hasApi(handlerPlugin)) {
+          const foundHandlerApi = findHandlerApi();
+          if (!foundHandlerApi) {
             return {
               diagnostics: 'the handler plugin loaded but exposes no API',
               doesDeletedFolderStillExist: false,
@@ -269,7 +292,7 @@ describe('Deleting a folder whose shared attachment sits in an attachment unit f
           }
 
           // The handler outlives this file, so what it held is handed back in the `finally` below.
-          handlerApi = handlerPlugin.api;
+          handlerApi = foundHandlerApi;
           const currentHandlerSettings = handlerApi.getSettings();
           priorHandlerSettings = {
             shouldHandleDeletions: currentHandlerSettings.shouldHandleDeletions,
