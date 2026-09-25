@@ -67,6 +67,22 @@ interface InlineTitleApp {
   updateInlineTitleDisplay: (this: void) => void;
 }
 
+/**
+ * The `moment` Obsidian exposes, reduced to its clock hook. Every `moment()`
+ * with no argument reads the time through `moment.now`, so replacing it moves
+ * the clock the `{{date}}` token sees and nothing else.
+ */
+interface MomentClock {
+  now: (this: void) => number;
+}
+
+/**
+ * `window`, reduced to the `moment` global Obsidian puts on it.
+ */
+interface MomentClockWindow {
+  moment: MomentClock;
+}
+
 const WIDTH_IN_PIXELS = 1200;
 const HEIGHT_IN_PIXELS = 800;
 
@@ -84,6 +100,22 @@ const RENAMED_NOTE_PATH = `${NOTE_FOLDER}/${RENAMED_NOTE_NAME}.md`;
  * naming, and the name the README complains about.
  */
 const PASTED_FILE_NAME = 'Pasted image 20260815093000';
+
+/**
+ * The moment the capture pretends it is, in the device's local time. The
+ * attachment names carry the day through `{{date:{momentJsFormat:'YYYYMMDD'}}}`,
+ * so a real clock would stamp every frame with the day it was shot, and two
+ * captures on different days would differ outside anything that changed. The
+ * day of the pasted files, a few hours after them: far enough that the pasted-
+ * image heuristic, which trusts a `Pasted image` name only within seconds of
+ * now, answers exactly as it does on a real clock.
+ */
+const CAPTURE_NOW_LOCAL_ISO = '2026-08-15T12:00:00';
+
+/**
+ * `CAPTURE_NOW_LOCAL_ISO` as the `{{date}}` token renders it.
+ */
+const CAPTURE_DAY = '20260815';
 
 /**
  * The pile shot 1 is about — Obsidian's naming, four days running.
@@ -126,11 +158,17 @@ beforeAll(async () => {
   await vault.syncToDevice();
 
   await evalInObsidian({
-    async callback({ app, lib: { waitUntil }, subjectNotePath }) {
+    async callback({ app, captureNowLocalIso, lib: { waitUntil }, subjectNotePath }) {
       const SETTLE_TIMEOUT_IN_MILLISECONDS = 20_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1000;
 
       app.changeTheme('obsidian');
+
+      // Pinned for the capture's whole life: the vault and the app are the
+      // capture's alone, so nothing else reads this clock.
+      const capturedNowInMilliseconds = new Date(captureNowLocalIso).getTime();
+      const momentClockWindow: unknown = window;
+      (momentClockWindow as MomentClockWindow).moment.now = (): number => capturedNowInMilliseconds;
 
       await waitUntil({
         message: 'the staged notes to appear in the vault',
@@ -152,7 +190,7 @@ beforeAll(async () => {
 
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
     },
-    input: { subjectNotePath: SUBJECT_NOTE_PATH },
+    input: { captureNowLocalIso: CAPTURE_NOW_LOCAL_ISO, subjectNotePath: SUBJECT_NOTE_PATH },
     vaultPath: vaultPath()
   });
 });
@@ -188,7 +226,7 @@ describe('desktop store screenshots', () => {
 
   it('3 - named after the note that owns it', async () => {
     const savedPath = await pasteAttachment(SECOND_NOTE_PATH, PASTED_FILE_NAME);
-    expect(savedPath).toContain('Retrospective-');
+    expect(savedPath).toContain(`Retrospective-${CAPTURE_DAY}`);
     expect(savedPath).not.toContain(PASTED_FILE_NAME);
     await openNote(SECOND_NOTE_PATH);
     await shoot(3, 'And named after the note it belongs to, not the clock');
