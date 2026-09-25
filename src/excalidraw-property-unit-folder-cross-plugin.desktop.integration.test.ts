@@ -234,8 +234,10 @@ describe('A drawing marked by its excalidraw-plugin property is an attachment (i
             settings.attachmentUnitFolderPaths = priorUnitFolderPaths;
           });
           /*
-           * The whole tree in one trash, not file by file: trashing `note_files/page.md` on its own makes Obsidian's
-           * main process log `Failed to parse path`, which the tree trash does not.
+           * The whole tree in one trash, not file by file. Trashing `note_files/page.md` on its own queues Advanced
+           * Rename and Delete Handler's empty-folder cleanup for `note_files`. That cleanup runs after the tree trash
+           * below has already taken the folder off disk, still finds it in the index, calls it empty, and trashes a
+           * missing path. The main process then logs `Failed to parse path`.
            */
           await trashIfExists(notePath);
           await trashIfExists(rootFolderPath);
