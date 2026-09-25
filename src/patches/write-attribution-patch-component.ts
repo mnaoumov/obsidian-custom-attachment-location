@@ -13,6 +13,7 @@ import {
   findCreatingPluginId
 } from '../creating-plugin-attribution.ts';
 import { foreignWriteRegistry } from '../foreign-write-registry.ts';
+import { selfWriteRegistry } from '../self-write-registry.ts';
 
 /**
  * The extension of a note, which is never the attachment this attribution is for.
@@ -99,14 +100,21 @@ export class WriteAttributionPatchComponent extends MonkeyAroundComponent {
   /**
    * Records the plugin on the current call stack as the writer of `path`.
    *
-   * Silent when there is nothing to attribute — no list mode selected, a note being saved, or no foreign
-   * plugin on the stack (core Obsidian, a sync client, or this plugin's own write, which the self-write
-   * registry already claims).
+   * Silent when there is nothing to attribute — a note being saved, a mode that does not ask who wrote the
+   * file, or no foreign plugin on the stack (core Obsidian, a sync client, or this plugin's own write, which
+   * the self-write registry already claims).
+   *
+   * A path this plugin resolved for an outside caller is attributed whatever the mode: that claim stands
+   * only while core Obsidian is the writer (issue #65), so the handler needs the writer even under `All`.
+   * The lookup is a map read, and the stack is captured only for such a path.
    *
    * @param path - The vault path being written.
    */
   private attributeWrite(path: string): void {
-    if (!this.pluginSettingsComponent.settings.needsCreatingPluginAttribution() || extname(path).toLowerCase() === NOTE_FILE_EXTENSION) {
+    if (
+      extname(path).toLowerCase() === NOTE_FILE_EXTENSION
+      || (!this.pluginSettingsComponent.settings.needsCreatingPluginAttribution() && !selfWriteRegistry.hasOutsideCallerClaim(path))
+    ) {
       return;
     }
 

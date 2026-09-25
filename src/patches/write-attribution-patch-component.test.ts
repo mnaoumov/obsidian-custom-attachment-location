@@ -17,6 +17,10 @@ import {
   PluginSettings,
   RenameAttachmentsCreatedByOtherPluginsMode
 } from '../plugin-settings.ts';
+import {
+  SelfWriteClaim,
+  selfWriteRegistry
+} from '../self-write-registry.ts';
 import { WriteAttributionPatchComponent } from './write-attribution-patch-component.ts';
 
 const OWN_PLUGIN_ID = 'custom-attachment-location';
@@ -119,6 +123,22 @@ describe('WriteAttributionPatchComponent', () => {
 
     // The stack is never captured under `All` / `None`, so a user who never opts into a list pays nothing.
     expect(foreignWriteRegistry.consume('shot.png')).toBeNull();
+  });
+
+  it('should attribute a write into a path resolved for an outside caller whatever the mode (issue #65)', async () => {
+    /*
+     * Under `All` the plugin id is otherwise never needed. For such a path it is: the claim the resolver left is
+     * the plugin's own when core Obsidian writes it, and not when a plugin does.
+     */
+    settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.All;
+    createComponent().load();
+    selfWriteRegistry.register('pasted.png', SelfWriteClaim.OutsideCaller);
+    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.createBinary("pasted.png", new ArrayBuffer(4));');
+
+    await write(vault);
+
+    expect(foreignWriteRegistry.consume('pasted.png')).toBe(FOREIGN_PLUGIN_ID);
+    expect(selfWriteRegistry.consume('pasted.png')).toBe(SelfWriteClaim.OutsideCaller);
   });
 
   it('should attribute nothing for a note, which is never the attachment being renamed', async () => {

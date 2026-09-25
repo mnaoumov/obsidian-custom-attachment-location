@@ -35,7 +35,10 @@ import {
   PluginSettings,
   RenameAttachmentsCreatedByOtherPluginsMode
 } from './plugin-settings.ts';
-import { selfWriteRegistry } from './self-write-registry.ts';
+import {
+  SelfWriteClaim,
+  selfWriteRegistry
+} from './self-write-registry.ts';
 
 vi.mock('obsidian-dev-utils/error', () => ({
   printError: vi.fn<(error: unknown) => void>()
@@ -373,7 +376,73 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
   });
 
   it('should do nothing when the active file is not a note', async () => {
-    await setUp({ isNoteEx: (): boolean => false });
+    const videoFile = await getApp().vault.createBinary('some-video.mp4', new ArrayBuffer(4));
+    await setUp();
+    vi.spyOn(getApp().workspace, 'getActiveFile').mockReturnValue(videoFile);
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).not.toHaveBeenCalled();
+  });
+
+  it('should file an attachment under a drawing the user treats as an attachment (issue #65)', async () => {
+    /*
+     * A drawing is listed in `treatAsAttachmentExtensions` by default, so `isNoteEx` says it is not a note. It
+     * still OWNS the images it shows — the same call `AttachmentPathManager` makes when it resolves the folder a
+     * drawing's paste lands in — and Excalidraw writes each one as an indexed `[[link]]` line, which
+     * `renameFile` rewrites like any other.
+     */
+    const drawingPath = 'notes/sketch.excalidraw.md';
+    let chosenNotePath: string | undefined;
+    await setUp({
+      isNoteEx: (pathOrFile: unknown): boolean => getPath(pathOrFile).endsWith('.md') && !getPath(pathOrFile).endsWith('.excalidraw.md'),
+      onGetAttachmentFolderFullPathForPath: (params): void => {
+        chosenNotePath = params.notePath;
+      }
+    });
+    await getApp().vault.create(drawingPath, '');
+    vi.spyOn(getApp().workspace, 'getActiveFile').mockReturnValue(getApp().vault.getFileByPath(drawingPath));
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).toHaveBeenCalledOnce();
+    expect(chosenNotePath).toBe(drawingPath);
+  });
+
+  it('should rename a file a plugin wrote under its own name into a path resolved for it (issue #65)', async () => {
+    /*
+     * Excalidraw asks `getAvailablePathForAttachment` for its `Pasted Image <date>.png` and writes exactly the path
+     * it gets back. The resolver kept the caller's name, so this plugin named nothing — the claim it left is
+     * no reason to skip the file once a plugin is known to have written it.
+     */
+    await setUp();
+    selfWriteRegistry.register(FOREIGN_ATTACHMENT_PATH, SelfWriteClaim.OutsideCaller);
+    foreignWriteRegistry.register(FOREIGN_ATTACHMENT_PATH, 'obsidian-excalidraw-plugin');
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).toHaveBeenCalledOnce();
+  });
+
+  it('should leave a file core Obsidian wrote into a path resolved for it alone', async () => {
+    // The audio recorder and the file imports ask the same way, with no plugin on the stack; they are not another plugin's attachments.
+    await setUp();
+    selfWriteRegistry.register(FOREIGN_ATTACHMENT_PATH, SelfWriteClaim.OutsideCaller);
+
+    await createForeignAttachment();
+
+    expect(renameFileSpy).not.toHaveBeenCalled();
+  });
+
+  it('should still leave a path resolved for a plugin alone when that plugin is not one to rename', async () => {
+    await setUp({
+      settings: {
+        otherPluginIdsForAttachmentRename: ['media-extended'],
+        renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins
+      }
+    });
+    selfWriteRegistry.register(FOREIGN_ATTACHMENT_PATH, SelfWriteClaim.OutsideCaller);
+    foreignWriteRegistry.register(FOREIGN_ATTACHMENT_PATH, 'obsidian-excalidraw-plugin');
 
     await createForeignAttachment();
 

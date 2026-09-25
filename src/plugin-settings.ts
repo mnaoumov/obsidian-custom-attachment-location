@@ -352,8 +352,9 @@ export class PluginSettings {
   /**
    * Whether the creating plugin has to be identified before an externally created attachment can be judged.
    *
-   * `false` for both non-list modes, which is what keeps the stack capture off the hot path entirely for a
-   * user who never opts into a list.
+   * `false` for both non-list modes, which is what keeps the stack capture off the hot path for a user who never
+   * opts into a list. The one write it still runs for is one into a path this plugin resolved for an outside
+   * caller, which `WriteAttributionPatchComponent` checks separately.
    *
    * @returns `true` when the current mode consults the plugin id.
    */
