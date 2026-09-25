@@ -44,7 +44,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     });
     Object.defineProperty(appMock.vault, 'getConfig', {
       configurable: true,
-      value: (name: string): unknown => name === 'useMarkdownLinks' ? true : 'absolute',
+      value: (name: string): unknown => name === 'useMarkdownLinks' || 'absolute',
       writable: true
     });
     app = appMock.asOriginalType__();
