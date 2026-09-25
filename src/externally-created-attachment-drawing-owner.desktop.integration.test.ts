@@ -64,6 +64,10 @@ interface ExcalidrawCreateParams {
   readonly onNewPane: boolean;
 }
 
+interface ExcalidrawPluginLike {
+  readonly settings?: unknown;
+}
+
 // Excalidraw's view is a `TextFileView` whose `save` takes a second flag that forces the write.
 interface ExcalidrawViewLike extends TextFileView {
   save: (shouldPreventReload?: boolean, shouldForceSave?: boolean) => Promise<void>;
@@ -197,6 +201,15 @@ describe('An image pasted into an Excalidraw drawing (issue #65)', () => {
         try {
           await app.plugins.loadManifests();
           await app.plugins.enablePlugin(excalidrawPluginId);
+          /*
+           * Excalidraw finishes loading after `enablePlugin` resolves: its automation API exists before its settings
+           * do, and `create` reads them. Asking too early throws inside Excalidraw, so wait for both.
+           */
+          await waitFor('Excalidraw to finish loading', () =>
+            Promise.resolve(
+              (window as ExcalidrawWindow).ExcalidrawAutomate !== undefined
+                && (app.plugins.getPlugin(excalidrawPluginId) as ExcalidrawPluginLike | null)?.settings !== undefined
+            ));
           const ea = (window as ExcalidrawWindow).ExcalidrawAutomate;
           if (!ea) {
             return { controlPaste: null, drawingPath: '', isExcalidrawLoaded: false, renamedPaste: null, settingsFound: true };
