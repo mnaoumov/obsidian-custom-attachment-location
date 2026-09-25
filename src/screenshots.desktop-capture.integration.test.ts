@@ -39,6 +39,11 @@ import {
   it
 } from 'vitest';
 
+import {
+  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
+  ADVANCED_RENAME_AND_DELETE_HANDLER_SEEDED_SETTINGS
+} from '../scripts/helpers/advanced-rename-and-delete-handler-seed.ts';
+
 /**
  * A file-explorer row, reduced to the collapse toggle.
  */
@@ -96,14 +101,24 @@ beforeAll(async () => {
   const vault = getTemporaryVault();
 
   vault.populate({
+    // Renames are the handler's to carry out, and its seed leaves them off. This
+    // vault belongs to the capture alone, so its record is written outright, with
+    // the note's attachment folder and files following a rename.
+    [`.obsidian/plugins/${ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID}/data.json`]: JSON.stringify({
+      ...ADVANCED_RENAME_AND_DELETE_HANDLER_SEEDED_SETTINGS,
+      shouldHandleRenames: true,
+      shouldRenameAttachmentFiles: true,
+      shouldRenameAttachmentFolder: true
+    }),
     [`.obsidian/plugins/${PLUGIN_ID}/data.json`]: JSON.stringify({
-      // The pattern the plugin's own defaults recommend, spelled out so the
-      // frames match what the settings would show.
+      // The pattern the plugin recommends, spelled out so the frames match what
+      // the settings would show. This file replaces the seeded one, so it also
+      // switches off following Obsidian's attachment location, the default
+      // since 13.0.0, which would leave the pattern unread.
       attachmentFolderPath: './assets/{{noteFileName}}',
       attachmentRenameMode: 'All',
       generatedAttachmentFileName: '{{noteFileName}}-{{date:{momentJsFormat:\'YYYYMMDD\'}}}',
-      shouldHandleRenames: true,
-      shouldRenameAttachmentFolder: true
+      shouldFollowObsidianAttachmentLocation: false
     }),
     [SECOND_NOTE_PATH]: '# Retrospective\n\nWhat went well, what did not.\n',
     [SUBJECT_NOTE_PATH]: `# ${SUBJECT_NOTE_NAME}\n\nNotes from the kickoff.\n`
@@ -160,7 +175,7 @@ describe('desktop store screenshots', () => {
     // one. Both halves of the complaint, asserted rather than assumed.
     expect(savedPaths).toStrictEqual(PILE_FILE_NAMES.map((fileName) => `${fileName}.png`));
     await openNote(SUBJECT_NOTE_PATH);
-    await shoot(1, 'Every pasted screenshot in one heap, named after the clock');
+    await shoot(1, 'Every pasted screenshot in one heap, named by the clock');
   });
 
   it('2 - a folder per note', async () => {
@@ -190,7 +205,7 @@ describe('desktop store screenshots', () => {
   it('5 - the link inside the note still resolves', async () => {
     const embedCount = await openNote(RENAMED_NOTE_PATH, 'preview');
     expect(embedCount).toBeGreaterThan(0);
-    await shoot(5, 'The embed still resolves — nothing is left pointing nowhere');
+    await shoot(5, 'The embed still resolves — no broken links');
   });
 });
 

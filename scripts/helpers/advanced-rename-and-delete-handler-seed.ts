@@ -38,7 +38,11 @@ const ADVANCED_RENAME_AND_DELETE_HANDLER_REPO = 'mnaoumov/obsidian-advanced-rena
 // Every vault the harness opens keeps its configuration in the default folder.
 const VAULT_CONFIG_FOLDER = '.obsidian';
 
-const SEEDED_SETTINGS = {
+/**
+ * The settings seeded with it. Exported so a suite that owns its vault outright (the store-screenshot captures)
+ * can write the same record with renames switched on.
+ */
+export const ADVANCED_RENAME_AND_DELETE_HANDLER_SEEDED_SETTINGS = {
   emptyFolderBehavior: 'DeleteWithEmptyParents',
   notePriorities: [],
   shouldHandleDeletions: false,
@@ -62,7 +66,7 @@ export async function getAdvancedRenameAndDeleteHandlerPopulate(): Promise<Popul
 
   const pluginFolder = `${VAULT_CONFIG_FOLDER}/plugins/${ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID}`;
   return {
-    [`${pluginFolder}/data.json`]: JSON.stringify(SEEDED_SETTINGS),
+    [`${pluginFolder}/data.json`]: JSON.stringify(ADVANCED_RENAME_AND_DELETE_HANDLER_SEEDED_SETTINGS),
     [`${pluginFolder}/main.js`]: files.mainJs,
     [`${pluginFolder}/manifest.json`]: files.manifestJson
   };
