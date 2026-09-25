@@ -78,7 +78,7 @@
     "nano-staged": "^1.0.2",
     "obsidian": "^1.13.1",
     "obsidian-dev-utils": "^107.0.0",
-    "obsidian-integration-testing": "^17.0.2",
+    "obsidian-integration-testing": "^17.1.1",
     "obsidian-test-mocks": "^7.0.0",
     "semver": "^7.8.5",
     "sharp": "^0.35.4",
