@@ -8,6 +8,11 @@ import { makeFileName } from 'obsidian-dev-utils/path';
 import type { AttachmentPathManager } from '../attachment-path-manager.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
+import {
+  SelfWriteClaim,
+  selfWriteRegistry
+} from '../self-write-registry.ts';
+
 interface VaultGetAvailablePathForAttachmentsPatchComponentConstructorParams {
   readonly attachmentPathManager: AttachmentPathManager;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -30,7 +35,7 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
     this.registerMethodPatch({
       $object: this.vault,
       methodName: 'getAvailablePathForAttachments',
-      patchHandler: ({
+      patchHandler: async ({
         originalArguments: [attachmentFileBaseName, attachmentFileExtension, notePathOrFile]
       }) => {
         /*
@@ -42,7 +47,7 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
          * `shouldSkipMissingAttachmentFolderCreation: true` so no folder is created for a resolution.
          * Real saves create their folder through the actual write path, not here.
          */
-        return this.attachmentPathManager.getAvailablePathForAttachments({
+        const attachmentPath = await this.attachmentPathManager.getAvailablePathForAttachments({
           attachmentFileBaseName,
           attachmentFileExtension,
           context: AttachmentPathContext.Unknown,
@@ -55,6 +60,15 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
           shouldSkipGeneratedAttachmentFileName: true,
           shouldSkipMissingAttachmentFolderCreation: true
         });
+
+        /*
+         * The caller named the file and the resolver kept that name, so the claim the manager just made is weaker
+         * than one on a name this plugin chose. It still covers core Obsidian's audio recorder and file imports,
+         * but not a PLUGIN that asks for a folder and writes its own name into it — Excalidraw's
+         * `Pasted Image <date>.png` (issue #65), which is another plugin's attachment like any other.
+         */
+        selfWriteRegistry.register(attachmentPath, SelfWriteClaim.OutsideCaller);
+        return attachmentPath;
       },
       postPatchHandler: ({
         patchedMethod

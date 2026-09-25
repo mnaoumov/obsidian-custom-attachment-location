@@ -22,35 +22,85 @@
  */
 const PRUNE_THRESHOLD_IN_MILLISECONDS = 60_000;
 
-class SelfWriteRegistry {
-  private readonly registeredAtByPath = new Map<string, number>();
+/**
+ * What a claim on a path says about the file that is about to be created there.
+ */
+export enum SelfWriteClaim {
+  /**
+   * Nothing claimed the path.
+   */
+  None = 'None',
 
   /**
-   * Reports whether `path` was claimed by {@link register}, and un-claims it.
+   * The plugin resolved the path for a caller outside its own pipeline — someone asking through the patched
+   * `vault.getAvailablePathForAttachments` — and that caller chose the file name, which the resolver passes
+   * through untouched.
+   *
+   * Such a claim holds only while core Obsidian is the writer: its audio recorder and its file imports ask
+   * exactly this way and must not be renamed a second time. A PLUGIN that asks for a folder and then writes
+   * its own name into it — Excalidraw's `Pasted Image <date>.png` (issue #65) — is the very case
+   * `renameAttachmentsCreatedByOtherPluginsMode` exists for, and the plugin named nothing there.
+   */
+  OutsideCaller = 'OutsideCaller',
+
+  /**
+   * The plugin is about to write the file itself, under a name it chose or accepted.
+   */
+  Plugin = 'Plugin'
+}
+
+interface Registration {
+  readonly claim: SelfWriteClaim;
+  readonly registeredAt: number;
+}
+
+class SelfWriteRegistry {
+  private readonly registrationByPath = new Map<string, Registration>();
+
+  /**
+   * Reports how `path` was claimed by {@link register}, and un-claims it.
    *
    * @param path - The path of the newly created file.
-   * @returns `true` when the plugin wrote the file itself.
+   * @returns The claim, or {@link SelfWriteClaim.None} when nothing claimed the path.
    */
-  public consume(path: string): boolean {
+  public consume(path: string): SelfWriteClaim {
     this.prune();
-    return this.registeredAtByPath.delete(path);
+    const registration = this.registrationByPath.get(path);
+    this.registrationByPath.delete(path);
+    return registration?.claim ?? SelfWriteClaim.None;
   }
 
   /**
-   * Claims `path` as a plugin-initiated write, matching a later {@link consume} for the same path.
+   * Tells whether `path` is claimed as resolved for an outside caller, leaving the claim in place.
    *
-   * @param path - The vault path the plugin is about to create.
+   * The write attribution asks this at the write, before the `create` event consumes the claim, because
+   * only a write to such a path needs its creating plugin identified when no list mode asks for it.
+   *
+   * @param path - The vault path being written.
+   * @returns Whether the claim is {@link SelfWriteClaim.OutsideCaller}.
    */
-  public register(path: string): void {
+  public hasOutsideCallerClaim(path: string): boolean {
     this.prune();
-    this.registeredAtByPath.set(path, Date.now());
+    return this.registrationByPath.get(path)?.claim === SelfWriteClaim.OutsideCaller;
+  }
+
+  /**
+   * Claims `path`, matching a later {@link consume} for the same path. A later claim on the same path
+   * replaces an earlier one.
+   *
+   * @param path - The vault path about to be created.
+   * @param claim - What kind of claim it is.
+   */
+  public register(path: string, claim: SelfWriteClaim.OutsideCaller | SelfWriteClaim.Plugin = SelfWriteClaim.Plugin): void {
+    this.prune();
+    this.registrationByPath.set(path, { claim, registeredAt: Date.now() });
   }
 
   private prune(): void {
     const cutoff = Date.now() - PRUNE_THRESHOLD_IN_MILLISECONDS;
-    for (const [path, registeredAt] of this.registeredAtByPath) {
-      if (registeredAt < cutoff) {
-        this.registeredAtByPath.delete(path);
+    for (const [path, registration] of this.registrationByPath) {
+      if (registration.registeredAt < cutoff) {
+        this.registrationByPath.delete(path);
       }
     }
   }

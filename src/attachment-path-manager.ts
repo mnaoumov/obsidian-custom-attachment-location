@@ -271,6 +271,10 @@ export class AttachmentPathManager {
      * Claiming a path that never gets written costs nothing: the entry expires, and it is only ever
      * consumed by a creation at exactly that path — which would mean the writer used the name this
      * plugin gave it, and so needs no renaming anyway.
+     *
+     * Not when the name was the CALLER's, though. `VaultGetAvailablePathForAttachmentsPatchComponent` hands
+     * out paths whose file name it passed through untouched, so it downgrades this claim to one that holds only
+     * while core Obsidian is the writer (issue #65).
      */
     selfWriteRegistry.register(attachmentPath);
 

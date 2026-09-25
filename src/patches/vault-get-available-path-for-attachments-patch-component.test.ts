@@ -22,6 +22,10 @@ import type { AttachmentPathManager } from '../attachment-path-manager.ts';
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 import type { PluginSettings } from '../plugin-settings.ts';
 
+import {
+  SelfWriteClaim,
+  selfWriteRegistry
+} from '../self-write-registry.ts';
 import { VaultGetAvailablePathForAttachmentsPatchComponent } from './vault-get-available-path-for-attachments-patch-component.ts';
 
 interface PatchedMethodWithExtended {
@@ -112,6 +116,15 @@ describe('VaultGetAvailablePathForAttachmentsPatchComponent', () => {
       shouldSkipGeneratedAttachmentFileName: true,
       shouldSkipMissingAttachmentFolderCreation: true
     });
+  });
+
+  it('should claim the path it hands out as resolved for an outside caller, whose file name it kept (issue #65)', async () => {
+    const component = createComponent();
+    component.load();
+
+    await vault.getAvailablePathForAttachments('Pasted Image', 'png', null);
+
+    expect(selfWriteRegistry.consume('/extended/attachment/path')).toBe(SelfWriteClaim.OutsideCaller);
   });
 
   it('should attach an extended method bound to the attachment path manager', async () => {

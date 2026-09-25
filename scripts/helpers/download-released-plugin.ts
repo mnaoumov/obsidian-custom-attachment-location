@@ -49,6 +49,16 @@ export interface DownloadReleasedPluginParams {
 }
 
 /**
+ * Parameters for {@link installReleasedPlugin}.
+ */
+export interface InstallReleasedPluginParams extends DownloadReleasedPluginParams {
+  /**
+   * The file-system path of the vault to install the plugin into.
+   */
+  readonly vaultPath: string;
+}
+
+/**
  * The files an Obsidian plugin needs in its folder to be loaded. `styles.css` is deliberately absent: it is
  * optional, and nothing under test reads it.
  */
@@ -66,6 +76,9 @@ export interface ReleasedPluginFiles {
 
 const CACHE_FOLDER_NAME = '.cache';
 
+// Every vault the harness opens keeps its configuration in the default folder.
+const VAULT_CONFIG_FOLDER = '.obsidian';
+
 const REPO_ROOT_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
@@ -82,6 +95,25 @@ export async function downloadReleasedPlugin(params: DownloadReleasedPluginParam
     mainJs: await readCachedAsset(cacheFolderPath, 'main.js', params),
     manifestJson: await readCachedAsset(cacheFolderPath, 'manifest.json', params)
   };
+}
+
+/**
+ * Writes a plugin's released `manifest.json` and `main.js` into a vault's plugin folder, downloading them on
+ * first use.
+ *
+ * For a plugin a single suite installs, enables and removes again, rather than one every vault is seeded with.
+ * The files are written from Node because a released `main.js` can run to megabytes, which has no business
+ * crossing the transport as a closure input. The plugin is not enabled: the suite does that inside Obsidian,
+ * after `app.plugins.loadManifests()`.
+ *
+ * @param params - Which plugin, repository and release tag to install, and into which vault.
+ */
+export async function installReleasedPlugin(params: InstallReleasedPluginParams): Promise<void> {
+  const files = await downloadReleasedPlugin(params);
+  const pluginFolderPath = join(params.vaultPath, VAULT_CONFIG_FOLDER, 'plugins', params.pluginId);
+  await mkdir(pluginFolderPath, { recursive: true });
+  await writeFile(join(pluginFolderPath, 'main.js'), files.mainJs, 'utf-8');
+  await writeFile(join(pluginFolderPath, 'manifest.json'), files.manifestJson, 'utf-8');
 }
 
 /**
