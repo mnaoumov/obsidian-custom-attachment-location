@@ -246,7 +246,10 @@ ${commentOut(this.legacySettings.customTokensStr)}
     }
 
     this.legacySettings.generatedAttachmentFileName = this.replaceLegacyTokens(this.legacySettings.generatedAttachmentFileName);
-    this.legacySettings.markdownUrlFormat = this.replaceLegacyTokens(this.legacySettings.markdownUrlFormat);
+    // An absent key stays absent, so the default fills it rather than an '' that happens to match it today.
+    if (this.legacySettings.markdownUrlFormat !== undefined) {
+      this.legacySettings.markdownUrlFormat = this.replaceLegacyTokens(this.legacySettings.markdownUrlFormat);
+    }
   }
 
   private convertMarkdownUrlFormat(): void {
@@ -455,15 +458,6 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
    * @param isInitialLoad - Whether the settings are being loaded for the first time.
    * @returns A {@link Promise} that resolves when the settings are loaded.
    */
-  public override async loadFromFile(isInitialLoad: boolean): Promise<void> {
-    const data: unknown = await this.dataHandler.loadData();
-    if (data === undefined || data === null) {
-      await this.dataHandler.saveData({});
-    }
-
-    await super.loadFromFile(isInitialLoad);
-  }
-
   public replaceSpecialCharacters($string: string): string {
     if (!this.settings.specialCharacters) {
       return $string;
