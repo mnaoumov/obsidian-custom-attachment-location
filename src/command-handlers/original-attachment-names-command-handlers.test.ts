@@ -92,11 +92,12 @@ afterEach(() => {
 describe('ShowOriginalAttachmentNamesCommandHandler', () => {
   it('should open the list of original names', async () => {
     const tokenValidator = strictProxy<TokenValidator>({});
-    const handler = new ShowOriginalAttachmentNamesCommandHandler({ app, originalAttachmentNamesComponent, tokenValidator });
+    const pluginNoticeComponent = strictProxy<PluginNoticeComponent>({ showNotice });
+    const handler = new ShowOriginalAttachmentNamesCommandHandler({ app, originalAttachmentNamesComponent, pluginNoticeComponent, tokenValidator });
 
     await castTo<TestableExecute>(handler).execute();
 
-    expect(mockShowOriginalAttachmentNamesModal).toHaveBeenCalledExactlyOnceWith({ app, originalAttachmentNamesComponent, tokenValidator });
+    expect(mockShowOriginalAttachmentNamesModal).toHaveBeenCalledExactlyOnceWith({ app, originalAttachmentNamesComponent, pluginNoticeComponent, tokenValidator });
   });
 });
 
