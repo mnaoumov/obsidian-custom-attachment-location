@@ -154,7 +154,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         }
         combinedAbortSignal.throwIfAborted();
       },
-      progressBarTitle: `${this.pluginName}: ${t(($) => $.moveAttachmentToProperFolder.progressBar.title)}`,
+      progressBarTitle: t(($) => $.moveAttachmentToProperFolder.progressBar.title),
       shouldContinueOnError: true,
       shouldShowProgressBar: true
     });

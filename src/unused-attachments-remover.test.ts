@@ -291,7 +291,6 @@ describe('UnusedAttachmentsRemover', () => {
       app,
       attachmentPathManager,
       handedOverSettingsComponent,
-      pluginName: PLUGIN_NAME,
       pluginNoticeComponent,
       pluginSettingsComponent
     });

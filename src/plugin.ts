@@ -322,7 +322,6 @@ export class Plugin extends PluginBase {
       consoleDebugComponent: this.consoleDebugComponent,
       handedOverSettingsComponent,
       networkImageDownloader,
-      pluginName: this.manifest.name,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent,
       resourceLockComponent: this.resourceLockComponent
@@ -367,7 +366,6 @@ export class Plugin extends PluginBase {
       app: this.app,
       attachmentPathManager,
       handedOverSettingsComponent,
-      pluginName: this.manifest.name,
       pluginNoticeComponent: this.pluginNoticeComponent,
       pluginSettingsComponent
     });

@@ -97,7 +97,6 @@ interface AttachmentCollectorConstructorParams {
   readonly consoleDebugComponent: ConsoleDebugComponent;
   readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly networkImageDownloader: NetworkImageDownloader;
-  readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly resourceLockComponent: null | ResourceLockComponent;
@@ -191,7 +190,6 @@ export class AttachmentCollector {
   private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly networkImageDownloader: NetworkImageDownloader;
   private readonly noteOwnerResolver: NoteOwnerResolver;
-  private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly resourceLockComponent: null | ResourceLockComponent;
@@ -204,7 +202,6 @@ export class AttachmentCollector {
     this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.networkImageDownloader = params.networkImageDownloader;
     this.resourceLockComponent = params.resourceLockComponent;
-    this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.noteOwnerResolver = new NoteOwnerResolver({
@@ -915,7 +912,7 @@ export class AttachmentCollector {
           abortController.abort();
         }
       },
-      progressBarTitle: `${this.pluginName}: ${t(($) => $.attachmentCollector.progressBar.title)}`,
+      progressBarTitle: t(($) => $.attachmentCollector.progressBar.title),
       shouldContinueOnError: true,
       shouldShowProgressBar: true
     });
