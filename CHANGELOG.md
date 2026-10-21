@@ -2,7 +2,7 @@
 
 ## 16.0.0
 
-- feat(settings)!: merge taking obsidian-lib 5.0.0 path settings with globs and case-insensitive matching
+- feat(settings)!: merge taking obsidian-lib 5.0.0 path settings with globs and case-insensitive matching (re #98 - Exclude file extensions (e.g. .mdenc) from Collect attachments)
 - docs: mark plugin names as code
 - fix(tokens): merge registering custom tokens whenever the settings are validated
 
@@ -11,7 +11,7 @@ Migration: every entry in a path list (attachment unit folders, the two exclude 
 ## 15.1.1
 
 - docs(api): merge naming the validation debug switch in the contract
-- fix(paste): merge renaming every pasted image file again under Only pasted images
+- fix(paste): merge renaming every pasted image file again under Only pasted images (re #97 - [BUG] The newly uploaded attachment was not renamed.)
 - chore(deps): merge bumping obsidian-test-mocks to ^7.2.3
 - refactor(api): merge refreshing the `Advanced Rename and Delete Handler` contract copy
 - chore(github): merge linking Discussions from the issue chooser
@@ -64,7 +64,7 @@ Migration: every entry in a path list (attachment unit folders, the two exclude 
 
 ## 14.0.3
 
-- fix: merge updating obsidian-dev-utils to 107.4.1
+- fix: merge updating obsidian-dev-utils to 107.4.1 (re #95 - [BUG] Global CSS leak via `body button:not(.clickable-icon)` breaks button text and icons in other plugins)
 
 ## 14.0.2
 
@@ -140,18 +140,18 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - feat(api): merge the published collectAttachments member
 - test: merge the wait-ceiling sizing for the rescue and dependency suites
 - test(delete): merge the reporter's second #70 vault layout suite
-- fix(delete-unused): an empty note no longer keeps an attachment unit folder alive
+- fix(delete-unused): an empty note no longer keeps an attachment unit folder alive (re #83 - [BUG] `Delete unused attachments in entire vault` still doesn't delete `attachment unit folders`)
 - fix: re #82
 - docs: say why every test vault seeds pattern mode now that a fresh install follows Obsidian
 - feat(location)!: follow Obsidian by default; switch it off to get ./assets/${noteFileName} back
 - feat(collect): receive the collect settings `Consistent Attachments and Links` hands over
 - feat(location): follow Obsidian's own attachment location on request
-- feat(collect): say when a collect moved nothing, and name the setting that pinned it
+- feat(collect): say when a collect moved nothing, and name the setting that pinned it (re #81 - [BUG] "Collect attachments in current note" function seems to do nothing - v11.11.0)
 - docs: replace two labels a reader of this repo cannot resolve
 - feat: publish a per-note attachment-folder read API for other plugins
 - refactor: read the attachment-unit-folder designation through the library
-- feat: exempt chosen attachment file types from the multiple notes check
-- feat: give Collect attachments a destination of its own
+- feat: exempt chosen attachment file types from the multiple notes check (re #80 - [FR] Allow excluding specific attachment extensions from the multiple-notes check)
+- feat: give Collect attachments a destination of its own (re #78 - [FR] Allow Collect attachments to use a separate destination from new attachments)
 - docs(agents): find the handler's dialogs by title, not by a bare modal lookup
 - test(rescue): accept issue #71's tie dialog with both real plugins on one vault
 - fix(deps): float devalue to 5.9.4, clearing GHSA-9rgm-9g3h-6x36
@@ -163,7 +163,7 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - docs: name the library and the sibling plugins so a reader can resolve them
 - docs: replace the private tracker references with what they pointed at
 - test: bring eight in-closure wait ceilings under the transport's per-eval cap
-- feat!: require `Advanced Rename and Delete Handler` instead of suggesting it
+- feat!: require `Advanced Rename and Delete Handler` instead of suggesting it (re #84 - [FR] Stop notification for `Advanced rename and delete handler` from appearing)
 - feat: warn about the `Consistent Attachments and Links` collecting overlap
 
 ## 12.0.1
@@ -180,16 +180,16 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - feat(ownerless-attachments): reach attachment folders whose owning note is gone
 - chore(deps): move to obsidian-dev-utils 101 and obsidian-test-mocks 5
 - refactor(move-to-proper-folder): drop the `this` alias the directory review flags
-- feat(rename-by-plugin): scope the foreign-attachment rename to named plugins
+- feat(rename-by-plugin): scope the foreign-attachment rename to named plugins (re #77 - [FR] Setting to only `include` defined plugins for renames)
 
 ## 12.0.0
 
 - feat(rename-delete)!: hand rename and delete over to `Advanced Rename and Delete Handler`
-- feat(collect): name the higher-priority notes when collecting from an outranked note
-- feat(note-priority): report only the notes tying for the highest rank
-- feat(collect): stay quiet when the priority winner already holds the attachment
+- feat(collect): name the higher-priority notes when collecting from an outranked note (re #75 - [FR] Show a higher priority notification when `collect attachments in current note` is triggered on a note of lower priority)
+- feat(note-priority): report only the notes tying for the highest rank (re #74 - [FR] A lower priority item should not appear on the notification box, when there is ambiguity in collection)
+- feat(collect): stay quiet when the priority winner already holds the attachment (re #73 - [FR] `Multiple notes` notification box should not appear when triggering `collect attachments in current file`, when all notes have different priorities)
 - feat: re #72
-- feat(attachment-unit-folder): publish the unit folder designation on the vault
+- feat(attachment-unit-folder): publish the unit folder designation on the vault (re #70 - [BUG] Delete Interception doesn't work with `Attachment Unit Folders`)
 - fix: re #69
 - fix(build): wire build:compile to buildCompile and drop the duplicate leaf script
 
@@ -228,7 +228,7 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - docs(demo-vault): unwrap the notes so Obsidian stops rendering a break per line
 - chore(cspell): teach the dictionary Obsidian's `offref`
 - docs(readme): render the same in Obsidian's plugin page as on GitHub
-- fix(rename): stop a concurrent edit orphaning a moved note's embeds
+- fix(rename): stop a concurrent edit orphaning a moved note's embeds (re #60 - The image link is not updated)
 - chore: lint
 
 ## 11.8.0
