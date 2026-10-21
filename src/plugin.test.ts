@@ -121,7 +121,7 @@ vi.mock('@mnaoumov/obsidian-lib/components/rename-delete-handler-component', asy
 
 // --- Collaborator dev-utils components NOT added as children: bare constructor spies. ---
 
-// `PluginDataHandler` and `PluginEventSourceImpl` are NOT stubbed: since obsidian-dev-utils 93.2 the base
+// `PluginDataHandler` and `PluginEventSourceImpl` are NOT stubbed: the base
 // builds its own settings component out of them during `onload`, and that component really calls
 // `pluginEventSource.on`, so a bare `vi.fn()` double makes the base throw before `onloadImpl` runs.
 // --- The plugin's OWN sibling modules: collaborators added as children return a real Component; the rest are bare constructor spies. ---
@@ -755,7 +755,7 @@ describe('Plugin', () => {
   });
 });
 
-// `registerCommandHandlers` takes a factory since obsidian-dev-utils 89.0.0, and the base
+// `registerCommandHandlers` takes a factory, and the base
 // registers its own handlers through the same spy — so pick the plugin's own factory by what it builds.
 function buildPluginCommandHandlers(): CommandHandler[] {
   const commandHandlerBatches = vi.mocked(CommandHandlerComponent.prototype.registerCommandHandlers).mock.calls

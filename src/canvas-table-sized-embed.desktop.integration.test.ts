@@ -10,13 +10,13 @@ import {
  * Coverage for issue #27 (a library-side fix consumed via obsidian-dev-utils 88.2.0): a canvas text node
  * holding a markdown TABLE cell with a sized, table-escaped embed `![[img.png\|500]]` must keep the
  * `\|500` escaping (embed size) when the canvas rewrite retargets the embed. Pre-88.2.0 the rewrite
- * emitted an UNescaped `|500`, breaking the surrounding table. The fix lives in obsidian-dev-utils
+ * emitted an UNescaped `|500`, breaking the surrounding table. The fix lives in `@mnaoumov/obsidian-lib`
  * `applyCanvasChanges`, which restores the escaping when the original reference used `\|`.
  *
  * NOT COVERED END TO END — the behavioral rewrite cannot be driven to completion in the hidden-mode
  * headless harness. Confirmed empirically against the harness-owned real Obsidian:
  *   - Renaming the IMAGE directly does not reach canvas text-node embeds (canvases are not in the
- *     backlink cache; the obsidian-dev-utils rename handler invokes `getCanvasReferences` only when
+ *     backlink cache; the `@mnaoumov/obsidian-lib` rename handler invokes `getCanvasReferences` only when
  *     the RENAMED file is itself a canvas).
  *   - Moving the CANVAS relocates FILE-node attachments (the issue-#22 suite passes) but NOT a
  *     TEXT-node embed's attachment.
@@ -28,7 +28,7 @@ import {
  *     hidden-mode harness. With no text-node reference discovered, no flow reaches
  *     `applyCanvasChanges` for a text embed, so the escaping fix cannot be observed here.
  *
- * The fix IS covered upstream by a unit test in obsidian-dev-utils (`file-change.test.ts`: a
+ * The fix IS covered upstream by a unit test in `@mnaoumov/obsidian-lib` (`file-change.test.ts`: a
  * round-trip of a table-escaped sized embed `![[old.png\|500]]` -> `![[new.png\|500]]`). This suite
  * is therefore recorded as a documented, skipped behavioral test with the assertions it WOULD run
  * plus the manual repro recipe below, rather than silently omitted.
@@ -90,7 +90,7 @@ describe('Canvas table sized embed survives the rewrite (issue #27)', () => {
 
     expect(result.settingsFound).toBe(true);
     // The literal backslash-escaped divider survives the JSON round-trip (this is the exact input
-    // the obsidian-dev-utils `applyCanvasChanges` fix must preserve when it rewrites the embed).
+    // the `@mnaoumov/obsidian-lib` `applyCanvasChanges` fix must preserve when it rewrites the embed).
     expect(result.nodeTextOnDisk).toMatch(/!\[\[[^[\]]*\.png\\\|500\]\]/);
   }, 120_000);
 
