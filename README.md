@@ -73,7 +73,7 @@ The API is published through the `@mnaoumov/obsidian-lib` plugin registry (the s
 
 Beside `api.d.ts`, [`api-contract.ts`](./api-contract.ts) holds the API's contract, `CUSTOM_ATTACHMENT_LOCATION_API_CONTRACT`: for every method, a schema over its arguments and a schema over what it returns. It is the constant this plugin publishes with the API, so copy it next to `api.d.ts` and pass it as the `contract`, and both sides check the same definition. Its schemas are [Standard Schema](https://standardschema.dev) objects built with [`@mnaoumov/typescript-lib/api-contract`](https://www.npmjs.com/package/@mnaoumov/typescript-lib), which carries the generic half (the contract types, the schema builders and the guard builders), and its file guards come from [`@mnaoumov/obsidian-lib`](https://www.npmjs.com/package/@mnaoumov/obsidian-lib), so copying it means adding both packages (`npm install @mnaoumov/typescript-lib @mnaoumov/obsidian-lib`, typescript-lib `1.3.0` or later). Apart from those two, the file imports only `obsidian` and `./api.d.ts`. (It is not named `api.ts`: TypeScript would read `api.d.ts` as that file's own declarations.)
 
-If your plugin already uses [`@mnaoumov/obsidian-lib`](https://mnaoumov.dev/obsidian-dev-utils/guides/cross-plugin-apis/), `watchPluginApi` is the whole of it:
+If your plugin already uses [`@mnaoumov/obsidian-lib`](https://mnaoumov.dev/obsidian-lib/guides/cross-plugin-apis/), `watchPluginApi` is the whole of it:
 
 ```ts
 const apiRef = watchPluginApi<CustomAttachmentLocationApi>({
@@ -88,7 +88,7 @@ const folder = await apiRef.value?.getAttachmentFolderPath({ notePath: 'Notes/Al
 const properPath = await apiRef.value?.getProperAttachmentPath({ attachmentPathOrFile: 'image.png', notePath: 'Notes/Alpha.md' });
 ```
 
-If your plugin does not use `@mnaoumov/obsidian-lib` — and is not going to — you still need no dependency on anything. The registry, and the two events a plugin announces itself through, are a documented wire protocol reachable with the `obsidian` module alone; [Plugin API protocol](https://mnaoumov.dev/obsidian-dev-utils/guides/plugin-api-protocol/) is that route written out, and `api.d.ts` types it just as well, since nothing in that file imports the library either. Only the contract takes packages, and the raw route works without it. Look the API up each time you use it rather than keeping it in a field: the raw object does not know when this plugin has unloaded.
+If your plugin does not use `@mnaoumov/obsidian-lib` — and is not going to — you still need no dependency on anything. The registry, and the two events a plugin announces itself through, are a documented wire protocol reachable with the `obsidian` module alone; [Plugin API protocol](https://mnaoumov.dev/obsidian-lib/guides/plugin-api-protocol/) is that route written out, and `api.d.ts` types it just as well, since nothing in that file imports the library either. Only the contract takes packages, and the raw route works without it. Look the API up each time you use it rather than keeping it in a field: the raw object does not know when this plugin has unloaded.
 
 ### Do not read `vault.getConfig('attachmentFolderPath')`
 
@@ -173,7 +173,7 @@ Without `Advanced Debug Mode`, run the following command in the `DevTools Consol
 window.DEBUG.enable('obsidian-custom-attachment-location');
 ```
 
-For more details, refer to the [documentation](https://mnaoumov.dev/obsidian-dev-utils/guides/debugging/).
+For more details, refer to the [documentation](https://mnaoumov.dev/obsidian-lib/guides/debugging/).
 
 ## Attributions
 
