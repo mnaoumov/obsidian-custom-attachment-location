@@ -70,10 +70,6 @@ interface LoopParams {
   readonly shouldShowProgressBar: boolean;
 }
 
-interface PluginNameHolder {
-  _pluginName: string;
-}
-
 interface TestableHandler {
   canExecute: () => boolean;
   canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
@@ -248,7 +244,6 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       pluginSettingsComponent,
       resourceLockComponent
     });
-    castTo<PluginNameHolder>(handler)._pluginName = 'My Plugin';
   });
 
   it('should construct with the correct command metadata', () => {
@@ -382,7 +377,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const params = getLoopParams();
       expect(params.items.map((file) => file.path)).toEqual(['a-b.png', 'folder/child.png', 'z-a.png']);
       expect(params.buildNoticeMessage({ item: attachmentA, iterationString: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
-      expect(params.progressBarTitle).toBe('My Plugin: Moving attachment to proper folder...');
+      expect(params.progressBarTitle).toBe('Moving attachment to proper folder...');
     });
 
     it('should warn and skip processing when the attachment path is ignored', async () => {

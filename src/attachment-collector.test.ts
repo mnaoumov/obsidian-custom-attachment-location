@@ -453,7 +453,6 @@ describe('AttachmentCollector', () => {
       consoleDebugComponent,
       handedOverSettingsComponent,
       networkImageDownloader,
-      pluginName: PLUGIN_NAME,
       pluginNoticeComponent,
       pluginSettingsComponent,
       resourceLockComponent

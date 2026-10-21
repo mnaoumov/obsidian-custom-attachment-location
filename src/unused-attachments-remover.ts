@@ -76,7 +76,6 @@ interface UnusedAttachmentsRemoverConstructorParams {
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
   readonly handedOverSettingsComponent: HandedOverSettingsComponent;
-  readonly pluginName: string;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -158,7 +157,6 @@ export class UnusedAttachmentsRemover {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
-  private readonly pluginName: string;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
@@ -167,7 +165,6 @@ export class UnusedAttachmentsRemover {
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
     this.handedOverSettingsComponent = params.handedOverSettingsComponent;
-    this.pluginName = params.pluginName;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
@@ -456,7 +453,7 @@ export class UnusedAttachmentsRemover {
         items: noteFiles,
         pluginNoticeComponent: this.pluginNoticeComponent,
         processItem: scanNote,
-        progressBarTitle: `${this.pluginName}: ${t(($) => $.deleteUnusedAttachments.progressBar.title)}`,
+        progressBarTitle: t(($) => $.deleteUnusedAttachments.progressBar.title),
         shouldContinueOnError: true,
         shouldShowProgressBar: true
       });
@@ -840,7 +837,7 @@ export class UnusedAttachmentsRemover {
         items: perFileCandidates,
         pluginNoticeComponent: this.pluginNoticeComponent,
         processItem: judgeCandidate,
-        progressBarTitle: `${this.pluginName}: ${t(($) => $.deleteUnusedAttachments.orphanProgressBar.title)}`,
+        progressBarTitle: t(($) => $.deleteUnusedAttachments.orphanProgressBar.title),
         shouldContinueOnError: true,
         shouldShowProgressBar: true
       });
