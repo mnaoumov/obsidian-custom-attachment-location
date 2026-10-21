@@ -163,17 +163,9 @@ To install the latest beta release of this plugin (regardless if it is available
 
 ## Debugging
 
-By default, debug messages for this plugin are hidden.
+By default, debug messages for this plugin (id: `obsidian-custom-attachment-location`) are hidden.
 
-To show them, install [`Advanced Debug Mode`](https://community.obsidian.md/plugins/advanced-debug-mode), run **`Advanced Debug Mode`: Open plugin debug messages** and tick `Custom Attachment Location`. To flip only this plugin, run **`Advanced Debug Mode`: Toggle debug messages for a plugin...** and pick `Custom Attachment Location`.
-
-Without `Advanced Debug Mode`, run the following command in the `DevTools Console`:
-
-```js
-window.DEBUG.enable('obsidian-custom-attachment-location');
-```
-
-For more details, refer to the [documentation](https://mnaoumov.dev/obsidian-lib/guides/debugging/).
+If you need to enable them refer to the [documentation](https://mnaoumov.dev/obsidian-lib/guides/debugging/).
 
 ## Attributions
 
