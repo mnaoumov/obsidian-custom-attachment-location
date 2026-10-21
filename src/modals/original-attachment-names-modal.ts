@@ -8,6 +8,7 @@
  * that, so each row can be edited, forgotten, or reset to the file's current name.
  */
 
+import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { PromiseResolve } from '@mnaoumov/typescript-lib/async';
 import type { App } from 'obsidian';
 
@@ -20,7 +21,6 @@ import { convertAsyncToSync } from '@mnaoumov/typescript-lib/async';
 import {
   ButtonComponent,
   ExtraButtonComponent,
-  Notice,
   TextComponent,
   ToggleComponent
 } from 'obsidian';
@@ -48,6 +48,11 @@ export interface ShowOriginalAttachmentNamesModalParams {
   readonly originalAttachmentNamesComponent: OriginalAttachmentNamesComponent;
 
   /**
+   * The component that shows the plugin's notices.
+   */
+  readonly pluginNoticeComponent: PluginNoticeComponent;
+
+  /**
    * The validator an edited name must pass.
    */
   readonly tokenValidator: TokenValidator;
@@ -62,6 +67,7 @@ class OriginalAttachmentNamesModal extends ModalBase<undefined> {
   private filter = '';
   private readonly listEl = createDiv('original-attachment-names-list');
   private readonly originalAttachmentNamesComponent: OriginalAttachmentNamesComponent;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly selectedPaths = new Set<string>();
   private readonly tokenValidator: TokenValidator;
   private readonly totalsEl = createEl('p');
@@ -69,6 +75,7 @@ class OriginalAttachmentNamesModal extends ModalBase<undefined> {
   public constructor(params: OriginalAttachmentNamesModalConstructorParams) {
     super(params);
     this.originalAttachmentNamesComponent = params.originalAttachmentNamesComponent;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.tokenValidator = params.tokenValidator;
     this.addCssClasses('original-attachment-names-modal');
   }
@@ -94,7 +101,7 @@ class OriginalAttachmentNamesModal extends ModalBase<undefined> {
       .onClick(convertAsyncToSync(async () => {
         const records = this.getShownRecords();
         await this.contentEl.win.navigator.clipboard.writeText(formatOriginalAttachmentNamesAsCsv(records));
-        new Notice(t(($) => $.originalAttachmentNames.showModal.copiedNotice, { count: records.length }));
+        this.pluginNoticeComponent.showNotice(t(($) => $.originalAttachmentNames.showModal.copiedNotice, { count: records.length }));
       }));
 
     new ButtonComponent(toolbarEl)

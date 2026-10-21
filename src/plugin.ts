@@ -418,6 +418,7 @@ export class Plugin extends PluginBase {
       new ShowOriginalAttachmentNamesCommandHandler({
         app: this.app,
         originalAttachmentNamesComponent,
+        pluginNoticeComponent: this.pluginNoticeComponent,
         tokenValidator: validator
       }),
       new PruneOriginalAttachmentNamesCommandHandler({

@@ -58,6 +58,7 @@ let extraButtonTooltips: Map<ExtraButtonComponent, string>;
 let modalPromise: null | Promise<void>;
 let openSpy: MockInstance<Modal['open']>;
 let originalAttachmentNamesComponent: OriginalAttachmentNamesComponent;
+let showNotice: ReturnType<typeof vi.fn<PluginNoticeComponent['showNotice']>>;
 let textComponents: TextComponent[];
 let textChangeHandlers: Map<TextComponent, (value: string) => void>;
 let toggleHandlers: ((isSelected: boolean) => void)[];
@@ -107,6 +108,7 @@ beforeEach(async () => {
   extraButtonHandlers = [];
   extraButtonTooltips = new Map<ExtraButtonComponent, string>();
   modalPromise = null;
+  showNotice = vi.fn<PluginNoticeComponent['showNotice']>();
   textComponents = [];
   textChangeHandlers = new Map<TextComponent, (value: string) => void>();
   toggleHandlers = [];
@@ -165,7 +167,12 @@ afterEach(async () => {
 });
 
 function openModal(): void {
-  modalPromise = showOriginalAttachmentNamesModal({ app, originalAttachmentNamesComponent, tokenValidator });
+  modalPromise = showOriginalAttachmentNamesModal({
+    app,
+    originalAttachmentNamesComponent,
+    pluginNoticeComponent: strictProxy<PluginNoticeComponent>({ showNotice }),
+    tokenValidator
+  });
 }
 
 describe('showOriginalAttachmentNamesModal', () => {
@@ -333,6 +340,7 @@ describe('showOriginalAttachmentNamesModal', () => {
     await flush();
 
     expect(writeText).toHaveBeenCalledExactlyOnceWith('path,originalName\nassets/gone.png,gone.png\nassets/note-img.png,img.png\nassets/screenshot.png,Pasted image 20260101.png\n');
+    expect(showNotice).toHaveBeenCalledExactlyOnceWith('Copied 3 record(s) as CSV.');
     vi.unstubAllGlobals();
   });
 

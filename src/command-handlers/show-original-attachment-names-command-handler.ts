@@ -1,3 +1,4 @@
+import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { App } from 'obsidian';
 
 import { GlobalCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/global-command-handler';
@@ -11,6 +12,7 @@ import { showOriginalAttachmentNamesModal } from '../modals/original-attachment-
 interface ShowOriginalAttachmentNamesCommandHandlerConstructorParams {
   readonly app: App;
   readonly originalAttachmentNamesComponent: OriginalAttachmentNamesComponent;
+  readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly tokenValidator: TokenValidator;
 }
 
@@ -20,6 +22,7 @@ interface ShowOriginalAttachmentNamesCommandHandlerConstructorParams {
 export class ShowOriginalAttachmentNamesCommandHandler extends GlobalCommandHandler {
   private readonly app: App;
   private readonly originalAttachmentNamesComponent: OriginalAttachmentNamesComponent;
+  private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly tokenValidator: TokenValidator;
 
   public constructor(params: ShowOriginalAttachmentNamesCommandHandlerConstructorParams) {
@@ -30,6 +33,7 @@ export class ShowOriginalAttachmentNamesCommandHandler extends GlobalCommandHand
     });
     this.app = params.app;
     this.originalAttachmentNamesComponent = params.originalAttachmentNamesComponent;
+    this.pluginNoticeComponent = params.pluginNoticeComponent;
     this.tokenValidator = params.tokenValidator;
   }
 
@@ -37,6 +41,7 @@ export class ShowOriginalAttachmentNamesCommandHandler extends GlobalCommandHand
     await showOriginalAttachmentNamesModal({
       app: this.app,
       originalAttachmentNamesComponent: this.originalAttachmentNamesComponent,
+      pluginNoticeComponent: this.pluginNoticeComponent,
       tokenValidator: this.tokenValidator
     });
   }
