@@ -285,7 +285,7 @@ beforeEach(() => {
   mockGetFileOrNull.mockReturnValue(null);
   mockGetPath.mockImplementation((_app, pathOrFile) => typeof pathOrFile === 'string' ? pathOrFile : castTo<TFile>(pathOrFile).path);
   mockIsNote.mockReturnValue(true);
-  mockGetAvailablePathForAttachments.mockResolvedValue('dev-utils-path');
+  mockGetAvailablePathForAttachments.mockResolvedValue('obsidian-lib-path');
   mockGetLinks.mockReturnValue([]);
   mockGetCacheSafe.mockResolvedValue(null);
   mockExtractLinkFile.mockReturnValue(null);
@@ -956,7 +956,7 @@ describe('AttachmentPathManager', () => {
         readAttachmentFileContent: null,
         shouldSkipMissingAttachmentFolderCreation: true
       });
-      expect(result).toBe('dev-utils-path');
+      expect(result).toBe('obsidian-lib-path');
     });
 
     it('should not read the attachment content when no token needs it', async () => {
@@ -1119,7 +1119,7 @@ describe('AttachmentPathManager', () => {
       expect(context.getAvailablePathForAttachmentsOriginal).toHaveBeenCalledWith('img', 'png', noteFile);
     });
 
-    it('should delegate to the dev-utils helper for a non-note path', async () => {
+    it('should delegate to the obsidian-lib helper for a non-note path', async () => {
       mockGetFileOrNull.mockReturnValue(null);
       mockIsNote.mockReturnValue(false);
       const result = await context.manager.getAvailablePathForAttachments({
@@ -1132,7 +1132,7 @@ describe('AttachmentPathManager', () => {
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: false
       });
-      expect(result).toBe('dev-utils-path');
+      expect(result).toBe('obsidian-lib-path');
       expect(mockGetAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: false

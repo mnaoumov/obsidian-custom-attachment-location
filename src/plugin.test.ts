@@ -99,7 +99,7 @@ const hoisted = vi.hoisted(() => {
   };
 });
 
-// --- Collaborator dev-utils components added as children: stub as constructor spies returning a real Component so the real addChild lifecycle can load them while capturing constructor args. ---
+// --- Collaborator obsidian-lib components added as children: stub as constructor spies returning a real Component so the real addChild lifecycle can load them while capturing constructor args. ---
 
 vi.mock('@mnaoumov/obsidian-lib/components/plugin-settings-tab-component', () => ({
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
@@ -119,7 +119,7 @@ vi.mock('@mnaoumov/obsidian-lib/components/rename-delete-handler-component', asy
   };
 });
 
-// --- Collaborator dev-utils components NOT added as children: bare constructor spies. ---
+// --- Collaborator obsidian-lib components NOT added as children: bare constructor spies. ---
 
 // `PluginDataHandler` and `PluginEventSourceImpl` are NOT stubbed: the base
 // builds its own settings component out of them during `onload`, and that component really calls
@@ -344,7 +344,7 @@ beforeEach(() => {
   getPluginMock = vi.fn((_pluginId: string): null | PluginOriginal => null);
   seedOnRawTarget(app.plugins, 'getPlugin', getPluginMock);
 
-  // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument read/write the same seeded holder.
+  // Expose the app as the global instance so obsidian-lib helpers that resolve shared state without an explicit app argument read/write the same seeded holder.
   castTo<AppGlobal>(window).app = app;
 
   // What the dependency gate reaches when the dependency is missing: it registers a settings tab explaining

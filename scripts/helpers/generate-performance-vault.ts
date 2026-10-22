@@ -6,7 +6,7 @@ import type { PopulateFilesParams } from 'obsidian-integration-testing';
  * Builds the file map for the `integration-tests:desktop-performance` vault used by
  * `attachment-path-bottleneck.desktop-performance.integration.test.ts`. The vault holds
  * many notes that embed real binary attachments, so the per-call cost of resolving an
- * attachment path (which the dev-utils core pays via `Vault.readBinary`) can be measured
+ * attachment path (which the obsidian-lib core pays via `Vault.readBinary`) can be measured
  * and decomposed against attachment file size and note link count.
  */
 
