@@ -65,7 +65,7 @@ vi.mock('@mnaoumov/obsidian-lib/modals/confirm', () => ({
   confirm: vi.fn((): Promise<boolean> => Promise.resolve(true))
 }));
 
-// The obsidian-test-mocks package does not model Obsidian's loadPrism, so return a stub prism; otherwise the real CodeHighlighterComponent's highlight-on-setValue (new in dev-utils 86.0.0) rejects.
+// The obsidian-test-mocks package does not model Obsidian's loadPrism, so return a stub prism; otherwise the real CodeHighlighterComponent's highlight-on-setValue rejects.
 vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (importOriginal) => {
   const original = await importOriginal<typeof import('@obsidian-typings/obsidian-public-latest/implementations')>();
   return {
@@ -493,7 +493,7 @@ function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknow
 
 beforeAll(async () => {
   await initI18N(translationsMap);
-  // Obsidian-dev-utils' bind() probes setPlaceholderValue to detect text-based components.
+  // Obsidian-lib's bind() probes setPlaceholderValue to detect text-based components.
   for (
     const prototype of [
       ToggleComponentClass.prototype,

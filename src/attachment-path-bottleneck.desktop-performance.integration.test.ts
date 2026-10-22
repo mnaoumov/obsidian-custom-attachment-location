@@ -30,7 +30,7 @@ import {
 
 /*
  * Localizes the bulk-deletion bottleneck. The consumer
- * (`consistent-attachments-and-links`) calls the dev-utils core
+ * (`consistent-attachments-and-links`) calls the obsidian-lib core
  * `getAttachmentFilePath` once per attachment link per file; that core reads the WHOLE
  * binary of each attachment (`await app.vault.readBinary(...)`) before dispatching to this
  * plugin's resolver, which it reaches through the plugin API's `getAvailablePathForAttachments`
