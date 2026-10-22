@@ -46,7 +46,7 @@ export const lv = {
     },
     notePathIsIgnored: 'Piezimes ceļš tiek ignorēts'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Atcelt',
       ok: 'Labi'

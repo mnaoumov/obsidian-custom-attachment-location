@@ -51,11 +51,11 @@ describe('The attachment unit folder designation is published through the plugin
           readonly isRevoked: boolean;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -106,7 +106,7 @@ describe('The attachment unit folder designation is published through the plugin
            * Read it the way a foreign plugin does: through the registry, with no access to this plugin's
            * instance, its settings or its exports.
            */
-          const record = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils?.pluginApiRegistry?.value?.records?.[pluginId]
+          const record = (window as Partial<ObsidianLibWrapper>).__obsidianLib?.pluginApiRegistry?.value?.records?.[pluginId]
             ?.find((candidate) => !candidate.isRevoked);
           const api = record && isApiLike(record.api) ? record.api : null;
           const checkIsAttachmentUnitFolder = api ? (folderPath: string): boolean => api.isAttachmentUnitFolder({ folderPath }) : null;

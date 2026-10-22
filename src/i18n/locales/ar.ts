@@ -46,7 +46,7 @@ export const ar = {
     },
     notePathIsIgnored: 'مسار الملاحظة مُتجاهل'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'إلغاء',
       ok: 'موافق'

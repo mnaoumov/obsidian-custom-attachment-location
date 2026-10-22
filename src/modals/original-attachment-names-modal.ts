@@ -196,7 +196,7 @@ class OriginalAttachmentNamesModal extends ModalBase<undefined> {
       .setCta()
       .onClick(save);
     new ButtonComponent(editorEl)
-      .setButtonText(t(($) => $.obsidianDevUtils.buttons.cancel))
+      .setButtonText(t(($) => $.obsidianLib.buttons.cancel))
       .onClick(() => {
         this.editingPath = null;
         this.render();

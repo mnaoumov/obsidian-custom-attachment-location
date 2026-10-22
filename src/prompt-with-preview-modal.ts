@@ -202,14 +202,14 @@ class PromptWithPreviewModal extends Modal {
     inputEl.addEventListener('focus', convertAsyncToSync(validate));
     invokeAsyncSafely(validate);
     const okButton = new ButtonComponent(this.contentEl);
-    okButton.setButtonText(t(($) => $.obsidianDevUtils.buttons.ok));
+    okButton.setButtonText(t(($) => $.obsidianLib.buttons.ok));
     okButton.setCta();
     okButton.onClick((event) => {
       this.handleOk(event, textComponent);
     });
     okButton.setClass(CssClass.OkButton);
     const cancelButton = new ButtonComponent(this.contentEl);
-    cancelButton.setButtonText(t(($) => $.obsidianDevUtils.buttons.cancel));
+    cancelButton.setButtonText(t(($) => $.obsidianLib.buttons.cancel));
     cancelButton.onClick(this.close.bind(this));
     cancelButton.setClass(CssClass.CancelButton);
 

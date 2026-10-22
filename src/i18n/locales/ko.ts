@@ -46,7 +46,7 @@ export const ko = {
     },
     notePathIsIgnored: '노트 경로가 무시됩니다'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: '취소',
       ok: '확인'

@@ -46,7 +46,7 @@ export const am = {
     },
     notePathIsIgnored: 'የማስታወሻ መንገድ ችላ ተብሏል'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'መሰረዝ',
       ok: 'እሺ'

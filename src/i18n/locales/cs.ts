@@ -46,7 +46,7 @@ export const cs = {
     },
     notePathIsIgnored: 'Cesta poznámky je ignorována'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Zrušit',
       ok: 'OK'

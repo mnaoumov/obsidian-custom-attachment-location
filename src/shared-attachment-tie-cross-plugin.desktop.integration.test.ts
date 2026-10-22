@@ -212,11 +212,11 @@ describe('Deleting a folder whose shared attachment ties at the top of the note-
           readonly isRevoked: boolean;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -238,7 +238,7 @@ describe('Deleting a folder whose shared attachment ties at the top of the note-
          * `api` getter on its plugin instance.
          */
         function findHandlerApi(): HandlerApiLike | null {
-          const registryState = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils;
+          const registryState = (window as Partial<ObsidianLibWrapper>).__obsidianLib;
           const api = registryState?.pluginApiRegistry?.value?.records?.[handlerPluginId]?.find((candidate) => !candidate.isRevoked)?.api;
           const record = api as null | Record<string, unknown> | undefined;
           return record && typeof record['migrateSettings'] === 'function' ? api as HandlerApiLike : null;

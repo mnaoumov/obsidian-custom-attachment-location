@@ -49,11 +49,11 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
           getAvailablePathForAttachments: (params: ResolveParams) => Promise<string>;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -172,7 +172,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
 
         const settings = findInPluginTree((record) => isRenameNoteSettings(record['settings']) ? record['settings'] : null);
         const foundHolder = findInPluginTree((record) => isHandedOverSettingsHolder(record) ? record : null);
-        const resolver: unknown = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils?.pluginApiRegistry?.value
+        const resolver: unknown = (window as Partial<ObsidianLibWrapper>).__obsidianLib?.pluginApiRegistry?.value
           ?.records?.['obsidian-custom-attachment-location']?.find((candidate) => !candidate.isRevoked)?.api;
         if (!settings || !foundHolder || !hasExtendedResolver(resolver)) {
           return { ...EMPTY_RESULT, probesFound: false };

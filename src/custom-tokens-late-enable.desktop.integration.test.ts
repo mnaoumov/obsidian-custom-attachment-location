@@ -43,11 +43,11 @@ describe('Custom tokens on an enable after layout-ready', () => {
           readonly isRevoked: boolean;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -60,7 +60,7 @@ describe('Custom tokens on an enable after layout-ready', () => {
         }
 
         function findApi(): ApiLike | null {
-          const registryState = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils;
+          const registryState = (window as Partial<ObsidianLibWrapper>).__obsidianLib;
           const api = registryState?.pluginApiRegistry?.value?.records?.[pluginId]?.find((candidate) => !candidate.isRevoked)?.api;
           const record = api as null | Record<string, unknown> | undefined;
           return record && typeof record['getAttachmentFolderPath'] === 'function' ? api as ApiLike : null;

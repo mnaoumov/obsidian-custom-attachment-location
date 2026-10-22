@@ -46,7 +46,7 @@ export const ca = {
     },
     notePathIsIgnored: 'El camí de la nota s\'ignora'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Cancel·lar',
       ok: 'D\'acord'

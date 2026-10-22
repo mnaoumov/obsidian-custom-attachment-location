@@ -46,7 +46,7 @@ export const kh = {
     },
     notePathIsIgnored: 'ធ្នាំការចំណាំត្រូវបានមិនចាប់អារម្មណ៍'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'បុកចេល',
       ok: 'OK'

@@ -39,7 +39,7 @@ describe('defaultTranslations', () => {
   });
 
   it('should merge the obsidian-lib translations', () => {
-    expect(defaultTranslations.obsidianDevUtils.buttons.cancel).toBeTypeOf('string');
+    expect(defaultTranslations.obsidianLib.buttons.cancel).toBeTypeOf('string');
   });
 
   it('should expose the prompt-with-preview modal title', () => {

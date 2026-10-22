@@ -46,7 +46,7 @@ export const uz = {
     },
     notePathIsIgnored: 'Eslatma yo\'li e\'tiborga olinmaydi'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Bekor qilish',
       ok: 'OK'

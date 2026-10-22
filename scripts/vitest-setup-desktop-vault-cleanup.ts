@@ -66,11 +66,11 @@ interface InstanceLivenessState {
   readonly lostReportedByFilePath?: string;
 }
 
-interface ObsidianDevUtilsGlobal {
-  readonly __obsidianDevUtils?: Record<string, ObsidianDevUtilsStateWrapper | undefined>;
+interface ObsidianLibGlobal {
+  readonly __obsidianLib?: Record<string, ObsidianLibStateWrapper | undefined>;
 }
 
-interface ObsidianDevUtilsStateWrapper {
+interface ObsidianLibStateWrapper {
   readonly value?: unknown;
 }
 
@@ -278,7 +278,7 @@ afterAll(async () => {
         /*
          * Drain `@mnaoumov/obsidian-lib`'s operation queue before letting the next file start.
          *
-         * That queue is a GLOBAL singleton — `getObsidianDevUtilsState('queue')` on `globalThis`, shared
+         * That queue is a GLOBAL singleton — `getObsidianLibState('queue')` on `globalThis`, shared
          * by every plugin using the library — and it is a promise chain: each entry runs only after the
          * previous one settles. So an entry this file left in flight does not stay this file's problem.
          * The next file's command is accepted (`executeCommandById` returns true) and then sits behind it,
@@ -288,7 +288,7 @@ afterAll(async () => {
          * Waiting here is bounded: every entry carries its own timeout, so the chain always advances.
          * Disabling the plugin does NOT clear this — the queue outlives the plugin instance.
          */
-        const queueState = (globalThis as ObsidianDevUtilsGlobal).__obsidianDevUtils?.['queue']?.value as OperationQueueState | undefined;
+        const queueState = (globalThis as ObsidianLibGlobal).__obsidianLib?.['queue']?.value as OperationQueueState | undefined;
 
         async function drainQueue(): Promise<void> {
           const drainDeadline = Date.now() + QUEUE_DRAIN_TIMEOUT_IN_MILLISECONDS;
@@ -325,7 +325,7 @@ afterAll(async () => {
          * `link-update-progress` and `attachment-rescue` kept doing, in every retry of the same run.
          */
         function handlerIds(): string[] {
-          const handlersMap = (globalThis as ObsidianDevUtilsGlobal).__obsidianDevUtils?.['renameDeleteHandlersMap']?.value;
+          const handlersMap = (globalThis as ObsidianLibGlobal).__obsidianLib?.['renameDeleteHandlersMap']?.value;
           return handlersMap instanceof Map ? [...handlersMap.keys()].map(String) : [];
         }
 

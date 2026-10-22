@@ -102,7 +102,7 @@ class CollectSettingsMigrationModal extends ModalBase<null | SettingsMigrationRo
     const buttonsEl = this.contentEl.createDiv();
 
     const okButton = new ButtonComponent(buttonsEl);
-    okButton.setButtonText(t(($) => $.obsidianDevUtils.buttons.ok));
+    okButton.setButtonText(t(($) => $.obsidianLib.buttons.ok));
     okButton.setCta();
     okButton.onClick(() => {
       this.approvedRows = this.rows.map((row) => ({
@@ -113,7 +113,7 @@ class CollectSettingsMigrationModal extends ModalBase<null | SettingsMigrationRo
     });
 
     const cancelButton = new ButtonComponent(buttonsEl);
-    cancelButton.setButtonText(t(($) => $.obsidianDevUtils.buttons.cancel));
+    cancelButton.setButtonText(t(($) => $.obsidianLib.buttons.cancel));
     cancelButton.onClick(this.close.bind(this));
   }
 

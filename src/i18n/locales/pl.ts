@@ -46,7 +46,7 @@ export const pl = {
     },
     notePathIsIgnored: 'Ścieżka notatki jest ignorowana'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Anuluj',
       ok: 'OK'

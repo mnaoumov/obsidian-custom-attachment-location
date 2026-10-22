@@ -46,7 +46,7 @@ export const tr = {
     },
     notePathIsIgnored: 'Not yolu yok sayıldı'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'İptal',
       ok: 'Tamam'

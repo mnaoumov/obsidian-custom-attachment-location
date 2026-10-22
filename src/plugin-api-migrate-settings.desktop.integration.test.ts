@@ -79,11 +79,11 @@ describe('migrateSettings', () => {
           readonly isRevoked: boolean;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -157,7 +157,7 @@ describe('migrateSettings', () => {
           return rowCount;
         }
 
-        const state = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils;
+        const state = (window as Partial<ObsidianLibWrapper>).__obsidianLib;
         const record = state?.pluginApiRegistry?.value?.records?.[pluginId]?.find((candidate) => !candidate.isRevoked);
         const api = record?.api;
         if (!record || !isApiLike(api)) {

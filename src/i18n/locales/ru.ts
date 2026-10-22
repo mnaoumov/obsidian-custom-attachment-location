@@ -46,7 +46,7 @@ export const ru = {
     },
     notePathIsIgnored: 'Путь заметки игнорируется'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Отменить',
       ok: 'ОК'

@@ -46,7 +46,7 @@ export const zhTW = {
     },
     notePathIsIgnored: '筆記路徑已被忽略'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: '取消',
       ok: '確定'

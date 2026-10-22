@@ -46,7 +46,7 @@ export const fr = {
     },
     notePathIsIgnored: 'Le chemin de la note est ignoré'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Annuler',
       ok: 'OK'

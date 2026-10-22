@@ -24,12 +24,19 @@
       "expect": "^7.0.3",
       "manualCheck": "The check reads the range @wdio/utils declares, not a version, because that range is what forces the override. When it moves to ^8 or later the override and this entry can both go. Before lifting it, re-run the deepmergeCustom probe rather than trusting the range alone: @wdio/config passes a handler that reads `meta.key`, and that is precisely the API 8.0.0 renamed, so a regression there would be silent rather than a crash."
     },
+    "katex": {
+      "section": "overrides",
+      "why": "Clears GHSA-238p-pmpm-9mq7 (KaTeX prototype pollution bypassing trust restrictions, >=0.11.0 <0.18.2). Reached only through the toolkit packages and markdownlint-cli2 -> markdownlint -> micromark-extension-math@3.1.0, its newest release, which declares katex ^0.16.0, so no direct bump reaches the fix. The 0.x minor jump is safe because nothing here runs KaTeX: markdownlint imports only `math`, the micromark syntax extension, and katex is required solely by the `mathHtml` half, which markdownlint never loads. Never take the `npm audit fix --force` remedy: it downgrades markdownlint.",
+      "check": "node -e \"const fs=require('node:fs');process.stdout.write(JSON.parse(fs.readFileSync('node_modules/micromark-extension-math/package.json','utf8')).dependencies.katex)\"",
+      "expect": "^0.16.0",
+      "manualCheck": "The check reads the range micromark-extension-math declares, which is what makes the override necessary. When it admits 0.18.2 or later, delete the override and this entry together, then confirm with `npm audit` and `npm run lint:md`."
+    },
     "moment": {
       "section": "overrides",
-      "why": "Clears GHSA-4p3w-j4w9-5jqw (moment path traversal via a crafted non-string locale name, 2.29.2 - 2.30.1), patched in 2.31.0. Reached only transitively, and no direct bump gets there: obsidian EXACT-pins moment at 2.29.4, obsidian 1.13.1 is already the latest release, and obsidian-test-mocks, @mnaoumov/obsidian-dev-toolkit (and eslint-plugin-obsidianmd under it) and obsidian-integration-testing all reach it through obsidian. The npm copy is never shipped: at runtime the plugin gets `moment` from Obsidian itself, which the build leaves external, so the forced minor only moves the copy the type-checker and the unit tests load. NEVER take the `npm audit fix --force` remedy here: it fixes by downgrading.",
-      "check": "node -e \"process.stdout.write(require('obsidian/package.json').dependencies.moment)\"",
+      "why": "Clears GHSA-4p3w-j4w9-5jqw (moment path traversal via a crafted non-string locale name, 2.29.2 - 2.30.1), patched in 2.31.0. Reached only through @mnaoumov/obsidian-dev-toolkit -> eslint-plugin-obsidianmd -> obsidian 1.12.3, which EXACT-pins moment 2.29.4; eslint-plugin-obsidianmd is on its newest release, so no direct bump gets there. That copy is loaded only by the lint rules, never shipped: at runtime the plugin gets `moment` from Obsidian itself. Never take the `npm audit fix --force` remedy: it downgrades @mnaoumov/obsidian-dev-toolkit.",
+      "check": "node -e \"const fs=require('node:fs');process.stdout.write(JSON.parse(fs.readFileSync('node_modules/eslint-plugin-obsidianmd/node_modules/obsidian/package.json','utf8')).dependencies.moment)\"",
       "expect": "2.29.4",
-      "manualCheck": "The check reads the pin obsidian itself declares, not an installed version, because that pin is what makes the override necessary. When it moves to 2.31.0 or later, obsidian no longer pulls a vulnerable moment and this override can be deleted along with this entry."
+      "manualCheck": "The check reads the moment pin of the obsidian copy eslint-plugin-obsidianmd brings, which is what makes the override necessary. When eslint-plugin-obsidianmd moves to an obsidian that pins moment 2.31.0 or later, delete the override and this entry."
     },
     "typescript": {
       "section": "devDependencies",

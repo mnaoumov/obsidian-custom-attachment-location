@@ -46,7 +46,7 @@ export const vi = {
     },
     notePathIsIgnored: 'Đường dẫn ghi chú bị bỏ qua'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Hủy',
       ok: 'Đồng ý'
