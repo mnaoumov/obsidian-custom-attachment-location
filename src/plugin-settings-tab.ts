@@ -568,9 +568,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               if (
                 (this.pluginSettingsComponent.settings.customTokensStr === SAMPLE_CUSTOM_TOKENS) || (this.pluginSettingsComponent.settings.customTokensStr !== '' && !await confirm({
                   app: this.app,
-                  cancelButtonText: t(($) => $.obsidianDevUtils.buttons.cancel),
+                  cancelButtonText: t(($) => $.obsidianLib.buttons.cancel),
                   message: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.message),
-                  okButtonText: t(($) => $.obsidianDevUtils.buttons.ok),
+                  okButtonText: t(($) => $.obsidianLib.buttons.ok),
                   title: t(($) => $.pluginSettingsTab.resetToSampleCustomTokens.title)
                 }))
               ) {

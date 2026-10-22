@@ -46,7 +46,7 @@ export const ro = {
     },
     notePathIsIgnored: 'Calea notiței a fost ignorată'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Anulează',
       ok: 'OK'

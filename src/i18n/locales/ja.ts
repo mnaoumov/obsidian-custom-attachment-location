@@ -46,7 +46,7 @@ export const ja = {
     },
     notePathIsIgnored: 'ノートパスが無視されています'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'キャンセル',
       ok: 'OK'

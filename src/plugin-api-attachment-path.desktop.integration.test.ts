@@ -57,11 +57,11 @@ describe('The plugin API resolves attachment paths with this plugin\'s template'
           readonly isRevoked: boolean;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -93,7 +93,7 @@ describe('The plugin API resolves attachment paths with this plugin\'s template'
             && typeof record['isAttachmentUnitFolder'] === 'function';
         }
 
-        const record = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils?.pluginApiRegistry?.value?.records?.[pluginId]
+        const record = (window as Partial<ObsidianLibWrapper>).__obsidianLib?.pluginApiRegistry?.value?.records?.[pluginId]
           ?.find((candidate) => !candidate.isRevoked);
         const api = record && isApiLike(record.api) ? record.api : null;
         if (!api) {

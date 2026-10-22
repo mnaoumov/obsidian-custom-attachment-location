@@ -50,11 +50,11 @@ describe('A deferred markdown tab at startup', () => {
           readonly editMode?: MarkdownEditModeLike;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -67,7 +67,7 @@ describe('A deferred markdown tab at startup', () => {
         }
 
         function isApiPublished(): boolean {
-          const registryState = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils;
+          const registryState = (window as Partial<ObsidianLibWrapper>).__obsidianLib;
           return registryState?.pluginApiRegistry?.value?.records?.[pluginId]?.some((candidate) => !candidate.isRevoked) ?? false;
         }
 

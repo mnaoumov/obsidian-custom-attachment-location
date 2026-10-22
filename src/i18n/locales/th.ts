@@ -46,7 +46,7 @@ export const th = {
     },
     notePathIsIgnored: 'เส้นทางโน้ตถูกข้าม'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'ยกเลิก',
       ok: 'ตกลง'

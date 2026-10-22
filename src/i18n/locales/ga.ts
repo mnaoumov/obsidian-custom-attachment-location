@@ -46,7 +46,7 @@ export const ga = {
     },
     notePathIsIgnored: 'Tá conair an nóta á neamhaird'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Cealaigh',
       ok: 'Tá go maith'

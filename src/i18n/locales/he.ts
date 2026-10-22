@@ -46,7 +46,7 @@ export const he = {
     },
     notePathIsIgnored: 'נתיב רשימה מתעלם'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'ביטול',
       ok: 'אישור'

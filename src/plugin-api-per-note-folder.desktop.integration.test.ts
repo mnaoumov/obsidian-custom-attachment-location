@@ -86,11 +86,11 @@ describe('The published API answers per note, which the getConfig patch cannot',
           readonly isRevoked: boolean;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -143,7 +143,7 @@ describe('The published API answers per note, which the getConfig patch cannot',
          * The bag `@mnaoumov/obsidian-lib` keeps its registry in lives on the main renderer's global, which is
          * the window this closure and every plugin bundle share.
          */
-        const registryState = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils;
+        const registryState = (window as Partial<ObsidianLibWrapper>).__obsidianLib;
         const record = registryState?.pluginApiRegistry?.value?.records?.[pluginId]
           ?.find((candidate) => !candidate.isRevoked);
 

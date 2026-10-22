@@ -46,7 +46,7 @@ export const id = {
     },
     notePathIsIgnored: 'Jalur catatan diabaikan'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Batal',
       ok: 'OK'

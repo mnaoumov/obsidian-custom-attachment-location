@@ -125,11 +125,11 @@ describe('Attachment-path bottleneck', () => {
           readonly isRevoked: boolean;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -141,7 +141,7 @@ describe('Attachment-path bottleneck', () => {
           readonly records?: Record<string, ApiRecord[]>;
         }
 
-        const api = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils?.pluginApiRegistry?.value?.records?.[pluginId]
+        const api = (window as Partial<ObsidianLibWrapper>).__obsidianLib?.pluginApiRegistry?.value?.records?.[pluginId]
           ?.find((candidate) => !candidate.isRevoked)?.api as CustomAttachmentLocationApi | undefined;
         if (!api) {
           return { ...EMPTY_RESULT, error: 'The plugin API is not published' };

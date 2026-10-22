@@ -46,7 +46,7 @@ export const ne = {
     },
     notePathIsIgnored: 'नोट पाथ बेवास्ता गरिएको छ'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'रद्द गर्नुहोस्',
       ok: 'ठिक छ'

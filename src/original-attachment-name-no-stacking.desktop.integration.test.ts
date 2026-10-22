@@ -29,8 +29,8 @@ interface NoStackingResult {
   readonly probesFound: boolean;
 }
 
-interface ObsidianDevUtilsGlobal {
-  readonly __obsidianDevUtils?: Record<string, OperationQueueWrapper | undefined>;
+interface ObsidianLibGlobal {
+  readonly __obsidianLib?: Record<string, OperationQueueWrapper | undefined>;
 }
 
 /**
@@ -122,7 +122,7 @@ describe('{{originalAttachmentFileName}} is the arrival name, so a collect templ
         }
 
         async function waitForQueueToDrain(): Promise<void> {
-          const queueState = (window as ObsidianDevUtilsGlobal).__obsidianDevUtils?.['queue']?.value;
+          const queueState = (window as ObsidianLibGlobal).__obsidianLib?.['queue']?.value;
           const queueDeadline = Date.now() + waitTimeoutInMilliseconds;
           while ((queueState?.items?.length ?? 0) > 0 && Date.now() < queueDeadline) {
             await sleep(QUEUE_DRAIN_POLL_IN_MILLISECONDS);

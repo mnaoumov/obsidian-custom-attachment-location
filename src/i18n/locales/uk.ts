@@ -46,7 +46,7 @@ export const uk = {
     },
     notePathIsIgnored: 'Шлях нотатки ігнорується'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Скасувати',
       ok: 'ОК'

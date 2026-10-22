@@ -134,7 +134,7 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
 
     buttonsSetting
       .addButton((button) => {
-        button.setButtonText(t(($) => $.obsidianDevUtils.buttons.cancel));
+        button.setButtonText(t(($) => $.obsidianLib.buttons.cancel));
         button.onClick(() => {
           this.select(MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel, shouldUseSameActionForOtherProblematicAttachments);
         });

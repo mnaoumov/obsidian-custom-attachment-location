@@ -1,9 +1,9 @@
 import type { DefaultTranslationsBase } from '@mnaoumov/obsidian-lib/i18n/default-translations';
 
-import { en as obsidianDevUtilsEn } from '@mnaoumov/obsidian-lib/i18n/locales/en';
+import { en as obsidianLibEn } from '@mnaoumov/obsidian-lib/i18n/locales/en';
 
 export const defaultTranslations = {
-  ...obsidianDevUtilsEn,
+  ...obsidianLibEn,
   attachmentCollector: {
     confirm: {
       part1: 'Do you want to collect attachments for all notes in folders recursively?',

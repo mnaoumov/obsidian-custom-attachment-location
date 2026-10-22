@@ -46,7 +46,7 @@ export const zh = {
     },
     notePathIsIgnored: '笔记路径已被忽略'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: '取消',
       ok: '确定'

@@ -46,7 +46,7 @@ export const enGB = {
     },
     notePathIsIgnored: 'Note path is ignored'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Cancel',
       ok: 'OK'

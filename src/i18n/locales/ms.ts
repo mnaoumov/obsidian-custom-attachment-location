@@ -46,7 +46,7 @@ export const ms = {
     },
     notePathIsIgnored: 'Laluan nota diabaikan'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Batal',
       ok: 'OK'

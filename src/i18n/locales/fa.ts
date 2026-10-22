@@ -46,7 +46,7 @@ export const fa = {
     },
     notePathIsIgnored: 'مسیر یادداشت نادیده گرفته شده است'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'لغو',
       ok: 'تأیید'

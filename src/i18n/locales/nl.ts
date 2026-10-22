@@ -46,7 +46,7 @@ export const nl = {
     },
     notePathIsIgnored: 'Notitie pad wordt genegeerd'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Annuleren',
       ok: 'OK'

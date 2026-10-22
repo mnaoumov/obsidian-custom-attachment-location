@@ -115,7 +115,7 @@ class PruneOriginalAttachmentNamesModal extends ModalBase<PruneOriginalAttachmen
       }));
 
     new ButtonComponent(buttonsEl)
-      .setButtonText(t(($) => $.obsidianDevUtils.buttons.cancel))
+      .setButtonText(t(($) => $.obsidianLib.buttons.cancel))
       .onClick(this.close.bind(this));
   }
 }

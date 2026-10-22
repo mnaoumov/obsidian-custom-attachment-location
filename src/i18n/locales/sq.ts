@@ -46,7 +46,7 @@ export const sq = {
     },
     notePathIsIgnored: 'Shtegu i shënimit është injoruar'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Anulo',
       ok: 'OK'

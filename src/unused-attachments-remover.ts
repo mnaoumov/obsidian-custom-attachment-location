@@ -549,7 +549,7 @@ export class UnusedAttachmentsRemover {
      */
     const isConfirmed = await confirmMinimizable({
       app: this.app,
-      cancelButtonText: t(($) => $.obsidianDevUtils.buttons.cancel),
+      cancelButtonText: t(($) => $.obsidianLib.buttons.cancel),
       message: await createFragmentAsync(async (f) => {
         if (attachmentsToDelete.length > 0) {
           f.appendText(t(($) => $.deleteUnusedAttachments.confirm.part1));
@@ -581,7 +581,7 @@ export class UnusedAttachmentsRemover {
         f.createEl('br');
         f.appendText(t(($) => $.deleteUnusedAttachments.confirm.part2));
       }),
-      okButtonText: t(($) => $.obsidianDevUtils.buttons.ok),
+      okButtonText: t(($) => $.obsidianLib.buttons.ok),
       title: createFragment((f) => {
         setIcon(f.createSpan(), 'lucide-alert-triangle');
         f.appendText(' ');

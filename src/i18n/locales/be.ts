@@ -46,7 +46,7 @@ export const be = {
     },
     notePathIsIgnored: 'Шлях нататкі ігнаруецца'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Адмена',
       ok: 'ОК'

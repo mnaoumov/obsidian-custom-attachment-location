@@ -8,8 +8,8 @@ import {
 
 import { findPluginSettingsComponent } from '../scripts/helpers/plugin-settings-component-finder.ts';
 
-interface ObsidianDevUtilsGlobal {
-  readonly __obsidianDevUtils?: Record<string, OperationQueueWrapper | undefined>;
+interface ObsidianLibGlobal {
+  readonly __obsidianLib?: Record<string, OperationQueueWrapper | undefined>;
 }
 
 /**
@@ -165,7 +165,7 @@ describe('The prompt token modal (issue #59)', () => {
          * reported (misleadingly) as the input not being focused.
          */
         async function waitForQueueToDrain(): Promise<void> {
-          const queueState = (window as ObsidianDevUtilsGlobal).__obsidianDevUtils?.['queue']?.value;
+          const queueState = (window as ObsidianLibGlobal).__obsidianLib?.['queue']?.value;
           const queueDeadline = Date.now() + QUEUE_DRAIN_TIMEOUT_IN_MILLISECONDS;
           while ((queueState?.items?.length ?? 0) > 0 && Date.now() < queueDeadline) {
             await sleep(QUEUE_DRAIN_POLL_IN_MILLISECONDS);

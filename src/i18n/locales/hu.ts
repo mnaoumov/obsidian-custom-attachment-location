@@ -46,7 +46,7 @@ export const hu = {
     },
     notePathIsIgnored: 'A jegyzet elérési útja figyelmen kívül marad'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Mégse',
       ok: 'OK'

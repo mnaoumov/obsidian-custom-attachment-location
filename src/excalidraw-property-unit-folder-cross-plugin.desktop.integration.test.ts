@@ -75,11 +75,11 @@ describe('A drawing marked by its excalidraw-plugin property is an attachment (i
           readonly isRevoked: boolean;
         }
 
-        interface ObsidianDevUtilsWrapper {
-          readonly __obsidianDevUtils: ObsidianDevUtilsState;
+        interface ObsidianLibWrapper {
+          readonly __obsidianLib: ObsidianLibState;
         }
 
-        interface ObsidianDevUtilsState {
+        interface ObsidianLibState {
           readonly pluginApiRegistry?: RegistryWrapper;
         }
 
@@ -99,7 +99,7 @@ describe('A drawing marked by its excalidraw-plugin property is an attachment (i
 
         // The handler's own published API, read where every plugin bundle in the renderer shares it.
         function findHandlerApi(): HandlerApiLike | null {
-          const registryState = (window as Partial<ObsidianDevUtilsWrapper>).__obsidianDevUtils;
+          const registryState = (window as Partial<ObsidianLibWrapper>).__obsidianLib;
           const api = registryState?.pluginApiRegistry?.value?.records?.[handlerPluginId]?.find((candidate) => !candidate.isRevoked)?.api;
           const record = api as null | Record<string, unknown> | undefined;
           return record && typeof record['isTreatedAsAttachment'] === 'function' ? api as HandlerApiLike : null;

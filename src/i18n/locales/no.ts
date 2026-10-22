@@ -46,7 +46,7 @@ export const no = {
     },
     notePathIsIgnored: 'Notatbane ignoreres'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Avbryt',
       ok: 'OK'

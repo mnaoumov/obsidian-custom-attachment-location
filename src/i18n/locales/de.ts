@@ -46,7 +46,7 @@ export const de = {
     },
     notePathIsIgnored: 'Notiz-Pfad wird ignoriert'
   },
-  obsidianDevUtils: {
+  obsidianLib: {
     buttons: {
       cancel: 'Abbrechen',
       ok: 'OK'

@@ -334,9 +334,6 @@ beforeEach(() => {
   });
   app = appMock.asOriginalType__();
 
-  // Seed the obsidianDevUtilsState holder on the raw target behind the strict-proxy App so the real getObsidianDevUtilsState can read/write it (the proxy throws on first access to an unassigned property).
-  seedOnRawTarget(app, 'obsidianDevUtilsState', {});
-
   // The onloadImpl binds vault.getAvailablePathForAttachments to pass it to AttachmentPathManager; seed it on the raw target so the strict-proxy does not throw.
   seedOnRawTarget(app.vault, 'getAvailablePathForAttachments', vi.fn((): Promise<string> => Promise.resolve('attachments/file.png')));
 
