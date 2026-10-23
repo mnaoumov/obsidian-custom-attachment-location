@@ -92,6 +92,34 @@ Extension of the attachment file as it is now, without its dot. While pasting, t
 
 - `{{attachmentFileExtension}}`: `alpha.bravo.pdf -> pdf`.
 
+## `{{attachmentFileHash}}`
+
+Hash of the attachment file's content, in hex. While pasting, the incoming file's — after any conversion to JPEG.
+
+Unlike `{{uuid}}` or `{{random}}`, the same bytes always give the same name, so `Collect attachments` and `Move attachment to proper folder` leave an unchanged file where it is. The name is not kept in step with the content by itself: when you edit an attachment (say you annotate a PDF), it keeps its old name until one of those commands runs on it again. Two files with the same content get the same hash, so pasting the second one places it beside the first with the usual numeric suffix (`2cf24dba5fb0 1.png`). Turn on **Deduplicate identical attachments** and the next `Collect attachments` or `Move attachment to proper folder` points its links at the first file and moves the copy to the trash.
+
+The whole file is read to hash it, so a large attachment costs a read the other tokens avoid.
+
+### Format schema
+
+```ts
+{
+  algorithm?: 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'; // default: 'SHA-256'
+  case?: 'lower' | 'upper'; // default: 'lower'
+  length?: number; // default: the full hash
+}
+```
+
+### Default (omitted) format
+
+`null`, equivalent to `{}`.
+
+### Examples
+
+- `{{attachmentFileHash}}`: `2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824`.
+- `{{attachmentFileHash:{length:12}}}`: `2cf24dba5fb0`.
+- `{{attachmentFileHash:{algorithm:'SHA-1',case:'upper',length:8}}}`: `AAF4C61D`.
+
 ## `{{attachmentFileModificationDate}}`
 
 Modification date/time of the attachment file. The same value as `{{originalAttachmentFileModificationDate}}`.

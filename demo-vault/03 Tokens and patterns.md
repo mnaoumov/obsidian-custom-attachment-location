@@ -26,6 +26,8 @@ Example folder pattern:
   - current date/time in [Moment.js](https://momentjs.com/docs/#/displaying/format/) format.
 - `{{uuid}}` / `{{random:{length:6}}}`
   - a random UUID / random string, for guaranteed-unique names.
+- `{{attachmentFileHash:{length:12}}}`
+  - a hash of the attachment's content: a short id that stays the same while the bytes do.
 - `{{prompt}}`
   - ask you for a value each time (with a file preview).
 - `{{frontmatter:{key:'project'}}}`
