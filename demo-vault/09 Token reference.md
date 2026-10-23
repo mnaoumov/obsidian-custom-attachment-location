@@ -104,7 +104,7 @@ The whole file is read to hash it, so a large attachment costs a read the other 
 
 ```ts
 {
-  algorithm?: 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'; // default: 'SHA-256'
+  algorithm?: 'BLAKE3' | 'CRC32' | 'MD5' | 'SHA-1' | 'SHA-224' | 'SHA-256' | 'SHA-384' | 'SHA-512' | 'SHA3-224' | 'SHA3-256' | 'SHA3-384' | 'SHA3-512'; // default: 'SHA-256'
   case?: 'lower' | 'upper'; // default: 'lower'
   length?: number; // default: the full hash
 }
@@ -119,6 +119,8 @@ The whole file is read to hash it, so a large attachment costs a read the other 
 - `{{attachmentFileHash}}`: `2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824`.
 - `{{attachmentFileHash:{length:12}}}`: `2cf24dba5fb0`.
 - `{{attachmentFileHash:{algorithm:'SHA-1',case:'upper',length:8}}}`: `AAF4C61D`.
+- `{{attachmentFileHash:{algorithm:'MD5'}}}`: `5d41402abc4b2a76b9719d911017c592`.
+- `{{attachmentFileHash:{algorithm:'CRC32'}}}`: `3610a686`, the same 8 digits Total Commander writes to an `.sfv` file.
 
 ## `{{attachmentFileModificationDate}}`
 

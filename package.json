@@ -91,6 +91,7 @@
   },
   "dependencies": {
     "@mnaoumov/obsidian-lib": "^6.0.2",
-    "@mnaoumov/typescript-lib": "^1.6.1"
+    "@mnaoumov/typescript-lib": "^1.6.1",
+    "@noble/hashes": "^2.4.0"
   }
 }
