@@ -26,6 +26,7 @@ import {
 } from './token-parser.ts';
 import { AttachmentFileCreationDateToken } from './tokens/attachment-file-creation-date-token.ts';
 import { AttachmentFileExtensionToken } from './tokens/attachment-file-extension-token.ts';
+import { AttachmentFileHashToken } from './tokens/attachment-file-hash-token.ts';
 import { AttachmentFileModificationDateToken } from './tokens/attachment-file-modification-date-token.ts';
 import { AttachmentFileNameToken } from './tokens/attachment-file-name-token.ts';
 import { AttachmentFileSizeToken } from './tokens/attachment-file-size-token.ts';
@@ -196,6 +197,7 @@ export class Substitutions {
     this.registeredTokens.clear();
     this.registerToken(new AttachmentFileCreationDateToken());
     this.registerToken(new AttachmentFileExtensionToken());
+    this.registerToken(new AttachmentFileHashToken());
     this.registerToken(new AttachmentFileModificationDateToken());
     this.registerToken(new AttachmentFileNameToken());
     this.registerToken(new AttachmentFileSizeToken());
