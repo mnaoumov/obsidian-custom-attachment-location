@@ -56,8 +56,13 @@ async function populate(): Promise<PopulateFilesParams> {
 // Pre-populates the whole `demo-vault/` tree (plus the `CodeScript Toolkit` binary and its settings)
 // before Obsidian opens, so the startup scan indexes every note in one pass. Used by
 // `integration-tests:demo-vault`.
+//
+// `Advanced Rename and Delete Handler` is enabled FIRST. `CodeScript Toolkit` runs `startup.ts` as it loads, and
+// that script enables the handler too; with the handler second, both enables can be in flight at once, neither
+// sees the other's, and the handler loads twice. The second load either fails the setup (it may publish its API
+// only once) or leaves a second instance, so a demo edits one copy's settings while this plugin reads the other's.
 const { setup, teardown } = createSetup({
-  enableCommunityPlugins: [CODE_SCRIPT_TOOLKIT_PLUGIN_ID, ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID],
+  enableCommunityPlugins: [ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID, CODE_SCRIPT_TOOLKIT_PLUGIN_ID],
   populate
 });
 
