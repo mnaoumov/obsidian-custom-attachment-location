@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 17.0.0
+
+- test(demo-vault): stop the startup script loading the rename handler a second time
+- refactor(crc32): drop the unreachable table-entry fallback that kept branch coverage under 100%
+- test: seed the obsidian-lib 6 release of `Advanced Rename and Delete Handler`
+- docs(demo-vault): split the token reference into one note per token
+- feat: offer every Total Commander checksum in {{attachmentFileHash}}
+- test(demo-vault): floor `CodeScript Toolkit` at 15.0.0
+- feat: add {{attachmentFileHash}} token naming attachments by a content hash
+- chore(deps)!: move to obsidian-lib 6 and off the dropped obsidian-dev-utils names
+- docs: name obsidian-lib where comments said dev-utils
+- docs: point a leftover obsidian-dev-utils pin reason at the packages in the tree now
+- fix: show the CSV copied notice with the plugin header
+- fix: drop the plugin name from notice text
+- docs: shorten the debugging section
+- docs(changelog): escape the issue-title tags so markdownlint and cspell pass
+- docs(changelog): name the issue each released entry resolved
+- chore: replace leftover obsidian-dev-utils references with @mnaoumov/obsidian-lib
+- chore(lint): turn lint:md and spellcheck green on main
+- docs(readme): lead the Debugging section with `Advanced Debug Mode`
+- feat(tokens): merge remembering each attachment's arrival name for {{originalAttachmentFileName}}
+- docs(changelog): merge adding the 16.0.0 path-settings migration note
+
 ## 16.0.0
 
 - feat(settings)!: merge taking obsidian-lib 5.0.0 path settings with globs and case-insensitive matching (re #98 - Exclude file extensions (e.g. .mdenc) from Collect attachments)
