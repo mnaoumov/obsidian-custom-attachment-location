@@ -1,5 +1,7 @@
 /* eslint-disable no-bitwise -- CRC-32 is defined in terms of bitwise operations. */
 
+import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
+
 const CRC32_POLYNOMIAL = 0xED_B8_83_20;
 const BYTE_VALUE_COUNT = 256;
 const BITS_PER_BYTE = 8;
@@ -13,7 +15,7 @@ const CRC32_TABLE = createCrc32Table();
 export function crc32(data: Uint8Array): Uint8Array {
   let crc = ALL_BITS;
   for (const byte of data) {
-    crc = (CRC32_TABLE[(crc ^ byte) & BYTE_MASK] ?? 0) ^ (crc >>> BITS_PER_BYTE);
+    crc = ensureNonNullable(CRC32_TABLE[(crc ^ byte) & BYTE_MASK]) ^ (crc >>> BITS_PER_BYTE);
   }
   const result = new Uint8Array(CRC32_BYTE_LENGTH);
   new DataView(result.buffer).setUint32(0, (crc ^ ALL_BITS) >>> 0);
