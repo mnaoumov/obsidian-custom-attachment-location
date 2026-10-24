@@ -33,8 +33,10 @@ export const ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID = 'advanced-rename-and
  * property (#90), which `excalidraw-property-unit-folder-cross-plugin.desktop.integration.test.ts` drives.
  * `2.2.0` is the first to read this plugin's attachment-unit-folder designation through the plugin API rather
  * than off the `getAvailablePathForAttachments` graft, which 15.0.0 removed; the rescue suites need it.
+ * `3.0.1` is the first on `@mnaoumov/obsidian-lib` 6, which this plugin is on: a plugin on lib 6 does not see
+ * one on an older lib through the plugin-API registry, so an older pin leaves this plugin blocked.
  */
-export const ADVANCED_RENAME_AND_DELETE_HANDLER_VERSION = '2.2.1';
+export const ADVANCED_RENAME_AND_DELETE_HANDLER_VERSION = '3.0.1';
 
 const ADVANCED_RENAME_AND_DELETE_HANDLER_REPO = 'mnaoumov/obsidian-advanced-rename-and-delete-handler';
 
