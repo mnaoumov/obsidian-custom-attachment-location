@@ -2,7 +2,7 @@
 
 ## Advanced Rename and Delete Handler is a declared dependency, so every test vault carries it
 
-`src/plugin.ts` declares `Advanced Rename and Delete Handler` through `getPluginDependencies()`. Until its API is published at contract `^1.1.0` by version `2.2.0` or later (`minPluginVersion`: 2.1.x publishes the same contract but reads the attachment-unit-folder designation off the graft 15.0.0 removed), this plugin's `onloadImpl` does not run: no commands, no patches, no settings tab of its own — the library shows a blocked tab and a notice that install it in one click.
+`src/plugin.ts` declares `Advanced Rename and Delete Handler` through `getPluginDependencies()`. Until its API is published at contract `^1.1.0` by version `3.0.1` or later (`minPluginVersion`: 2.1.x publishes the same contract but reads the attachment-unit-folder designation off the graft 15.0.0 removed, and up to 3.0.0 it is built on an `@mnaoumov/obsidian-lib` older than 6, which publishes into `globalThis.__obsidianDevUtils`, a registry lib 6 never reads), this plugin's `onloadImpl` does not run: no commands, no patches, no settings tab of its own — the library shows a blocked tab and a notice that install it in one click.
 
 Consequences for anyone touching the tests:
 

@@ -594,8 +594,9 @@ describe('Plugin', () => {
       // gate and then fail every read.
       expect(dependency?.apiVersionRange).toBe('^1.1.0');
       // 2.1.x publishes that same contract but reads the unit-folder designation off a graft this plugin removed,
-      // so only the plugin version tells it apart.
-      expect(dependency?.minPluginVersion).toBe('2.2.0');
+      // so only the plugin version tells it apart. Up to 3.0.0 it publishes into the registry obsidian-lib 6
+      // stopped reading, so 3.0.1 is the first release this plugin can see at all.
+      expect(dependency?.minPluginVersion).toBe('3.0.1');
       // Both plugin names are marked as code, so the reason is a fragment rather than a plain string.
       const reason = dependency?.reason;
       expect(reason).toBeInstanceOf(DocumentFragment);
