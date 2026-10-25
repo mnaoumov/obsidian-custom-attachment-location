@@ -141,9 +141,14 @@ export const ADVANCED_RENAME_AND_DELETE_HANDLER_DEPENDENCY_API_VERSION_RANGE = '
  * `2.2.0` is the first release that reads the attachment-unit-folder designation through this plugin's API rather than
  * off the `getAvailablePathForAttachments` graft 15.0.0 removed. A 2.1.x provider still publishes contract `1.1.0`, so
  * the range above cannot tell it apart: it would open the gate and then delete a unit folder's contents piecemeal,
- * without any notice. Asking for `2.2.0` here gives that user the gate's own "update this plugin" message instead.
+ * without any notice. Asking for `2.2.0` gave that user the gate's own "update this plugin" message instead.
+ *
+ * `3.0.1` is the first release built on `@mnaoumov/obsidian-lib` 6, the major that moved the plugin-API registry from
+ * `globalThis.__obsidianDevUtils` to `globalThis.__obsidianLib`. Up to 3.0.0 the provider publishes into the old bag,
+ * which this plugin never reads, so the gate sees an enabled plugin with no API and says it is not installed. Asking
+ * for `3.0.1` turns that into the "update this plugin" message too, with the button that does it.
  */
-export const ADVANCED_RENAME_AND_DELETE_HANDLER_MIN_PLUGIN_VERSION = '2.2.0';
+export const ADVANCED_RENAME_AND_DELETE_HANDLER_MIN_PLUGIN_VERSION = '3.0.1';
 
 /**
  * What the MIGRATION needs — a single method, published since contract `1.0.0`.
