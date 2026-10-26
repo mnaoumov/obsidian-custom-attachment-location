@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## The README's `Tokens` headings are link targets, and the API detail lives in `docs/plugin-api.md`
+
+`## Tokens`, `### Custom tokens` and `### Markdown URL format` hold only a pointer into the demo vault, but they stay: the settings tab, the release notes and every locale's custom-token comment link `?tab=readme-ov-file#tokens`, `#custom-tokens` and `#markdown-url-format`, including from versions already installed. The README is a landing page, so the full plugin-API guide is `docs/plugin-api.md`, and `## For plugin developers` only links it.
+
 ## Advanced Rename and Delete Handler is a declared dependency, so every test vault carries it
 
 `src/plugin.ts` declares `Advanced Rename and Delete Handler` through `getPluginDependencies()`. Until its API is published at contract `^1.1.0` by version `3.0.1` or later (`minPluginVersion`: 2.1.x publishes the same contract but reads the attachment-unit-folder designation off the graft 15.0.0 removed, and up to 3.0.0 it is built on an `@mnaoumov/obsidian-lib` older than 6, which publishes into `globalThis.__obsidianDevUtils`, a registry lib 6 never reads), this plugin's `onloadImpl` does not run: no commands, no patches, no settings tab of its own — the library shows a blocked tab and a notice that install it in one click.
