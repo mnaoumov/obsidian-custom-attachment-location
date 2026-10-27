@@ -39,6 +39,7 @@ describe('Name cleaning is available as a token format (issue #59)', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent, pluginId, raggedBaseName }): Promise<ProbeResult> {
         interface NameSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
         }
 

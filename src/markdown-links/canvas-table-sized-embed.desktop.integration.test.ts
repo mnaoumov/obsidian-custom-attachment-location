@@ -44,7 +44,7 @@ import {
  */
 
 interface CanvasJson {
-  nodes: CanvasTextNodeJson[];
+  readonly nodes: CanvasTextNodeJson[];
 }
 
 interface CanvasTableSetupResult {
@@ -53,7 +53,7 @@ interface CanvasTableSetupResult {
 }
 
 interface CanvasTextNodeJson {
-  text?: string;
+  readonly text?: string;
 }
 
 /*

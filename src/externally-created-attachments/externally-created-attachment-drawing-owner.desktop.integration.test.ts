@@ -51,12 +51,12 @@ const EXCALIDRAW_VERSION = '2.27.3';
 const PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 interface ExcalidrawApiLike {
-  addElementsToView: (shouldRepositionToCursor: boolean, shouldSave: boolean) => Promise<boolean>;
-  addImage: (topX: number, topY: number, imageFile: string) => Promise<string>;
-  addRect: (topX: number, topY: number, width: number, height: number) => string;
-  create: (params: ExcalidrawCreateParams) => Promise<string>;
-  reset: () => void;
-  setView: (view: unknown) => unknown;
+  readonly addElementsToView: (shouldRepositionToCursor: boolean, shouldSave: boolean) => Promise<boolean>;
+  readonly addImage: (topX: number, topY: number, imageFile: string) => Promise<string>;
+  readonly addRect: (topX: number, topY: number, width: number, height: number) => string;
+  readonly create: (params: ExcalidrawCreateParams) => Promise<string>;
+  readonly reset: () => void;
+  readonly setView: (view: unknown) => unknown;
 }
 
 interface ExcalidrawCreateParams {
@@ -71,11 +71,11 @@ interface ExcalidrawPluginLike {
 
 // `Excalidraw`'s view is a `TextFileView` whose `save` takes a second flag that forces the write.
 interface ExcalidrawViewLike extends TextFileView {
-  save: (shouldPreventReload?: boolean, shouldForceSave?: boolean) => Promise<void>;
+  readonly save: (shouldPreventReload?: boolean, shouldForceSave?: boolean) => Promise<void>;
 }
 
 interface ExcalidrawWindow extends Window {
-  ExcalidrawAutomate?: ExcalidrawApiLike;
+  readonly ExcalidrawAutomate?: ExcalidrawApiLike;
 }
 
 interface PasteResult {
@@ -94,9 +94,13 @@ interface ProbeResult {
 }
 
 interface ScopedSettings {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   attachmentFolderPath: string;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   generatedAttachmentFileName: string;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   otherPluginIdsForAttachmentRename: string[];
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   renameAttachmentsCreatedByOtherPluginsMode: string;
 }
 

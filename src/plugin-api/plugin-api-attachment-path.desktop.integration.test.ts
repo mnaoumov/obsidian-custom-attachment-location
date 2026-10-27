@@ -49,7 +49,7 @@ describe('The plugin API resolves attachment paths with this plugin\'s template'
         }
 
         interface ApiLike {
-          getAvailablePathForAttachments: (params: ResolverParams) => Promise<string>;
+          readonly getAvailablePathForAttachments: (params: ResolverParams) => Promise<string>;
         }
 
         interface ApiRecord {
@@ -74,6 +74,7 @@ describe('The plugin API resolves attachment paths with this plugin\'s template'
         }
 
         interface PathSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
         }
 

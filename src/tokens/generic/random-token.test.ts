@@ -14,10 +14,10 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 import { RandomToken } from './random-token.ts';
 
 interface EvaluateImplFormat {
-  digits: boolean;
-  length: number;
-  letterCase: 'lower' | 'mixed' | 'upper';
-  letters: boolean;
+  readonly digits: boolean;
+  readonly length: number;
+  readonly letterCase: 'lower' | 'mixed' | 'upper';
+  readonly letters: boolean;
 }
 
 class TestableRandomToken extends RandomToken {

@@ -21,10 +21,11 @@ import { ClipboardManagerInsertFilesPatchComponent } from './clipboard-manager-i
 import { InsertGesture } from './insert-gesture-tracker-component.ts';
 
 interface ClipboardManagerPrototype {
-  insertFiles: InsertFilesFunction;
+  readonly insertFiles: InsertFilesFunction;
 }
 
 interface GestureHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   gesture: InsertGesture | null;
 }
 

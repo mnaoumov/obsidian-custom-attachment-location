@@ -68,8 +68,11 @@ describe('Delete unused attachments in entire vault, for attachments no note own
         const SETTLE_DELAY_IN_MILLISECONDS = 1000;
 
         interface RemoverSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           orphanAttachmentScanMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           orphanAttachmentScanPaths: string[];
         }
 

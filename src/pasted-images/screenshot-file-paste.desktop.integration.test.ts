@@ -26,26 +26,26 @@ import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settin
  */
 
 interface AdapterWithFsPromises {
-  fsPromises: FsPromisesLike;
+  readonly fsPromises: FsPromisesLike;
 }
 
 interface EditorLike {
-  cm?: EditorViewLike;
+  readonly cm?: EditorViewLike;
 }
 
 interface EditorViewLike {
-  contentDOM: HTMLElement;
+  readonly contentDOM: HTMLElement;
 }
 
 interface FsPromisesLike {
-  mkdir: (path: string, options: MkdirOptions) => Promise<unknown>;
-  rm: (path: string, options: RmOptions) => Promise<void>;
-  utimes: (path: string, atime: Date, mtime: Date) => Promise<void>;
-  writeFile: (path: string, data: Uint8Array) => Promise<void>;
+  readonly mkdir: (path: string, options: MkdirOptions) => Promise<unknown>;
+  readonly rm: (path: string, options: RmOptions) => Promise<void>;
+  readonly utimes: (path: string, atime: Date, mtime: Date) => Promise<void>;
+  readonly writeFile: (path: string, data: Uint8Array) => Promise<void>;
 }
 
 interface MarkdownViewLike {
-  editor?: EditorLike;
+  readonly editor?: EditorLike;
 }
 
 interface MkdirOptions {
@@ -53,11 +53,11 @@ interface MkdirOptions {
 }
 
 interface OsModuleLike {
-  tmpdir: () => string;
+  readonly tmpdir: () => string;
 }
 
 interface PathModuleLike {
-  join: (...parts: string[]) => string;
+  readonly join: (...parts: string[]) => string;
 }
 
 interface RmOptions {
@@ -82,10 +82,15 @@ describe('Only pasted images tells a screenshot tool\'s file apart from a real f
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent, lib: { waitUntil } }): Promise<ScreenshotPasteResult> {
         interface ScreenshotSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           screenshotFilePaths: string[];
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldKeepNamesOfPastedNonScreenshotFiles: boolean;
         }
 
@@ -239,18 +244,23 @@ describe('Only pasted images tells a screenshot tool\'s file apart from a real f
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent, lib: { waitUntil } }): Promise<ScreenshotPasteResult> {
         interface CanvasLike {
-          wrapperEl: HTMLElement;
+          readonly wrapperEl: HTMLElement;
         }
 
         interface CanvasViewLike {
-          canvas?: CanvasLike;
+          readonly canvas?: CanvasLike;
         }
 
         interface ScreenshotSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           screenshotFilePaths: string[];
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldKeepNamesOfPastedNonScreenshotFiles: boolean;
         }
 

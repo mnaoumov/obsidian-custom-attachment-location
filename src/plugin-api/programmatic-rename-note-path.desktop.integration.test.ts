@@ -46,7 +46,7 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
         }
 
         interface ExtendedResolver {
-          getAvailablePathForAttachments: (params: ResolveParams) => Promise<string>;
+          readonly getAvailablePathForAttachments: (params: ResolveParams) => Promise<string>;
         }
 
         interface ObsidianLibWrapper {
@@ -66,8 +66,11 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
         }
 
         interface RenameNoteSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           renamedAttachmentFileName: string;
         }
 
@@ -78,16 +81,17 @@ describe('Programmatic RenameNote resolution (Advanced Note Composer issue #259)
          * which exercises the real read path without needing the other plugin installed in the vault.
          */
         interface HandedOverProvider {
-          getSettings: () => Record<string, unknown>;
-          isPathIgnored: (path: string) => boolean;
-          isTreatedAsAttachment: (path: string) => boolean;
+          readonly getSettings: () => Record<string, unknown>;
+          readonly isPathIgnored: (path: string) => boolean;
+          readonly isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {
-          value: HandedOverProvider | null;
+          readonly value: HandedOverProvider | null;
         }
 
         interface HandedOverSettingsHolder {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           apiRef: HandedOverProviderRef | null;
         }
 

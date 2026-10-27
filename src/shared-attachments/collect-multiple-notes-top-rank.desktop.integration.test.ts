@@ -49,7 +49,9 @@ describe('The shared-attachment dialog lists only the top-ranked notes (issue #7
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface PrioritySettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           collectAttachmentUsedByMultipleNotesMode: string;
         }
 
@@ -61,16 +63,17 @@ describe('The shared-attachment dialog lists only the top-ranked notes (issue #7
          * installed in the vault.
          */
         interface HandedOverProvider {
-          getSettings: () => Record<string, unknown>;
-          isPathIgnored: (path: string) => boolean;
-          isTreatedAsAttachment: (path: string) => boolean;
+          readonly getSettings: () => Record<string, unknown>;
+          readonly isPathIgnored: (path: string) => boolean;
+          readonly isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {
-          value: HandedOverProvider | null;
+          readonly value: HandedOverProvider | null;
         }
 
         interface HandedOverSettingsHolder {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           apiRef: HandedOverProviderRef | null;
         }
 

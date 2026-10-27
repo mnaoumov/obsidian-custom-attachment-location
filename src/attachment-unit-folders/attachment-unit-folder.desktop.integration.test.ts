@@ -36,8 +36,9 @@ describe('Attachment unit folders travel whole (issue #56)', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ProbeResult> {
         interface UnitFolderSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder: (path: string) => boolean;
+          readonly isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         function isUnitFolderSettings(value: unknown): value is UnitFolderSettings {

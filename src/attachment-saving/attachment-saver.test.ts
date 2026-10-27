@@ -35,22 +35,22 @@ import { AttachmentRenameMode } from '../settings/plugin-settings.ts';
 import { AttachmentSaver } from './attachment-saver.ts';
 
 interface TestContext {
-  convertToJpeg: ReturnType<typeof vi.fn<ImageManager['convertToJpeg']>>;
-  createBinary: ReturnType<typeof vi.fn<Vault['createBinary']>>;
-  getActiveFile: ReturnType<typeof vi.fn<Workspace['getActiveFile']>>;
-  getAvailablePathForAttachments: ReturnType<typeof vi.fn<AttachmentPathManager['getAvailablePathForAttachments']>>;
-  getFileStats: ReturnType<typeof vi.fn<ArrayBufferMap['getFileStats']>>;
-  getGeneratedAttachmentFileBaseName: ReturnType<typeof vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>>;
-  getImageSize: ReturnType<typeof vi.fn<ImageManager['getImageSize']>>;
-  getSourcePath: ReturnType<typeof vi.fn<ArrayBufferMap['getSourcePath']>>;
-  imageSizeMapSet: ReturnType<typeof vi.fn<ImageSizeMap['set']>>;
-  isPastedImageBuffer: ReturnType<typeof vi.fn<ArrayBufferMap['isPastedImage']>>;
-  isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
-  markdownUrlMapDelete: ReturnType<typeof vi.fn<MarkdownUrlMap['delete']>>;
-  markdownUrlMapSet: ReturnType<typeof vi.fn<MarkdownUrlMap['set']>>;
-  saver: AttachmentSaver;
-  setOriginalPath: ReturnType<typeof vi.fn<OriginalAttachmentNamesComponent['setOriginalPath']>>;
-  settings: PluginSettings;
+  readonly convertToJpeg: ReturnType<typeof vi.fn<ImageManager['convertToJpeg']>>;
+  readonly createBinary: ReturnType<typeof vi.fn<Vault['createBinary']>>;
+  readonly getActiveFile: ReturnType<typeof vi.fn<Workspace['getActiveFile']>>;
+  readonly getAvailablePathForAttachments: ReturnType<typeof vi.fn<AttachmentPathManager['getAvailablePathForAttachments']>>;
+  readonly getFileStats: ReturnType<typeof vi.fn<ArrayBufferMap['getFileStats']>>;
+  readonly getGeneratedAttachmentFileBaseName: ReturnType<typeof vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>>;
+  readonly getImageSize: ReturnType<typeof vi.fn<ImageManager['getImageSize']>>;
+  readonly getSourcePath: ReturnType<typeof vi.fn<ArrayBufferMap['getSourcePath']>>;
+  readonly imageSizeMapSet: ReturnType<typeof vi.fn<ImageSizeMap['set']>>;
+  readonly isPastedImageBuffer: ReturnType<typeof vi.fn<ArrayBufferMap['isPastedImage']>>;
+  readonly isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
+  readonly markdownUrlMapDelete: ReturnType<typeof vi.fn<MarkdownUrlMap['delete']>>;
+  readonly markdownUrlMapSet: ReturnType<typeof vi.fn<MarkdownUrlMap['set']>>;
+  readonly saver: AttachmentSaver;
+  readonly setOriginalPath: ReturnType<typeof vi.fn<OriginalAttachmentNamesComponent['setOriginalPath']>>;
+  readonly settings: PluginSettings;
 }
 
 const moment = extractDefaultExportInterop(moment_);

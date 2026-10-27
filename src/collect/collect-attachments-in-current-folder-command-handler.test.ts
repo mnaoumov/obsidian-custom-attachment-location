@@ -18,10 +18,10 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './collect-attachments-in-current-folder-command-handler.ts';
 
 interface TestableHandler {
-  executeFolder: (folder: TFolder) => void;
-  icon: string;
-  id: string;
-  name: string;
+  readonly executeFolder: (folder: TFolder) => void;
+  readonly icon: string;
+  readonly id: string;
+  readonly name: string;
 }
 
 const mockCollectAttachmentsInAbstractFiles = vi.fn<AttachmentCollector['collectAttachmentsInAbstractFiles']>();

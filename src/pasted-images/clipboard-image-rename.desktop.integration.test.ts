@@ -19,7 +19,7 @@ import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settin
  */
 
 interface AdapterWithFsPromises {
-  fsPromises: FsPromisesLike;
+  readonly fsPromises: FsPromisesLike;
 }
 
 interface ClipboardRenameResult {
@@ -29,28 +29,28 @@ interface ClipboardRenameResult {
 }
 
 interface FsPromisesLike {
-  unlink: (path: string) => Promise<void>;
-  writeFile: (path: string, data: Uint8Array) => Promise<void>;
+  readonly unlink: (path: string) => Promise<void>;
+  readonly writeFile: (path: string, data: Uint8Array) => Promise<void>;
 }
 
 interface InsertFilesClipboardManager {
-  insertFiles: (importedAttachments: unknown[]) => Promise<void>;
+  readonly insertFiles: (importedAttachments: unknown[]) => Promise<void>;
 }
 
 interface MarkdownEditModeLike {
-  clipboardManager?: InsertFilesClipboardManager;
+  readonly clipboardManager?: InsertFilesClipboardManager;
 }
 
 interface MarkdownViewLike {
-  editMode?: MarkdownEditModeLike;
+  readonly editMode?: MarkdownEditModeLike;
 }
 
 interface OsModuleLike {
-  tmpdir: () => string;
+  readonly tmpdir: () => string;
 }
 
 interface PathModuleLike {
-  join: (...parts: string[]) => string;
+  readonly join: (...parts: string[]) => string;
 }
 
 /*
@@ -64,10 +64,13 @@ describe('Clipboard-inserted image is renamed in "Only pasted images" mode (issu
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ClipboardRenameResult> {
         interface RenameSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
-          isPathIgnored: (path: string) => boolean;
+          readonly isPathIgnored: (path: string) => boolean;
         }
 
         function isRenameSettings(value: unknown): value is RenameSettings {

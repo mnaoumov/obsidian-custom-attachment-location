@@ -16,10 +16,10 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './delete-unused-attachments-entire-vault-command-handler.ts';
 
 interface TestableHandler {
-  execute: () => Promise<void>;
-  icon: string;
-  id: string;
-  name: string;
+  readonly execute: () => Promise<void>;
+  readonly icon: string;
+  readonly id: string;
+  readonly name: string;
 }
 
 const mockDeleteUnusedAttachmentsEntireVault = vi.fn<UnusedAttachmentsRemover['deleteUnusedAttachmentsEntireVault']>();

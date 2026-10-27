@@ -24,7 +24,7 @@ import { translationsMap } from './i18n/locales/translations-map.ts';
 import { createReleaseNotesComponent } from './release-notes-component.ts';
 
 interface LayoutReadyTrigger {
-  setLayoutReady__: () => void;
+  readonly setLayoutReady__: () => void;
 }
 
 interface TestContext {

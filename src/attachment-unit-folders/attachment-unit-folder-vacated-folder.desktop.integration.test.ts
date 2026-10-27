@@ -49,9 +49,11 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface UnitFolderSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder: (path: string) => boolean;
+          readonly isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         /*
@@ -63,16 +65,17 @@ describe('Collect deletes the folder an attachment unit folder was carried out o
          * component's live ref, which is the path the sweep really reads.
          */
         interface HandedOverProvider {
-          getSettings: () => Record<string, unknown>;
-          isPathIgnored: (path: string) => boolean;
-          isTreatedAsAttachment: (path: string) => boolean;
+          readonly getSettings: () => Record<string, unknown>;
+          readonly isPathIgnored: (path: string) => boolean;
+          readonly isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {
-          value: HandedOverProvider | null;
+          readonly value: HandedOverProvider | null;
         }
 
         interface HandedOverSettingsHolder {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           apiRef: HandedOverProviderRef | null;
         }
 

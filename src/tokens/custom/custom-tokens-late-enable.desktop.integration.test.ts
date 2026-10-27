@@ -35,7 +35,7 @@ describe('Custom tokens on an enable after layout-ready', () => {
         }
 
         interface ApiLike {
-          getAttachmentFolderPath: (params: GetAttachmentFolderPathParams) => Promise<null | string>;
+          readonly getAttachmentFolderPath: (params: GetAttachmentFolderPathParams) => Promise<null | string>;
         }
 
         interface ApiRecord {

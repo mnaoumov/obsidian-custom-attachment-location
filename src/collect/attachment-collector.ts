@@ -154,7 +154,9 @@ interface CanvasReferenceTarget {
 }
 
 interface CollectAttachmentContext {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   collectAttachmentUsedByMultipleNotesMode?: CollectAttachmentUsedByMultipleNotesMode;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   isAborted?: boolean;
 
   /**
@@ -163,7 +165,7 @@ interface CollectAttachmentContext {
    *
    * Such a run shows no progress notice, because it repeats on every save of the note.
    */
-  isAutomaticRun?: boolean;
+  readonly isAutomaticRun?: boolean;
 
   /**
    * Whether this run targets a single note - the `Collect attachments in current note` command.
@@ -174,7 +176,7 @@ interface CollectAttachmentContext {
    * report would be a box per attachment. Two reports read it today - the higher-priority notes the
    * list handed an attachment to (issue #75), and a run that moved nothing at all (issue #81).
    */
-  isSingleNoteRun?: boolean;
+  readonly isSingleNoteRun?: boolean;
 }
 
 interface MovedAttachment {

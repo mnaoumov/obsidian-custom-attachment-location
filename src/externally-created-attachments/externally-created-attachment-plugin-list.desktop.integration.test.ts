@@ -31,7 +31,7 @@ interface EditableViewLike {
 }
 
 interface EditorLike {
-  replaceSelection: (text: string) => void;
+  readonly replaceSelection: (text: string) => void;
 }
 
 interface PluginListResult {
@@ -40,9 +40,13 @@ interface PluginListResult {
 }
 
 interface ScopedSettings {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   attachmentFolderPath: string;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   generatedAttachmentFileName: string;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   otherPluginIdsForAttachmentRename: string[];
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   renameAttachmentsCreatedByOtherPluginsMode: string;
 }
 

@@ -111,9 +111,11 @@ describe('Deleting a folder on the layout of the reporter\'s second sample vault
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface UnitFolderSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder: (path: string) => boolean;
+          readonly isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         interface MigratableSettingsLike {
@@ -138,8 +140,8 @@ describe('Deleting a folder on the layout of the reporter\'s second sample vault
         }
 
         interface HandlerApiLike {
-          getSettings: () => HandedOverSettingsLike;
-          migrateSettings: (params: MigrateSettingsParamsLike) => Promise<MigrateSettingsResultLike>;
+          readonly getSettings: () => HandedOverSettingsLike;
+          readonly migrateSettings: (params: MigrateSettingsParamsLike) => Promise<MigrateSettingsResultLike>;
         }
 
         interface ApiRecord {

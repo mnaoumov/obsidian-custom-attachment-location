@@ -22,29 +22,29 @@ import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settin
  */
 
 interface AdapterWithFsPromises {
-  fsPromises: FsPromisesLike;
+  readonly fsPromises: FsPromisesLike;
 }
 
 interface ExifTags {
-  hasMake: boolean;
-  orientation: number;
+  readonly hasMake: boolean;
+  readonly orientation: number;
 }
 
 interface FsPromisesLike {
-  unlink: (path: string) => Promise<void>;
-  writeFile: (path: string, data: Uint8Array) => Promise<void>;
+  readonly unlink: (path: string) => Promise<void>;
+  readonly writeFile: (path: string, data: Uint8Array) => Promise<void>;
 }
 
 interface InsertFilesClipboardManager {
-  insertFiles: (importedAttachments: unknown[]) => Promise<void>;
+  readonly insertFiles: (importedAttachments: unknown[]) => Promise<void>;
 }
 
 interface MarkdownEditModeLike {
-  clipboardManager?: InsertFilesClipboardManager;
+  readonly clipboardManager?: InsertFilesClipboardManager;
 }
 
 interface MarkdownViewLike {
-  editMode?: MarkdownEditModeLike;
+  readonly editMode?: MarkdownEditModeLike;
 }
 
 interface MetadataRoundTripResult {
@@ -57,11 +57,11 @@ interface MetadataRoundTripResult {
 }
 
 interface OsModuleLike {
-  tmpdir: () => string;
+  readonly tmpdir: () => string;
 }
 
 interface PathModuleLike {
-  join: (...parts: string[]) => string;
+  readonly join: (...parts: string[]) => string;
 }
 
 /*
@@ -75,10 +75,13 @@ describe('Image metadata is preserved across the JPEG conversion (issue #55)', (
     return await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent, shouldPreserveImageMetadata: shouldPreserve }): Promise<MetadataRoundTripResult> {
         interface ConversionSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           convertImagesToJpegMode: string;
-          isPathIgnored: (path: string) => boolean;
-          jpegQuality: number;
+          readonly isPathIgnored: (path: string) => boolean;
+          readonly jpegQuality: number;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldPreserveImageMetadata: boolean;
         }
 

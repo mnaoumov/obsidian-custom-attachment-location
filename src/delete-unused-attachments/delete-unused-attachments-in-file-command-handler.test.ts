@@ -24,20 +24,21 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { DeleteUnusedAttachmentsInFileCommandHandler } from './delete-unused-attachments-in-file-command-handler.ts';
 
 interface ActiveFileProviderHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   _activeFileProvider: ActiveFileProvider;
 }
 
 interface TestableHandler {
-  canExecute: () => boolean;
-  canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
-  canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
-  executeAbstractFile: (abstractFile: TAbstractFile) => Promise<void>;
-  executeAbstractFiles: (abstractFiles: TAbstractFile[]) => Promise<void>;
-  icon: string;
-  id: string;
-  name: string;
-  shouldAddToAbstractFileMenu: () => boolean;
-  shouldAddToAbstractFilesMenu: () => boolean;
+  readonly canExecute: () => boolean;
+  readonly canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
+  readonly canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
+  readonly executeAbstractFile: (abstractFile: TAbstractFile) => Promise<void>;
+  readonly executeAbstractFiles: (abstractFiles: TAbstractFile[]) => Promise<void>;
+  readonly icon: string;
+  readonly id: string;
+  readonly name: string;
+  readonly shouldAddToAbstractFileMenu: () => boolean;
+  readonly shouldAddToAbstractFilesMenu: () => boolean;
 }
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({

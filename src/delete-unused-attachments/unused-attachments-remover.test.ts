@@ -68,8 +68,8 @@ import { confirmMinimizable } from './minimizable-confirm-modal.ts';
 import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
 interface QueueParamsLike {
-  operationFunction: (abortSignal: AbortSignal) => Promise<void>;
-  operationName: string;
+  readonly operationFunction: (abortSignal: AbortSignal) => Promise<void>;
+  readonly operationName: string;
 }
 
 interface RenderInternalLinkParamsLike {
@@ -77,12 +77,12 @@ interface RenderInternalLinkParamsLike {
 }
 
 interface SettingsLike {
-  emptyFolderBehavior: EmptyFolderBehavior;
-  getTimeoutInMilliseconds: () => number;
-  isAttachmentUnitFolder: (path: string) => boolean;
-  isExcludedFromMultipleNotesCheck: (path: string) => boolean;
-  isOrphanAttachmentScanCandidate: (path: string) => boolean;
-  isPathIgnored: (path: string) => boolean;
+  readonly emptyFolderBehavior: EmptyFolderBehavior;
+  readonly getTimeoutInMilliseconds: () => number;
+  readonly isAttachmentUnitFolder: (path: string) => boolean;
+  readonly isExcludedFromMultipleNotesCheck: (path: string) => boolean;
+  readonly isOrphanAttachmentScanCandidate: (path: string) => boolean;
+  readonly isPathIgnored: (path: string) => boolean;
 }
 
 vi.mock('@mnaoumov/obsidian-lib/canvas', async (importOriginal) => ({
@@ -153,7 +153,7 @@ const PLUGIN_NAME = 'Custom Attachment Location';
 const ATTACHMENT_FOLDER_PATH = 'assets/note';
 
 interface ConfirmParamsLike {
-  message: DocumentFragment;
+  readonly message: DocumentFragment;
 }
 
 function createBacklinks(keys: string[]): CustomArrayDict<Reference> {

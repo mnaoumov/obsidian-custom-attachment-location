@@ -48,15 +48,15 @@ import {
  * A file-explorer row, reduced to the collapse toggle.
  */
 interface CollapsibleFileItem {
-  collapsed?: boolean;
-  setCollapsed?: (this: void, isCollapsed: boolean) => Promise<void>;
+  readonly collapsed?: boolean;
+  readonly setCollapsed?: (this: void, isCollapsed: boolean) => Promise<void>;
 }
 
 /**
  * The file-explorer view, reduced to its rows.
  */
 interface FileExplorerView {
-  fileItems: Record<string, CollapsibleFileItem>;
+  readonly fileItems: Record<string, CollapsibleFileItem>;
 }
 
 /**
@@ -65,6 +65,7 @@ interface FileExplorerView {
  * the clock the `{{date}}` token sees and nothing else.
  */
 interface MomentClock {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   now: (this: void) => number;
 }
 
@@ -72,7 +73,7 @@ interface MomentClock {
  * `window`, reduced to the `moment` global Obsidian puts on it.
  */
 interface MomentClockWindow {
-  moment: MomentClock;
+  readonly moment: MomentClock;
 }
 
 const WIDTH_IN_PIXELS = 1200;

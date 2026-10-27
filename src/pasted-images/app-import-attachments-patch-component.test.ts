@@ -21,13 +21,14 @@ import { AppImportAttachmentsPatchComponent } from './app-import-attachments-pat
 import { InsertGesture } from './insert-gesture-tracker-component.ts';
 
 interface GestureHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   gesture: InsertGesture | null;
 }
 
 type ImportAttachmentsFunction = (attachmentsToImport: ImportedAttachment[], folder: null | TFolder) => Promise<TFile[]>;
 
 interface ImportAttachmentsHolder {
-  importAttachments: ImportAttachmentsFunction;
+  readonly importAttachments: ImportAttachmentsFunction;
 }
 
 describe('AppImportAttachmentsPatchComponent', () => {

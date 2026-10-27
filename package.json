@@ -57,14 +57,14 @@
     "typescript": "$typescript"
   },
   "dependencies": {
-    "@mnaoumov/obsidian-lib": "^6.0.2",
-    "@mnaoumov/typescript-lib": "^1.6.1",
+    "@mnaoumov/obsidian-lib": "^7.1.0",
+    "@mnaoumov/typescript-lib": "^2.0.0",
     "@noble/hashes": "^2.4.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
-    "@mnaoumov/obsidian-dev-toolkit": "^5.0.2",
-    "@mnaoumov/typescript-dev-toolkit": "^3.10.0",
+    "@mnaoumov/obsidian-dev-toolkit": "^7.1.0",
+    "@mnaoumov/typescript-dev-toolkit": "^5.0.0",
     "@mnaoumov/typescript-test-toolkit": "^1.0.2",
     "@obsidian-typings/obsidian-public-latest": "^6.50.0",
     "@total-typescript/ts-reset": "^0.6.1",
@@ -77,6 +77,7 @@
     "czg": "^1.14.0",
     "electron": "^45.0.0",
     "eslint": "^10.13.0",
+    "fake-indexeddb": "^6.2.6",
     "husky": "^9.1.7",
     "i18next": "^26.5.4",
     "jiti": "^2.7.0",

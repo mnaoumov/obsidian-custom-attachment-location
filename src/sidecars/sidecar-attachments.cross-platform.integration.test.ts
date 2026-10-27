@@ -14,10 +14,15 @@ describe('sidecar attachment groups', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { waitUntil }, obsidianModule: { MarkdownView, Platform } }) {
         interface Settings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldFollowObsidianAttachmentLocation: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           sidecarExtensions: string[];
         }
         function isSettings(value: unknown): value is Settings {

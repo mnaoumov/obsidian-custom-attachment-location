@@ -32,20 +32,21 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { GoToAttachmentFolderCommandHandler } from './go-to-attachment-folder-command-handler.ts';
 
 interface ActiveFileProviderHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   _activeFileProvider: ActiveFileProvider;
 }
 
 interface SettingsLike {
-  isPathIgnored: Mock<(path: string) => boolean>;
+  readonly isPathIgnored: Mock<(path: string) => boolean>;
 }
 
 interface TestableHandler {
-  canExecuteFile: (file: TFile) => boolean;
-  executeFile: (file: TFile) => Promise<void>;
-  icon: string;
-  id: string;
-  name: string;
-  shouldAddToFileMenu: () => boolean;
+  readonly canExecuteFile: (file: TFile) => boolean;
+  readonly executeFile: (file: TFile) => Promise<void>;
+  readonly icon: string;
+  readonly id: string;
+  readonly name: string;
+  readonly shouldAddToFileMenu: () => boolean;
 }
 
 vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({

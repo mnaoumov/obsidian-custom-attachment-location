@@ -30,7 +30,7 @@ import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settin
  */
 
 interface AttachmentWriterWindow extends Window {
-  writeAttachmentAsInstalledPlugin__?: (path: string) => Promise<unknown>;
+  readonly writeAttachmentAsInstalledPlugin__?: (path: string) => Promise<unknown>;
 }
 
 /**
@@ -41,7 +41,7 @@ interface EditableViewLike {
 }
 
 interface EditorLike {
-  replaceSelection: (text: string) => void;
+  readonly replaceSelection: (text: string) => void;
 }
 
 interface InstalledPluginResult {
@@ -51,9 +51,13 @@ interface InstalledPluginResult {
 }
 
 interface ScopedSettings {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   attachmentFolderPath: string;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   generatedAttachmentFileName: string;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   otherPluginIdsForAttachmentRename: readonly string[];
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   renameAttachmentsCreatedByOtherPluginsMode: string;
 }
 

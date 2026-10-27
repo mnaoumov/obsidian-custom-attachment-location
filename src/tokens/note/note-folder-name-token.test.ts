@@ -12,12 +12,12 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 import { NoteFolderNameToken } from './note-folder-name-token.ts';
 
 interface EvaluateImplFormat {
-  pick?: PickFormat;
+  readonly pick?: PickFormat;
 }
 
 interface PickFormat {
-  from: 'end' | 'start';
-  index: number;
+  readonly from: 'end' | 'start';
+  readonly index: number;
 }
 
 class TestableNoteFolderNameToken extends NoteFolderNameToken {

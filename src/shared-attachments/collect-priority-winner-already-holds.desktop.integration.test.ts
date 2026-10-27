@@ -48,8 +48,11 @@ describe('An unambiguous collect stays quiet when the winning note already holds
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface PrioritySettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           collectAttachmentUsedByMultipleNotesMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldRenameCollectedAttachments: boolean;
         }
 
@@ -61,16 +64,17 @@ describe('An unambiguous collect stays quiet when the winning note already holds
          * installed in the vault.
          */
         interface HandedOverProvider {
-          getSettings: () => Record<string, unknown>;
-          isPathIgnored: (path: string) => boolean;
-          isTreatedAsAttachment: (path: string) => boolean;
+          readonly getSettings: () => Record<string, unknown>;
+          readonly isPathIgnored: (path: string) => boolean;
+          readonly isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {
-          value: HandedOverProvider | null;
+          readonly value: HandedOverProvider | null;
         }
 
         interface HandedOverSettingsHolder {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           apiRef: HandedOverProviderRef | null;
         }
 

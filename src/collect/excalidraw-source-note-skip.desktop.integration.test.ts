@@ -59,20 +59,21 @@ describe('A .excalidraw.md is never swept as a note, and is still collected from
         pluginId
       }): Promise<ProbeResult> {
         interface AvailabilityCheckableCommand {
-          checkCallback?: (isChecking: boolean) => boolean | undefined;
+          readonly checkCallback?: (isChecking: boolean) => boolean | undefined;
         }
 
         interface HandedOverProvider {
-          getSettings: () => Record<string, unknown>;
-          isPathIgnored: (path: string) => boolean;
-          isTreatedAsAttachment: (path: string) => boolean;
+          readonly getSettings: () => Record<string, unknown>;
+          readonly isPathIgnored: (path: string) => boolean;
+          readonly isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {
-          value: HandedOverProvider | null;
+          readonly value: HandedOverProvider | null;
         }
 
         interface HandedOverSettingsHolder {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           apiRef: HandedOverProviderRef | null;
         }
 

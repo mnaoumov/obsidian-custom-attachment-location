@@ -32,16 +32,16 @@ vi.mock('@mnaoumov/typescript-lib/error', () => ({
 }));
 
 interface ActiveEditorOverrides {
-  cursor?: EditorPosition;
-  filePath?: string;
+  readonly cursor?: EditorPosition;
+  readonly filePath?: string;
 }
 
 interface SubstitutionsOverrides {
-  activeEditorOverrides?: ActiveEditorOverrides;
-  attachmentFileContent?: ArrayBuffer;
-  cursorLine?: number;
-  noteFilePath?: string;
-  readAttachmentFileContent?: () => Promise<ArrayBuffer>;
+  readonly activeEditorOverrides?: ActiveEditorOverrides;
+  readonly attachmentFileContent?: ArrayBuffer;
+  readonly cursorLine?: number;
+  readonly noteFilePath?: string;
+  readonly readAttachmentFileContent?: () => Promise<ArrayBuffer>;
 }
 
 const mockPrintError = vi.mocked(printError);

@@ -64,19 +64,24 @@ describe('Deduplicate identical attachments (discussion #96)', () => {
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface DeduplicateSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           collectAttachmentUsedByMultipleNotesMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldDeduplicateIdenticalAttachments: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldFollowObsidianAttachmentLocation: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldRenameCollectedAttachments: boolean;
         }
 
         interface CanvasData {
-          nodes: CanvasNode[];
+          readonly nodes: CanvasNode[];
         }
 
         interface CanvasNode {
-          file?: string;
+          readonly file?: string;
         }
 
         type CollectAttachmentsInAbstractFilesFunction = (this: unknown, abstractFiles: unknown[]) => void;

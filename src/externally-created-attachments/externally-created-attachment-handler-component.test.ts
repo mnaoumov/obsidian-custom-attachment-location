@@ -58,17 +58,17 @@ interface GetAttachmentFolderFullPathForPathParams {
 }
 
 interface SettingsOverrides {
-  isPathIgnored?: (path: string) => boolean;
-  otherPluginIdsForAttachmentRename?: string[];
-  renameAttachmentsCreatedByOtherPluginsMode?: RenameAttachmentsCreatedByOtherPluginsMode;
-  shouldDeduplicateIdenticalAttachments?: boolean;
+  readonly isPathIgnored?: (path: string) => boolean;
+  readonly otherPluginIdsForAttachmentRename?: string[];
+  readonly renameAttachmentsCreatedByOtherPluginsMode?: RenameAttachmentsCreatedByOtherPluginsMode;
+  readonly shouldDeduplicateIdenticalAttachments?: boolean;
 }
 
 interface SetupOverrides {
-  generatedAttachmentFileBaseName?: string;
-  isNoteEx?: (pathOrFile: unknown) => boolean;
-  onGetAttachmentFolderFullPathForPath?: (params: GetAttachmentFolderFullPathForPathParams) => void;
-  settings?: SettingsOverrides;
+  readonly generatedAttachmentFileBaseName?: string;
+  readonly isNoteEx?: (pathOrFile: unknown) => boolean;
+  readonly onGetAttachmentFolderFullPathForPath?: (params: GetAttachmentFolderFullPathForPathParams) => void;
+  readonly settings?: SettingsOverrides;
 }
 
 const NOTE_PATH = 'notes/my-note.md';

@@ -25,12 +25,12 @@ export enum TokenValidationMode {
 }
 
 interface Token {
-  end: number;
-  formatText: null | string;
-  isScalarFormat: boolean;
-  raw: string;
-  start: number;
-  token: string;
+  readonly end: number;
+  readonly formatText: null | string;
+  readonly isScalarFormat: boolean;
+  readonly raw: string;
+  readonly start: number;
+  readonly token: string;
 }
 
 interface TokenValidatorConstructorParams {

@@ -55,6 +55,7 @@ interface MoveAttachmentToProperFolderCommandHandlerRelinkNoteParams {
 }
 
 interface MoveAttachmentToProperFolderContext {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   mode?: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
 }
 

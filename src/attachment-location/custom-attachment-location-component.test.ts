@@ -43,18 +43,18 @@ import type { AttachmentPathManager } from './attachment-path-manager.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 
 interface CapturedChild {
-  params: unknown;
-  type: string;
+  readonly params: unknown;
+  readonly type: string;
 }
 
 type EventHandler = (...$arguments: unknown[]) => unknown;
 
 interface EventOnSpy {
-  mock: EventOnSpyMock;
+  readonly mock: EventOnSpyMock;
 }
 
 interface EventOnSpyMock {
-  calls: [string, EventHandler][];
+  readonly calls: [string, EventHandler][];
 }
 
 interface FileChildParams {
@@ -64,6 +64,7 @@ interface FileChildParams {
 type GenerateMarkdownLinkFunction = (file: TFile, sourcePath: string) => string;
 
 interface GenerateMarkdownLinkHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   generateMarkdownLink: GenerateMarkdownLinkFunction;
 }
 
@@ -74,34 +75,36 @@ interface InsertFilesChildParams {
 }
 
 interface LayoutReadyTrigger {
-  setLayoutReady__: () => void;
+  readonly setLayoutReady__: () => void;
 }
 
 interface MarkdownLeafEditMode {
-  clipboardManager: object;
+  readonly clipboardManager: object;
 }
 
 interface MarkdownLeafView {
-  editMode: MarkdownLeafEditMode;
-  getViewType: () => string;
+  readonly editMode: MarkdownLeafEditMode;
+  readonly getViewType: () => string;
 }
 
 interface MenuItemLike {
-  callback?: () => void;
+  readonly callback?: () => void;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   iconEl: HTMLElement;
 }
 
 interface MenuLike {
-  items: MenuItemLike[];
+  readonly items: MenuItemLike[];
 }
 
 interface ObsidianComponentModule {
-  Component: new () => object;
+  readonly Component: new () => object;
 }
 
 type ReplaceSelectionFunction = (replacement: string, origin?: string) => void;
 
 interface ShareReceiverHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   shareReceiver: object;
 }
 
@@ -170,18 +173,18 @@ import { CustomAttachmentLocationComponent } from './custom-attachment-location-
 /* eslint-enable import-x/first, import-x/imports-first -- vi.mock must precede imports. */
 
 interface ComponentContext {
-  app: AppOriginal;
-  attachmentPathManager: AttachmentPathManager;
-  getActiveFileMock: ReturnType<typeof vi.fn>;
-  getActiveViewOfTypeMock: ReturnType<typeof vi.fn>;
-  getAttachmentFolderFullPathForPathMock: ReturnType<typeof vi.fn>;
-  getLeavesOfTypeMock: ReturnType<typeof vi.fn>;
-  handedOverSettingsComponent: HandedOverSettingsComponent;
-  isPathIgnoredMock: ReturnType<typeof vi.fn>;
-  loadFromFileMock: ReturnType<typeof vi.fn>;
-  pluginSettingsComponent: PluginSettingsComponent;
-  settings: PluginSettings;
-  whenLoadedFromFileMock: ReturnType<typeof vi.fn>;
+  readonly app: AppOriginal;
+  readonly attachmentPathManager: AttachmentPathManager;
+  readonly getActiveFileMock: ReturnType<typeof vi.fn>;
+  readonly getActiveViewOfTypeMock: ReturnType<typeof vi.fn>;
+  readonly getAttachmentFolderFullPathForPathMock: ReturnType<typeof vi.fn>;
+  readonly getLeavesOfTypeMock: ReturnType<typeof vi.fn>;
+  readonly handedOverSettingsComponent: HandedOverSettingsComponent;
+  readonly isPathIgnoredMock: ReturnType<typeof vi.fn>;
+  readonly loadFromFileMock: ReturnType<typeof vi.fn>;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly settings: PluginSettings;
+  readonly whenLoadedFromFileMock: ReturnType<typeof vi.fn>;
 }
 
 let context: ComponentContext;
@@ -673,9 +676,9 @@ function createMenuItem(hasFileIcon: boolean): MenuItemLike {
 }
 
 function dispatchChange(target: HTMLElement): void {
-  const event = new Event('change');
-  Object.defineProperty(event, 'target', { value: target });
-  activeDocument.dispatchEvent(event);
+  const $event = new Event('change');
+  Object.defineProperty($event, 'target', { value: target });
+  activeDocument.dispatchEvent($event);
 }
 
 function findHandler(spy: EventOnSpy, eventName: string): EventHandler {

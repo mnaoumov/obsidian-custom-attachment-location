@@ -13,8 +13,8 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 import { AttachmentFileSizeToken } from './attachment-file-size-token.ts';
 
 interface EvaluateImplFormat {
-  decimalPoints: number;
-  unit: 'B' | 'KB' | 'MB';
+  readonly decimalPoints: number;
+  readonly unit: 'B' | 'KB' | 'MB';
 }
 
 class TestableAttachmentFileSizeToken extends AttachmentFileSizeToken {

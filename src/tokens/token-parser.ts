@@ -17,15 +17,15 @@ export enum TokenSyntax {
 }
 
 interface ScannedToken {
-  end: number;
-  formatText: null | string;
+  readonly end: number;
+  readonly formatText: null | string;
   /**
    * Whether {@link formatText} is the scalar shorthand (`{{date:YYYY-MM-DD}}`) rather than a JSON5 object.
    */
-  isScalarFormat: boolean;
-  raw: string;
-  start: number;
-  token: string;
+  readonly isScalarFormat: boolean;
+  readonly raw: string;
+  readonly start: number;
+  readonly token: string;
 }
 
 interface SyntaxDefinition {

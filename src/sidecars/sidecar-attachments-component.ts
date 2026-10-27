@@ -46,6 +46,7 @@ interface ImportEntry {
   readonly batch: ImportEntry[];
   readonly content: ArrayBuffer;
   readonly name: string;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   saved?: Promise<TFile>;
 }
 

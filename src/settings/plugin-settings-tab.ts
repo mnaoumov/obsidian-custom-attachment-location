@@ -227,11 +227,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }),
         name: t(($) => $.pluginSettingsTab.timeoutInSeconds.name),
         render: (setting) => {
-          setting.addNumber((number) => {
-            number.setMin(0);
+          setting.addNumber(($number) => {
+            $number.setMin(0);
             this.bind({
               propertyName: 'timeoutInSeconds',
-              valueComponent: number
+              valueComponent: $number
             });
           });
         }
@@ -261,11 +261,11 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         desc: t(($) => $.pluginSettingsTab.networkImageDownloadTimeoutInSeconds.description),
         name: t(($) => $.pluginSettingsTab.networkImageDownloadTimeoutInSeconds.name),
         render: (setting) => {
-          setting.addNumber((number) => {
-            number.setMin(1);
+          setting.addNumber(($number) => {
+            $number.setMin(1);
             this.bind({
               propertyName: 'networkImageDownloadTimeoutInSeconds',
-              valueComponent: number
+              valueComponent: $number
             });
           });
         },

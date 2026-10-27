@@ -34,8 +34,10 @@ describe('Collect attachments — raw path safety net (issue #46)', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ProbeResult> {
         interface RawPathSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           collectAttachmentUsedByMultipleNotesMode: string;
-          isExcludedFromMultipleNotesCheck: (path: string) => boolean;
+          readonly isExcludedFromMultipleNotesCheck: (path: string) => boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldSkipCollectingAttachmentsReferencedByRawPath: boolean;
         }
 

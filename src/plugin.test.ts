@@ -80,6 +80,7 @@ import { createTokenizedStringLanguageComponent } from './tokens/tokenized-strin
 // --- Hoisted shared state ---
 
 interface StubbedSettings {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   proposedRenameDeleteSettings: MigratableSettings | null;
 }
 
@@ -261,32 +262,33 @@ import { Plugin } from './plugin.ts';
 vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers').mockResolvedValue(castTo<DisposableEx>({ dispose: vi.fn() }));
 
 interface AppGlobal {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   app: AppOriginal;
 }
 
 interface MigrationParamsProbe {
   readonly apiVersionRange: string;
   readonly contract: ApiContract;
-  getProposedSettings: () => MigratableSettings | null;
+  readonly getProposedSettings: () => MigratableSettings | null;
   readonly providerPluginId: string;
-  retireProposedSettings: () => Promise<void>;
+  readonly retireProposedSettings: () => Promise<void>;
   readonly sourcePluginId: string;
 }
 
 // `getPluginApis` is protected on the base, so a test reads it through a probe.
 interface PluginApisProbe {
-  getPluginApis: () => unknown[];
+  readonly getPluginApis: () => unknown[];
 }
 
 // `getPluginConflicts` is protected on the base — the declaration is for the library, not for callers —
 // so a test reads it through a probe rather than widening the plugin's own surface.
 interface PluginConflictsProbe {
-  getPluginConflicts: () => PluginConflict[];
+  readonly getPluginConflicts: () => PluginConflict[];
 }
 
 // `getPluginDependencies` is protected on the base, so a test reads it through a probe.
 interface PluginDependenciesProbe {
-  getPluginDependencies: () => PluginDependency[];
+  readonly getPluginDependencies: () => PluginDependency[];
 }
 
 interface PluginGateProbe {
@@ -294,12 +296,12 @@ interface PluginGateProbe {
 }
 
 interface ReleaseNotesParamsProbe {
-  pluginDirectory: string;
-  pluginName: string;
+  readonly pluginDirectory: string;
+  readonly pluginName: string;
 }
 
 interface SettingsTabParamsProbe {
-  getPluginGateComponent: () => PluginGateComponent;
+  readonly getPluginGateComponent: () => PluginGateComponent;
 }
 
 function getMigrationParams(): MigrationParamsProbe {
@@ -702,7 +704,7 @@ describe('Plugin', () => {
     });
 
     it('should stay dormant when Notebook Navigator is not installed', async () => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
       const plugin = new Plugin(app, manifest);
       await plugin.onload();
       await vi.runAllTimersAsync();
@@ -723,7 +725,7 @@ describe('Plugin', () => {
         }
       }));
 
-      vi.useFakeTimers();
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
       const plugin = new Plugin(app, manifest);
       await plugin.onload();
       await vi.runAllTimersAsync();

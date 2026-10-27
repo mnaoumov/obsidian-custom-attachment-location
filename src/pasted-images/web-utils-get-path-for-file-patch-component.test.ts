@@ -11,7 +11,7 @@ import {
 import { WebUtilsGetPathForFilePatchComponent } from './web-utils-get-path-for-file-patch-component.ts';
 
 interface FileWithPath {
-  path: string;
+  readonly path: string;
 }
 
 describe('WebUtilsGetPathForFilePatchComponent', () => {
