@@ -65,20 +65,24 @@ Moved to [04 Custom tokens](<./demo-vault/04 Custom tokens.md>).
 
 Moved to [06 Settings](<./demo-vault/06 Settings.md>), under `markdownUrlFormat`.
 
-## Similar plugins
+## See also
 
-- [`Attachment Management`](https://community.obsidian.md/plugins/attachment-management) — the closest in scope: attachment path and name patterns, a command that rearranges existing attachments, and renaming attachments when their note is renamed, all in one plugin; this plugin leaves following note renames and moves to `Advanced Rename and Delete Handler`.
-- [`Attachment Manager`](https://community.obsidian.md/plugins/attachment-manager) — binds one attachment folder to each note's name, renaming, deleting and showing or hiding it with the note; this plugin builds the folder from a pattern, so one folder per note is one layout among many.
-- [`Attachment Location Manager`](https://community.obsidian.md/plugins/attachment-location-manager) — sets the attachment location globally, per folder or per note, resolved by nearest match with per-extension exceptions; this plugin uses one pattern whose tokens can read the note's path and frontmatter.
-- [`Attachment Placement`](https://community.obsidian.md/plugins/attachment-placement) — places new attachments by rules about where they are used or added; it decides the folder, while this plugin decides the file name as well.
-- [`Attachment Steward`](https://community.obsidian.md/plugins/attachment-steward) — organizes attachments into templated folders and file names, keeps the original file name, and catches bulk imports as they land; this plugin also collects existing attachments and deletes unused ones on demand.
-- [`Note Companion Folder`](https://community.obsidian.md/plugins/note-companion-folder) — manages a separate attachment folder for each note; this plugin can produce that layout from a pattern, alongside other layouts.
-- [`Foldwise`](https://community.obsidian.md/plugins/foldwise) — routes pasted files into per-folder asset folders by rules and manages saved assets on one page; this plugin routes by a token pattern and has no assets page.
-- [`Attachment Renamer`](https://community.obsidian.md/plugins/attachment-renamer) — renames pasted, dropped and existing attachments with a template; it names the file, while this plugin chooses the folder too.
-- [`Paste image rename`](https://community.obsidian.md/plugins/obsidian-paste-image-rename) — renames an image after it is pasted, by a name pattern or by asking; it names the file and leaves the folder to Obsidian.
-- [`Image Renamer`](https://community.obsidian.md/plugins/image-renamer) — renames pasted images with templates that can read frontmatter, and can set a per-note image folder from a frontmatter key; it handles images, while this plugin handles every attachment type.
-- [`Unique attachments`](https://community.obsidian.md/plugins/unique-attachments) — renames attachments to names derived from a hash of their content; this plugin can name by content hash too, through `{{attachmentFileHash}}` in a pattern, and chooses the folder as well.
-- [`Consistent Attachments and Links`](https://community.obsidian.md/plugins/consistent-attachments-and-links) — moves a note's attachments with it and keeps links consistent across the vault; it focuses on link consistency, while this plugin decides where new attachments go and what they are called.
+[My other Obsidian resources](https://github.com/mnaoumov/obsidian-resources)
+
+| Plugin | Features | How `Custom Attachment Location` differs |
+| --- | --- | --- |
+| [`Attachment Location Manager`](https://community.obsidian.md/plugins/attachment-location-manager) | Global, folder and note destinations; nearest-match rules; extension exceptions | Same routing goal; one token pattern can read paths and frontmatter |
+| [`Attachment Management`](https://community.obsidian.md/plugins/attachment-management) | Attachment path/name patterns; collection; follows note renames | Overlaps on naming and collection; delegates note moves/renames to `Advanced Rename and Delete Handler` |
+| [`Attachment Manager`](https://community.obsidian.md/plugins/attachment-manager) | One attachment folder per note; rename, delete and visibility handling | Overlaps on per-note folders; supports other layouts through patterns |
+| [`Attachment Placement`](https://community.obsidian.md/plugins/attachment-placement) | Routes new attachments by usage and insertion rules | Overlaps on routing; also chooses file names |
+| [`Attachment Renamer`](https://community.obsidian.md/plugins/attachment-renamer) | Templated names for new and existing attachments | Overlaps on naming; also chooses the folder |
+| [`Attachment Steward`](https://community.obsidian.md/plugins/attachment-steward) | Templated folders/names; original-name retention; bulk imports | Overlaps on templating; also collects existing attachments and deletes unused ones |
+| [`Consistent Attachments and Links`](https://community.obsidian.md/plugins/consistent-attachments-and-links) (maintained by me) | Moves attachments with notes; vault-wide link consistency | Complementary: chooses new attachment folders and names |
+| [`Foldwise`](https://community.obsidian.md/plugins/foldwise) | Per-folder asset rules; saved-assets page | Same routing goal; token patterns; no assets page |
+| [`Image Renamer`](https://community.obsidian.md/plugins/image-renamer) | Pasted-image templates; frontmatter-based names and folders | Broader scope: every attachment type |
+| [`Note Companion Folder`](https://community.obsidian.md/plugins/note-companion-folder) | Separate attachment folder for each note | Overlaps on per-note folders; supports other pattern-based layouts too |
+| [`Paste image rename`](https://community.obsidian.md/plugins/obsidian-paste-image-rename) | Pasted-image names from a pattern or prompt | Broader scope: every attachment type; folder patterns too |
+| [`Unique attachments`](https://community.obsidian.md/plugins/unique-attachments) | Names derived from content hashes | Overlaps on hash naming; also chooses folders and other name patterns |
 
 Last searched for similar plugins on 2026-10-26.
 
@@ -129,10 +133,6 @@ Contributions are welcome — see [CONTRIBUTING](./CONTRIBUTING.md) to get set u
 <a href="https://www.buymeacoffee.com/mnaoumov" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217"></a>
 
 <!-- markdownlint-enable MD033 -->
-
-## My other Obsidian resources
-
-[See my other Obsidian resources](https://github.com/mnaoumov/obsidian-resources).
 
 ## License
 
