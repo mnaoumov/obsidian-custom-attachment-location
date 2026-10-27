@@ -30,10 +30,7 @@ import { waitForAllAsyncOperations } from '@mnaoumov/typescript-test-toolkit/asy
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   App,
-  ButtonComponent as ButtonComponentClass,
-  DropdownComponent as DropdownComponentClass,
-  TextComponent as TextComponentClass,
-  ToggleComponent as ToggleComponentClass
+  ButtonComponent as ButtonComponentClass
 } from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
@@ -273,14 +270,6 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   addMultipleDropdownSpy.mockImplementation(function capturingAddMultipleDropdown(this: SettingEx, callback): SettingEx {
     const name = this.nameEl.textContent;
     return originalAddMultipleDropdown.call(this, (component: MultipleDropdownComponent) => {
-      /*
-       * `bind` duck-types a text-based component by READING `setPlaceholderValue` and `isEmpty`. This
-       * component defines neither — in Obsidian that read is a plain `undefined` and the check fails, but
-       * the mock's strict proxy THROWS on an unassigned property. Seeding them as undefined restores the
-       * production answer rather than inventing methods the real component does not have.
-       */
-      seedOnRawTarget(component, 'setPlaceholderValue', undefined);
-      seedOnRawTarget(component, 'isEmpty', undefined);
       multipleDropdownComponents.push({
         name,
         setValue: (value) => {
@@ -493,19 +482,6 @@ function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknow
 
 beforeAll(async () => {
   await initI18N(translationsMap);
-  // Obsidian-lib's bind() probes setPlaceholderValue to detect text-based components.
-  for (
-    const prototype of [
-      ToggleComponentClass.prototype,
-      DropdownComponentClass.prototype,
-      TextComponentClass.prototype,
-      ButtonComponentClass.prototype
-    ]
-  ) {
-    if (!('setPlaceholderValue' in prototype)) {
-      Object.defineProperty(prototype, 'setPlaceholderValue', { value: undefined });
-    }
-  }
 });
 
 describe('PluginSettingsTab', () => {
