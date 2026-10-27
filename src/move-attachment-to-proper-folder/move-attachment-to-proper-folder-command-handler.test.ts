@@ -1,0 +1,1030 @@
+import type { ActiveFileProvider } from '@mnaoumov/obsidian-lib/active-file-provider';
+import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type { CustomArrayDict } from '@obsidian-typings/obsidian-public-latest';
+import type {
+  App,
+  Reference,
+  TAbstractFile,
+  TFile,
+  TFolder
+} from 'obsidian';
+
+import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import {
+  isFile,
+  isFolder
+} from '@mnaoumov/obsidian-lib/file-system';
+import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import {
+  editLinks,
+  updateLink
+} from '@mnaoumov/obsidian-lib/link';
+import { loop } from '@mnaoumov/obsidian-lib/loop';
+import { getBacklinksForFileSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
+import { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
+import { copySafe } from '@mnaoumov/obsidian-lib/vault';
+import {
+  deleteIfNotUsed,
+  DeleteIfNotUsedResult
+} from '@mnaoumov/obsidian-lib/vault-delete';
+import { abortSignalAny } from '@mnaoumov/typescript-lib/abort-controller';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import { Vault } from 'obsidian';
+import {
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest';
+
+import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
+import type { AttachmentPathManager } from '../attachment-location/attachment-path-manager.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+import type { PluginSettings } from '../settings/plugin-settings.ts';
+
+import { findIdenticalAttachmentFile } from '../attachment-location/identical-attachment.ts';
+import { translationsMap } from '../i18n/locales/translations-map.ts';
+import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
+import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to-proper-folder-command-handler.ts';
+import { selectMode } from './move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
+
+interface ActiveFileProviderHolder {
+  _activeFileProvider: ActiveFileProvider;
+}
+
+interface LoopBuildNoticeMessageParamsLike {
+  item: TFile;
+  iterationString: string;
+}
+
+interface LoopParams {
+  readonly abortSignal: AbortSignal;
+  readonly buildNoticeMessage: (params: LoopBuildNoticeMessageParamsLike) => string;
+  readonly items: TFile[];
+  readonly processItem: (item: TFile) => Promise<void>;
+  readonly progressBarTitle: string;
+  readonly shouldContinueOnError: boolean;
+  readonly shouldShowProgressBar: boolean;
+}
+
+interface TestableHandler {
+  canExecute: () => boolean;
+  canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
+  canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
+  executeAbstractFile: (abstractFile: TAbstractFile) => Promise<void>;
+  executeAbstractFiles: (abstractFiles: TAbstractFile[]) => Promise<void>;
+  icon: string;
+  id: string;
+  name: string;
+  shouldAddToAbstractFileMenu: () => boolean;
+  shouldAddToAbstractFilesMenu: () => boolean;
+}
+
+vi.mock('../attachment-location/identical-attachment.ts', () => ({
+  findIdenticalAttachmentFile: vi.fn()
+}));
+
+vi.mock('@mnaoumov/typescript-lib/abort-controller', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/typescript-lib/abort-controller')>(),
+  abortSignalAny: vi.fn()
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  isFile: vi.fn(),
+  isFolder: vi.fn()
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  editLinks: vi.fn(),
+  updateLink: vi.fn()
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/loop', () => ({
+  loop: vi.fn()
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
+  getBacklinksForFileSafe: vi.fn()
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>(),
+  copySafe: vi.fn()
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/vault-delete', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault-delete')>(),
+  deleteIfNotUsed: vi.fn()
+}));
+
+vi.mock('./move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts', () => ({
+  selectMode: vi.fn()
+}));
+
+const mockAbortSignalAny = vi.mocked(abortSignalAny);
+const mockCopySafe = vi.mocked(copySafe);
+const mockFindIdenticalAttachmentFile = vi.mocked(findIdenticalAttachmentFile);
+const mockDeleteIfNotUsed = vi.mocked(deleteIfNotUsed);
+const mockEditLinks = vi.mocked(editLinks);
+const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
+const mockIsFile = vi.mocked(isFile);
+const mockIsFolder = vi.mocked(isFolder);
+const mockLoop = vi.mocked(loop);
+const mockSelectMode = vi.mocked(selectMode);
+const mockUpdateLink = vi.mocked(updateLink);
+
+const mockGetProperAttachmentPath = vi.fn<AttachmentPathManager['getProperAttachmentPath']>();
+const mockGetSequenceNumberMap = vi.fn<AttachmentPathManager['getSequenceNumberMap']>();
+const mockIsExcludedFromMultipleNotesCheck = vi.fn<PluginSettings['isExcludedFromMultipleNotesCheck']>();
+const mockIsExtensionExcludedFromMultipleNotesCheck = vi.fn<PluginSettings['isExtensionExcludedFromMultipleNotesCheck']>();
+const mockIsNoteEx = vi.fn<PluginSettingsComponent['isNoteEx']>();
+const mockIsPathIgnored = vi.fn<HandedOverSettingsComponent['isPathIgnored']>();
+
+function createBacklinks(map: Map<string, Reference[]>): CustomArrayDict<Reference> {
+  return strictProxy<CustomArrayDict<Reference>>({
+    get(key: string): null | Reference[] {
+      return map.get(key) ?? null;
+    },
+    keys(): string[] {
+      return [...map.keys()];
+    }
+  });
+}
+
+function createFile(path: string): TFile {
+  return strictProxy<TFile>({ path });
+}
+
+function createFolder(path: string): TFolder {
+  return strictProxy<TFolder>({ path });
+}
+
+function createReference(original: string): Reference {
+  return strictProxy<Reference>({ link: original, original });
+}
+
+function getLoopParams(): LoopParams {
+  return castTo<LoopParams>(mockLoop.mock.calls[0]?.[0]);
+}
+
+function setActiveFile(handler: MoveAttachmentToProperFolderCommandHandler, activeFile: null | TFile): void {
+  castTo<ActiveFileProviderHolder>(handler)._activeFileProvider = strictProxy<ActiveFileProvider>({
+    getActiveFile: () => activeFile
+  });
+}
+
+beforeAll(async () => {
+  await initI18N(translationsMap);
+});
+
+describe('MoveAttachmentToProperFolderCommandHandler', () => {
+  let abortSignalComponent: AbortSignalComponent;
+  let app: App;
+  let attachmentPathManager: AttachmentPathManager;
+  let combinedAbortSignal: AbortSignal;
+  let getFileByPath: ReturnType<typeof vi.fn<(path: string) => null | TFile>>;
+  let handler: MoveAttachmentToProperFolderCommandHandler;
+  let mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode;
+  let pluginSettingsComponent: PluginSettingsComponent;
+  let pluginNoticeComponent: PluginNoticeComponent;
+  let resourceLockComponent: ResourceLockComponent;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // A free destination: the copy lands exactly where it was asked to.
+    mockCopySafe.mockImplementation(({ newPath }) => Promise.resolve(newPath));
+    mockFindIdenticalAttachmentFile.mockResolvedValue(null);
+    mockGetSequenceNumberMap.mockResolvedValue(new Map());
+    mockIsPathIgnored.mockReturnValue(false);
+    mockIsExcludedFromMultipleNotesCheck.mockReturnValue(false);
+    mockIsExtensionExcludedFromMultipleNotesCheck.mockReturnValue(false);
+    mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+    combinedAbortSignal = new AbortController().signal;
+    mockAbortSignalAny.mockReturnValue(combinedAbortSignal);
+    mockUpdateLink.mockReturnValue('new-link');
+    getFileByPath = vi.fn<(path: string) => null | TFile>();
+    app = strictProxy<App>({
+      vault: strictProxy<App['vault']>({
+        getFileByPath: (path: string) => getFileByPath(path)
+      })
+    });
+    pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
+      isNoteEx: mockIsNoteEx,
+      settings: strictProxy<PluginSettings>({
+        isExcludedFromMultipleNotesCheck: mockIsExcludedFromMultipleNotesCheck,
+        isExtensionExcludedFromMultipleNotesCheck: mockIsExtensionExcludedFromMultipleNotesCheck,
+        get moveAttachmentToProperFolderUsedByMultipleNotesMode(): MoveAttachmentToProperFolderUsedByMultipleNotesMode {
+          return mode;
+        }
+      })
+    });
+    abortSignalComponent = strictProxy<AbortSignalComponent>({
+      abortSignal: new AbortController().signal
+    });
+    attachmentPathManager = strictProxy<AttachmentPathManager>({
+      getProperAttachmentPath: mockGetProperAttachmentPath,
+      getSequenceNumberMap: mockGetSequenceNumberMap
+    });
+    pluginNoticeComponent = new PluginNoticeComponent({ app, pluginName: 'My Plugin' });
+    resourceLockComponent = strictProxy<ResourceLockComponent>({});
+    handler = new MoveAttachmentToProperFolderCommandHandler({
+      abortSignalComponent,
+      app,
+      attachmentPathManager,
+      handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
+        isPathIgnored: mockIsPathIgnored
+      }),
+      pluginNoticeComponent,
+      pluginSettingsComponent,
+      resourceLockComponent
+    });
+  });
+
+  it('should construct with the correct command metadata', () => {
+    expect(handler).toBeInstanceOf(MoveAttachmentToProperFolderCommandHandler);
+    expect(castTo<TestableHandler>(handler).id).toBe('move-attachment-to-proper-folder');
+    expect(castTo<TestableHandler>(handler).icon).toBe('move');
+    expect(castTo<TestableHandler>(handler).name).toBe('Move attachment to proper folder');
+  });
+
+  describe('canExecuteAbstractFile', () => {
+    it('should accept an attachment', () => {
+      mockIsFile.mockReturnValue(true);
+      mockIsNoteEx.mockReturnValue(false);
+      expect(castTo<TestableHandler>(handler).canExecuteAbstractFile(createFile('image.png'))).toBe(true);
+    });
+
+    it('should reject a note', () => {
+      mockIsFile.mockReturnValue(true);
+      mockIsNoteEx.mockReturnValue(true);
+      expect(castTo<TestableHandler>(handler).canExecuteAbstractFile(createFile('note.md'))).toBe(false);
+    });
+
+    it('should accept a folder without asking the predicate, because the walk inside it filters', () => {
+      mockIsFile.mockReturnValue(false);
+      expect(castTo<TestableHandler>(handler).canExecuteAbstractFile(createFolder('folder'))).toBe(true);
+      expect(mockIsNoteEx).not.toHaveBeenCalled();
+    });
+  });
+
+  /*
+   * The base composes the per-file predicate over every entry, and this handler no longer overrides that.
+   * The cases below are here because the override it replaced was the ONLY gate the multi-select menu had,
+   * so a future re-override has to keep answering them.
+   */
+  describe('canExecuteAbstractFiles', () => {
+    it('should return false when a file is a note', () => {
+      mockIsFile.mockReturnValue(true);
+      mockIsNoteEx.mockReturnValueOnce(false).mockReturnValueOnce(true);
+      const files = [createFile('image.png'), createFile('note.md')];
+      expect(castTo<TestableHandler>(handler).canExecuteAbstractFiles(files)).toBe(false);
+    });
+
+    it('should return true when no file is a note', () => {
+      mockIsFile.mockReturnValue(true);
+      mockIsNoteEx.mockReturnValue(false);
+      expect(castTo<TestableHandler>(handler).canExecuteAbstractFiles([createFile('a.png'), createFile('b.png')])).toBe(true);
+    });
+
+    it('should return true when none of the abstract files are files', () => {
+      mockIsFile.mockReturnValue(false);
+      expect(castTo<TestableHandler>(handler).canExecuteAbstractFiles([createFolder('folder1'), createFolder('folder2')])).toBe(true);
+      expect(mockIsNoteEx).not.toHaveBeenCalled();
+    });
+
+    it('should not depend on the active file, since the menu is built from the clicked files', () => {
+      setActiveFile(handler, null);
+      mockIsFile.mockReturnValue(true);
+      mockIsNoteEx.mockReturnValue(false);
+      expect(castTo<TestableHandler>(handler).canExecuteAbstractFiles([createFile('a.png')])).toBe(true);
+    });
+  });
+
+  /*
+   * The command-palette path: `canExecute` asks `canExecuteAbstractFile` about the ACTIVE file and never
+   * consults `canExecuteAbstractFiles`, so while the gate lived only on the latter the palette offered this
+   * command on a note and it then did nothing.
+   */
+  describe('canExecute', () => {
+    it('should refuse when no file is open', () => {
+      setActiveFile(handler, null);
+      expect(castTo<TestableHandler>(handler).canExecute()).toBe(false);
+    });
+
+    it('should offer the command while an attachment is open', () => {
+      setActiveFile(handler, createFile('image.png'));
+      mockIsFile.mockReturnValue(true);
+      mockIsNoteEx.mockReturnValue(false);
+      expect(castTo<TestableHandler>(handler).canExecute()).toBe(true);
+    });
+
+    it('should refuse while a note is open', () => {
+      setActiveFile(handler, createFile('note.md'));
+      mockIsFile.mockReturnValue(true);
+      mockIsNoteEx.mockReturnValue(true);
+      expect(castTo<TestableHandler>(handler).canExecute()).toBe(false);
+    });
+  });
+
+  it('should add to the abstract file menu', () => {
+    expect(castTo<TestableHandler>(handler).shouldAddToAbstractFileMenu()).toBe(true);
+  });
+
+  it('should add to the abstract files menu', () => {
+    expect(castTo<TestableHandler>(handler).shouldAddToAbstractFilesMenu()).toBe(true);
+  });
+
+  describe('executeAbstractFile', () => {
+    it('should delegate to executeAbstractFiles with the single file', async () => {
+      mockIsFile.mockReturnValue(true);
+      mockIsNoteEx.mockReturnValue(false);
+      mockLoop.mockResolvedValue();
+      const file = createFile('image.png');
+      await castTo<TestableHandler>(handler).executeAbstractFile(file);
+      expect(getLoopParams().items).toEqual([file]);
+    });
+  });
+
+  describe('executeAbstractFiles', () => {
+    it('should collect attachment files, recurse folders, sort, and pass them to loop', async () => {
+      const attachmentA = createFile('z-a.png');
+      const attachmentB = createFile('a-b.png');
+      const note = createFile('note.md');
+      const childAttachment = createFile('folder/child.png');
+      const childNote = createFile('folder/child.md');
+      const folder = createFolder('folder');
+
+      mockIsFile.mockImplementation((value) => {
+        const path = castTo<TAbstractFile>(value).path;
+        return path.endsWith('.png') || path.endsWith('.md');
+      });
+      mockIsFolder.mockImplementation((value) => castTo<TAbstractFile>(value) === folder);
+      mockIsNoteEx.mockImplementation((value) => castTo<TAbstractFile>(value).path.endsWith('.md'));
+      vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(childAttachment);
+        callback(childNote);
+      });
+      mockLoop.mockResolvedValue();
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachmentA, attachmentB, note, folder]);
+
+      const params = getLoopParams();
+      expect(params.items.map((file) => file.path)).toEqual(['a-b.png', 'folder/child.png', 'z-a.png']);
+      expect(params.buildNoticeMessage({ item: attachmentA, iterationString: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');
+      expect(params.progressBarTitle).toBe('Moving attachment to proper folder...');
+    });
+
+    it('should warn and skip processing when the attachment path is ignored', async () => {
+      const attachment = createFile('ignored.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mockIsPathIgnored.mockReturnValue(true);
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(warnSpy).toHaveBeenCalledExactlyOnceWith('Cannot move attachment to proper folder as attachment path is ignored: ignored.png.');
+      expect(mockGetBacklinksForFileSafe).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should return early from processItem when moveAttachmentToProperFolder returns false', async () => {
+      const attachment = createFile('attachment.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['note1.md', [createReference('[[attachment]]')]],
+          ['note2.md', [createReference('[[attachment]]')]]
+        ])
+      ));
+      mockSelectMode.mockResolvedValue({
+        backlinksToCopy: [],
+        mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel,
+        shouldUseSameActionForOtherProblematicAttachments: false
+      });
+      const throwIfAbortedSpy = vi.spyOn(combinedAbortSignal, 'throwIfAborted').mockImplementation(() => undefined);
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'], isCancelMode: true });
+      throwIfAbortedSpy.mockRestore();
+    });
+  });
+
+  describe('moveAttachmentToProperFolder', () => {
+    async function runProcessItem(attachment: TFile): Promise<void> {
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+    }
+
+    it('should stop after notifying when the attachment has no backlinks', async () => {
+      const attachment = createFile('unused.png');
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(new Map()));
+
+      await runProcessItem(attachment);
+
+      expect(mockGetBacklinksForFileSafe).toHaveBeenCalledOnce();
+      expect(mockCopySafe).not.toHaveBeenCalled();
+      expect(mockDeleteIfNotUsed).not.toHaveBeenCalled();
+    });
+
+    it('should move an attachment used by a single note, without consulting the multiple-notes mode', async () => {
+      const attachment = createFile('attachment.png');
+      const reference = createReference('[[attachment]]');
+      const backlinkFile = createFile('note1.md');
+      // Deliberately Prompt: a single note is not a multiple-notes case, so no modal may be raised for it.
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(new Map([['note1.md', [reference]]])))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      getFileByPath.mockReturnValue(backlinkFile);
+      mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
+      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+        await linkConverter(reference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockSelectMode).not.toHaveBeenCalled();
+      expect(mockGetProperAttachmentPath).toHaveBeenCalledWith(expect.objectContaining({ noteFilePath: 'note1.md', reference }));
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'new-folder/attachment.png', oldPathOrFile: attachment });
+      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith({
+        app,
+        link: reference,
+        newSourcePathOrFile: backlinkFile,
+        newTargetPathOrFile: 'new-folder/attachment.png',
+        oldTargetPathOrFile: attachment
+      });
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
+    });
+
+    it('should point the notes at an identical file already at the destination instead of copying beside it', async () => {
+      const attachment = createFile('attachment.png');
+      const reference = createReference('[[attachment]]');
+      const backlinkFile = createFile('note1.md');
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(new Map([['note1.md', [reference]]])))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      getFileByPath.mockReturnValue(backlinkFile);
+      mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
+      mockFindIdenticalAttachmentFile.mockResolvedValue(createFile('new-folder/Attachment.png'));
+      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+        await linkConverter(reference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockFindIdenticalAttachmentFile).toHaveBeenCalledExactlyOnceWith({
+        app,
+        attachmentPathOrFile: attachment,
+        destinationPath: 'new-folder/attachment.png',
+        pluginSettingsComponent
+      });
+      expect(mockCopySafe).not.toHaveBeenCalled();
+      expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ newTargetPathOrFile: 'new-folder/Attachment.png' }));
+      // The original is now unused, and goes the way an unused original always went.
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
+    });
+
+    it('should point the notes at the copy where it really landed when the destination was taken', async () => {
+      const attachment = createFile('attachment.png');
+      const reference = createReference('[[attachment]]');
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(new Map([['note1.md', [reference]]])))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      getFileByPath.mockReturnValue(createFile('note1.md'));
+      mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
+      mockCopySafe.mockResolvedValue('new-folder/attachment 1.png');
+      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+        await linkConverter(reference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ newTargetPathOrFile: 'new-folder/attachment 1.png' }));
+    });
+
+    it('should leave an attachment used by a single note alone when it is already in the destination folder', async () => {
+      const attachment = createFile('attachment.png');
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(new Map([['note1.md', [createReference('[[attachment]]')]]])));
+      getFileByPath.mockReturnValue(createFile('note1.md'));
+      mockGetProperAttachmentPath.mockResolvedValue(null);
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      await runProcessItem(attachment);
+
+      expect(warnSpy).toHaveBeenCalledWith('Skipping moving attachment attachment.png to proper folder as it is already in the destination folder.');
+      expect(mockCopySafe).not.toHaveBeenCalled();
+      expect(mockEditLinks).not.toHaveBeenCalled();
+      expect(mockDeleteIfNotUsed).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should move into the one counted note and carry an excluded note\'s links along', async () => {
+      // The excluded note does not count as a second owner, but it links to the attachment too: leaving its link on the
+      // old path would keep the original alive and turn the move into a silent copy.
+      const attachment = createFile('attachment.png');
+      const drawingReference = createReference('[[attachment]]d');
+      const noteReference = createReference('[[attachment]]n');
+      const drawingFile = createFile('drawing.excalidraw.md');
+      const noteFile = createFile('note1.md');
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
+      mockIsExcludedFromMultipleNotesCheck.mockImplementation((path) => path === 'drawing.excalidraw.md');
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['drawing.excalidraw.md', [drawingReference]],
+            ['note1.md', [noteReference]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      const filesByPath = new Map([['drawing.excalidraw.md', drawingFile], ['note1.md', noteFile]]);
+      getFileByPath.mockImplementation((path) => filesByPath.get(path) ?? null);
+      mockGetProperAttachmentPath.mockResolvedValue('note1-assets/attachment.png');
+      mockEditLinks.mockImplementation(async ({ linkConverter, pathOrFile }) => {
+        await linkConverter(pathOrFile === drawingFile ? drawingReference : noteReference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockSelectMode).not.toHaveBeenCalled();
+      expect(mockGetProperAttachmentPath).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ noteFilePath: 'note1.md', reference: noteReference }));
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'note1-assets/attachment.png', oldPathOrFile: attachment });
+      expect(mockUpdateLink).toHaveBeenCalledTimes(2);
+      expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ link: drawingReference, newSourcePathOrFile: drawingFile }));
+      expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ link: noteReference, newSourcePathOrFile: noteFile }));
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
+    });
+
+    it('should move into an excluded note when every note linking to the attachment is excluded', async () => {
+      // A drawing is excluded from the multiple-notes count, but an attachment only a drawing uses still has to go somewhere.
+      const attachment = createFile('attachment.png');
+      const drawingReference = createReference('[[attachment]]d');
+      const drawingFile = createFile('drawing.excalidraw.md');
+      mockIsExcludedFromMultipleNotesCheck.mockReturnValue(true);
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(new Map([['drawing.excalidraw.md', [drawingReference]]])))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      getFileByPath.mockReturnValue(drawingFile);
+      mockGetProperAttachmentPath.mockResolvedValue('drawing-assets/attachment.png');
+      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+        await linkConverter(drawingReference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockGetProperAttachmentPath).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ noteFilePath: 'drawing.excalidraw.md', reference: drawingReference })
+      );
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'drawing-assets/attachment.png', oldPathOrFile: attachment });
+      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ link: drawingReference, newSourcePathOrFile: drawingFile }));
+    });
+
+    it('should skip relinking a note that no longer resolves to a file and still move into the one that does', async () => {
+      // A backlink key the vault cannot resolve, such as a note deleted after the backlinks were read, has no links to rewrite.
+      const attachment = createFile('attachment.png');
+      const noteReference = createReference('[[attachment]]n');
+      const noteFile = createFile('note1.md');
+      mockIsExcludedFromMultipleNotesCheck.mockImplementation((path) => path === 'gone.md');
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['gone.md', [createReference('[[attachment]]g')]],
+            ['note1.md', [noteReference]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      getFileByPath.mockImplementation((path) => path === 'note1.md' ? noteFile : null);
+      mockGetProperAttachmentPath.mockResolvedValue('note1-assets/attachment.png');
+      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
+        await linkConverter(noteReference);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'note1-assets/attachment.png', oldPathOrFile: attachment });
+      expect(mockEditLinks).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ pathOrFile: noteFile }));
+      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ link: noteReference, newSourcePathOrFile: noteFile }));
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
+    });
+
+    it('should move an exempt-type attachment into the first of its notes by path and relink every note', async () => {
+      // Issue #80: the file type is deliberately shared, so there is no question to ask, and one copy serves all notes.
+      const attachment = createFile('attachment.af');
+      const referenceA = createReference('[[attachment]]a');
+      const referenceB = createReference('[[attachment]]b');
+      const noteA = createFile('a.md');
+      const noteB = createFile('b.md');
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
+      mockIsExtensionExcludedFromMultipleNotesCheck.mockReturnValue(true);
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['a.md', [referenceA]],
+            ['b.md', [referenceB]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      const filesByPath = new Map([['a.md', noteA], ['b.md', noteB]]);
+      getFileByPath.mockImplementation((path) => filesByPath.get(path) ?? null);
+      mockGetProperAttachmentPath.mockResolvedValue('a-assets/attachment.af');
+      mockEditLinks.mockImplementation(async ({ linkConverter, pathOrFile }) => {
+        await linkConverter(pathOrFile === noteA ? referenceA : referenceB);
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+
+      await runProcessItem(attachment);
+
+      expect(mockSelectMode).not.toHaveBeenCalled();
+      expect(mockGetProperAttachmentPath).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ noteFilePath: 'a.md', reference: referenceA }));
+      expect(mockCopySafe).toHaveBeenCalledOnce();
+      expect(mockUpdateLink).toHaveBeenCalledTimes(2);
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
+    });
+
+    it('should copy attachment, update matching links, and delete when no backlinks remain (CopyAll)', async () => {
+      const attachment = createFile('attachment.png');
+      const reference = createReference('[[attachment]]');
+      const backlinkFile = createFile('note1.md');
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['note1.md', [reference]],
+            ['note2.md', [createReference('[[attachment]]2')]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map()));
+      getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
+      mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
+      mockEditLinks.mockImplementation(async ({ linkConverter: converter }) => {
+        await converter(reference);
+        await converter(createReference('non-matching'));
+      });
+      mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+      mockCopySafe.mockResolvedValue('new-folder/attachment.png');
+
+      await runProcessItem(attachment);
+
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        newPath: 'new-folder/attachment.png',
+        oldPathOrFile: attachment
+      });
+      expect(mockUpdateLink).toHaveBeenCalledOnce();
+      expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({
+        app,
+        pathOrFile: attachment
+      });
+    });
+
+    it('should skip a backlink whose file cannot be resolved (CopyAll)', async () => {
+      const attachment = createFile('attachment.png');
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['missing.md', [createReference('[[attachment]]')]],
+            ['other.md', [createReference('[[attachment]]')]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map([['other.md', [createReference('[[attachment]]')]]])));
+      getFileByPath.mockReturnValue(null);
+
+      await runProcessItem(attachment);
+
+      expect(mockCopySafe).not.toHaveBeenCalled();
+      expect(mockDeleteIfNotUsed).not.toHaveBeenCalled();
+    });
+
+    it('should skip a backlink whose first reference is missing (CopyAll)', async () => {
+      const attachment = createFile('attachment.png');
+      const backlinkFile = createFile('note1.md');
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['note1.md', []],
+            ['note2.md', [createReference('[[attachment]]')]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[attachment]]')]]])));
+      getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
+
+      await runProcessItem(attachment);
+
+      expect(mockCopySafe).not.toHaveBeenCalled();
+    });
+
+    it('should skip a backlink when the attachment is already in the destination folder (CopyAll)', async () => {
+      const attachment = createFile('attachment.png');
+      const backlinkFile = createFile('note1.md');
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['note1.md', [createReference('[[attachment]]')]],
+            ['note2.md', [createReference('[[attachment]]')]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[attachment]]')]]])));
+      getFileByPath.mockReturnValue(backlinkFile);
+      mockGetProperAttachmentPath.mockResolvedValue(null);
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      await runProcessItem(attachment);
+
+      expect(warnSpy).toHaveBeenCalledWith('Skipping moving attachment attachment.png to proper folder as it is already in the destination folder.');
+      expect(mockCopySafe).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('handleMode', () => {
+    async function runWithMode(selectedMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode): Promise<void> {
+      const attachment = createFile('attachment.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = selectedMode;
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['note1.md', [createReference('[[a]]')]],
+          ['note2.md', [createReference('[[a]]')]]
+        ])
+      ));
+      getFileByPath.mockReturnValue(null);
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+    }
+
+    it('should select cancel mode when settings default is Cancel', async () => {
+      await runWithMode(MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel);
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'], isCancelMode: true });
+    });
+
+    it('should not trip the multiple-notes handling when only one non-excluded backlink remains', async () => {
+      // One real note + one excluded note: the effective count is one, so the Cancel handling never runs.
+      const attachment = createFile('attachment.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
+      mockIsExcludedFromMultipleNotesCheck.mockImplementation((path) => path === 'drawing.excalidraw.md');
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['drawing.excalidraw.md', [createReference('[[a]]')]],
+          ['note1.md', [createReference('[[a]]')]]
+        ])
+      ));
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      // What the move then does is asserted in the moveAttachmentToProperFolder suite.
+      expect(mockSelectMode).not.toHaveBeenCalled();
+    });
+
+    it('should still handle multiple notes when only one of several backlinks is excluded', async () => {
+      // Two real notes + one excluded note: the two real notes still trip Cancel, and only they are listed.
+      const attachment = createFile('attachment.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
+      mockIsExcludedFromMultipleNotesCheck.mockImplementation((path) => path === 'drawing.excalidraw.md');
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['drawing.excalidraw.md', [createReference('[[a]]')]],
+          ['note1.md', [createReference('[[a]]')]],
+          ['note2.md', [createReference('[[a]]')]]
+        ])
+      ));
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'], isCancelMode: true });
+    });
+
+    it('should not trip the multiple-notes handling for an attachment whose file type is exempt', async () => {
+      // Issue #80: the extension list exempts the ATTACHMENT, so two genuine notes never reach Cancel.
+      const attachment = createFile('attachment.af');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel;
+      mockIsExtensionExcludedFromMultipleNotesCheck.mockImplementation((path) => path === 'attachment.af');
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['note1.md', [createReference('[[a]]')]],
+          ['note2.md', [createReference('[[a]]')]]
+        ])
+      ));
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockSelectMode).not.toHaveBeenCalled();
+      expect(mockIsExtensionExcludedFromMultipleNotesCheck).toHaveBeenCalledWith('attachment.af');
+    });
+
+    it('should not re-prompt for Cancel mode when settings default is not Cancel', async () => {
+      const attachment = createFile('attachment.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['note1.md', [createReference('[[a]]')]],
+          ['note2.md', [createReference('[[a]]')]]
+        ])
+      ));
+      mockSelectMode.mockResolvedValue({
+        backlinksToCopy: [],
+        mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.Cancel,
+        shouldUseSameActionForOtherProblematicAttachments: false
+      });
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'] });
+      expect(mockCopySafe).not.toHaveBeenCalled();
+    });
+
+    it('should copy all backlinks for CopyAll mode', async () => {
+      const attachment = createFile('attachment.png');
+      const backlinkFile = createFile('note1.md');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
+      const reference = createReference('[[a]]');
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['note1.md', [reference]],
+            ['note2.md', [createReference('[[a]]2')]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[a]]2')]]])));
+      getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
+      mockGetProperAttachmentPath.mockResolvedValue('new/attachment.png');
+      mockEditLinks.mockResolvedValue();
+      mockCopySafe.mockResolvedValue('new/attachment.png');
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        newPath: 'new/attachment.png',
+        oldPathOrFile: attachment
+      });
+    });
+
+    it('should use the prompt result backlinks when prompt resolves to Prompt mode', async () => {
+      const attachment = createFile('attachment.png');
+      const backlinkFile = createFile('note1.md');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
+      const reference = createReference('[[a]]');
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['note1.md', [reference]],
+            ['note2.md', [createReference('[[a]]2')]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[a]]2')]]])));
+      mockSelectMode.mockResolvedValue({
+        backlinksToCopy: ['note1.md'],
+        mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt,
+        shouldUseSameActionForOtherProblematicAttachments: true
+      });
+      getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
+      mockGetProperAttachmentPath.mockResolvedValue('new/attachment.png');
+      mockEditLinks.mockResolvedValue();
+      mockCopySafe.mockResolvedValue('new/attachment.png');
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'] });
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        newPath: 'new/attachment.png',
+        oldPathOrFile: attachment
+      });
+    });
+
+    it('should recurse into the resolved mode when prompt resolves to CopyAll', async () => {
+      const attachment = createFile('attachment.png');
+      const backlinkFile = createFile('note1.md');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.Prompt;
+      const reference = createReference('[[a]]');
+      mockGetBacklinksForFileSafe
+        .mockResolvedValueOnce(createBacklinks(
+          new Map([
+            ['note1.md', [reference]],
+            ['note2.md', [createReference('[[a]]2')]]
+          ])
+        ))
+        .mockResolvedValueOnce(createBacklinks(new Map([['note2.md', [createReference('[[a]]2')]]])));
+      mockSelectMode.mockResolvedValue({
+        backlinksToCopy: [],
+        mode: MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll,
+        shouldUseSameActionForOtherProblematicAttachments: false
+      });
+      getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
+      mockGetProperAttachmentPath.mockResolvedValue('new/attachment.png');
+      mockEditLinks.mockResolvedValue();
+      mockCopySafe.mockResolvedValue('new/attachment.png');
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({
+        app,
+        newPath: 'new/attachment.png',
+        oldPathOrFile: attachment
+      });
+    });
+
+    it('should copy nothing for Skip mode', async () => {
+      await runWithMode(MoveAttachmentToProperFolderUsedByMultipleNotesMode.Skip);
+      expect(mockCopySafe).not.toHaveBeenCalled();
+    });
+
+    it('should return false for an unknown mode (default branch)', async () => {
+      const attachment = createFile('attachment.png');
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      mode = castTo<MoveAttachmentToProperFolderUsedByMultipleNotesMode>('UnknownMode');
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(
+        new Map([
+          ['note1.md', [createReference('[[a]]')]],
+          ['note2.md', [createReference('[[a]]')]]
+        ])
+      ));
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+
+      expect(mockCopySafe).not.toHaveBeenCalled();
+    });
+  });
+});

@@ -1,0 +1,317 @@
+import type { CachedMetadataEx } from '@mnaoumov/obsidian-lib/metadata-cache';
+import type { CustomArrayDict } from '@obsidian-typings/obsidian-public-latest';
+import type {
+  App,
+  Reference,
+  TFile,
+  TFolder
+} from 'obsidian';
+import type { Mock } from 'vitest';
+
+import { findAttachmentUnitFolderPath } from '@mnaoumov/obsidian-lib/attachment-unit-folder';
+import { isFile } from '@mnaoumov/obsidian-lib/file-system';
+import { getBacklinksForFileSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
+import { NoPriorityWinnerReason } from '@mnaoumov/obsidian-lib/note-priority';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import { Vault } from 'obsidian';
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest';
+
+import type { HandedOverSettings } from '../advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
+import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+import type { PluginSettings } from '../settings/plugin-settings.ts';
+
+import { NoteOwnerResolver } from './note-owner-resolver.ts';
+
+interface SettingsLike {
+  isAttachmentUnitFolder: Mock<(path: string) => boolean>;
+  notePriorities: readonly string[];
+}
+
+vi.mock('@mnaoumov/obsidian-lib/attachment-unit-folder', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-unit-folder')>(),
+  findAttachmentUnitFolderPath: vi.fn()
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  isFile: vi.fn()
+}));
+
+vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
+  getBacklinksForFileSafe: vi.fn()
+}));
+
+const mockFindAttachmentUnitFolderPath = vi.mocked(findAttachmentUnitFolderPath);
+const mockIsFile = vi.mocked(isFile);
+const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
+
+function createBacklinks(keys: string[]): CustomArrayDict<Reference> {
+  return strictProxy<CustomArrayDict<Reference>>({
+    keys: () => keys
+  });
+}
+
+function createFile(path: string): TFile {
+  return strictProxy<TFile>({
+    extension: path.split('.').at(-1) ?? '',
+    name: path.split('/').at(-1) ?? '',
+    path
+  });
+}
+
+describe('NoteOwnerResolver', () => {
+  let app: App;
+  let getFileByPath: Mock<(path: string) => null | TFile>;
+  let getFileCache: Mock<(file: TFile) => CachedMetadataEx | null>;
+  let getFolderByPath: Mock<(path: string) => null | TFolder>;
+  let isNoteEx: Mock<(path: string) => boolean>;
+  let pluginSettingsComponent: PluginSettingsComponent;
+  let resolver: NoteOwnerResolver;
+  let settings: SettingsLike;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    settings = {
+      isAttachmentUnitFolder: vi.fn<(path: string) => boolean>().mockReturnValue(false),
+      notePriorities: []
+    };
+    getFileByPath = vi.fn<(path: string) => null | TFile>().mockImplementation((path) => createFile(path));
+    getFileCache = vi.fn<(file: TFile) => CachedMetadataEx | null>().mockReturnValue(null);
+    getFolderByPath = vi.fn<(path: string) => null | TFolder>().mockReturnValue(null);
+    app = strictProxy<App>({
+      metadataCache: strictProxy<App['metadataCache']>({
+        getFileCache: (file: TFile) => getFileCache(file)
+      }),
+      vault: strictProxy<App['vault']>({
+        getFileByPath: (path: string) => getFileByPath(path),
+        getFolderByPath: (path: string) => getFolderByPath(path)
+      })
+    });
+    isNoteEx = vi.fn<(path: string) => boolean>().mockReturnValue(true);
+    pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
+      isNoteEx: (pathOrFile) => isNoteEx(castTo<string>(pathOrFile)),
+      settings: castTo<PluginSettings>(settings)
+    });
+    mockFindAttachmentUnitFolderPath.mockReturnValue(null);
+    mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
+    const handedOverSettingsComponent = strictProxy<HandedOverSettingsComponent>({
+      settings: castTo<HandedOverSettings>(settings)
+    });
+    resolver = new NoteOwnerResolver({ app, handedOverSettingsComponent, pluginSettingsComponent });
+  });
+
+  describe('findCandidateNotePaths', () => {
+    it('should return the attachment\'s own backlinks, sorted', async () => {
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['b.md', 'a.md']));
+      await expect(resolver.findCandidateNotePaths(createFile('attachments/img.png'))).resolves.toEqual(['a.md', 'b.md']);
+    });
+
+    it('should return an empty list when nothing references the attachment', async () => {
+      await expect(resolver.findCandidateNotePaths(createFile('attachments/img.png'))).resolves.toEqual([]);
+    });
+
+    it('should drop backlinks that are not notes', async () => {
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'board.canvas']));
+      isNoteEx.mockImplementation((path) => path === 'note.md');
+      await expect(resolver.findCandidateNotePaths(createFile('attachments/img.png'))).resolves.toEqual(['note.md']);
+    });
+
+    it('should not report the attachment as its own owner', async () => {
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['attachments/img.png', 'note.md']));
+      await expect(resolver.findCandidateNotePaths(createFile('attachments/img.png'))).resolves.toEqual(['note.md']);
+    });
+
+    it('should consult the whole unit folder for an unlinked member', async () => {
+      const attachmentFile = createFile('page_files/style.css');
+      const entryPoint = createFile('page_files/page.html');
+      mockFindAttachmentUnitFolderPath.mockReturnValue('page_files');
+      getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: 'page_files' }));
+      mockIsFile.mockReturnValue(true);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        callback(attachmentFile);
+        callback(entryPoint);
+      });
+      mockGetBacklinksForFileSafe.mockImplementation((params) => Promise.resolve(createBacklinks(params.pathOrFile === 'page_files/page.html' ? ['note.md'] : [])));
+
+      try {
+        await expect(resolver.findCandidateNotePaths(attachmentFile)).resolves.toEqual(['note.md']);
+      } finally {
+        recurseSpy.mockRestore();
+      }
+
+      // The attachment itself is never asked about twice.
+      expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(2);
+    });
+
+    it('should answer the unit-folder probe from the published designation', async () => {
+      mockFindAttachmentUnitFolderPath.mockReturnValue(null);
+      await resolver.findCandidateNotePaths(createFile('page_files/style.css'));
+
+      /*
+       * The library's parameters are a union since 100.0.0: an app it reads the published designation
+       * from, or a predicate the caller owns. This plugin passes the app, so that this resolver, the
+       * collecting commands and the plugin owning the delete interception all read ONE answer - the one
+       * the patch component published. Asserting the whole bag is what pins down which form is passed:
+       * an added `checkIsAttachmentUnitFolder` would be a regression to the caller-owned predicate.
+       */
+      expect(mockFindAttachmentUnitFolderPath).toHaveBeenCalledExactlyOnceWith({
+        app,
+        attachmentPath: 'page_files/style.css'
+      });
+      expect(settings.isAttachmentUnitFolder).not.toHaveBeenCalled();
+    });
+
+    it('should ignore a unit folder that does not exist', async () => {
+      mockFindAttachmentUnitFolderPath.mockReturnValue('page_files');
+      getFolderByPath.mockReturnValue(null);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren');
+      try {
+        await expect(resolver.findCandidateNotePaths(createFile('page_files/style.css'))).resolves.toEqual([]);
+      } finally {
+        recurseSpy.mockRestore();
+      }
+      expect(recurseSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('pickOwnerNotePath', () => {
+    it('should return null when the priority list is empty', () => {
+      expect(resolver.pickOwnerNotePath(['a.md', 'b.excalidraw.md'])).toBeNull();
+    });
+
+    it('should return the highest-priority note', () => {
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      expect(resolver.pickOwnerNotePath(['drawing.excalidraw.md', 'note.md'])).toBe('note.md');
+    });
+
+    it('should return null on a tie', () => {
+      settings.notePriorities = ['.md'];
+      expect(resolver.pickOwnerNotePath(['a.md', 'b.md'])).toBeNull();
+    });
+  });
+
+  describe('filterTopRankNotePaths', () => {
+    it('should keep every note when the priority list is empty', () => {
+      expect(resolver.filterTopRankNotePaths(['a.md', 'b.excalidraw.md'])).toEqual(['a.md', 'b.excalidraw.md']);
+    });
+
+    it('should drop a note the list deliberately ranked lower', () => {
+      // The reporter's case: the drawing also ends with `.md`, but the longer entry demotes it, so it
+      // has no say in the ambiguity and must not be offered as if it had.
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      expect(resolver.filterTopRankNotePaths(['a.md', 'b.md', 'drawing.excalidraw.md'])).toEqual(['a.md', 'b.md']);
+    });
+
+    it('should keep every note when none of them matches the list', () => {
+      settings.notePriorities = ['.canvas'];
+      expect(resolver.filterTopRankNotePaths(['a.md', 'b.md'])).toEqual(['a.md', 'b.md']);
+    });
+
+    it('should rank by frontmatter as pickOwnerNotePath does', () => {
+      settings.notePriorities = ['property:pinned', '.md'];
+      getFileCache.mockImplementation((file) => file.path === 'pinned.md' ? castTo<CachedMetadataEx>({ frontmatter: { pinned: true } }) : null);
+      expect(resolver.filterTopRankNotePaths(['pinned.md', 'plain.md'])).toEqual(['pinned.md']);
+    });
+
+    it('should return the sole winner whenever pickOwnerNotePath names one', () => {
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      const notePaths = ['drawing.excalidraw.md', 'note.md'];
+      expect(resolver.filterTopRankNotePaths(notePaths)).toEqual([resolver.pickOwnerNotePath(notePaths)]);
+    });
+  });
+
+  describe('filterHigherPriorityNotePaths', () => {
+    it('should keep a note the list ranks above the reference', () => {
+      // The reporter's case: collecting from the drawing, the markdown note is the one that really
+      // owns the image, so it is the note worth naming.
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['note.md'], 'drawing.excalidraw.md')).toEqual(['note.md']);
+    });
+
+    it('should name every note above the reference, not only the winner', () => {
+      settings.notePriorities = ['top.md', '.md', '.excalidraw.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['top.md', 'middle.md'], 'drawing.excalidraw.md')).toEqual(['top.md', 'middle.md']);
+    });
+
+    it('should drop a note that only ties with the reference', () => {
+      // A tie settles nothing, so it is the multiple-notes dialog's business rather than this report's.
+      settings.notePriorities = ['.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['a.md', 'b.md'], 'a.md')).toEqual([]);
+    });
+
+    it('should drop a note the list ranks below the reference', () => {
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['drawing.excalidraw.md'], 'note.md')).toEqual([]);
+    });
+
+    it('should return nothing when the priority list is empty', () => {
+      // Nothing has ruled the reference out, so there is no higher priority to report.
+      expect(resolver.filterHigherPriorityNotePaths(['a.md', 'b.md'], 'c.md')).toEqual([]);
+    });
+
+    it('should return nothing when none of the notes matches the list', () => {
+      settings.notePriorities = ['.canvas'];
+      expect(resolver.filterHigherPriorityNotePaths(['a.md', 'b.md'], 'c.md')).toEqual([]);
+    });
+
+    it('should never return the reference note itself', () => {
+      settings.notePriorities = ['.md'];
+      expect(resolver.filterHigherPriorityNotePaths(['a.md', 'b.md'], 'a.md')).not.toContain('a.md');
+    });
+
+    it('should stay quiet whenever the reference note is the winner pickOwnerNotePath names', () => {
+      settings.notePriorities = ['.md', '.excalidraw.md'];
+      const notePaths = ['drawing.excalidraw.md', 'note.md'];
+      expect(resolver.pickOwnerNotePath(notePaths)).toBe('note.md');
+      expect(resolver.filterHigherPriorityNotePaths(notePaths, 'note.md')).toEqual([]);
+    });
+
+    it('should rank by frontmatter as pickOwnerNotePath does', () => {
+      settings.notePriorities = ['property:pinned', '.md'];
+      getFileCache.mockImplementation((file) => file.path === 'pinned.md' ? castTo<CachedMetadataEx>({ frontmatter: { pinned: true } }) : null);
+      expect(resolver.filterHigherPriorityNotePaths(['pinned.md'], 'plain.md')).toEqual(['pinned.md']);
+    });
+  });
+
+  describe('findNoPriorityWinnerReason', () => {
+    it('should report an empty list', () => {
+      expect(resolver.findNoPriorityWinnerReason(['a.md'])).toBe(NoPriorityWinnerReason.EmptyList);
+    });
+
+    it('should report that nothing matched', () => {
+      settings.notePriorities = ['.canvas'];
+      expect(resolver.findNoPriorityWinnerReason(['a.md', 'b.md'])).toBe(NoPriorityWinnerReason.NoMatch);
+    });
+
+    it('should report a tie', () => {
+      settings.notePriorities = ['.md'];
+      expect(resolver.findNoPriorityWinnerReason(['a.md', 'b.md'])).toBe(NoPriorityWinnerReason.Tie);
+    });
+  });
+
+  describe('rankNote', () => {
+    it('should rank by the most specific matching entry', () => {
+      expect(resolver.rankNote(['.md', '.excalidraw.md'], 'drawing.excalidraw.md')).toBe(1);
+    });
+
+    it('should consult the note\'s frontmatter', () => {
+      getFileCache.mockReturnValue(castTo<CachedMetadataEx>({ frontmatter: { pinned: true } }));
+      expect(resolver.rankNote(['property:pinned'], 'note.md')).toBe(0);
+    });
+
+    it('should treat a missing note as having no frontmatter', () => {
+      getFileByPath.mockReturnValue(null);
+      expect(resolver.rankNote(['property:pinned'], 'note.md')).toBe(Infinity);
+      expect(getFileCache).not.toHaveBeenCalled();
+    });
+  });
+});

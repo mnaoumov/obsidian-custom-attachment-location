@@ -12,7 +12,7 @@ export const configs: Linter.Config[] = defineEslintConfigs({
     return defineConfig([
       // A verbatim copy of the provider's hand-written `api.d.ts`, refreshed from its repository rather than edited,
       // so its style is the provider's to keep.
-      globalIgnores(['src/advanced-rename-and-delete-handler-api/api.d.ts']),
+      globalIgnores(['src/advanced-rename-and-delete-handler/api/api.d.ts']),
       {
         rules: {
           'obsidianmd/ui/sentence-case': [
@@ -28,8 +28,8 @@ export const configs: Linter.Config[] = defineEslintConfigs({
       },
       {
         files: [
-          'src/patches/write-attribution-patch-component.test.ts',
-          'src/externally-created-attachment-plugin-list.desktop.integration.test.ts'
+          'src/externally-created-attachments/write-attribution-patch-component.test.ts',
+          'src/externally-created-attachments/externally-created-attachment-plugin-list.desktop.integration.test.ts'
         ],
         rules: {
           /**

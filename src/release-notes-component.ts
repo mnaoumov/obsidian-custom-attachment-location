@@ -8,7 +8,7 @@ import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
 import { noop } from '@mnaoumov/typescript-lib/function';
 import { compare } from 'semver';
 
-import type { PluginSettingsComponent } from './plugin-settings-component.ts';
+import type { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
 
 interface CreateReleaseNotesComponentParams {
   readonly app: App;

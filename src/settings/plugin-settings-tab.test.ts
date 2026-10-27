@@ -1,0 +1,1081 @@
+import type { PluginGateComponent } from '@mnaoumov/obsidian-lib/components/plugin-gate-component';
+import type { DataHandler } from '@mnaoumov/obsidian-lib/data-handler';
+import type { PluginEventSource } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
+import type { CodeHighlighterComponent } from '@mnaoumov/obsidian-lib/setting-components/code-highlighter-component';
+import type { MultipleDropdownComponent } from '@mnaoumov/obsidian-lib/setting-components/multiple-dropdown-component';
+import type { MultipleTextComponent } from '@mnaoumov/obsidian-lib/setting-components/multiple-text-component';
+import type { NumberComponent } from '@mnaoumov/obsidian-lib/setting-components/number-component';
+import type { AsyncEventRef } from '@mnaoumov/typescript-lib/async-events';
+import type { PrismModule } from '@obsidian-typings/obsidian-public-latest/implementations';
+import type {
+  ButtonComponent,
+  DropdownComponent,
+  PluginManifest,
+  SettingDefinition,
+  SettingDefinitionGroup,
+  SettingDefinitionItem,
+  SettingDefinitionPage,
+  SettingDefinitionRender,
+  SettingGroup,
+  ToggleComponent
+} from 'obsidian';
+
+import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { confirm } from '@mnaoumov/obsidian-lib/modals/confirm';
+import { SettingEx } from '@mnaoumov/obsidian-lib/setting-ex';
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { ValueWrapper } from '@mnaoumov/typescript-lib/value-wrapper';
+import { waitForAllAsyncOperations } from '@mnaoumov/typescript-test-toolkit/async-operation-tracking';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import {
+  App,
+  ButtonComponent as ButtonComponentClass,
+  DropdownComponent as DropdownComponentClass,
+  TextComponent as TextComponentClass,
+  ToggleComponent as ToggleComponentClass
+} from 'obsidian-test-mocks/obsidian';
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest';
+
+import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
+import type { Plugin } from '../plugin.ts';
+import type { PluginSettings } from './plugin-settings.ts';
+
+import { translationsMap } from '../i18n/locales/translations-map.ts';
+import { TokenValidator } from '../tokens/token-validator.ts';
+import { PluginSettingsComponent } from './plugin-settings-component.ts';
+import { PluginSettingsTab } from './plugin-settings-tab.ts';
+import {
+  AttachmentRenameMode,
+  ConvertImagesToJpegMode,
+  OrphanAttachmentScanMode,
+  RenameAttachmentsCreatedByOtherPluginsMode,
+  SAMPLE_CUSTOM_TOKENS
+} from './plugin-settings.ts';
+
+vi.mock('@mnaoumov/obsidian-lib/modals/confirm', () => ({
+  confirm: vi.fn((): Promise<boolean> => Promise.resolve(true))
+}));
+
+// The obsidian-test-mocks package does not model Obsidian's loadPrism, so return a stub prism; otherwise the real CodeHighlighterComponent's highlight-on-setValue rejects.
+vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@obsidian-typings/obsidian-public-latest/implementations')>();
+  return {
+    ...original,
+    loadPrism: vi.fn((): Promise<PrismModule> => Promise.resolve(strictProxy<PrismModule>({ highlightElement: vi.fn() })))
+  };
+});
+
+// This test renders the whole settings tab and drains the debounced revalidation under fake timers.
+// Under coverage instrumentation that work exceeds the default 5-second test timeout.
+const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
+
+// Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
+// 38 = 37 setting rows + the overlap banner row that rides at the top.
+const EXPECTED_ROW_COUNT = 39;
+
+const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
+
+// The overlap banner's two inputs: what the library writes into the row, and whether a warning conflict
+// holds at all, which is what decides whether the row exists.
+const renderConflictWarningBannerMock = vi.fn<(containerEl: HTMLElement) => void>();
+const hasActiveWarningConflictsMock = vi.fn<() => boolean>();
+
+interface CapturedMultipleValueComponent {
+  name: string;
+  setValue: (value: readonly string[]) => unknown;
+}
+
+interface CapturedToggle {
+  name: string;
+  toggle: ToggleComponent;
+}
+
+interface CapturedValueComponent {
+  inputEl?: HTMLInputElement | HTMLTextAreaElement;
+  name: string;
+  setValue: (value: string) => unknown;
+}
+
+interface CreatedTab {
+  buttons: ButtonComponentClass[];
+  multipleDropdownComponents: CapturedMultipleValueComponent[];
+  multipleTextComponents: CapturedMultipleValueComponent[];
+  names: string[];
+  pluginSettingsComponent: PluginSettingsComponent;
+  tab: PluginSettingsTab;
+  textLikeComponents: CapturedValueComponent[];
+  toggles: CapturedToggle[];
+}
+
+interface DeclaredRow {
+  disabled?: (() => boolean) | boolean;
+  visible?: (() => boolean) | boolean;
+}
+
+class MockDataHandler implements DataHandler {
+  public async loadData(): Promise<unknown> {
+    await noopAsync();
+    return {};
+  }
+
+  public async saveData(): Promise<void> {
+    await noopAsync();
+  }
+}
+
+const originalAddButton = SettingEx.prototype.addButton;
+const originalAddToggle = SettingEx.prototype.addToggle;
+const originalAddText = SettingEx.prototype.addText;
+const originalAddCodeHighlighter = SettingEx.prototype.addCodeHighlighter;
+const originalAddDropdown = SettingEx.prototype.addDropdown;
+const originalAddNumber = SettingEx.prototype.addNumber;
+const originalAddMultipleText = SettingEx.prototype.addMultipleText;
+const originalAddMultipleDropdown = SettingEx.prototype.addMultipleDropdown;
+const originalSetName = SettingEx.prototype.setName;
+
+/**
+ * Resolves a declarative predicate that may be a boolean, a function, or absent.
+ *
+ * @param predicate - The predicate.
+ * @param shouldDefaultTo - The value to use when the predicate is absent.
+ * @returns The resolved value.
+ */
+function checkPredicate(predicate: (() => boolean) | boolean | undefined, shouldDefaultTo: boolean): boolean {
+  return typeof predicate === 'function' ? predicate() : predicate ?? shouldDefaultTo;
+}
+
+async function createTab(configure?: (settings: PluginSettings) => void): Promise<CreatedTab> {
+  const app = App.createConfigured__();
+  const originalApp = app.asOriginalType__();
+
+  // The plugin picker builds its options from the installed manifests; the strict proxy throws on an
+  // unassigned property, so seed them on the raw target the way the plugin suite does.
+  seedOnRawTarget(originalApp, 'plugins', {
+    manifests: {
+      // This plugin must never offer ITSELF as something that creates attachments for it to rename.
+      'custom-attachment-location': { id: 'custom-attachment-location', name: 'Custom Attachment Location' },
+      'excalidraw': { id: 'excalidraw', name: 'Excalidraw' }
+    }
+  });
+  const validatorWrapper = ValueWrapper.unset<TokenValidator>();
+  const pluginSettingsComponent = new PluginSettingsComponent({
+    app: originalApp,
+    dataHandler: new MockDataHandler(),
+    handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
+      isTreatedAsAttachment: (path) => path.endsWith('.excalidraw.md')
+    }),
+    pluginEventSource: strictProxy<PluginEventSource>({
+      on: (): AsyncEventRef => strictProxy<AsyncEventRef>({})
+    }),
+    validatorWrapper
+  });
+  validatorWrapper.value = new TokenValidator({
+    app: originalApp,
+    pluginSettingsComponent
+  });
+  await pluginSettingsComponent.loadWithPromises();
+
+  const obsidianPlugin = strictProxy<Plugin>({
+    app: originalApp,
+    // The tab reads its own id from here, so it can leave itself out of the plugin picker.
+    manifest: castTo<PluginManifest>({ id: 'custom-attachment-location' })
+  });
+
+  const buttons: ButtonComponentClass[] = [];
+  const toggles: CapturedToggle[] = [];
+  const names: string[] = [];
+  const textLikeComponents: CapturedValueComponent[] = [];
+  const multipleTextComponents: CapturedMultipleValueComponent[] = [];
+  const multipleDropdownComponents: CapturedMultipleValueComponent[] = [];
+
+  const addTextSpy = vi.spyOn(SettingEx.prototype, 'addText');
+  addTextSpy.mockImplementation(function capturingAddText(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddText.call(this, (component) => {
+      textLikeComponents.push({
+        inputEl: component.inputEl,
+        name,
+        setValue: (value) => {
+          typeInto(component.setValue(value).inputEl);
+        }
+      });
+      callback(component);
+    });
+  });
+
+  const addCodeHighlighterSpy = vi.spyOn(SettingEx.prototype, 'addCodeHighlighter');
+  addCodeHighlighterSpy.mockImplementation(function capturingAddCodeHighlighter(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddCodeHighlighter.call(this, (component: CodeHighlighterComponent) => {
+      textLikeComponents.push({
+        name,
+        setValue: (value) => {
+          typeInto(component.setValue(value).inputEl);
+        }
+      });
+      callback(component);
+    });
+  });
+
+  const addDropdownSpy = vi.spyOn(SettingEx.prototype, 'addDropdown');
+  addDropdownSpy.mockImplementation(function capturingAddDropdown(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddDropdown.call(this, (component: DropdownComponent) => {
+      textLikeComponents.push({
+        name,
+        setValue: (value) => {
+          pickIn(component.setValue(value).selectEl);
+        }
+      });
+      callback(component);
+    });
+  });
+
+  const addNumberSpy = vi.spyOn(SettingEx.prototype, 'addNumber');
+  addNumberSpy.mockImplementation(function capturingAddNumber(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddNumber.call(this, (component: NumberComponent) => {
+      textLikeComponents.push({
+        inputEl: component.inputEl,
+        name,
+        setValue: (value) => {
+          typeInto(component.setValue(Number(value)).inputEl);
+        }
+      });
+      callback(component);
+    });
+  });
+
+  const addMultipleTextSpy = vi.spyOn(SettingEx.prototype, 'addMultipleText');
+  addMultipleTextSpy.mockImplementation(function capturingAddMultipleText(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddMultipleText.call(this, (component: MultipleTextComponent) => {
+      multipleTextComponents.push({
+        name,
+        setValue: (value) => {
+          typeInto(component.setValue(value).inputEl);
+        }
+      });
+      callback(component);
+    });
+  });
+
+  const addMultipleDropdownSpy = vi.spyOn(SettingEx.prototype, 'addMultipleDropdown');
+  addMultipleDropdownSpy.mockImplementation(function capturingAddMultipleDropdown(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddMultipleDropdown.call(this, (component: MultipleDropdownComponent) => {
+      /*
+       * `bind` duck-types a text-based component by READING `setPlaceholderValue` and `isEmpty`. This
+       * component defines neither — in Obsidian that read is a plain `undefined` and the check fails, but
+       * the mock's strict proxy THROWS on an unassigned property. Seeding them as undefined restores the
+       * production answer rather than inventing methods the real component does not have.
+       */
+      seedOnRawTarget(component, 'setPlaceholderValue', undefined);
+      seedOnRawTarget(component, 'isEmpty', undefined);
+      multipleDropdownComponents.push({
+        name,
+        setValue: (value) => {
+          pickIn(component.setValue(value).selectEl);
+        }
+      });
+      callback(component);
+    });
+  });
+
+  const addButtonSpy = vi.spyOn(SettingEx.prototype, 'addButton');
+  addButtonSpy.mockImplementation(function capturingAddButton(this: SettingEx, callback): SettingEx {
+    return originalAddButton.call(this, (button: ButtonComponent) => {
+      buttons.push(ButtonComponentClass.fromOriginalType2__(button));
+      callback(button);
+    });
+  });
+
+  const addToggleSpy = vi.spyOn(SettingEx.prototype, 'addToggle');
+  addToggleSpy.mockImplementation(function capturingAddToggle(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddToggle.call(this, (toggle: ToggleComponent) => {
+      toggles.push({ name, toggle });
+      callback(toggle);
+    });
+  });
+
+  const setNameSpy = vi.spyOn(SettingEx.prototype, 'setName');
+  setNameSpy.mockImplementation(function capturingSetName(this: SettingEx, name: DocumentFragment | string): SettingEx {
+    if (typeof name === 'string') {
+      names.push(name);
+    }
+    return originalSetName.call(this, name);
+  });
+
+  const tab = new PluginSettingsTab({
+    getPluginGateComponent: (): PluginGateComponent =>
+      strictProxy<PluginGateComponent>({
+        hasActiveWarningConflicts: hasActiveWarningConflictsMock,
+        renderConflictWarningBanner: renderConflictWarningBannerMock
+      }),
+    plugin: obsidianPlugin,
+    pluginSettingsComponent
+  });
+
+  if (configure) {
+    await pluginSettingsComponent.editAndSave(configure);
+  }
+
+  renderRows(tab);
+  addButtonSpy.mockRestore();
+  addToggleSpy.mockRestore();
+  addTextSpy.mockRestore();
+  addCodeHighlighterSpy.mockRestore();
+  addDropdownSpy.mockRestore();
+  addNumberSpy.mockRestore();
+  addMultipleTextSpy.mockRestore();
+  addMultipleDropdownSpy.mockRestore();
+  setNameSpy.mockRestore();
+  return {
+    buttons,
+    multipleDropdownComponents,
+    multipleTextComponents,
+    names,
+    pluginSettingsComponent,
+    tab,
+    textLikeComponents,
+    toggles
+  };
+}
+
+/**
+ * Finds the overlap banner row — the tab's one nameless row.
+ *
+ * @param tab - The settings tab.
+ * @returns The row.
+ */
+function findConflictRow(tab: PluginSettingsTab): SettingDefinitionRender {
+  return findRow(tab, '');
+}
+
+/**
+ * Finds a declared row by name.
+ *
+ * @param tab - The settings tab.
+ * @param name - The row name.
+ * @returns The row.
+ */
+function findRow(tab: PluginSettingsTab, name: string): SettingDefinitionRender {
+  const row = findRows(tab, name)[0];
+  if (row) {
+    return row;
+  }
+
+  throw new Error(`Row not found: ${name}`);
+}
+
+/**
+ * Finds every declared row carrying one name, in declaration order.
+ *
+ * The overlap banner is the one nameless row: a name is what a row shows beside its control, and a banner is
+ * a bare host with no control, so it cannot carry one.
+ *
+ * @param tab - The settings tab.
+ * @param name - The name to match.
+ * @returns The matching rows.
+ */
+function findRows(tab: PluginSettingsTab, name: string): SettingDefinitionRender[] {
+  return flattenRows(tab.getSettingDefinitions())
+    .filter((candidate) => 'name' in candidate && candidate.name === name)
+    .map((row) => castTo<SettingDefinitionRender>(row));
+}
+
+/**
+ * Flattens declared items into leaf rows, descending into groups and sub-pages alike.
+ *
+ * Both a group and a page carry their children in `items`, so the walk has to recurse: a page's rows sit one
+ * level deeper than a top-level group's.
+ *
+ * @param items - The declared items.
+ * @returns The leaf rows.
+ */
+function flattenRows(items: SettingDefinitionItem[]): SettingDefinition[] {
+  const rows: SettingDefinition[] = [];
+  for (const item of items) {
+    if ('items' in item) {
+      rows.push(...flattenRows(castTo<SettingDefinitionItem[]>(item.items ?? [])));
+      continue;
+    }
+
+    rows.push(castTo<SettingDefinition>(item));
+  }
+
+  return rows;
+}
+
+/**
+ * Evaluates a declared row's `disabled` predicate.
+ *
+ * @param tab - The settings tab.
+ * @param name - The row name.
+ * @returns Whether the row is disabled.
+ */
+function isRowDisabled(tab: PluginSettingsTab, name: string): boolean {
+  const row = flattenRows(tab.getSettingDefinitions()).find((candidate) => 'name' in candidate && candidate.name === name);
+  if (row) {
+    return checkPredicate(castTo<DeclaredRow>(row).disabled, false);
+  }
+
+  throw new Error(`Row not found: ${name}`);
+}
+
+/**
+ * Resolves a declared row's `visible` predicate.
+ *
+ * @param tab - The settings tab.
+ * @param name - The row name.
+ * @returns Whether the row is visible.
+ */
+function isRowVisible(tab: PluginSettingsTab, name: string): boolean {
+  const row = flattenRows(tab.getSettingDefinitions()).find((candidate) => 'name' in candidate && candidate.name === name);
+  if (row) {
+    return checkPredicate(castTo<DeclaredRow>(row).visible, true);
+  }
+
+  throw new Error(`Row not found: ${name}`);
+}
+
+/**
+ * Renders the declared rows the way Obsidian does when the tab is opened: it skips the rows whose `visible`
+ * predicate is false, applies the name and description, runs the row's `render` callback, and finally applies
+ * the `disabled` predicate (which `Setting.setDisabled` propagates to every component on the row).
+ *
+ * @param tab - The settings tab.
+ */
+function renderRows(tab: PluginSettingsTab): void {
+  for (const row of flattenRows(tab.getSettingDefinitions())) {
+    if (!('render' in row)) {
+      continue;
+    }
+
+    const rowExtension = castTo<DeclaredRow>(row);
+    if (!checkPredicate(rowExtension.visible, true)) {
+      continue;
+    }
+
+    const setting = new SettingEx(tab.containerEl);
+    setting.setName(row.name);
+    if (row.desc) {
+      setting.setDesc(row.desc);
+    }
+
+    row.render(setting, castTo<SettingGroup>(null));
+    setting.setDisabled(checkPredicate(rowExtension.disabled, false));
+  }
+}
+
+/**
+ * Assigns a property on the raw object behind a strict proxy, which throws on an unassigned property.
+ *
+ * @param strictProxiedObject - The strict-proxied object.
+ * @param key - The property to seed.
+ * @param value - The value to seed it with.
+ */
+function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknown): void {
+  const proxyWithTarget = castTo<Partial<Record<symbol, object>>>(strictProxiedObject);
+  const rawTarget = proxyWithTarget[STRICT_PROXY_TARGET_SYMBOL] ?? strictProxiedObject;
+  castTo<Record<string, unknown>>(rawTarget)[key] = value;
+}
+
+beforeAll(async () => {
+  await initI18N(translationsMap);
+  // Obsidian-lib's bind() probes setPlaceholderValue to detect text-based components.
+  for (
+    const prototype of [
+      ToggleComponentClass.prototype,
+      DropdownComponentClass.prototype,
+      TextComponentClass.prototype,
+      ButtonComponentClass.prototype
+    ]
+  ) {
+    if (!('setPlaceholderValue' in prototype)) {
+      Object.defineProperty(prototype, 'setPlaceholderValue', { value: undefined });
+    }
+  }
+});
+
+describe('PluginSettingsTab', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // `clearAllMocks` drops the recorded calls but keeps any implementation set by an earlier test, and
+    // whether this one writes into the container is exactly what the overlap row's tests differ on.
+    renderConflictWarningBannerMock.mockReset();
+    hasActiveWarningConflictsMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('Consistent Attachments and Links overlap banner', () => {
+    it('should hand the row element to the plugin gate, emptied first', async () => {
+      renderConflictWarningBannerMock.mockImplementation((containerEl) => {
+        containerEl.createDiv({ text: 'Overlap' });
+      });
+      const { tab } = await createTab();
+      const setting = new SettingEx(tab.containerEl);
+      setting.setName('Leftover');
+
+      findConflictRow(tab).render(setting, castTo<SettingGroup>(null));
+
+      expect(renderConflictWarningBannerMock).toHaveBeenCalledWith(setting.settingEl);
+      expect(setting.settingEl.textContent).toBe('Overlap');
+    });
+
+    // The library renders nothing when no overlap holds, and an empty row is still a row — a divider and a
+    // block of padding with nothing in it.
+    it('should hide itself when no warning conflict holds', async () => {
+      hasActiveWarningConflictsMock.mockReturnValue(false);
+      const { tab } = await createTab();
+
+      expect(isRowVisible(tab, '')).toBe(false);
+    });
+
+    it('should show itself while a warning conflict holds', async () => {
+      hasActiveWarningConflictsMock.mockReturnValue(true);
+      const { tab } = await createTab();
+
+      expect(isRowVisible(tab, '')).toBe(true);
+    });
+
+    // A function, not a value: the gate re-evaluates as plugins are enabled and disabled while the tab is open,
+    // and the tab re-reads a function form on every render.
+    it('should re-read the gate on every evaluation', async () => {
+      const { tab } = await createTab();
+      hasActiveWarningConflictsMock.mockReturnValue(false);
+      expect(isRowVisible(tab, '')).toBe(false);
+
+      hasActiveWarningConflictsMock.mockReturnValue(true);
+
+      expect(isRowVisible(tab, '')).toBe(true);
+    });
+
+    it('should stay out of the settings search', async () => {
+      const { tab } = await createTab();
+      expect(findConflictRow(tab).searchable).toBe(false);
+    });
+  });
+
+  it('should be constructable', async () => {
+    const { tab } = await createTab();
+    expect(tab).toBeInstanceOf(PluginSettingsTab);
+  });
+
+  it('should render the expected settings', async () => {
+    const { names } = await createTab((settings) => {
+      settings.shouldFollowObsidianAttachmentLocation = false;
+    });
+    expect(names).toContain('Location for new attachments');
+    expect(names).toContain('Generated attachment file name');
+    expect(names).toContain('Duplicate name separator');
+    expect(names).toContain('Attachment rename mode');
+    expect(names).toContain('Keep the names of pasted image files that are not screenshots');
+    expect(names).toContain('Screenshot file paths');
+    expect(names).toContain('Rename attachments created by other plugins');
+    expect(names).toContain('Renamed attachment file name');
+    expect(names).toContain('Move attachment to proper folder used by multiple notes mode');
+    expect(names).toContain('Special characters');
+    expect(names).toContain('Special characters replacement');
+    expect(names).toContain('Should rename collected attachments');
+    expect(names).toContain('Collected attachment file name');
+    expect(names).toContain('Collect attachment used by multiple notes mode');
+    expect(names).toContain('Skip collecting attachments referenced by a raw path');
+    expect(names).toContain('Default image size');
+    expect(names).toContain('Convert images to JPEG mode');
+    expect(names).toContain('JPEG Quality');
+    expect(names).toContain('Attachment unit folders');
+    expect(names).toContain('Exclude paths from attachment collecting');
+    expect(names).toContain('Custom tokens');
+    expect(names).toContain('Markdown URL format');
+    expect(names).toContain('Timeout in seconds');
+  });
+
+  it('should keep Core inline and expose every other group as a navigable sub-page', async () => {
+    const { tab } = await createTab();
+    // The overlap banner rides at the top as a bare ROW: Obsidian never calls `display()` once the declarative
+    // definitions are non-empty, so there is nowhere else to put it.
+    const [conflictBanner, coreGroup, ...pages] = tab.getSettingDefinitions();
+    expect(castTo<SettingDefinitionRender>(conflictBanner).name).toBe('');
+
+    const core = castTo<SettingDefinitionGroup>(coreGroup);
+    expect(core.type).toBe('group');
+    expect(core.heading).toBe('Core');
+
+    expect(pages.map((page) => castTo<SettingDefinitionPage>(page).name)).toEqual([
+      'Move/renames',
+      'Special characters',
+      'Collected attachments',
+      'Images',
+      'Path',
+      'Custom tokens',
+      'Advanced'
+    ]);
+
+    for (const page of pages) {
+      const settingPage = castTo<SettingDefinitionPage>(page);
+      expect(settingPage.type).toBe('page');
+      // A page entry with no description reads as a bare label on the parent tab, which is the scrolling problem again.
+      expect(settingPage.desc).toBeTypeOf('string');
+      expect(settingPage.desc).not.toBe('');
+    }
+  });
+
+  it('should keep every declared row reachable after the split into sub-pages', async () => {
+    const { tab } = await createTab();
+    expect(flattenRows(tab.getSettingDefinitions())).toHaveLength(EXPECTED_ROW_COUNT);
+  });
+
+  it('should enable debouncing of custom token validation while displayed', async () => {
+    const { pluginSettingsComponent } = await createTab();
+    expect(pluginSettingsComponent.shouldDebounceCustomTokensValidation).toBe(true);
+  });
+
+  it('should disable debouncing of custom token validation when hidden', async () => {
+    const { pluginSettingsComponent, tab } = await createTab();
+    tab.hide();
+    expect(pluginSettingsComponent.shouldDebounceCustomTokensValidation).toBe(false);
+  });
+
+  it('should revalidate when hidden, so tokens whose debounced registration was cancelled are registered', async () => {
+    const { pluginSettingsComponent, tab } = await createTab();
+    const revalidateSpy = vi.spyOn(pluginSettingsComponent, 'revalidate');
+    tab.hide();
+    await vi.waitFor(() => {
+      expect(revalidateSpy).toHaveBeenCalled();
+    });
+  });
+
+  it('should cancel the debounced custom-token registration when the row is torn down', async () => {
+    const { tab } = await createTab();
+
+    // Obsidian calls the cleanup a row's `render` returns before the row is re-rendered or removed.
+    const row = findRow(tab, 'Custom tokens');
+    const setting = new SettingEx(tab.containerEl);
+    setting.setName(row.name);
+    const cleanup = row.render(setting, castTo<SettingGroup>(null));
+
+    expect(cleanup).toBeTypeOf('function');
+    expect(() => {
+      castTo<() => void>(cleanup)();
+    }).not.toThrow();
+  });
+
+  it('should re-evaluate the predicates when the download-network-images toggle changes', async () => {
+    const { tab, toggles } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = toggles.find((entry) => entry.name === 'Download network images');
+    expect(captured).toBeDefined();
+    captured?.toggle.setValue(true);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should re-evaluate the predicates when the follow-Obsidian toggle changes', async () => {
+    const { tab, toggles } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = toggles.find((entry) => entry.name === 'Follow Obsidian attachment location');
+    expect(captured).toBeDefined();
+    // On by default, so switching it OFF is the change a user makes.
+    captured?.toggle.setValue(false);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should hide the location template by default, because a fresh install follows Obsidian', async () => {
+    const { names } = await createTab();
+    expect(names).toContain('Follow Obsidian attachment location');
+    expect(names).not.toContain('Location for new attachments');
+  });
+
+  it('should hide the location template while the plugin follows Obsidian\'s own location', async () => {
+    const { names } = await createTab((settings) => {
+      settings.shouldFollowObsidianAttachmentLocation = true;
+    });
+    expect(names).toContain('Follow Obsidian attachment location');
+    expect(names).not.toContain('Location for new attachments');
+  });
+
+  it('should show the location template while the plugin uses its own template', async () => {
+    const { names } = await createTab((settings) => {
+      settings.shouldFollowObsidianAttachmentLocation = false;
+    });
+    expect(names).toContain('Location for new attachments');
+  });
+
+  it('should render the network image download timeout setting when downloading is enabled', async () => {
+    const { names } = await createTab((settings) => {
+      settings.downloadNetworkImages = true;
+    });
+    expect(names).toContain('Network image download timeout in seconds');
+  });
+
+  it('should not render the network image download timeout setting when downloading is disabled', async () => {
+    const { names } = await createTab();
+    expect(names).not.toContain('Network image download timeout in seconds');
+  });
+
+  it('should re-evaluate the predicates when the convert-images-to-JPEG dropdown changes', async () => {
+    const { tab, textLikeComponents } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = textLikeComponents.find((entry) => entry.name === 'Convert images to JPEG mode');
+    expect(captured).toBeDefined();
+    captured?.setValue(ConvertImagesToJpegMode.AllImages);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should disable the preserve-metadata row while nothing is being converted', async () => {
+    // Nothing is re-encoded in `None` mode, so there is no metadata loss for the row to prevent.
+    const { tab } = await createTab();
+    expect(isRowDisabled(tab, 'Should preserve image metadata')).toBe(true);
+  });
+
+  it('should enable the preserve-metadata row once images are converted', async () => {
+    const { tab } = await createTab((settings) => {
+      settings.convertImagesToJpegMode = ConvertImagesToJpegMode.AllImages;
+    });
+    expect(isRowDisabled(tab, 'Should preserve image metadata')).toBe(false);
+  });
+
+  it('should do nothing when resetting custom tokens that already match the sample', async () => {
+    const { buttons, pluginSettingsComponent } = await createTab();
+    await pluginSettingsComponent.editAndSave((settings) => {
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
+      settings.customTokensStr = SAMPLE_CUSTOM_TOKENS;
+    });
+    const button = getResetButton(buttons);
+    button.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(pluginSettingsComponent.settings.customTokensStr).toBe(SAMPLE_CUSTOM_TOKENS);
+  });
+
+  it('should reset custom tokens directly when there is no existing code', async () => {
+    const { buttons, pluginSettingsComponent } = await createTab();
+    expect(pluginSettingsComponent.settings.customTokensStr).toBe('');
+    const button = getResetButton(buttons);
+    button.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(pluginSettingsComponent.settings.customTokensStr).toBe(SAMPLE_CUSTOM_TOKENS);
+  });
+
+  it('should reset custom tokens after confirmation when existing code is present', async () => {
+    vi.mocked(confirm).mockResolvedValue(true);
+    const { buttons, pluginSettingsComponent } = await createTab();
+    await pluginSettingsComponent.editAndSave((settings) => {
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
+      settings.customTokensStr = 'registerCustomToken(\'foo\', () => \'bar\');';
+    });
+    const button = getResetButton(buttons);
+    button.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(confirm).toHaveBeenCalled();
+    expect(pluginSettingsComponent.settings.customTokensStr).toBe(SAMPLE_CUSTOM_TOKENS);
+  });
+
+  it('should keep custom tokens when the reset confirmation is cancelled', async () => {
+    vi.mocked(confirm).mockResolvedValue(false);
+    const { buttons, pluginSettingsComponent } = await createTab();
+    const existingCode = 'registerCustomToken(\'foo\', () => \'bar\');';
+    await pluginSettingsComponent.editAndSave((settings) => {
+      // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
+      settings.customTokensStr = existingCode;
+    });
+    const button = getResetButton(buttons);
+    button.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(confirm).toHaveBeenCalled();
+    expect(pluginSettingsComponent.settings.customTokensStr).toBe(existingCode);
+  });
+
+  it('should normalize and trim the attachment folder path when its value changes', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab((settings) => {
+      settings.shouldFollowObsidianAttachmentLocation = false;
+    });
+    const component = findComponent(textLikeComponents, 'Location for new attachments');
+    component.setValue('assets/folder   ');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.attachmentFolderPath).toBe('assets/folder');
+  });
+
+  it('should normalize and trim the collected attachment folder path when its value changes', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Collected attachment folder path');
+    const attachmentFolderPathBefore = pluginSettingsComponent.settings.attachmentFolderPath;
+    component.setValue('exported/folder   ');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.collectedAttachmentFolderPath).toBe('exported/folder');
+    // The destination for NEW attachments is untouched: decoupling the two is the whole point of the row.
+    expect(pluginSettingsComponent.settings.attachmentFolderPath).toBe(attachmentFolderPathBefore);
+  });
+
+  it('should store the duplicate name separator with restored space characters', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Duplicate name separator');
+    component.setValue('␣');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.duplicateNameSeparator).toBe(' ');
+  });
+
+  it('should store the special characters with restored space characters', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Special characters');
+    component.setValue('a␣b');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.specialCharacters).toBe('a b');
+  });
+
+  it('should store the special characters replacement with restored space characters', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Special characters replacement');
+    component.setValue('x␣y');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.specialCharactersReplacement).toBe('x y');
+  });
+
+  it('should visualize whitespace as the value is typed into the duplicate name separator', async () => {
+    const { textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Duplicate name separator');
+    const inputEl = component.inputEl;
+    expect(inputEl).toBeDefined();
+    if (!inputEl) {
+      return;
+    }
+    inputEl.value = 'a b';
+    inputEl.dispatchEvent(new Event('input'));
+    expect(inputEl.value).toBe('a␣b');
+  });
+
+  it('should convert the selected JPEG quality back to a number', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'JPEG Quality');
+    component.setValue('0.50');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.jpegQuality).toBe(0.5);
+  });
+
+  it('should bind the attachment rename mode dropdown', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Attachment rename mode');
+    component.setValue(AttachmentRenameMode.All);
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.attachmentRenameMode).toBe(AttachmentRenameMode.All);
+  });
+
+  it('should bind the default image size text field', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Default image size');
+    component.setValue('300px');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.defaultImageSize).toBe('300px');
+  });
+
+  it('should bind the timeout number field', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Timeout in seconds');
+    component.setValue('42');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.timeoutInSeconds).toBe(42);
+  });
+
+  it('should hide the plugin picker while no list mode is selected', async () => {
+    // `None` and `All` never consult a plugin id, so a list of plugins would be a control that does nothing.
+    const { names, tab } = await createTab();
+    expect(isRowVisible(tab, 'Plugins')).toBe(false);
+    expect(names).not.toContain('Plugins');
+  });
+
+  it('should show the plugin picker for the include mode', async () => {
+    const { names, tab } = await createTab((settings) => {
+      settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins;
+    });
+    expect(isRowVisible(tab, 'Plugins')).toBe(true);
+    expect(names).toContain('Plugins');
+  });
+
+  it('should show the plugin picker for the exclude mode', async () => {
+    const { tab } = await createTab((settings) => {
+      settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.AllExceptListedPlugins;
+    });
+    expect(isRowVisible(tab, 'Plugins')).toBe(true);
+  });
+
+  it('should re-evaluate the predicates when the rename-by-other-plugins dropdown changes', async () => {
+    const { tab, textLikeComponents } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = textLikeComponents.find((entry) => entry.name === 'Rename attachments created by other plugins');
+    expect(captured).toBeDefined();
+    captured?.setValue(RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should bind the plugin picker', async () => {
+    const { multipleDropdownComponents, pluginSettingsComponent } = await createTab((settings) => {
+      settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.OnlyListedPlugins;
+      // Offered as an option because it is already stored, even though no manifest names it.
+      settings.otherPluginIdsForAttachmentRename = ['media-extended'];
+    });
+    const component = findMultipleValueComponent(multipleDropdownComponents, 'Plugins');
+    component.setValue(['media-extended']);
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.otherPluginIdsForAttachmentRename).toStrictEqual(['media-extended']);
+  });
+
+  it('should hide the ownerless-scan paths while the mode does not consult them', async () => {
+    // Off and entire-vault both ignore the list, so showing it would be a control that decides nothing.
+    const { names, tab } = await createTab();
+    expect(isRowVisible(tab, 'Paths to look in')).toBe(false);
+    expect(names).not.toContain('Paths to look in');
+
+    const { tab: entireVaultTab } = await createTab((settings) => {
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.EntireVault;
+    });
+    expect(isRowVisible(entireVaultTab, 'Paths to look in')).toBe(false);
+  });
+
+  it('should show the ownerless-scan paths for the listed-paths mode', async () => {
+    const { names, tab } = await createTab((settings) => {
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.ListedPaths;
+    });
+    expect(isRowVisible(tab, 'Paths to look in')).toBe(true);
+    expect(names).toContain('Paths to look in');
+  });
+
+  it('should re-evaluate the predicates when the ownerless-scan dropdown changes', async () => {
+    const { tab, textLikeComponents } = await createTab();
+
+    const refreshDomStateSpy = vi.fn();
+    tab.refreshDomState = refreshDomStateSpy;
+    const captured = textLikeComponents.find((entry) => entry.name === 'Find attachments no note owns');
+    expect(captured).toBeDefined();
+    captured?.setValue(OrphanAttachmentScanMode.ListedPaths);
+    await waitForAllAsyncOperations();
+    expect(refreshDomStateSpy).toHaveBeenCalled();
+  });
+
+  it('should bind the ownerless-scan paths', async () => {
+    const { multipleTextComponents, pluginSettingsComponent } = await createTab((settings) => {
+      settings.orphanAttachmentScanMode = OrphanAttachmentScanMode.ListedPaths;
+    });
+    const component = findMultipleValueComponent(multipleTextComponents, 'Paths to look in');
+    component.setValue(['Books/!!files']);
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.orphanAttachmentScanPaths).toStrictEqual(['Books/!!files']);
+  });
+
+  it('should bind a multiple-text field', async () => {
+    const { multipleTextComponents, pluginSettingsComponent } = await createTab();
+    const component = findMultipleValueComponent(multipleTextComponents, 'Exclude paths from attachment collecting');
+    component.setValue(['foo/bar']);
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.excludePathsFromAttachmentCollecting).toStrictEqual(['foo/bar']);
+  });
+
+  it('should bind the multiple-notes-check extension list', async () => {
+    const { multipleTextComponents, pluginSettingsComponent } = await createTab();
+    const component = findMultipleValueComponent(multipleTextComponents, 'Exclude extensions from multiple notes check');
+    component.setValue(['af']);
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.excludeExtensionsFromMultipleNotesCheck).toStrictEqual(['af']);
+  });
+
+  it('should re-register custom tokens when the custom tokens code changes', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Custom tokens');
+    component.setValue('registerCustomToken(\'qux\', () => \'quux\');');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.customTokensStr).toBe('registerCustomToken(\'qux\', () => \'quux\');');
+  });
+
+  it('should register custom tokens and revalidate after the debounce elapses', async () => {
+    vi.useFakeTimers();
+    try {
+      const { pluginSettingsComponent, textLikeComponents } = await createTab();
+      const revalidateSpy = vi.spyOn(pluginSettingsComponent, 'revalidate');
+      const component = findComponent(textLikeComponents, 'Custom tokens');
+      component.setValue('registerCustomToken(\'corge\', () => \'grault\');');
+      await vi.advanceTimersByTimeAsync(2000);
+      await waitForAllAsyncOperations();
+      expect(revalidateSpy).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  }, DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS);
+
+  it('should default the caret offsets to zero when the input reports no selection', async () => {
+    const { textLikeComponents } = await createTab();
+    const component = findComponent(textLikeComponents, 'Duplicate name separator');
+    const inputEl = component.inputEl;
+    expect(inputEl).toBeDefined();
+    if (!inputEl) {
+      return;
+    }
+    Object.defineProperties(inputEl, {
+      selectionEnd: { configurable: true, value: null },
+      selectionStart: { configurable: true, value: null }
+    });
+    inputEl.value = 'c d';
+    inputEl.dispatchEvent(new Event('input'));
+    expect(inputEl.value).toBe('c␣d');
+  });
+});
+
+function findComponent(components: CapturedValueComponent[], name: string): CapturedValueComponent {
+  const component = components.find((entry) => entry.name === name);
+  if (!component) {
+    throw new Error(`Component "${name}" was not captured.`);
+  }
+  return component;
+}
+
+function findMultipleValueComponent(components: CapturedMultipleValueComponent[], name: string): CapturedMultipleValueComponent {
+  const component = components.find((entry) => entry.name === name);
+  if (!component) {
+    throw new Error(`Multiple-text component "${name}" was not captured.`);
+  }
+  return component;
+}
+
+function getResetButton(buttons: ButtonComponentClass[]): ButtonComponentClass {
+  const button = buttons[0];
+  if (!button) {
+    throw new Error('Reset button was not captured.');
+  }
+  return button;
+}
+
+// Obsidian fires a select's `onChange` from the element's `change` event, never from `setValue`, so a
+// test that changes a row the way the user does has to raise that event after setting the value.
+function pickIn(selectEl: HTMLSelectElement): void {
+  selectEl.dispatchEvent(new Event('change'));
+}
+
+// Obsidian fires a text-like input's `onChange` from the element's `input` event, never from `setValue`,
+// so a test that changes a row the way the user does has to raise that event after setting the value.
+function typeInto(inputEl: HTMLInputElement | HTMLTextAreaElement): void {
+  inputEl.dispatchEvent(new Event('input'));
+}

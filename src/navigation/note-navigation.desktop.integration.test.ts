@@ -1,0 +1,146 @@
+import type { TAbstractFile } from 'obsidian';
+
+import { evalInObsidian } from 'obsidian-integration-testing';
+import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
+import {
+  describe,
+  expect,
+  it
+} from 'vitest';
+
+import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settings-component-finder.ts';
+
+/*
+ * End-to-end coverage for the two navigation commands. Both are resolved through the
+ * plugin's own machinery — the folder from the attachment-folder pattern, the owning note from the
+ * link graph — so only a real vault with a real metadata cache proves they agree with each other.
+ */
+
+interface FileExplorerLike {
+  revealInFolder: (abstractFile: TAbstractFile) => void;
+}
+
+interface NavigationResult {
+  readonly activeFilePathAfterGoToOwningNote: string;
+  readonly attachmentPath: string;
+  readonly expectedAttachmentFolderPath: string;
+  readonly isFileExplorerFound: boolean;
+  readonly notePath: string;
+  readonly revealedPath: string;
+  readonly settingsFound: boolean;
+}
+
+describe('Navigation between a note and its attachments', () => {
+  it('reveals the note\'s attachment folder and comes back from the attachment', async () => {
+    const result = await evalInObsidian({
+      async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<NavigationResult> {
+        interface Settings {
+          attachmentFolderPath: string;
+          generatedAttachmentFileName: string;
+        }
+        function isSettings(value: unknown): value is Settings {
+          return typeof value === 'object' && value !== null
+            && typeof (value as Record<string, unknown>)['attachmentFolderPath'] === 'string'
+            && typeof (value as Record<string, unknown>)['generatedAttachmentFileName'] === 'string';
+        }
+        /*
+         * 24 x 250 ms = 6 000 ms per call, and it is called THREE times below, plus a 500 ms settle: 18 500 ms in
+         * all, under the transport's ~30s per-closure default. The project raises its command timeout past that,
+         * but only as a backstop — a closure that spends it dies as a bare transport timeout, never as the wait
+         * that overran. Each wait settles within moments on a quiet machine.
+         */
+        async function waitUntil(checkIsSettled: () => boolean): Promise<void> {
+          for (let attempt = 0; attempt < 24 && !checkIsSettled(); attempt++) {
+            await sleep(250);
+          }
+        }
+
+        const emptyResult: NavigationResult = {
+          activeFilePathAfterGoToOwningNote: '',
+          attachmentPath: '',
+          expectedAttachmentFolderPath: '',
+          isFileExplorerFound: false,
+          notePath: '',
+          revealedPath: '',
+          settingsFound: false
+        };
+
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin('obsidian-custom-attachment-location'), isSettings);
+        if (!settingsComponent) {
+          return emptyResult;
+        }
+
+        const priorFolderPath = settingsComponent.settings.attachmentFolderPath;
+        await settingsComponent.editAndSave((settings) => {
+          settings.attachmentFolderPath = './_/{{noteFileName}}';
+        });
+
+        try {
+          const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
+          const noteBaseName = `NavNote-${stamp}`;
+          const notePath = `${noteBaseName}.md`;
+          const attachmentFolderPath = `_/${noteBaseName}`;
+          const attachmentPath = `${attachmentFolderPath}/img-${stamp}.png`;
+
+          await app.vault.createFolder(attachmentFolderPath);
+          await app.vault.createBinary(attachmentPath, new ArrayBuffer(8));
+          const note = await app.vault.create(notePath, `![[${attachmentPath}]]\n`);
+
+          const attachmentFile = app.vault.getFileByPath(attachmentPath);
+          if (!attachmentFile) {
+            return { ...emptyResult, settingsFound: true };
+          }
+
+          const fileExplorer = app.internalPlugins.getEnabledPluginById('file-explorer') as FileExplorerLike | null;
+          if (!fileExplorer) {
+            return { ...emptyResult, settingsFound: true };
+          }
+
+          // Go to attachment folder: from the note, reveal the folder the pattern resolves to.
+          await app.workspace.getLeaf(false).openFile(note);
+          await sleep(500);
+
+          let revealedPath = '';
+          const originalRevealInFolder = fileExplorer.revealInFolder.bind(fileExplorer);
+          fileExplorer.revealInFolder = (abstractFile: TAbstractFile): void => {
+            revealedPath = abstractFile.path;
+          };
+          try {
+            app.commands.executeCommandById('obsidian-custom-attachment-location:go-to-attachment-folder');
+            await waitUntil(() => revealedPath !== '');
+          } finally {
+            fileExplorer.revealInFolder = originalRevealInFolder;
+          }
+
+          // Go to owning note: from the attachment, open the note that references it.
+          await app.workspace.getLeaf(false).openFile(attachmentFile);
+          await waitUntil(() => app.workspace.getActiveFile()?.path === attachmentPath);
+
+          app.commands.executeCommandById('obsidian-custom-attachment-location:go-to-owning-note');
+          await waitUntil(() => app.workspace.getActiveFile()?.path === notePath);
+
+          return {
+            activeFilePathAfterGoToOwningNote: app.workspace.getActiveFile()?.path ?? '',
+            attachmentPath,
+            expectedAttachmentFolderPath: attachmentFolderPath,
+            isFileExplorerFound: true,
+            notePath,
+            revealedPath,
+            settingsFound: true
+          };
+        } finally {
+          await settingsComponent.editAndSave((settings) => {
+            settings.attachmentFolderPath = priorFolderPath;
+          });
+        }
+      },
+      input: { findPluginSettingsComponent },
+      vaultPath: getTemporaryVault().path
+    });
+
+    expect(result.settingsFound).toBe(true);
+    expect(result.isFileExplorerFound).toBe(true);
+    expect(result.revealedPath).toBe(result.expectedAttachmentFolderPath);
+    expect(result.activeFilePathAfterGoToOwningNote).toBe(result.notePath);
+  }, 180_000);
+});

@@ -44,38 +44,38 @@ import {
   vi
 } from 'vitest';
 
-import type { MigratableSettings } from './advanced-rename-and-delete-handler.ts';
-import type { CustomAttachmentLocationApi } from './plugin-api.ts';
+import type { MigratableSettings } from './advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
+import type { CustomAttachmentLocationApi } from './plugin-api/plugin-api.ts';
 
-import { ADVANCED_RENAME_AND_DELETE_HANDLER_API_CONTRACT } from './advanced-rename-and-delete-handler-api/api-contract.ts';
-import { ArrayBufferMap } from './array-buffer-map.ts';
-import { AttachmentCollector } from './attachment-collector.ts';
-import { AttachmentPathManager } from './attachment-path-manager.ts';
-import { AttachmentSaver } from './attachment-saver.ts';
-import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
-import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
-import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
-import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './command-handlers/delete-unused-attachments-entire-vault-command-handler.ts';
-import { DeleteUnusedAttachmentsInFileCommandHandler } from './command-handlers/delete-unused-attachments-in-file-command-handler.ts';
-import { GoToAttachmentFolderCommandHandler } from './command-handlers/go-to-attachment-folder-command-handler.ts';
-import { GoToOwningNoteCommandHandler } from './command-handlers/go-to-owning-note-command-handler.ts';
-import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
-import { PruneOriginalAttachmentNamesCommandHandler } from './command-handlers/prune-original-attachment-names-command-handler.ts';
-import { RememberCurrentNameAsOriginalCommandHandler } from './command-handlers/remember-current-name-as-original-command-handler.ts';
-import { ShowOriginalAttachmentNamesCommandHandler } from './command-handlers/show-original-attachment-names-command-handler.ts';
-import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
-import { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
-import { ImageManager } from './image-manager.ts';
-import { ImageSizeMap } from './image-size-map.ts';
-import { MarkdownUrlMap } from './markdown-url-map.ts';
-import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
-import { PLUGIN_API_CONTRACT } from './plugin-api.ts';
-import { PluginSettingsComponent } from './plugin-settings-component.ts';
-import { PluginSettingsTab } from './plugin-settings-tab.ts';
+import { ADVANCED_RENAME_AND_DELETE_HANDLER_API_CONTRACT } from './advanced-rename-and-delete-handler/api/api-contract.ts';
+import { HandedOverSettingsComponent } from './advanced-rename-and-delete-handler/handed-over-settings-component.ts';
+import { AttachmentPathManager } from './attachment-location/attachment-path-manager.ts';
+import { CustomAttachmentLocationComponent } from './attachment-location/custom-attachment-location-component.ts';
+import { AppSaveAttachmentPatchComponent } from './attachment-saving/app-save-attachment-patch-component.ts';
+import { ArrayBufferMap } from './attachment-saving/array-buffer-map.ts';
+import { AttachmentSaver } from './attachment-saving/attachment-saver.ts';
+import { ImageManager } from './attachment-saving/image-manager.ts';
+import { AttachmentCollector } from './collect/attachment-collector.ts';
+import { CollectAttachmentsEntireVaultCommandHandler } from './collect/collect-attachments-entire-vault-command-handler.ts';
+import { CollectAttachmentsInCurrentFolderCommandHandler } from './collect/collect-attachments-in-current-folder-command-handler.ts';
+import { CollectAttachmentsInFileCommandHandler } from './collect/collect-attachments-in-file-command-handler.ts';
+import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './delete-unused-attachments/delete-unused-attachments-entire-vault-command-handler.ts';
+import { DeleteUnusedAttachmentsInFileCommandHandler } from './delete-unused-attachments/delete-unused-attachments-in-file-command-handler.ts';
+import { UnusedAttachmentsRemover } from './delete-unused-attachments/unused-attachments-remover.ts';
+import { ImageSizeMap } from './markdown-links/image-size-map.ts';
+import { MarkdownUrlMap } from './markdown-links/markdown-url-map.ts';
+import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to-proper-folder/move-attachment-to-proper-folder-command-handler.ts';
+import { GoToAttachmentFolderCommandHandler } from './navigation/go-to-attachment-folder-command-handler.ts';
+import { GoToOwningNoteCommandHandler } from './navigation/go-to-owning-note-command-handler.ts';
+import { PruneOriginalAttachmentNamesCommandHandler } from './original-attachment-names/prune-original-attachment-names-command-handler.ts';
+import { RememberCurrentNameAsOriginalCommandHandler } from './original-attachment-names/remember-current-name-as-original-command-handler.ts';
+import { ShowOriginalAttachmentNamesCommandHandler } from './original-attachment-names/show-original-attachment-names-command-handler.ts';
+import { PLUGIN_API_CONTRACT } from './plugin-api/plugin-api.ts';
 import { createReleaseNotesComponent } from './release-notes-component.ts';
-import { TokenValidator } from './token-validator.ts';
-import { createTokenizedStringLanguageComponent } from './tokenized-string-language.ts';
-import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
+import { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
+import { PluginSettingsTab } from './settings/plugin-settings-tab.ts';
+import { TokenValidator } from './tokens/token-validator.ts';
+import { createTokenizedStringLanguageComponent } from './tokens/tokenized-string-language.ts';
 
 // --- Hoisted shared state ---
 
@@ -126,7 +126,7 @@ vi.mock('@mnaoumov/obsidian-lib/components/rename-delete-handler-component', asy
 // `pluginEventSource.on`, so a bare `vi.fn()` double makes the base throw before `onloadImpl` runs.
 // --- The plugin's OWN sibling modules: collaborators added as children return a real Component; the rest are bare constructor spies. ---
 
-vi.mock('./handed-over-settings-component.ts', () => ({
+vi.mock('./advanced-rename-and-delete-handler/handed-over-settings-component.ts', () => ({
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
   HandedOverSettingsComponent: vi.fn(function handedOverSettingsComponentStub() {
     return new Component();
@@ -144,77 +144,77 @@ vi.mock('@mnaoumov/obsidian-lib/components/settings-migration-component', async 
   };
 });
 
-vi.mock('./array-buffer-map.ts', () => ({
+vi.mock('./attachment-saving/array-buffer-map.ts', () => ({
   ArrayBufferMap: vi.fn()
 }));
 
-vi.mock('./attachment-collector.ts', () => ({
+vi.mock('./collect/attachment-collector.ts', () => ({
   AttachmentCollector: vi.fn()
 }));
 
-vi.mock('./attachment-path-manager.ts', () => ({
+vi.mock('./attachment-location/attachment-path-manager.ts', () => ({
   AttachmentPathManager: vi.fn()
 }));
 
-vi.mock('./attachment-saver.ts', () => ({
+vi.mock('./attachment-saving/attachment-saver.ts', () => ({
   AttachmentSaver: vi.fn()
 }));
 
-vi.mock('./command-handlers/collect-attachments-entire-vault-command-handler.ts', () => ({
+vi.mock('./collect/collect-attachments-entire-vault-command-handler.ts', () => ({
   CollectAttachmentsEntireVaultCommandHandler: vi.fn()
 }));
 
-vi.mock('./command-handlers/collect-attachments-in-current-folder-command-handler.ts', () => ({
+vi.mock('./collect/collect-attachments-in-current-folder-command-handler.ts', () => ({
   CollectAttachmentsInCurrentFolderCommandHandler: vi.fn()
 }));
 
-vi.mock('./command-handlers/collect-attachments-in-file-command-handler.ts', () => ({
+vi.mock('./collect/collect-attachments-in-file-command-handler.ts', () => ({
   CollectAttachmentsInFileCommandHandler: vi.fn()
 }));
 
-vi.mock('./command-handlers/delete-unused-attachments-in-file-command-handler.ts', () => ({
+vi.mock('./delete-unused-attachments/delete-unused-attachments-in-file-command-handler.ts', () => ({
   DeleteUnusedAttachmentsInFileCommandHandler: vi.fn()
 }));
 
-vi.mock('./command-handlers/go-to-attachment-folder-command-handler.ts', () => ({
+vi.mock('./navigation/go-to-attachment-folder-command-handler.ts', () => ({
   GoToAttachmentFolderCommandHandler: vi.fn()
 }));
 
-vi.mock('./command-handlers/go-to-owning-note-command-handler.ts', () => ({
+vi.mock('./navigation/go-to-owning-note-command-handler.ts', () => ({
   GoToOwningNoteCommandHandler: vi.fn()
 }));
 
-vi.mock('./command-handlers/move-attachment-to-proper-folder-command-handler.ts', () => ({
+vi.mock('./move-attachment-to-proper-folder/move-attachment-to-proper-folder-command-handler.ts', () => ({
   MoveAttachmentToProperFolderCommandHandler: vi.fn()
 }));
 
-vi.mock('./custom-attachment-location-component.ts', () => ({
+vi.mock('./attachment-location/custom-attachment-location-component.ts', () => ({
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
   CustomAttachmentLocationComponent: vi.fn(function customAttachmentLocationComponentStub() {
     return new Component();
   })
 }));
 
-vi.mock('./image-manager.ts', () => ({
+vi.mock('./attachment-saving/image-manager.ts', () => ({
   ImageManager: vi.fn()
 }));
 
-vi.mock('./image-size-map.ts', () => ({
+vi.mock('./markdown-links/image-size-map.ts', () => ({
   ImageSizeMap: vi.fn()
 }));
 
-vi.mock('./markdown-url-map.ts', () => ({
+vi.mock('./markdown-links/markdown-url-map.ts', () => ({
   MarkdownUrlMap: vi.fn()
 }));
 
-vi.mock('./patches/app-save-attachment-patch-component.ts', () => ({
+vi.mock('./attachment-saving/app-save-attachment-patch-component.ts', () => ({
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
   AppSaveAttachmentPatchComponent: vi.fn(function appSaveAttachmentPatchComponentStub() {
     return new Component();
   })
 }));
 
-vi.mock('./plugin-settings-component.ts', () => ({
+vi.mock('./settings/plugin-settings-component.ts', () => ({
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component carrying the stubbed settings.
   PluginSettingsComponent: vi.fn(function pluginSettingsComponentStub() {
     const component = new Component();
@@ -227,7 +227,7 @@ vi.mock('./plugin-settings-component.ts', () => ({
   })
 }));
 
-vi.mock('./plugin-settings-tab.ts', () => ({
+vi.mock('./settings/plugin-settings-tab.ts', () => ({
   PluginSettingsTab: vi.fn()
 }));
 
@@ -235,15 +235,15 @@ vi.mock('./release-notes-component.ts', () => ({
   createReleaseNotesComponent: vi.fn(() => new Component())
 }));
 
-vi.mock('./tokenized-string-language.ts', () => ({
+vi.mock('./tokens/tokenized-string-language.ts', () => ({
   createTokenizedStringLanguageComponent: vi.fn(() => new Component())
 }));
 
-vi.mock('./token-validator.ts', () => ({
+vi.mock('./tokens/token-validator.ts', () => ({
   TokenValidator: vi.fn()
 }));
 
-vi.mock('./unused-attachments-remover.ts', () => ({
+vi.mock('./delete-unused-attachments/unused-attachments-remover.ts', () => ({
   UnusedAttachmentsRemover: vi.fn()
 }));
 
@@ -519,7 +519,7 @@ describe('Plugin', () => {
     /*
      * The per-note read exists BECAUSE the `Vault.getConfig` patch cannot answer for a note that is not
      * open. That defect is proved end to end in
-     * `src/plugin-api-per-note-folder.desktop.integration.test.ts`; what is asserted here is only that the
+     * `src/plugin-api/plugin-api-per-note-folder.desktop.integration.test.ts`; what is asserted here is only that the
      * declaration reaches the registry at all, which is the half a consumer negotiates against.
      */
     it('should publish its reads through the registry, at the declared contract', async () => {
