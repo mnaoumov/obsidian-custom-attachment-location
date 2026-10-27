@@ -131,6 +131,10 @@ The names are kept in `original-attachment-names.json`, in the plugin's folder b
 
 Manual walkthrough: set `collectedAttachmentFileName` to `{{noteFileName}}-{{originalAttachmentFileName}}` and turn on `shouldRenameCollectedAttachments`. Paste an image into a note, run **Collect attachments in current note** twice, and the image keeps the name the first collect gave it. Then run **Show original attachment names** to see the name it arrived with.
 
+Right-click an attachment in the file explorer, or a link to that attachment, for **Copy original file name** and **Copy original path**. Each action copies its stored value exactly and stays visible but disabled when that value is unknown. Neither substitutes the attachment's current name or path. The original path is the source path exposed by the import, when available; older records and pathless clipboard images have no source path. These optional paths are stored alongside the original names, follow vault moves, and are removed when their records are forgotten or deleted. Remembering a different original name does not change a recorded source path. Obsidian's own path-copy actions continue to describe the current file.
+
+Manual copy walkthrough: turn on **All** attachment renaming and choose a generated name different from the incoming name. Drop a PDF from a file manager into a note. Use each original-metadata copy action from the attachment's file menu and from its note link, then paste into a plain text editor: the results should be the source file's name and source path. A pathless clipboard image enables the original-name action only. An attachment with neither value recorded shows both actions disabled.
+
 ## Safety net for non-standard references
 
 The plugin only sees attachment references that Obsidian indexes - traditional `[[wikilink]]` / `![](markdown)` embeds. If another plugin renders images through its own syntax (a raw `<img src="...">`, a custom code block, an image-slider list, etc.), those references are invisible to collecting, so an attachment used only that way could be moved to an unexpected place and later lost.

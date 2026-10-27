@@ -64,6 +64,8 @@ interface AttachmentSaverSaveAttachmentParams {
   readonly shouldPreserveContent?: boolean;
 }
 
+type AttachmentSaverSaveAttachmentWithRenamingParams = AttachmentSaverSaveAttachmentParams;
+
 export class AttachmentSaver {
   private readonly app: App;
   private readonly arrayBufferMap: ArrayBufferMap;
@@ -89,6 +91,60 @@ export class AttachmentSaver {
   }
 
   public async saveAttachment(params: AttachmentSaverSaveAttachmentParams): Promise<TFile> {
+    const originalPath = this.arrayBufferMap.getSourcePath(params.attachmentFileContent);
+    const file = await this.saveAttachmentWithRenaming(params);
+    if (originalPath) {
+      this.attachmentPathManager.originalAttachmentNamesComponent.setOriginalPath(file.path, originalPath);
+    }
+    return file;
+  }
+
+  private async saveAttachmentCore(params: AttachmentSaverSaveAttachmentCoreParams): Promise<TFile> {
+    const noteFile = this.app.workspace.getActiveFile();
+    const attachmentFileStats = this.arrayBufferMap.getFileStats(params.attachmentFileContent);
+
+    const attachmentFileContent = params.attachmentFileContent;
+    const attachmentPath = params.destinationPath ?? await this.attachmentPathManager.getAvailablePathForAttachments({
+      attachmentFileBaseName: params.attachmentFileBaseName,
+      attachmentFileExtension: params.attachmentFileExtension,
+      attachmentFileStats,
+      context: actionContextToAttachmentPathContext(ActionContext.SaveAttachment),
+      notePathOrFile: noteFile,
+      oldAttachmentPathOrFile: makeFileName({
+        fileBaseName: params.attachmentFileBaseName,
+        fileExtension: params.attachmentFileExtension
+      }),
+      originalAttachmentFileName: params.originalAttachmentFileName,
+      readAttachmentFileContent: (): Promise<ArrayBuffer> => Promise.resolve(attachmentFileContent),
+      shouldReplaceSpecialCharactersInKeptFileName: params.shouldReplaceSpecialCharactersInKeptFileName ?? false,
+      shouldSkipDuplicateCheck: false,
+      shouldSkipGeneratedAttachmentFileName: true,
+      shouldSkipMissingAttachmentFolderCreation: false
+    });
+
+    if (params.destinationPath) {
+      this.attachmentPathManager.originalAttachmentNamesComponent.expectArrival(attachmentPath, params.originalAttachmentFileName);
+    }
+
+    const imageSize = await this.imageManager.getImageSize({
+      content: params.attachmentFileContent,
+      extension: params.attachmentFileExtension
+    });
+    if (imageSize !== null) {
+      this.imageSizeMap.set({ path: attachmentPath, size: imageSize });
+    }
+
+    return await this.app.vault.createBinary(
+      attachmentPath,
+      params.attachmentFileContent,
+      removeUndefinedProperties(normalizeOptionalProperties<DataWriteOptions>({
+        ctime: attachmentFileStats?.ctime ? Math.trunc(attachmentFileStats.ctime) : undefined,
+        mtime: attachmentFileStats?.mtime ? Math.trunc(attachmentFileStats.mtime) : undefined
+      }))
+    );
+  }
+
+  private async saveAttachmentWithRenaming(params: AttachmentSaverSaveAttachmentWithRenamingParams): Promise<TFile> {
     let attachmentFileBaseName = params.attachmentFileBaseName;
     let attachmentFileContent = params.attachmentFileContent;
     let attachmentFileExtension = params.attachmentFileExtension;
@@ -201,50 +257,5 @@ export class AttachmentSaver {
       this.markdownUrlMap.delete(attachmentFile.path);
     }
     return attachmentFile;
-  }
-
-  private async saveAttachmentCore(params: AttachmentSaverSaveAttachmentCoreParams): Promise<TFile> {
-    const noteFile = this.app.workspace.getActiveFile();
-    const attachmentFileStats = this.arrayBufferMap.getFileStats(params.attachmentFileContent);
-
-    const attachmentFileContent = params.attachmentFileContent;
-    const attachmentPath = params.destinationPath ?? await this.attachmentPathManager.getAvailablePathForAttachments({
-      attachmentFileBaseName: params.attachmentFileBaseName,
-      attachmentFileExtension: params.attachmentFileExtension,
-      attachmentFileStats,
-      context: actionContextToAttachmentPathContext(ActionContext.SaveAttachment),
-      notePathOrFile: noteFile,
-      oldAttachmentPathOrFile: makeFileName({
-        fileBaseName: params.attachmentFileBaseName,
-        fileExtension: params.attachmentFileExtension
-      }),
-      originalAttachmentFileName: params.originalAttachmentFileName,
-      readAttachmentFileContent: (): Promise<ArrayBuffer> => Promise.resolve(attachmentFileContent),
-      shouldReplaceSpecialCharactersInKeptFileName: params.shouldReplaceSpecialCharactersInKeptFileName ?? false,
-      shouldSkipDuplicateCheck: false,
-      shouldSkipGeneratedAttachmentFileName: true,
-      shouldSkipMissingAttachmentFolderCreation: false
-    });
-
-    if (params.destinationPath) {
-      this.attachmentPathManager.originalAttachmentNamesComponent.expectArrival(attachmentPath, params.originalAttachmentFileName);
-    }
-
-    const imageSize = await this.imageManager.getImageSize({
-      content: params.attachmentFileContent,
-      extension: params.attachmentFileExtension
-    });
-    if (imageSize !== null) {
-      this.imageSizeMap.set({ path: attachmentPath, size: imageSize });
-    }
-
-    return await this.app.vault.createBinary(
-      attachmentPath,
-      params.attachmentFileContent,
-      removeUndefinedProperties(normalizeOptionalProperties<DataWriteOptions>({
-        ctime: attachmentFileStats?.ctime ? Math.trunc(attachmentFileStats.ctime) : undefined,
-        mtime: attachmentFileStats?.mtime ? Math.trunc(attachmentFileStats.mtime) : undefined
-      }))
-    );
   }
 }

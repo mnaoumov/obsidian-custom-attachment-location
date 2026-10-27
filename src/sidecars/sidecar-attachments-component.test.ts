@@ -34,6 +34,7 @@ describe('sidecar attachment operations', () => {
   let settings: PluginSettings;
   let pathManager: AttachmentPathManager;
   let originalNames: Map<string, string>;
+  let originalPaths: Map<string, string>;
   let save: ReturnType<typeof vi.fn<AttachmentSaver['saveAttachment']>>;
   let showNotice: ReturnType<typeof vi.fn<PluginNoticeComponent['showNotice']>>;
 
@@ -53,11 +54,17 @@ describe('sidecar attachment operations', () => {
     });
     saver = strictProxy<AttachmentSaver>({ saveAttachment: save });
     originalNames = new Map();
+    originalPaths = new Map();
     pathManager = strictProxy<AttachmentPathManager>({
       getAttachmentFolderFullPathForPath: vi.fn().mockResolvedValue('assets'),
       getAvailablePathForAttachments: vi.fn().mockResolvedValue('assets/independent.pdf'),
       getProperAttachmentPath: vi.fn().mockResolvedValue('assets/independent.pdf'),
-      originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ get: (path) => originalNames.get(path) })
+      originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({
+        get: (path) => originalNames.get(path),
+        setOriginalPath: (path, originalPath) => {
+          originalPaths.set(path, originalPath);
+        }
+      })
     });
     app.importAttachments = async (attachments): Promise<TFile[]> => {
       const files: TFile[] = [];
@@ -80,6 +87,12 @@ describe('sidecar attachment operations', () => {
   });
   afterEach(() => {
     component.unload();
+  });
+
+  it('retains each import source path even when its destination name changes', async () => {
+    const files = await app.importAttachments([imported('source', 'pdf', '/Downloads/source.pdf')], null);
+    expect(files).toHaveLength(1);
+    expect(originalPaths.get(files[0]?.path ?? '')).toBe('/Downloads/source.pdf');
   });
 
   function imported(name: string, extension: string, filepath?: string): ImportedAttachment {
