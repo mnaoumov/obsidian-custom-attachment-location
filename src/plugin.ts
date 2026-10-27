@@ -29,7 +29,7 @@ import {
 import type {
   AdvancedRenameAndDeleteHandlerMigratableSettings,
   MigratableSettings
-} from './advanced-rename-and-delete-handler.ts';
+} from './advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
 
 import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_API_VERSION_RANGE,
@@ -38,52 +38,52 @@ import {
   ADVANCED_RENAME_AND_DELETE_HANDLER_MIN_PLUGIN_VERSION,
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
   ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME
-} from './advanced-rename-and-delete-handler.ts';
-import { ArrayBufferMap } from './array-buffer-map.ts';
-import { AttachmentCollector } from './attachment-collector.ts';
-import { AttachmentPathManager } from './attachment-path-manager.ts';
-import { AttachmentSaver } from './attachment-saver.ts';
-import { AutomaticAttachmentCollectorComponent } from './automatic-attachment-collector-component.ts';
-import { CollectAttachmentsEntireVaultCommandHandler } from './command-handlers/collect-attachments-entire-vault-command-handler.ts';
-import { CollectAttachmentsInCurrentFolderCommandHandler } from './command-handlers/collect-attachments-in-current-folder-command-handler.ts';
-import { CollectAttachmentsInFileCommandHandler } from './command-handlers/collect-attachments-in-file-command-handler.ts';
-import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './command-handlers/delete-unused-attachments-entire-vault-command-handler.ts';
-import { DeleteUnusedAttachmentsInFileCommandHandler } from './command-handlers/delete-unused-attachments-in-file-command-handler.ts';
-import { GoToAttachmentFolderCommandHandler } from './command-handlers/go-to-attachment-folder-command-handler.ts';
-import { GoToOwningNoteCommandHandler } from './command-handlers/go-to-owning-note-command-handler.ts';
-import { MoveAttachmentToProperFolderCommandHandler } from './command-handlers/move-attachment-to-proper-folder-command-handler.ts';
-import { PruneOriginalAttachmentNamesCommandHandler } from './command-handlers/prune-original-attachment-names-command-handler.ts';
-import { RememberCurrentNameAsOriginalCommandHandler } from './command-handlers/remember-current-name-as-original-command-handler.ts';
-import { ShowOriginalAttachmentNamesCommandHandler } from './command-handlers/show-original-attachment-names-command-handler.ts';
+} from './advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
+import { HandedOverSettingsComponent } from './advanced-rename-and-delete-handler/handed-over-settings-component.ts';
+import { AttachmentPathManager } from './attachment-location/attachment-path-manager.ts';
+import { CustomAttachmentLocationComponent } from './attachment-location/custom-attachment-location-component.ts';
+import { AppSaveAttachmentPatchComponent } from './attachment-saving/app-save-attachment-patch-component.ts';
+import { ArrayBufferMap } from './attachment-saving/array-buffer-map.ts';
+import { AttachmentSaver } from './attachment-saving/attachment-saver.ts';
+import { ImageManager } from './attachment-saving/image-manager.ts';
+import { AttachmentCollector } from './collect/attachment-collector.ts';
+import { AutomaticAttachmentCollectorComponent } from './collect/automatic-attachment-collector-component.ts';
+import { CollectAttachmentsEntireVaultCommandHandler } from './collect/collect-attachments-entire-vault-command-handler.ts';
+import { CollectAttachmentsInCurrentFolderCommandHandler } from './collect/collect-attachments-in-current-folder-command-handler.ts';
+import { CollectAttachmentsInFileCommandHandler } from './collect/collect-attachments-in-file-command-handler.ts';
 import {
   CONSISTENT_ATTACHMENTS_AND_LINKS_COLLECTING_VERSION_RANGE,
   CONSISTENT_ATTACHMENTS_AND_LINKS_PLUGIN_ID,
   CONSISTENT_ATTACHMENTS_AND_LINKS_PLUGIN_NAME
 } from './consistent-attachments-and-links.ts';
-import { CustomAttachmentLocationComponent } from './custom-attachment-location-component.ts';
-import { HandedOverSettingsComponent } from './handed-over-settings-component.ts';
+import { DeleteUnusedAttachmentsEntireVaultCommandHandler } from './delete-unused-attachments/delete-unused-attachments-entire-vault-command-handler.ts';
+import { DeleteUnusedAttachmentsInFileCommandHandler } from './delete-unused-attachments/delete-unused-attachments-in-file-command-handler.ts';
+import { UnusedAttachmentsRemover } from './delete-unused-attachments/unused-attachments-remover.ts';
 import { translationsMap } from './i18n/locales/translations-map.ts';
-import { ImageManager } from './image-manager.ts';
-import { ImageSizeMap } from './image-size-map.ts';
-import { MarkdownUrlMap } from './markdown-url-map.ts';
-import { NetworkImageDownloader } from './network-image-downloader.ts';
-import { NoteOwnerResolver } from './note-owner-resolver.ts';
+import { ImageSizeMap } from './markdown-links/image-size-map.ts';
+import { MarkdownUrlMap } from './markdown-links/markdown-url-map.ts';
+import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to-proper-folder/move-attachment-to-proper-folder-command-handler.ts';
+import { GoToAttachmentFolderCommandHandler } from './navigation/go-to-attachment-folder-command-handler.ts';
+import { GoToOwningNoteCommandHandler } from './navigation/go-to-owning-note-command-handler.ts';
+import { NetworkImageDownloader } from './network-images/network-image-downloader.ts';
 import {
   ORIGINAL_ATTACHMENT_NAMES_FILE_NAME,
   OriginalAttachmentNamesComponent
-} from './original-attachment-names-component.ts';
-import { AppSaveAttachmentPatchComponent } from './patches/app-save-attachment-patch-component.ts';
-import { PluginApiImpl } from './plugin-api-impl.ts';
+} from './original-attachment-names/original-attachment-names-component.ts';
+import { PruneOriginalAttachmentNamesCommandHandler } from './original-attachment-names/prune-original-attachment-names-command-handler.ts';
+import { RememberCurrentNameAsOriginalCommandHandler } from './original-attachment-names/remember-current-name-as-original-command-handler.ts';
+import { ShowOriginalAttachmentNamesCommandHandler } from './original-attachment-names/show-original-attachment-names-command-handler.ts';
+import { PluginApiImpl } from './plugin-api/plugin-api-impl.ts';
 import {
   PLUGIN_API_CONTRACT,
   PLUGIN_API_VERSION
-} from './plugin-api.ts';
-import { PluginSettingsComponent } from './plugin-settings-component.ts';
-import { PluginSettingsTab } from './plugin-settings-tab.ts';
+} from './plugin-api/plugin-api.ts';
 import { createReleaseNotesComponent } from './release-notes-component.ts';
-import { TokenValidator } from './token-validator.ts';
-import { createTokenizedStringLanguageComponent } from './tokenized-string-language.ts';
-import { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
+import { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
+import { PluginSettingsTab } from './settings/plugin-settings-tab.ts';
+import { NoteOwnerResolver } from './shared-attachments/note-owner-resolver.ts';
+import { TokenValidator } from './tokens/token-validator.ts';
+import { createTokenizedStringLanguageComponent } from './tokens/tokenized-string-language.ts';
 
 export class Plugin extends PluginBase {
   private attachmentCollector: AttachmentCollector | null = null;

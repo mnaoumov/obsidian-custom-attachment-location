@@ -1,0 +1,44 @@
+import { DUMMY_PATH } from '@mnaoumov/obsidian-lib/attachment-path';
+import { z } from 'zod';
+
+import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
+
+import {
+  formatString,
+  stringFormatSchema
+} from '../base/string-token-base.ts';
+import { TokenBase } from '../base/token-base.ts';
+import { isNonInteractiveActionContext } from '../token-evaluator-context.ts';
+import { promptWithPreview } from './prompt-with-preview-modal.ts';
+
+const formatSchema = z.strictObject({
+  ...stringFormatSchema.shape,
+  defaultValueTemplate: z.string().optional().default('{{originalAttachmentFileName}}')
+});
+type Format = z.infer<typeof formatSchema>;
+
+export class PromptToken extends TokenBase<Format> {
+  public constructor() {
+    super('prompt', formatSchema);
+  }
+
+  protected override async evaluateImpl(context: TokenEvaluatorContext, format: Format): Promise<string> {
+    if (isNonInteractiveActionContext(context.actionContext) || context.attachmentFileName === DUMMY_PATH) {
+      return DUMMY_PATH;
+    }
+
+    const promptResult = await promptWithPreview({
+      context,
+      defaultValue: format.defaultValueTemplate,
+      valueValidator: (value) =>
+        context.tokenValidator.validatePath({
+          areTokensAllowed: false,
+          path: value
+        })
+    });
+    if (promptResult === null) {
+      throw new Error('Prompt cancelled');
+    }
+    return formatString(promptResult, format);
+  }
+}

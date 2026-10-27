@@ -1,0 +1,217 @@
+import type { App } from 'obsidian';
+
+import { DUMMY_PATH } from '@mnaoumov/obsidian-lib/attachment-path';
+import { getOsUnsafePathCharsRegExp } from '@mnaoumov/obsidian-lib/validation';
+import {
+  trimEnd,
+  trimStart
+} from '@mnaoumov/typescript-lib/string';
+
+import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+
+import { Substitutions } from './substitutions.ts';
+import { ActionContext } from './token-evaluator-context.ts';
+import {
+  findLegacyToken,
+  LegacyTokenSyntaxError,
+  parseTokenFormat,
+  scanTokens
+} from './token-parser.ts';
+
+export enum TokenValidationMode {
+  Error = 'Error',
+  Skip = 'Skip',
+  Validate = 'Validate'
+}
+
+interface Token {
+  end: number;
+  formatText: null | string;
+  isScalarFormat: boolean;
+  raw: string;
+  start: number;
+  token: string;
+}
+
+interface TokenValidatorConstructorParams {
+  readonly app: App;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+}
+
+interface TokenValidatorValidateFileNameParams {
+  readonly areSingleDotsAllowed: boolean;
+  readonly fileName: string;
+  readonly isEmptyAllowed: boolean;
+  readonly tokenValidationMode: TokenValidationMode;
+}
+
+interface TokenValidatorValidatePathParams {
+  readonly areTokensAllowed: boolean;
+  readonly path: string;
+}
+
+export class TokenValidator {
+  private readonly app: App;
+  private readonly pluginSettingsComponent: PluginSettingsComponent;
+
+  public constructor(params: TokenValidatorConstructorParams) {
+    this.app = params.app;
+    this.pluginSettingsComponent = params.pluginSettingsComponent;
+  }
+
+  public async validateFileName(params: TokenValidatorValidateFileNameParams): Promise<string> {
+    switch (params.tokenValidationMode) {
+      case TokenValidationMode.Error: {
+        if (scanTokens(params.fileName, { throwOnError: false }).length > 0) {
+          return 'Tokens are not allowed in file name';
+        }
+        break;
+      }
+      case TokenValidationMode.Skip: {
+        break;
+      }
+      case TokenValidationMode.Validate: {
+        const validationMessage = await this.validateTokens(params.fileName);
+        if (validationMessage) {
+          return validationMessage;
+        }
+        break;
+      }
+      default: {
+        throw new Error(`Invalid token validation mode: ${params.tokenValidationMode as string}`);
+      }
+    }
+
+    let cleanFileName: string;
+    try {
+      cleanFileName = removeTokens(params.fileName);
+    } catch (error) {
+      return error instanceof LegacyTokenSyntaxError ? error.message : `Invalid token syntax in file name "${params.fileName}"`;
+    }
+
+    if (cleanFileName === '.' || cleanFileName === '..') {
+      return params.areSingleDotsAllowed ? '' : 'Single dots are not allowed in file name';
+    }
+
+    if (!cleanFileName) {
+      return params.isEmptyAllowed ? '' : 'File name is empty';
+    }
+
+    if (getOsUnsafePathCharsRegExp().test(cleanFileName)) {
+      return `File name "${params.fileName}" contains invalid symbols`;
+    }
+
+    if (MORE_THAN_TWO_DOTS_REG_EXP.test(cleanFileName)) {
+      return `File name "${params.fileName}" contains more than two dots`;
+    }
+
+    return TRAILING_DOTS_REG_EXP.test(cleanFileName) ? `File name "${params.fileName}" contains trailing dots` : '';
+  }
+
+  public async validatePath(params: TokenValidatorValidatePathParams): Promise<string> {
+    const legacyTokenError = findLegacyToken(params.path);
+    if (legacyTokenError) {
+      return legacyTokenError.message;
+    }
+
+    if (params.areTokensAllowed) {
+      const unknownToken = await this.validateTokens(params.path);
+      if (unknownToken) {
+        return `Unknown token: ${unknownToken}`;
+      }
+    } else if (scanTokens(params.path, { throwOnError: false }).length > 0) {
+      return 'Tokens are not allowed in path';
+    }
+
+    let path = trimStart({
+      $string: params.path,
+      prefix: '/'
+    });
+    path = trimEnd({
+      $string: path,
+      suffix: '/'
+    });
+
+    if (path === '') {
+      return '';
+    }
+
+    const pathParts = path.split('/');
+    for (const part of pathParts) {
+      const partValidationError = await this.validateFileName({
+        areSingleDotsAllowed: true,
+        fileName: part,
+        isEmptyAllowed: true,
+        tokenValidationMode: TokenValidationMode.Skip
+      });
+
+      if (partValidationError) {
+        return partValidationError;
+      }
+    }
+
+    return '';
+  }
+
+  private async validateTokens($string: string): Promise<null | string> {
+    const FAKE_SUBSTITUTION = new Substitutions({
+      actionContext: ActionContext.ValidateTokens,
+      app: this.app,
+      attachmentFileName: DUMMY_PATH,
+      noteFilePath: DUMMY_PATH,
+      pluginSettingsComponent: this.pluginSettingsComponent,
+      tokenValidator: this
+    });
+
+    const legacyTokenError = findLegacyToken($string);
+    if (legacyTokenError) {
+      return legacyTokenError.message;
+    }
+
+    const extractedTokens = extractTokens($string);
+
+    for (const extractedToken of extractedTokens) {
+      if (!Substitutions.isRegisteredToken(extractedToken.token)) {
+        return `Unknown token '${extractedToken.token}'.`;
+      }
+
+      // Validate the format object is parseable JSON5 (if present).
+      if (extractedToken.formatText !== null) {
+        try {
+          parseTokenFormat(extractedToken);
+        } catch (error) {
+          return `Invalid format for token '${extractedToken.token}': ${(error as Error).message}`;
+        }
+      }
+
+      // Validate token-specific schema by evaluating in a safe context.
+      try {
+        await FAKE_SUBSTITUTION.fillTemplate(extractedToken.raw);
+      } catch (error) {
+        return `Invalid token '${extractedToken.raw}': ${(error as Error).message}`;
+      }
+    }
+
+    return null;
+  }
+}
+
+function extractTokens($string: string): Token[] {
+  return scanTokens($string, { throwOnError: false });
+}
+
+const MORE_THAN_TWO_DOTS_REG_EXP = /^\.{3,}$/;
+const TRAILING_DOTS_REG_EXP = /\.+$/;
+
+function removeTokens($string: string): string {
+  const tokens = scanTokens($string);
+  let out = '';
+  let lastOffset = 0;
+  for (const t of tokens) {
+    out += $string.slice(lastOffset, t.start);
+    out += `__${t.token}__`;
+    lastOffset = t.end;
+  }
+  out += $string.slice(lastOffset);
+  return out;
+}
