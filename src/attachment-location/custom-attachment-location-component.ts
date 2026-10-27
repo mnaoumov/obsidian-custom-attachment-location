@@ -194,6 +194,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.addChild(
       new FileManagerGenerateMarkdownLinkPatchComponent({
         app: this.app,
+        attachmentPathManager: this.attachmentPathManager,
         fileManager: this.app.fileManager,
         imageSizeMap: this.imageSizeMap,
         markdownUrlMap: this.markdownUrlMap,

@@ -153,7 +153,7 @@ export class TokenValidator {
     return '';
   }
 
-  private async validateTokens($string: string): Promise<null | string> {
+  public async validateTokens($string: string): Promise<null | string> {
     const FAKE_SUBSTITUTION = new Substitutions({
       actionContext: ActionContext.ValidateTokens,
       app: this.app,

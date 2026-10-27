@@ -52,13 +52,22 @@ import type { OriginalAttachmentNamesComponent } from '../original-attachment-na
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { OriginalAttachmentFileNameParams } from '../tokens/substitutions.ts';
 
+import { isImageExtension } from '../attachment-saving/image-mime-types.ts';
 import { selfWriteRegistry } from '../externally-created-attachments/self-write-registry.ts';
+import {
+  formatString,
+  stringFormatSchema
+} from '../tokens/base/string-token-base.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
 import {
   ActionContext,
   attachmentPathContextToActionContext,
   TemplatePart
 } from '../tokens/token-evaluator-context.ts';
+import {
+  parseTokenFormat,
+  scanTokens
+} from '../tokens/token-parser.ts';
 import {
   TokenValidationMode,
   TokenValidator
@@ -70,6 +79,10 @@ import {
 } from './share-receiver-import-files-patch-component.ts';
 
 const ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE = '{{originalAttachmentFileName}}';
+const ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN = 'originalAttachmentFileName'.toLowerCase();
+const ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN = 'originalAttachmentFileExtension'.toLowerCase();
+const MAX_INSERTED_LINK_TEXTS = 100;
+const INSERTED_LINK_TEXT_LIFETIME_IN_MILLISECONDS = 60_000;
 
 interface AttachmentPathManagerCleanKeptFileBaseNameParams {
   readonly fileBaseName: string;
@@ -127,12 +140,26 @@ interface AttachmentPathManagerGetDownloadedImagePathParams {
   readonly noteFilePath: string;
 }
 
+interface AttachmentPathManagerGetInsertedLinkTextParams {
+  readonly attachmentFile: TFile;
+  readonly notePath: string;
+}
+
 interface AttachmentPathManagerGetProperAttachmentPathParams {
   readonly actionContext: ActionContext;
   readonly attachmentFile: TFile;
   readonly noteFilePath: string;
   readonly reference: Reference;
   readonly sequenceNumber: number;
+}
+
+interface AttachmentPathManagerPrepareInsertedLinkTextParams {
+  readonly attachmentFileBaseName: string;
+  readonly attachmentFileStats: FileStats | undefined;
+  readonly attachmentPath: string;
+  readonly noteFilePath: string | undefined;
+  readonly originalAttachmentFileNameParams: OriginalAttachmentFileNameParams;
+  readonly params: AttachmentPathManagerGetAvailablePathForAttachmentsParams;
 }
 
 interface AttachmentPathManagerResolveOriginalAttachmentFileNameParams {
@@ -147,12 +174,24 @@ interface AttachmentPathManagerResolvePathTemplateParams {
   readonly template: string;
 }
 
+interface AttachmentPathManagerTakeInsertedLinkTextParams {
+  readonly attachmentPath: string;
+  readonly notePath: string;
+}
+
 interface CursorLineAndSequenceNumber {
   readonly cursorLine: number;
   readonly sequenceNumber: number;
 }
 
 type GetAvailablePathForAttachmentsFunction = Vault['getAvailablePathForAttachments'];
+
+interface InsertedLinkTextEntry {
+  readonly expiresAt: number;
+  readonly notePath: string;
+  readonly template: string;
+  readonly text: string;
+}
 
 interface NoteLinkWalkResult {
   readonly cursorLine: number;
@@ -180,6 +219,7 @@ export class AttachmentPathManager {
   private readonly app: App;
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFunction;
   private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
+  private readonly insertedLinkTexts = new Map<string, InsertedLinkTextEntry>();
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly tokenValidator: TokenValidator;
@@ -366,6 +406,7 @@ export class AttachmentPathManager {
       }
     }
 
+    await this.prepareInsertedLinkText({ attachmentFileBaseName, attachmentFileStats, attachmentPath, noteFilePath, originalAttachmentFileNameParams, params });
     return attachmentPath;
   }
 
@@ -474,6 +515,34 @@ export class AttachmentPathManager {
     return path;
   }
 
+  public getInsertedLinkText(params: AttachmentPathManagerGetInsertedLinkTextParams): string | undefined {
+    const prepared = this.takeInsertedLinkText({ attachmentPath: params.attachmentFile.path, notePath: params.notePath });
+    if (prepared !== undefined) {
+      return prepared;
+    }
+    // Existing files have no asynchronous import in flight. The original-name tokens can read the durable
+    // store synchronously, including after collect/rename; other templates require an import preparation.
+    const template = this.pluginSettingsComponent.settings.insertedLinkText;
+    const tokens = scanTokens(template).map((token) => ({ ...token, token: token.token.toLowerCase() }));
+    if (tokens.some((token) => token.token !== ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN && token.token !== ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN)) {
+      return undefined;
+    }
+    const originalNameParams = this.getOriginalAttachmentFileNameParams(params.attachmentFile, ActionContext.Unknown);
+    const originalName = originalNameParams.originalAttachmentFileName ?? params.attachmentFile.name;
+    if (tokens.length > 0) {
+      originalNameParams.onOriginalAttachmentFileNameUnknown?.();
+    }
+    const extension = extname(originalName);
+    let text = '';
+    let offset = 0;
+    for (const token of tokens) {
+      const value = token.token === ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN ? basename(originalName, extension) : extension.slice(1);
+      text += template.slice(offset, token.start) + formatString(value, stringFormatSchema.parse(parseTokenFormat(token) ?? {}));
+      offset = token.end;
+    }
+    return text + template.slice(offset) || undefined;
+  }
+
   /**
    * What a template reads as the original name of an attachment that already exists: the arrival name on record,
    * or, when there is none, a report that its current name stood in.
@@ -567,6 +636,15 @@ export class AttachmentPathManager {
   public async getSequenceNumberMap(noteFilePath: string): Promise<Map<string, number>> {
     const { sequenceNumberByAttachmentPath } = await this.walkNoteLinks(noteFilePath, null);
     return sequenceNumberByAttachmentPath;
+  }
+
+  public takeInsertedLinkText(params: AttachmentPathManagerTakeInsertedLinkTextParams): string | undefined {
+    const entry = this.insertedLinkTexts.get(params.attachmentPath);
+    if (!entry || entry.expiresAt < Date.now() || entry.notePath !== params.notePath || entry.template !== this.pluginSettingsComponent.settings.insertedLinkText) {
+      return undefined;
+    }
+    this.insertedLinkTexts.delete(params.attachmentPath);
+    return entry.text || undefined;
   }
 
   private cleanFilePathPart(part: string): string {
@@ -714,6 +792,33 @@ export class AttachmentPathManager {
           isCaseInsensitive: true,
           pathOrFile: properPath
         }) !== null;
+  }
+
+  private async prepareInsertedLinkText(prepareParams: AttachmentPathManagerPrepareInsertedLinkTextParams): Promise<void> {
+    const { attachmentFileBaseName, attachmentFileStats, attachmentPath, noteFilePath, originalAttachmentFileNameParams, params } = prepareParams;
+    // Link generation is synchronous. Finish asynchronous tokens before handing the path to the importer.
+    const template = this.pluginSettingsComponent.settings.insertedLinkText;
+    const actionContext = attachmentPathContextToActionContext(params.context);
+    if (!template || !noteFilePath || attachmentFileBaseName === DUMMY_PATH || isImageExtension(params.attachmentFileExtension) || actionContext !== ActionContext.Unknown) {
+      return;
+    }
+    const text = await new Substitutions({
+      actionContext,
+      app: this.app,
+      attachmentFileName: makeFileName({ fileBaseName: attachmentFileBaseName, fileExtension: params.attachmentFileExtension }),
+      attachmentFileStats,
+      generatedAttachmentFileName: basename(attachmentPath),
+      generatedAttachmentFilePath: attachmentPath,
+      noteFilePath,
+      ...originalAttachmentFileNameParams,
+      pluginSettingsComponent: this.pluginSettingsComponent,
+      readAttachmentFileContent: params.readAttachmentFileContent ?? undefined,
+      tokenValidator: this.tokenValidator
+    }).fillTemplate(template);
+    this.insertedLinkTexts.set(attachmentPath, { expiresAt: Date.now() + INSERTED_LINK_TEXT_LIFETIME_IN_MILLISECONDS, notePath: noteFilePath, template, text });
+    if (this.insertedLinkTexts.size > MAX_INSERTED_LINK_TEXTS) {
+      this.insertedLinkTexts.delete(ensureNonNullable(this.insertedLinkTexts.keys().next().value));
+    }
   }
 
   /**

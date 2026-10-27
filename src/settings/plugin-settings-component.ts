@@ -50,6 +50,7 @@ const TOKENIZED_SETTINGS_KEYS = [
   'collectedAttachmentFileName',
   'collectedAttachmentFolderPath',
   'generatedAttachmentFileName',
+  'insertedLinkText',
   'markdownUrlFormat',
   'renamedAttachmentFileName'
 ] as const satisfies readonly (keyof PluginSettings)[];
@@ -358,7 +359,7 @@ ${commentOut(this.legacySettings.customTokensStr)}
   }
 
   /**
-   * Carries the six tokenized settings from the retired `${...}` syntax onto `{{...}}` (14.0.0).
+   * Carries tokenized settings from the retired `${...}` syntax onto `{{...}}` (14.0.0).
    *
    * Not version-gated, deliberately: `${...}` no longer parses, so a legacy token left in any of these keys is
    * broken whatever version wrote it, and {@link migrateLegacyTokenSyntax} leaves a string holding none untouched.
@@ -483,6 +484,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   }
 
   protected override registerValidators(): void {
+    this.registerValidator('insertedLinkText', async (value) => await this.validator.validateTokens(value) ?? undefined);
     this.registerValidator('attachmentFolderPath', async (value) =>
       await this.validator.validatePath({
         areTokensAllowed: true,

@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Inserted link text is prepared before synchronous link generation
+
+Obsidian's `generateMarkdownLink` returns a string, while a token may be asynchronous. `AttachmentPathManager` evaluates `insertedLinkText` while resolving an import destination and keeps at most 100 results for one minute, keyed by attachment and source note and checked against the current template. The link patch consumes the prepared value even when an explicit alias wins, so it cannot leak into a later link. For an existing attachment with no import in flight, original-name/extension-only templates read the persistent original-name store synchronously, using the same parser, string schema and formatter as those tokens. Other templates apply during imports only. Images skip this template because numeric aliases change embed size; explicit aliases and cached sizes take priority. Link delimiters are converted to full width equivalents so a name cannot become part of the target or terminate the link.
+
 ## The README's `Tokens` headings are link targets, and the API detail lives in `docs/plugin-api.md`
 
 `## Tokens`, `### Custom tokens` and `### Markdown URL format` hold only a pointer into the demo vault, but they stay: the settings tab, the release notes and every locale's custom-token comment link `?tab=readme-ov-file#tokens`, `#custom-tokens` and `#markdown-url-format`, including from versions already installed. The README is a landing page, so the full plugin-API guide is `docs/plugin-api.md`, and `## For plugin developers` only links it.

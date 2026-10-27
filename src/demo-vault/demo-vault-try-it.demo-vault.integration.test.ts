@@ -61,6 +61,19 @@ interface TieDemoReport {
 const COLLECT_MATERIALS_FOLDER_PATH = 'Materials/05 Collect attachments';
 const TEST_TIMEOUT_IN_MILLISECONDS = 120_000;
 
+describe('original-name link text demo', () => {
+  it('shows the arrival name beside a renamed PDF only while enabled', async () => {
+    const enabled = await callDemoSetup({ functionName: 'insertOriginalNameLinkDemo', helperArguments: [true] });
+    expect(enabled.error).toBeNull();
+    expect(enabled.value).toContain('renamed-report.pdf');
+    expect(enabled.value).toMatch(/\|report-2026\]\]|\[report-2026\]\(/);
+    const disabled = await callDemoSetup({ functionName: 'insertOriginalNameLinkDemo', helperArguments: [false] });
+    expect(disabled.error).toBeNull();
+    expect(disabled.value).not.toContain('|report-2026');
+    expect(disabled.value).not.toContain('[report-2026]');
+  }, TEST_TIMEOUT_IN_MILLISECONDS);
+});
+
 /**
  * Calls one exported `demoSetup.ts` helper inside Obsidian, as a button would, and captures the notices it
  * raised.

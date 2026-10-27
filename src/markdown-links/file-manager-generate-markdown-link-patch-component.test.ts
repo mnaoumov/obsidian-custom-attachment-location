@@ -15,6 +15,7 @@ import {
   vi
 } from 'vitest';
 
+import type { AttachmentPathManager } from '../attachment-location/attachment-path-manager.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { ImageSizeMap } from './image-size-map.ts';
 import type { MarkdownUrlMap } from './markdown-url-map.ts';
@@ -28,6 +29,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
   let settings: PluginSettings;
   let imageSizeMap: ImageSizeMap;
   let markdownUrlMap: MarkdownUrlMap;
+  let attachmentPathManager: AttachmentPathManager;
   let pluginSettingsComponent: PluginSettingsComponent;
   let targetFile: TFile;
   let attachmentFile: TFile;
@@ -52,6 +54,10 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     attachmentFile = ensureNonNullable(app.vault.getFileByPath('folder/image.png'));
 
     settings = new PluginSettings();
+    attachmentPathManager = strictProxy<AttachmentPathManager>({
+      getInsertedLinkText: vi.fn().mockReturnValue('original report'),
+      takeInsertedLinkText: vi.fn().mockReturnValue(undefined)
+    });
     settings.markdownUrlFormat = '';
 
     imageSizeMap = strictProxy<ImageSizeMap>({
@@ -75,6 +81,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
   function createComponent(): FileManagerGenerateMarkdownLinkPatchComponent {
     return new FileManagerGenerateMarkdownLinkPatchComponent({
       app,
+      attachmentPathManager,
       fileManager,
       imageSizeMap,
       markdownUrlMap,
@@ -85,6 +92,71 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
   function invoke(subpath?: string, alias?: string): string {
     return fileManager.generateMarkdownLink(targetFile, 'note.md', subpath, alias);
   }
+
+  it('uses the prepared original name for an inserted attachment link', () => {
+    settings.insertedLinkText = '{{originalAttachmentFileName}}';
+    const component = createComponent();
+    component.load();
+    const pdf = strictProxy<TFile>({ basename: 'renamed', extension: 'pdf', path: 'renamed.pdf' });
+
+    fileManager.generateMarkdownLink(pdf, 'note.md');
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(pdf, 'note.md', undefined, 'original report');
+  });
+
+  it.each([['photo', 'jpg'], ['300', 'png'], ['1920x1080', 'png'], ['a|b', 'png'], ['a]b', 'png'], ['a#b', 'png']])('leaves image %s.%s without a template alias to preserve embed sizing', (basename, extension) => {
+    settings.insertedLinkText = '{{originalAttachmentFileName}}';
+    const component = createComponent();
+    component.load();
+    const image = strictProxy<TFile>({ basename, extension, path: `${basename}.${extension}` });
+
+    fileManager.generateMarkdownLink(image, 'note.md');
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(image, 'note.md', undefined, undefined);
+  });
+
+  it('preserves an explicit alias over the inserted-link template', () => {
+    settings.insertedLinkText = '{{originalAttachmentFileName}}';
+    const component = createComponent();
+    component.load();
+
+    const pdf = strictProxy<TFile>({ basename: 'renamed', extension: 'pdf', path: 'renamed.pdf' });
+    fileManager.generateMarkdownLink(pdf, 'note.md', undefined, 'chosen');
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(pdf, 'note.md', undefined, 'chosen');
+  });
+
+  it('replaces unsafe link delimiters without changing the attachment target', () => {
+    settings.insertedLinkText = '{{originalAttachmentFileName}}';
+    vi.mocked(attachmentPathManager.getInsertedLinkText).mockReturnValue('a|b]c[d#e^f');
+    const component = createComponent();
+    component.load();
+    const pdf = strictProxy<TFile>({ basename: 'renamed', extension: 'pdf', path: 'renamed.pdf' });
+
+    fileManager.generateMarkdownLink(pdf, 'note.md', '#page=2');
+
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(pdf, 'note.md', '#page=2', 'a｜b］c［d＃e＾f');
+  });
+
+  it('keeps the default when an asynchronous template has no prepared text', () => {
+    settings.insertedLinkText = '{{noteFileName}}';
+    vi.mocked(attachmentPathManager.getInsertedLinkText).mockReturnValue(undefined);
+    const component = createComponent();
+    component.load();
+    const pdf = strictProxy<TFile>({ basename: 'renamed', extension: 'pdf', path: 'renamed.pdf' });
+    fileManager.generateMarkdownLink(pdf, 'note.md');
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(pdf, 'note.md', undefined, undefined);
+  });
+
+  it('turns template line breaks into spaces so the inserted link stays on one line', () => {
+    settings.insertedLinkText = 'template';
+    vi.mocked(attachmentPathManager.getInsertedLinkText).mockReturnValue('one\r\ntwo');
+    const component = createComponent();
+    component.load();
+    const pdf = strictProxy<TFile>({ basename: 'renamed', extension: 'pdf', path: 'renamed.pdf' });
+    fileManager.generateMarkdownLink(pdf, 'note.md');
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(pdf, 'note.md', undefined, 'one  two');
+  });
 
   it('should register a single method patch on load', () => {
     const component = createComponent();

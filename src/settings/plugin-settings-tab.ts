@@ -162,6 +162,21 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   private getAdvancedItems(): SettingDefinitionRender[] {
     return [
       this.settingEx({
+        desc: t(($) => $.pluginSettingsTab.insertedLinkText.description),
+        name: t(($) => $.pluginSettingsTab.insertedLinkText.name),
+        render: (setting) => {
+          setting.addCodeHighlighter((codeHighlighter) => {
+            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+            this.bind({
+              propertyName: 'insertedLinkText',
+              shouldShowPlaceholderForDefaultValues: false,
+              valueComponent: codeHighlighter
+            });
+          });
+        }
+      }),
+      this.settingEx({
         desc: createFragment((f) => {
           f.appendText(t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part1));
           f.createEl('br');

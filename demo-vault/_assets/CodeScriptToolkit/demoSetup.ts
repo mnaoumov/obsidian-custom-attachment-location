@@ -114,6 +114,7 @@ interface DemoSettingsPatch {
   customTokensStr?: string;
   excludeExtensionsFromMultipleNotesCheck?: string[];
   generatedAttachmentFileName?: string;
+  insertedLinkText?: string;
   shouldDeduplicateIdenticalAttachments?: boolean;
   shouldFollowObsidianAttachmentLocation?: boolean;
   shouldRenameAttachmentFiles?: boolean;
@@ -465,6 +466,35 @@ export async function insertLinksForDisplayTextDemo(app: App): Promise<LinkDispl
   await openFile(app, notePath);
   new Notice(`The PDF link: ${attachmentLink}\nThe note link: ${noteLink}`, NOTICE_DURATION_IN_MILLISECONDS);
   return { attachmentLink, noteLink };
+}
+
+/**
+ * Saves and links a renamed PDF, keeping its arrival name as display text when enabled.
+ *
+ * @param app - The demo vault app.
+ * @param shouldEnable - Whether to use the original-name link template.
+ * @returns The inserted link.
+ */
+export async function insertOriginalNameLinkDemo(app: App, shouldEnable: boolean): Promise<string> {
+  const folderPath = `${LINK_DISPLAY_TEXT_FOLDER_PATH}/Original name`;
+  const notePath = `${folderPath}/Original name demo.md`;
+  await recreateFolder(app, folderPath, { 'Original name demo.md': '' });
+  await changeSettings(app, {
+    attachmentFolderPath: `${folderPath}/assets`,
+    attachmentRenameMode: 'All',
+    generatedAttachmentFileName: 'renamed-report',
+    insertedLinkText: shouldEnable ? '{{originalAttachmentFileName}}' : '',
+    shouldFollowObsidianAttachmentLocation: false,
+    shouldSetLinkDisplayTextToAttachmentFileName: false
+  });
+  await openFile(app, notePath);
+  const path = await resolveAttachmentPath({ app, kind: 'pdf', notePath, shouldCreateFolder: true });
+  const attachment = await app.vault.createBinary(path, sampleContent('pdf'));
+  const link = app.fileManager.generateMarkdownLink(attachment, notePath);
+  await app.vault.modify(getFile(app, notePath), `${link}\n`);
+  await openFile(app, notePath);
+  new Notice(`Inserted: ${link}`, NOTICE_DURATION_IN_MILLISECONDS);
+  return link;
 }
 
 /**
