@@ -8,8 +8,8 @@
  * `Note-Note-img`, because once a file was renamed its old name was gone for good.
  *
  * The record is keyed by the attachment's path and follows every rename or move the vault reports, so it survives
- * this plugin's own renames and the user's renames inside Obsidian. It is kept in a file of its own beside
- * `data.json`, never in the settings: it grows with the vault, and a settings export has no business carrying it.
+ * this plugin's own renames and the user's renames inside Obsidian. Shared observations travel in vault Markdown
+ * files; IndexedDB keeps the local replica. The old plugin-folder JSON is migration input only.
  */
 
 import type { ConsoleDebugComponent } from '@mnaoumov/obsidian-lib/components/console-debug-component';
@@ -19,8 +19,14 @@ import type {
   Debouncer,
   TAbstractFile
 } from 'obsidian';
+import type {
+  Except,
+  JsonValue
+} from 'type-fest';
 
 import { PluginNoticeMode } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import { LocalDataStore } from '@mnaoumov/obsidian-lib/data-stores/local-data-store';
+import { SharedDataStore } from '@mnaoumov/obsidian-lib/data-stores/shared-data-store';
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
@@ -28,6 +34,7 @@ import {
   convertAsyncToSync,
   invokeAsyncSafely
 } from '@mnaoumov/typescript-lib/async';
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import {
   ButtonComponent,
   Component,
@@ -38,17 +45,23 @@ import {
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { ActionContext } from '../tokens/token-evaluator-context.ts';
+import type { OriginalAttachmentNameOperation } from './original-attachment-name-history.ts';
 
 import { isNonInteractiveActionContext } from '../tokens/token-evaluator-context.ts';
+import { OriginalAttachmentNameHistory } from './original-attachment-name-history.ts';
 
 /**
- * The name of the file the records are kept in, inside the plugin's folder.
+ * The legacy JSON migration source, kept untouched inside the plugin's folder.
  */
 export const ORIGINAL_ATTACHMENT_NAMES_FILE_NAME = 'original-attachment-names.json';
 
-const STORE_FORMAT_VERSION = 1;
+const STORE_ID = 'original-attachment-names-v1';
+const PLUGIN_ID = 'obsidian-custom-attachment-location';
+const SYNCHRONIZE_INTERVAL_IN_MILLISECONDS = 60_000;
+const MIGRATION_KEY = 'original-attachment-names-json-migrated-v1';
 const SAVE_DEBOUNCE_IN_MILLISECONDS = 1000;
 const WARNING_DEBOUNCE_IN_MILLISECONDS = 1000;
+const COMPACTION_OPERATION_COUNT = 100;
 
 /**
  * How long a path handed out for a new attachment waits for the file to be created. The same minute the
@@ -132,11 +145,17 @@ export class OriginalAttachmentNamesComponent extends Component {
   private readonly consoleDebugComponent: ConsoleDebugComponent;
   private readonly expectedArrivals = new Map<string, ExpectedArrival>();
 
-  private readonly names = new Map<string, string>();
-  private readonly originalPaths = new Map<string, string>();
+  private readonly history = new OriginalAttachmentNameHistory();
+  private local: LocalDataStore | undefined;
+  private readonly names = this.history.names;
+  private readonly originalPaths = this.history.originalPaths;
+  private readonly pending = new Map<string, JsonValue>();
+  private persistence: Promise<void> = noopAsync();
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private publishedSinceCompaction = 0;
   private readonly saveDebounced: Debouncer<[], void>;
+  private shared: SharedDataStore | undefined;
   private readonly showWarningDebounced: Debouncer<[], void>;
   private readonly storeFilePath: string;
   private readonly unknownPaths = new Set<string>();
@@ -150,7 +169,7 @@ export class OriginalAttachmentNamesComponent extends Component {
     this.storeFilePath = params.storeFilePath;
     this.saveDebounced = debounce(
       () => {
-        invokeAsyncSafely(() => this.save());
+        invokeAsyncSafely(() => this.flush());
       },
       SAVE_DEBOUNCE_IN_MILLISECONDS,
       true
@@ -186,6 +205,39 @@ export class OriginalAttachmentNamesComponent extends Component {
   }
 
   /**
+   * Publishes pending records and merges delivered records. Failed publications remain pending for retry.
+   *
+   * @returns Completion of the serialized persistence operation.
+   */
+  public flush(): Promise<void> {
+    const run = this.persistence.catch(() => undefined).then(async () => {
+      const shared = this.shared;
+      if (!shared) {
+        return;
+      }
+      const batch = [...this.pending];
+      if (batch.length > 0) {
+        await shared.setMany(batch);
+        for (const [key] of batch) {
+          this.pending.delete(key);
+        }
+        this.publishedSinceCompaction += batch.length;
+      } else {
+        await shared.synchronize();
+      }
+      this.history.merge(shared.entries());
+      if (this.publishedSinceCompaction < COMPACTION_OPERATION_COUNT) {
+        return;
+      }
+
+      await shared.compact();
+      this.publishedSinceCompaction = 0;
+    });
+    this.persistence = run;
+    return run;
+  }
+
+  /**
    * Forgets the given records, so their attachments fall back to their current names, with the warning.
    *
    * @param paths - The attachments' paths.
@@ -194,10 +246,12 @@ export class OriginalAttachmentNamesComponent extends Component {
   public forget(paths: readonly string[]): number {
     let count = 0;
     for (const path of paths) {
-      const isHadName = this.names.delete(path);
-      if (this.originalPaths.delete(path) || isHadName) {
-        count++;
+      if (!this.names.has(path) && !this.originalPaths.has(path)) {
+        continue;
       }
+
+      this.record({ kind: 'remove', path });
+      count++;
     }
     if (count > 0) {
       this.saveDebounced();
@@ -211,9 +265,11 @@ export class OriginalAttachmentNamesComponent extends Component {
    * @returns How many records were removed.
    */
   public forgetAll(): number {
-    const count = new Set([...this.names.keys(), ...this.originalPaths.keys()]).size;
-    this.names.clear();
-    this.originalPaths.clear();
+    const paths = new Set([...this.names.keys(), ...this.originalPaths.keys()]);
+    const count = paths.size;
+    for (const path of paths) {
+      this.record({ kind: 'remove', path });
+    }
     if (count > 0) {
       this.saveDebounced();
     }
@@ -257,38 +313,14 @@ export class OriginalAttachmentNamesComponent extends Component {
    * Reads the records from disk. Called once, before anything asks for a name.
    */
   public async loadFromDisk(): Promise<void> {
-    this.names.clear();
-    this.originalPaths.clear();
-    const adapter = this.app.vault.adapter;
-    if (!await adapter.exists(this.storeFilePath)) {
-      return;
-    }
-
-    let stored: unknown;
+    this.local = await LocalDataStore.open({ pluginId: PLUGIN_ID, storeId: STORE_ID, vaultId: this.app.appId });
     try {
-      stored = JSON.parse(await adapter.read(this.storeFilePath));
+      this.shared = await SharedDataStore.open({ adapter: this.app.vault.adapter, kind: 'last-write-wins', local: this.local, pluginId: PLUGIN_ID, storeId: STORE_ID });
+      this.history.merge(this.shared.entries());
+      await this.migrateLegacy();
     } catch (error) {
-      // A damaged file must not stop the plugin loading. Every name then falls back to the current one, with the warning.
-      console.error(`Could not read '${this.storeFilePath}'. Original attachment names are unknown until it is rewritten.`, error);
-      return;
-    }
-
-    if (!isStoredOriginalAttachmentNames(stored)) {
-      console.error(`'${this.storeFilePath}' is not a store of original attachment names. Ignoring it.`);
-      return;
-    }
-
-    for (const [path, fileName] of Object.entries(stored.names)) {
-      if (typeof fileName === 'string') {
-        this.names.set(path, fileName);
-      }
-    }
-    if (typeof stored.originalPaths === 'object' && stored.originalPaths !== null && !Array.isArray(stored.originalPaths)) {
-      for (const [path, originalPath] of Object.entries(stored.originalPaths)) {
-        if (typeof originalPath === 'string' && originalPath) {
-          this.originalPaths.set(path, originalPath);
-        }
-      }
+      this.local.close();
+      throw error;
     }
   }
 
@@ -297,13 +329,36 @@ export class OriginalAttachmentNamesComponent extends Component {
     this.registerEvent(this.app.vault.on('create', this.handleCreate.bind(this)));
     this.registerEvent(this.app.vault.on('rename', this.handleRename.bind(this)));
     this.registerEvent(this.app.vault.on('delete', this.handleDelete.bind(this)));
+    const synchronize = (): void => {
+      this.saveDebounced();
+    };
+    function onTransportChange(path: string): void {
+      const name = path.slice(path.lastIndexOf('/') + 1);
+      if (path.startsWith(`Plugin data/${PLUGIN_ID}/${STORE_ID}/`) && name.endsWith('.md') && (name.startsWith('log-') || name.startsWith('snapshot-'))) {
+        synchronize();
+      }
+    }
+    this.registerEvent(this.app.vault.on('raw', onTransportChange));
+    this.registerInterval(window.setInterval(synchronize, SYNCHRONIZE_INTERVAL_IN_MILLISECONDS));
+    this.registerDomEvent(document, 'visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        synchronize();
+      }
+    });
   }
 
   public override onunload(): void {
     super.onunload();
     this.showWarningDebounced.cancel();
     // A record changed in the last second would otherwise be lost with the plugin.
-    this.saveDebounced.run();
+    this.saveDebounced.cancel();
+    invokeAsyncSafely(async () => {
+      try {
+        await this.flush();
+      } finally {
+        this.local?.close();
+      }
+    });
   }
 
   /**
@@ -348,7 +403,7 @@ export class OriginalAttachmentNamesComponent extends Component {
   }
 
   /**
-   * Records the name an attachment arrived with, replacing any earlier record for the path.
+   * Records an arrival, or an explicit correction when the path already has a name.
    *
    * @param path - The attachment's path.
    * @param fileName - The name, extension included.
@@ -357,27 +412,22 @@ export class OriginalAttachmentNamesComponent extends Component {
     if (this.names.get(path) === fileName) {
       return;
     }
-    this.names.set(path, fileName);
+    this.record({ fileName, kind: this.names.has(path) ? 'edit' : 'arrival', path });
     this.saveDebounced();
   }
 
   /**
-   * Records an import's source path independently of its arrival name.
+   * Records the optional source path independently of the arrival name.
    *
-   * @param path - The attachment's current vault path.
-   * @param originalPath - The source path exposed by the import.
+   * @param path - Current vault path.
+   * @param originalPath - Source path exposed by the importer.
    */
   public setOriginalPath(path: string, originalPath: string): void {
     if (!originalPath || this.originalPaths.get(path) === originalPath) {
       return;
     }
-    this.originalPaths.set(path, originalPath);
+    this.record({ kind: this.originalPaths.has(path) ? 'source-edit' : 'source', originalPath, path });
     this.saveDebounced();
-  }
-
-  private getPathsUnder(folderPath: string): string[] {
-    const prefix = `${folderPath}/`;
-    return [...new Set([...this.names.keys(), ...this.originalPaths.keys()])].filter((path) => path.startsWith(prefix));
   }
 
   private handleCreate(file: TAbstractFile): void {
@@ -393,51 +443,84 @@ export class OriginalAttachmentNamesComponent extends Component {
   }
 
   private handleDelete(file: TAbstractFile): void {
-    if (file instanceof TFolder) {
-      this.forget(this.getPathsUnder(file.path));
+    if (this.isTransportPath(file.path)) {
       return;
     }
-
-    this.forget([file.path]);
+    this.record({ isFolder: file instanceof TFolder, kind: 'remove', path: file.path });
+    this.saveDebounced();
   }
 
   private handleRename(file: TAbstractFile, oldPath: string): void {
-    // Whether the vault also reports each child of a renamed folder or not, the prefix move is idempotent: a child
-    // already moved has no record left under the old prefix.
-    const moves: [string, string][] = file instanceof TFolder
-      ? this.getPathsUnder(oldPath).map((path) => [path, file.path + path.slice(oldPath.length)])
-      : [[oldPath, file.path]];
-
-    let isChanged = false;
-    for (const [fromPath, toPath] of moves) {
-      const originalPath = this.originalPaths.get(fromPath);
-      if (originalPath !== undefined) {
-        this.originalPaths.delete(fromPath);
-        this.originalPaths.set(toPath, originalPath);
-        isChanged = true;
-      }
-      const fileName = this.names.get(fromPath);
-      if (fileName === undefined) {
-        continue;
-      }
-      this.names.delete(fromPath);
-      this.names.set(toPath, fileName);
-      isChanged = true;
+    if (this.isTransportPath(file.path) || this.isTransportPath(oldPath)) {
+      return;
     }
-
-    if (isChanged) {
-      this.saveDebounced();
-    }
+    this.record({ isFolder: file instanceof TFolder, kind: 'rename', path: oldPath, target: file.path });
+    this.saveDebounced();
   }
 
-  private async save(): Promise<void> {
-    const stored: StoredOriginalAttachmentNames = {
-      names: Object.fromEntries(this.names),
-      ...this.originalPaths.size > 0 && { originalPaths: Object.fromEntries(this.originalPaths) },
-      version: STORE_FORMAT_VERSION
+  private isTransportPath(path: string): boolean {
+    const root = `Plugin data/${PLUGIN_ID}/${STORE_ID}`;
+    return path === root || path.startsWith(`${root}/`);
+  }
+
+  private async migrateLegacy(): Promise<void> {
+    const local = this.local;
+    const shared = this.shared;
+    if (!local || !shared || await local.get(MIGRATION_KEY) === true) {
+      return;
+    }
+    const adapter = this.app.vault.adapter;
+    if (!await adapter.exists(this.storeFilePath)) {
+      return;
+    }
+
+    let stored: unknown;
+    try {
+      stored = JSON.parse(await adapter.read(this.storeFilePath));
+    } catch (error) {
+      // A damaged file must not stop the plugin loading. Every name then falls back to the current one, with the warning.
+      console.error(`Could not read '${this.storeFilePath}'. Original attachment names are unknown until it is rewritten.`, error);
+      return;
+    }
+
+    if (!isStoredOriginalAttachmentNames(stored)) {
+      console.error(`'${this.storeFilePath}' is not a store of original attachment names. Ignoring it.`);
+      return;
+    }
+
+    for (const [path, fileName] of Object.entries(stored.names)) {
+      if (typeof fileName !== 'string') {
+        continue;
+      }
+
+      const operation: OriginalAttachmentNameOperation = { fileName, kind: 'arrival', path, time: 0 };
+      this.pending.set(JSON.stringify(['legacy', path, fileName]), { ...operation });
+    }
+    if (typeof stored.originalPaths === 'object' && stored.originalPaths !== null && !Array.isArray(stored.originalPaths)) {
+      for (const [path, originalPath] of Object.entries(stored.originalPaths)) {
+        if (typeof originalPath === 'string' && originalPath) {
+          this.pending.set(JSON.stringify(['legacy-source', path, originalPath]), { kind: 'source', originalPath, path, time: 0 });
+        }
+      }
+    }
+    await this.flush();
+    await local.set(MIGRATION_KEY, true);
+  }
+
+  private record(operation: Except<OriginalAttachmentNameOperation, 'time'>): void {
+    const paths = operation.isFolder
+      ? [...new Set([...this.names.keys(), ...this.originalPaths.keys()])].filter((path) => path.startsWith(`${operation.path}/`))
+      : [operation.path];
+    const observed = paths.flatMap((path) => this.history.getObserved(path));
+    const timed: OriginalAttachmentNameOperation = {
+      ...operation,
+      ...(observed.length > 0 && (operation.kind === 'remove' || operation.kind === 'rename') && { observed }),
+      time: Math.max(Date.now(), this.history.time + 1)
     };
-    // Compact on purpose: the file grows with the vault, and nobody reads it by eye.
-    await this.app.vault.adapter.write(this.storeFilePath, JSON.stringify(stored));
+    // eslint-disable-next-line n/no-unsupported-features/node-builtins -- This is the renderer Web Crypto API.
+    const key = window.crypto.randomUUID();
+    this.history.add(key, timed);
+    this.pending.set(key, { ...timed });
   }
 
   private showWarning(): void {
