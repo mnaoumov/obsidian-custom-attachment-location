@@ -6,6 +6,8 @@
 
 The component intercepts `vault.rename` and awaits companion moves, including unlinked companions and chained signatures. It refuses occupied companion destinations before moving the base and rolls back earlier moves on failure. Collect's proper-path resolver skips independent sidecar moves. The `RenameNote` resolver likewise returns a sidecar's current path: the dependency may plan linked files before or after the base, and only the base's eventual move owns the companion destination. New import and API read contexts retain their own semantics.
 
+`src/sidecars/sidecar-group.ts` applies the same matcher to existing folder-local groups. Unused deletion filters its final candidate set so a group survives when any member survives, including references found only in canvas JSON or note text. Ambiguous and orphan sidecars remain independent. Collect Copy and Move-to-proper-folder copies carry unlinked descendants and chained signatures using the base's actual collision-suffixed destination. An identical reused base can reuse byte-identical companions; conflicting companions refuse the copy, and incomplete copies roll back only files created by that operation.
+
 The real editor drop test waits for the clipboard interception as well as the editor element. `LayoutReadyComponent` waits for ancestry loading, so a visible editor alone can precede patch installation in a fresh harness vault; dropping during that interval exercises core's original import instead of the feature.
 
 ## Inserted link text is prepared before synchronous link generation

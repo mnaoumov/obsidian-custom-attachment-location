@@ -83,6 +83,7 @@ interface SettingsLike {
   readonly isExcludedFromMultipleNotesCheck: (path: string) => boolean;
   readonly isOrphanAttachmentScanCandidate: (path: string) => boolean;
   readonly isPathIgnored: (path: string) => boolean;
+  readonly sidecarExtensions: string[];
 }
 
 vi.mock('@mnaoumov/obsidian-lib/canvas', async (importOriginal) => ({
@@ -254,7 +255,8 @@ describe('UnusedAttachmentsRemover', () => {
       isExcludedFromMultipleNotesCheck: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       // The shipped default is `None`, so every pre-existing test runs with the orphan pass off.
       isOrphanAttachmentScanCandidate: vi.fn<(path: string) => boolean>().mockReturnValue(false),
-      isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false)
+      isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false),
+      sidecarExtensions: []
     };
     attachmentFolder = strictProxy<TFolder>({ children: [], path: ATTACHMENT_FOLDER_PATH });
     getFolderByPath = vi.fn<(path: string) => null | TFolder>().mockReturnValue(attachmentFolder);
@@ -431,6 +433,58 @@ describe('UnusedAttachmentsRemover', () => {
       mockIsCanvasFile.mockReturnValue(false);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([]);
+    });
+
+    it('keeps an unlinked signature and its chain when the base is linked', async () => {
+      settings.sidecarExtensions.push('p7s', 'asc');
+      const base = createFile(`${ATTACHMENT_FOLDER_PATH}/doc.html`);
+      const signature = createFile(`${base.path}.p7s`);
+      const chain = createFile(`${signature.path}.asc`);
+      const files = [base, signature, chain];
+      app.vault.getFiles = (): TFile[] => files;
+      mockGetLinks.mockReturnValue([createReference('doc.html')]);
+      mockExtractLinkFile.mockReturnValue(base);
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
+      mockConfirm.mockResolvedValue(true);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        for (const file of files) {
+          callback(file);
+        }
+      });
+      try {
+        await runOperation([note]);
+      } finally {
+        recurseSpy.mockRestore();
+      }
+      expect(mockTrashSafe).not.toHaveBeenCalled();
+      expect(mockConfirm).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { deletedNames: [], names: ['doc.html', 'doc.html.p7s'], referencedName: 'doc.html.p7s', sharedName: '' },
+      { deletedNames: [], names: ['doc.html', 'doc.html.p7s'], referencedName: '', sharedName: 'doc.html' },
+      { deletedNames: ['orphan.asc'], names: ['doc.html', 'doc.html.p7s', 'orphan.asc'], referencedName: 'doc.html', sharedName: '' },
+      { deletedNames: ['doc.html', 'doc.html.p7s'], names: ['doc.html', 'doc.html.p7s'], referencedName: '', sharedName: '' },
+      { deletedNames: ['doc.p7s', 'doc.pdf', 'orphan.asc'], names: ['doc.html', 'doc.pdf', 'doc.p7s', 'orphan.asc'], referencedName: 'doc.html', sharedName: '' }
+    ])('judges companion use conservatively: $names, linked $referencedName, shared $sharedName', async ({ deletedNames, names, referencedName, sharedName }) => {
+      settings.sidecarExtensions.push('p7s', 'asc');
+      const files = names.map((name) => createFile(`${ATTACHMENT_FOLDER_PATH}/${name}`));
+      app.vault.getFiles = (): TFile[] => files;
+      mockGetLinks.mockReturnValue(referencedName ? [createReference(referencedName)] : []);
+      mockExtractLinkFile.mockReturnValue(files.find((file) => file.name === referencedName) ?? null);
+      mockGetBacklinksForFileSafe.mockImplementation(({ pathOrFile }) => Promise.resolve(createBacklinks(typeof pathOrFile !== 'string' && pathOrFile.name === sharedName ? ['other.md'] : [])));
+      mockConfirm.mockResolvedValue(true);
+      const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
+        for (const file of files) {
+          callback(file);
+        }
+      });
+      try {
+        await runOperation([note]);
+      } finally {
+        recurseSpy.mockRestore();
+      }
+      expect(mockTrashSafe.mock.calls.map(([, file]) => typeof file === 'string' ? file : file.name)).toEqual(deletedNames);
     });
 
     it('should skip a note without a cache', async () => {

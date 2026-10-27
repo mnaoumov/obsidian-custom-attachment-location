@@ -44,7 +44,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 ## What it does
 
 - **Choose the folder** each new attachment goes into, from a pattern: beside the note, a folder per note, a folder per year. A fresh install follows Obsidian's own setting until you pick a pattern. [01 Attachment folder location](<./demo-vault/01 Attachment folder location.md>)
-- **Choose the file name**, so an attachment says where it came from; by default only pasted images are renamed. [02 Attachment file naming](<./demo-vault/02 Attachment file naming.md>)
+- **Choose the file name**, so an attachment says where it came from; by default only pasted images are renamed. Paired signatures and subtitles follow their base through copies and stay protected while the group is used. [02 Attachment file naming](<./demo-vault/02 Attachment file naming.md>)
 - **Patterns and tokens**, the vocabulary both are written in, including prompting at paste time, reading frontmatter and your own JavaScript tokens. [03 Tokens and patterns](<./demo-vault/03 Tokens and patterns.md>) · [04 Custom tokens](<./demo-vault/04 Custom tokens.md>) · [09 Token reference](<./demo-vault/09 Token reference.md>)
 - **Catch attachments other plugins create**, such as an image pasted into an `Excalidraw` drawing, and move and rename them too. [06 Settings](<./demo-vault/06 Settings.md>)
 - **Collect attachments** a note already has into the folder your settings say, for a note, a folder or the whole vault, optionally merging identical files. [05 Collect attachments](<./demo-vault/05 Collect attachments.md>)

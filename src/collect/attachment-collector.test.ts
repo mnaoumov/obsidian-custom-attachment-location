@@ -143,6 +143,7 @@ interface SettingsLike {
   shouldRenameCollectedAttachments: boolean;
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   shouldSkipCollectingAttachmentsReferencedByRawPath: boolean;
+  readonly sidecarExtensions: string[];
 }
 
 vi.mock('@mnaoumov/typescript-lib/abort-controller', async (importOriginal) => ({
@@ -399,7 +400,8 @@ describe('AttachmentCollector', () => {
       isPathIgnored: vi.fn<(path: string) => boolean>().mockReturnValue(false),
       notePriorities: [],
       shouldRenameCollectedAttachments: false,
-      shouldSkipCollectingAttachmentsReferencedByRawPath: false
+      shouldSkipCollectingAttachmentsReferencedByRawPath: false,
+      sidecarExtensions: []
     };
     designationComponent = publishAttachmentUnitFolderDesignation(settings);
     getRoot = vi.fn<() => TFolder>().mockReturnValue(strictProxy<TFolder>({ path: '/' }));
@@ -1236,6 +1238,16 @@ describe('AttachmentCollector', () => {
         await runSingleFile(note);
         expect(mockSelectMode).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('referenced by multiple notes'));
+      });
+
+      it('copies unlinked companions beside the base in Copy mode', async () => {
+        settings.sidecarExtensions.push('p7s');
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
+        app.vault.getFiles = (): TFile[] => [createFile('img.png'), createFile('img.png.p7s')];
+        app.vault.getAbstractFileByPathInsensitive = (): null => null;
+        mockCopySafe.mockImplementation(({ newPath }) => Promise.resolve(newPath));
+        await runSingleFile(note);
+        expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'attachments/img.png.p7s', oldPathOrFile: 'img.png.p7s' });
       });
 
       it('should copy and rewrite links in Copy mode', async () => {

@@ -103,4 +103,6 @@ The button creates a demonstration pair under `Materials/02 Attachment file nami
 
 Manual equivalent: enable attachment renaming for all files, set **Generated attachment file name** to `{{random}}`, and drag a document and its signature into a note together.
 
-Keep a link to each companion if you use **Delete unused attachments**: companion naming does not yet make an unlinked sidecar count as used. Copy modes still copy linked files individually.
+**Delete unused attachments** keeps a paired group when any member is still used, so an unlinked signature stays beside its linked document. A group is offered for deletion only when all its members are unused within the selected scope. Ambiguous and orphan sidecars are judged independently.
+
+Copy modes in **Collect attachments** and **Move attachment to proper folder** copy unlinked companions and chained signatures beside the base's actual new name, including a collision suffix. A reused identical base also reuses byte-identical companions. A conflicting companion destination refuses the copy and rolls back newly created files; existing files remain untouched.

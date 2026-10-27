@@ -44,6 +44,7 @@ import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-
 import type { AttachmentPathManager } from '../attachment-location/attachment-path-manager.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
+import { getSidecarGroupPaths } from '../sidecars/sidecar-group.ts';
 import { ActionContext } from '../tokens/token-evaluator-context.ts';
 import { confirmMinimizable } from './minimizable-confirm-modal.ts';
 
@@ -533,6 +534,7 @@ export class UnusedAttachmentsRemover {
      * the rename into `.trash`, taking the rest of the sweep with it. The folder already takes
      * everything inside it, so dropping the member costs nothing.
      */
+    this.keepReferencedSidecarGroups(unusedAttachments);
     const attachmentsToDelete = [...unusedAttachments]
       .filter((attachment) => unitFoldersToDelete.every((unitFolder) => !attachment.path.startsWith(`${unitFolder.path}/`)))
       .sort((a, b) => a.path.localeCompare(b.path));
@@ -854,6 +856,39 @@ export class UnusedAttachmentsRemover {
       unusedAttachments,
       unusedUnitFolders
     };
+  }
+
+  private keepReferencedSidecarGroups(unusedAttachments: Set<TFile>): void {
+    // A companion group dies only when every member was independently judged unused. This final
+    // filter also honors canvas/text references and members outside the selected deletion scope.
+    const extensions = this.pluginSettingsComponent.settings.sidecarExtensions;
+    if (extensions.length === 0 || unusedAttachments.size === 0) {
+      return;
+    }
+    const files = this.app.vault.getFiles();
+    const paths = files.map((file) => file.path);
+    const unusedPaths = new Set([...unusedAttachments].map((file) => file.path));
+    const checkedPaths = new Set<string>();
+    const candidates = [...unusedAttachments];
+    for (const attachment of candidates) {
+      if (checkedPaths.has(attachment.path)) {
+        continue;
+      }
+      const group = getSidecarGroupPaths({ extensions, path: attachment.path, paths });
+      // Paired files share a parent, so they also share any attachment-unit-folder designation.
+      // Whole-unit deletion is already decided separately; this filters only loose file candidates.
+      const isGroupUnused = group.every((path) => unusedPaths.has(path));
+      for (const path of group) {
+        checkedPaths.add(path);
+      }
+      if (!isGroupUnused) {
+        for (const candidate of candidates) {
+          if (group.includes(candidate.path)) {
+            unusedAttachments.delete(candidate);
+          }
+        }
+      }
+    }
   }
 }
 

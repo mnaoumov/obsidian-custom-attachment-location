@@ -21,7 +21,6 @@ import {
 } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
 import { getBacklinksForFileSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
-import { copySafe } from '@mnaoumov/obsidian-lib/vault';
 import { deleteIfNotUsed } from '@mnaoumov/obsidian-lib/vault-delete';
 import { abortSignalAny } from '@mnaoumov/typescript-lib/abort-controller';
 import { toJson } from '@mnaoumov/typescript-lib/object-utils';
@@ -34,6 +33,7 @@ import type { PluginSettingsComponent } from '../settings/plugin-settings-compon
 
 import { findIdenticalAttachmentFile } from '../attachment-location/identical-attachment.ts';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
+import { copyWithSidecars } from '../sidecars/sidecar-group.ts';
 import { ActionContext } from '../tokens/token-evaluator-context.ts';
 import { selectMode } from './move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
 
@@ -243,8 +243,10 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
         destinationPath: newAttachmentPath,
         pluginSettingsComponent: this.pluginSettingsComponent
       });
-      const copiedAttachmentPath = identicalFile?.path ?? await copySafe({
+      const copiedAttachmentPath = await copyWithSidecars({
         app: this.app,
+        existingFile: identicalFile,
+        extensions: this.pluginSettingsComponent.settings.sidecarExtensions,
         newPath: newAttachmentPath,
         oldPathOrFile: attachmentFile
       });
