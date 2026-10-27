@@ -70,7 +70,7 @@ registerCustomToken('bravo', async (ctx) => {
 });
 ```
 
-Its full shape is documented in the plugin's [`token-evaluator-context.ts`](https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/src/token-evaluator-context.ts).
+Its full shape is documented in the plugin's [`token-evaluator-context.ts`](https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/src/tokens/token-evaluator-context.ts).
 
 ## Worked example: rename only images, keep every other file's name
 
