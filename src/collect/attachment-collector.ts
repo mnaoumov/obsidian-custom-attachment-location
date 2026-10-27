@@ -47,7 +47,6 @@ import {
 } from '@mnaoumov/obsidian-lib/reference';
 import {
   cleanupEmptyFolders,
-  copySafe,
   renameSafe
 } from '@mnaoumov/obsidian-lib/vault';
 import { abortSignalAny } from '@mnaoumov/typescript-lib/abort-controller';
@@ -81,6 +80,7 @@ import {
 import { CollectAttachmentUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
 import { selectMode } from '../shared-attachments/collect-attachment-used-by-multiple-notes-modal.ts';
 import { NoteOwnerResolver } from '../shared-attachments/note-owner-resolver.ts';
+import { copyWithSidecars } from '../sidecars/sidecar-group.ts';
 import { ActionContext } from '../tokens/token-evaluator-context.ts';
 import { isReferencedByRawPath } from './raw-path-reference.ts';
 
@@ -594,8 +594,10 @@ export class AttachmentCollector {
                 // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
                 result = {
                   ...result,
-                  newAttachmentPath: identicalFile?.path ?? await copySafe({
+                  newAttachmentPath: await copyWithSidecars({
                     app,
+                    existingFile: identicalFile,
+                    extensions: pluginSettingsComponent.settings.sidecarExtensions,
                     newPath: result.newAttachmentPath,
                     oldPathOrFile: result.oldAttachmentPath
                   })

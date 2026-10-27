@@ -195,9 +195,11 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   let pluginSettingsComponent: PluginSettingsComponent;
   let pluginNoticeComponent: PluginNoticeComponent;
   let resourceLockComponent: ResourceLockComponent;
+  let sidecarExtensions: string[];
 
   beforeEach(() => {
     vi.clearAllMocks();
+    sidecarExtensions = [];
     // A free destination: the copy lands exactly where it was asked to.
     mockCopySafe.mockImplementation(({ newPath }) => Promise.resolve(newPath));
     mockFindIdenticalAttachmentFile.mockResolvedValue(null);
@@ -222,7 +224,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         isExtensionExcludedFromMultipleNotesCheck: mockIsExtensionExcludedFromMultipleNotesCheck,
         get moveAttachmentToProperFolderUsedByMultipleNotesMode(): MoveAttachmentToProperFolderUsedByMultipleNotesMode {
           return mode;
-        }
+        },
+        sidecarExtensions
       })
     });
     abortSignalComponent = strictProxy<AbortSignalComponent>({
@@ -890,6 +893,28 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       expect(mockSelectMode).toHaveBeenCalledExactlyOnceWith({ app, attachmentPath: 'attachment.png', backlinks: ['note1.md', 'note2.md'] });
       expect(mockCopySafe).not.toHaveBeenCalled();
+    });
+
+    it('copies an unlinked signature to each selected note with its base', async () => {
+      sidecarExtensions.push('p7s');
+      const attachment = createFile('attachment.png');
+      const signature = createFile('attachment.png.p7s');
+      app.vault.getFiles = (): TFile[] => [attachment, signature];
+      app.vault.getAbstractFileByPathInsensitive = (): null => null;
+      mockIsFile.mockReturnValue(true);
+      mockIsFolder.mockReturnValue(false);
+      mockIsNoteEx.mockReturnValue(false);
+      const references = new Map([['note1.md', [createReference('[[a]]')]], ['note2.md', [createReference('[[a]]')]]]);
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(references));
+      getFileByPath.mockImplementation((path) => createFile(path));
+      mockGetProperAttachmentPath.mockImplementation(({ noteFilePath }) => Promise.resolve(`${noteFilePath}/renamed.png`));
+      mockEditLinks.mockResolvedValue();
+      mockLoop.mockImplementation(async (params) => {
+        await castTo<LoopParams>(params).processItem(attachment);
+      });
+      await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+      expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'note1.md/renamed.png.p7s', oldPathOrFile: signature.path });
+      expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'note2.md/renamed.png.p7s', oldPathOrFile: signature.path });
     });
 
     it('should copy all backlinks for CopyAll mode', async () => {
