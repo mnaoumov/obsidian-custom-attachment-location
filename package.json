@@ -56,6 +56,11 @@
     "type-fest": "$type-fest",
     "typescript": "$typescript"
   },
+  "dependencies": {
+    "@mnaoumov/obsidian-lib": "^6.0.2",
+    "@mnaoumov/typescript-lib": "^1.6.1",
+    "@noble/hashes": "^2.4.0"
+  },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
     "@mnaoumov/obsidian-dev-toolkit": "^5.0.2",
@@ -79,7 +84,7 @@
     "json5": "^2.2.3",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.14.4",
-    "obsidian-integration-testing": "^17.5.0",
+    "obsidian-integration-testing": "^17.6.1",
     "obsidian-test-mocks": "^7.2.3",
     "semver": "^7.8.5",
     "sharp": "^0.35.5",
@@ -88,10 +93,5 @@
     "typescript": "6.0.3",
     "vitest": "^5.0.5",
     "zod": "^4.6.7"
-  },
-  "dependencies": {
-    "@mnaoumov/obsidian-lib": "^6.0.2",
-    "@mnaoumov/typescript-lib": "^1.6.1",
-    "@noble/hashes": "^2.4.0"
   }
 }

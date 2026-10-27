@@ -71,9 +71,19 @@ describe('inserted attachment link text', () => {
               timeoutInMilliseconds: 10_000
             });
           } else {
-            // Mobile has no OS file-drag source; exercise the same attachment saver and link generator.
-            const file = await app.saveAttachment('dropped report', 'pdf', new TextEncoder().encode('%PDF-1.4').buffer);
-            await app.vault.modify(note, app.fileManager.generateMarkdownLink(file, note.path));
+            // Appium cannot supply an Android share intent with a file payload. A blob URI drives the real
+            // share receiver, including its pre-save renaming, fetch and attachment save.
+            const uri = URL.createObjectURL(new Blob(['%PDF-1.4'], { type: 'application/pdf' }));
+            try {
+              await app.shareReceiver.importFiles([{ name: 'dropped report.pdf', uri }]);
+              const file = app.vault.getFileByPath(`${folder}/renamed.pdf`);
+              if (!file) {
+                throw new Error(`Shared PDF missing; vault files: ${JSON.stringify(app.vault.getFiles().map((entry) => entry.path))}`);
+              }
+              await app.vault.modify(note, app.fileManager.generateMarkdownLink(file, note.path));
+            } finally {
+              URL.revokeObjectURL(uri);
+            }
           }
           const droppedContent = await app.vault.read(note);
           // Drive the same saving sink for names the host filesystem cannot give a real drag source.
