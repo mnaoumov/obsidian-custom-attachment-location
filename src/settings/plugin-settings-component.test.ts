@@ -208,6 +208,16 @@ describe('PluginSettingsComponent', () => {
   });
 
   describe('path validators', () => {
+    it('validates inserted link text as tokens rather than as a filesystem path', async () => {
+      const component = await createComponent();
+      const settings = createSettings();
+      settings.insertedLinkText = 'Report: {{originalAttachmentFileName}}?';
+      const validResult = await component.validate(settings);
+      expect(validResult.insertedLinkText).toBeUndefined();
+      settings.insertedLinkText = '{{unknownLinkTextToken}}';
+      const invalidResult = await component.validate(settings);
+      expect(invalidResult.insertedLinkText).toContain('Unknown token');
+    });
     it('should accept a valid attachment folder path with tokens', async () => {
       const component = await createComponent();
       const settings = createSettings();

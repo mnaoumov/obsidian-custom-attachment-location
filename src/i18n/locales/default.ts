@@ -476,6 +476,10 @@ export const defaultTranslations = {
       path: 'Path',
       specialCharacters: 'Special characters'
     },
+    insertedLinkText: {
+      description: 'Display text for newly imported non-image attachments. Use {{originalAttachmentFileName}} to show the arrival name. Leave blank for the default. Explicit aliases and image sizes take priority; link delimiters use full width equivalents.',
+      name: 'Inserted link text'
+    },
     jpegQuality: {
       description: 'The smaller the quality, the greater the compression ratio.',
       name: 'JPEG Quality'

@@ -176,6 +176,7 @@ function createManager(): TestContext {
     collectedAttachmentFolderPath: '',
     duplicateNameSeparator: ' ',
     generatedAttachmentFileName: 'generated',
+    insertedLinkText: '',
     renamedAttachmentFileName: '',
     shouldFollowObsidianAttachmentLocation: false,
     shouldRenameCollectedAttachments: false,
@@ -295,6 +296,120 @@ beforeEach(() => {
 });
 
 describe('AttachmentPathManager', () => {
+  describe('inserted link text', () => {
+    interface PrepareOptions {
+      readonly baseName?: string;
+      readonly context?: AttachmentPathContext;
+      readonly extension?: string;
+      readonly notePath?: null | string;
+      readonly originalFileName?: string;
+      readonly readContent?: () => Promise<ArrayBuffer>;
+    }
+    function file(path = 'renamed.pdf'): TFile {
+      return createTFile({ extension: 'pdf', name: 'renamed.pdf', path });
+    }
+
+    async function prepare(options: PrepareOptions = {}): Promise<string> {
+      const note = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? note : null);
+      mockIsNote.mockReturnValue(true);
+      return await context.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: options.baseName ?? 'renamed',
+        attachmentFileExtension: options.extension ?? 'pdf',
+        context: options.context ?? AttachmentPathContext.Unknown,
+        notePathOrFile: options.notePath === undefined ? 'note.md' : options.notePath,
+        oldAttachmentPathOrFile: 'incoming.pdf',
+        originalAttachmentFileName: options.originalFileName ?? 'Original.pdf',
+        readAttachmentFileContent: options.readContent ?? null,
+        shouldSkipGeneratedAttachmentFileName: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+    }
+
+    it('reads the saved arrival name after the attachment has been collected or renamed, including string formats', () => {
+      context.settings.insertedLinkText = '{{OriginalAttachmentFileName:{case:"upper"}}}.{{originalAttachmentFileExtension}}';
+      context.originalAttachmentNames.set('renamed.pdf', 'original report.pdf');
+      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBe('ORIGINAL REPORT.pdf');
+    });
+
+    it('uses the current name when an older attachment has no saved original', () => {
+      context.settings.insertedLinkText = '{{originalAttachmentFileName}}';
+      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBe('renamed');
+      expect(context.reportUnknown).toHaveBeenCalledWith({ actionContext: ActionContext.Unknown, currentFileName: 'renamed.pdf', path: 'renamed.pdf' });
+    });
+
+    it('supports literal text and leaves empty templates at the default', () => {
+      context.settings.insertedLinkText = 'Read this';
+      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBe('Read this');
+      context.settings.insertedLinkText = '';
+      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBeUndefined();
+    });
+
+    it('requires asynchronous import preparation for templates using other tokens', () => {
+      context.settings.insertedLinkText = '{{noteFileName}}';
+      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBeUndefined();
+    });
+
+    it('uses a prepared general template before synchronous link generation', async () => {
+      context.settings.insertedLinkText = '{{noteFileName}}: {{originalAttachmentFileName}}';
+      const path = await prepare({ readContent: () => Promise.resolve(new ArrayBuffer(0)) });
+      expect(context.manager.getInsertedLinkText({ attachmentFile: file(path), notePath: 'note.md' })).toBe('note: Original');
+    });
+
+    it('awaits asynchronous custom tokens before the importer generates its link', async () => {
+      Substitutions.registerCustomTokens('registerCustomToken(\'linkLabel\', async (ctx) => { await Promise.resolve(); return ctx.originalAttachmentFileName + \' async\'; });');
+      context.settings.insertedLinkText = '{{linkLabel}}';
+      try {
+        const path = await prepare();
+        expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBe('Original async');
+      } finally {
+        Substitutions.registerCustomTokens('');
+      }
+    });
+
+    it('leaves the link at its default when the evaluated template is empty', async () => {
+      context.settings.insertedLinkText = '{{originalAttachmentFileName}}';
+      const emptyPath = await prepare({ originalFileName: '' });
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: emptyPath, notePath: 'note.md' })).toBeUndefined();
+    });
+
+    it('discards expired preparations and preparations made with a different template', async () => {
+      context.settings.insertedLinkText = '{{noteFileName}}';
+      const path = await prepare();
+      const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 60_001);
+      try {
+        expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+      } finally {
+        clock.mockRestore();
+      }
+      await prepare();
+      // eslint-disable-next-line require-atomic-updates -- Each test owns this settings fixture.
+      context.settings.insertedLinkText = 'different';
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+    });
+
+    it('evicts the oldest unused preparation rather than growing for every dry path probe', async () => {
+      context.settings.insertedLinkText = '{{noteFileName}}';
+      const count = 101;
+      for (let index = 0; index < count; index++) {
+        await prepare({ baseName: `attachment-${index.toString()}` });
+      }
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: 'assets/attachment-0.pdf', notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: 'assets/attachment-100.pdf', notePath: 'note.md' })).toBe('note');
+    });
+
+    it.each([
+      { extension: 'png' },
+      { baseName: DUMMY_PATH },
+      { notePath: null },
+      { context: AttachmentPathContext.DeleteNote }
+    ])('does not prepare aliases for images, placeholders, missing notes or deletion (%j)', async (options) => {
+      context.settings.insertedLinkText = '{{noteFileName}}';
+      const path = await prepare(options);
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+    });
+  });
+
   describe('getAttachmentFolderFullPathForPath', () => {
     it('should resolve the attachment folder path for the note', async () => {
       context.settings.attachmentFolderPath = 'assets';
@@ -944,6 +1059,29 @@ describe('AttachmentPathManager', () => {
   });
 
   describe('getAvailablePathForAttachments', () => {
+    it('prepares arrival-name link text before a renamed attachment is created, once per insertion', async () => {
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : null);
+      mockIsNote.mockReturnValue(true);
+      context.settings.insertedLinkText = '{{originalAttachmentFileName}} ({{generatedAttachmentFileName}})';
+
+      const path = await context.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'renamed',
+        attachmentFileExtension: 'pdf',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'renamed.pdf',
+        originalAttachmentFileName: 'original report.pdf',
+        readAttachmentFileContent: null,
+        shouldSkipGeneratedAttachmentFileName: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'other.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBe('original report (renamed.pdf)');
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+    });
+
     it('should seed default content and stats for a dummy attachment base name', async () => {
       mockGetFileOrNull.mockReturnValue(null);
       mockIsNote.mockReturnValue(false);

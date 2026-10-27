@@ -50,7 +50,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Collect attachments** a note already has into the folder your settings say, for a note, a folder or the whole vault, optionally merging identical files. [05 Collect attachments](<./demo-vault/05 Collect attachments.md>)
 - **Delete unused attachments**, after a confirmation, optionally including folders whose note is gone. [08 Delete unused attachments](<./demo-vault/08 Delete unused attachments.md>)
 - **Keep it true over time**: attachments follow their note on rename, move and delete, through `Advanced Rename and Delete Handler`. [06 Settings](<./demo-vault/06 Settings.md>)
-- **Link display text**: give an inserted link the attachment's own name as its text. [07 Link display text](<./demo-vault/07 Link display text.md>)
+- **Link display text**: show an attachment's name or its original arrival name after renaming, using a token template. [07 Link display text](<./demo-vault/07 Link display text.md>)
 - **Jump between a note and its attachments**, both ways. [10 Navigation](<./demo-vault/10 Navigation.md>)
 
 ## Tokens

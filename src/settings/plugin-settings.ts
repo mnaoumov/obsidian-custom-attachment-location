@@ -137,6 +137,7 @@ export class PluginSettings {
   public excludeExtensionsFromMultipleNotesCheck: string[] = [];
 
   public generatedAttachmentFileName = 'file-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}';
+  public insertedLinkText = '';
 
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public jpegQuality = 0.8;

@@ -38,4 +38,26 @@ await require('/demoSetup.ts').changeSettings(app, { shouldSetLinkDisplayTextToA
 
 Manual equivalent: the four steps above.
 
-Relevant setting: `shouldSetLinkDisplayTextToAttachmentFileName` (see [06 Settings](<./06 Settings.md>)).
+## Keep the original name after renaming
+
+Set **Inserted link text** (`insertedLinkText`) under **Advanced** to `{{originalAttachmentFileName}}`. A PDF arriving as `report-2026.pdf`, saved as `renamed-report.pdf`, is inserted as `[[.../renamed-report.pdf|report-2026]]`. With Obsidian's Markdown links enabled it becomes `[report-2026](.../renamed-report.pdf)`. Add `.{{originalAttachmentFileExtension}}` to include the extension in the text. The same tokens used by file-name patterns are available, including asynchronous custom tokens.
+
+The template is empty by default. It applies when an attachment is imported, including a paste, a drop or a mobile share; it does not rewrite existing links. Images skip the template because an alias such as `300` or `1920x1080` would resize an embed. Explicit aliases and cached image sizes keep priority. Link delimiters (`|`, `[`, `]`, `#`, `^`, backslashes and angle brackets) use their full width equivalents in template text so they cannot change the link target; line breaks become spaces.
+
+Drop a PDF into a note after enabling the setting to try it yourself. These buttons create an isolated sample PDF and insert the link through the same destination resolver and link generator that imports use. Each resets its sample folder and configures the patterns it needs.
+
+```code-button
+---
+caption: Rename a PDF and show its original name
+---
+await require('/demoSetup.ts').insertOriginalNameLinkDemo(app, true);
+```
+
+```code-button
+---
+caption: Turn off the template and insert the same example
+---
+await require('/demoSetup.ts').insertOriginalNameLinkDemo(app, false);
+```
+
+Relevant settings: `insertedLinkText`, `shouldSetLinkDisplayTextToAttachmentFileName` (see [06 Settings](<./06 Settings.md>)).
