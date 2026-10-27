@@ -111,6 +111,7 @@ interface OriginalAttachmentNamesComponentConstructorParams {
 
 interface StoredOriginalAttachmentNames {
   readonly names: Record<string, string>;
+  readonly originalPaths?: unknown;
   readonly version: number;
 }
 
@@ -132,6 +133,7 @@ export class OriginalAttachmentNamesComponent extends Component {
   private readonly expectedArrivals = new Map<string, ExpectedArrival>();
 
   private readonly names = new Map<string, string>();
+  private readonly originalPaths = new Map<string, string>();
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly saveDebounced: Debouncer<[], void>;
@@ -192,7 +194,8 @@ export class OriginalAttachmentNamesComponent extends Component {
   public forget(paths: readonly string[]): number {
     let count = 0;
     for (const path of paths) {
-      if (this.names.delete(path)) {
+      const isHadName = this.names.delete(path);
+      if (this.originalPaths.delete(path) || isHadName) {
         count++;
       }
     }
@@ -208,8 +211,9 @@ export class OriginalAttachmentNamesComponent extends Component {
    * @returns How many records were removed.
    */
   public forgetAll(): number {
-    const count = this.names.size;
+    const count = new Set([...this.names.keys(), ...this.originalPaths.keys()]).size;
     this.names.clear();
+    this.originalPaths.clear();
     if (count > 0) {
       this.saveDebounced();
     }
@@ -224,6 +228,16 @@ export class OriginalAttachmentNamesComponent extends Component {
    */
   public get(path: string): string | undefined {
     return this.names.get(path);
+  }
+
+  /**
+   * Returns the source path exposed by an import, without inventing one for older or pathless imports.
+   *
+   * @param path - The attachment's current vault path.
+   * @returns The recorded source path, if known.
+   */
+  public getOriginalPath(path: string): string | undefined {
+    return this.originalPaths.get(path);
   }
 
   /**
@@ -244,6 +258,7 @@ export class OriginalAttachmentNamesComponent extends Component {
    */
   public async loadFromDisk(): Promise<void> {
     this.names.clear();
+    this.originalPaths.clear();
     const adapter = this.app.vault.adapter;
     if (!await adapter.exists(this.storeFilePath)) {
       return;
@@ -266,6 +281,13 @@ export class OriginalAttachmentNamesComponent extends Component {
     for (const [path, fileName] of Object.entries(stored.names)) {
       if (typeof fileName === 'string') {
         this.names.set(path, fileName);
+      }
+    }
+    if (typeof stored.originalPaths === 'object' && stored.originalPaths !== null && !Array.isArray(stored.originalPaths)) {
+      for (const [path, originalPath] of Object.entries(stored.originalPaths)) {
+        if (typeof originalPath === 'string' && originalPath) {
+          this.originalPaths.set(path, originalPath);
+        }
       }
     }
   }
@@ -339,9 +361,23 @@ export class OriginalAttachmentNamesComponent extends Component {
     this.saveDebounced();
   }
 
+  /**
+   * Records an import's source path independently of its arrival name.
+   *
+   * @param path - The attachment's current vault path.
+   * @param originalPath - The source path exposed by the import.
+   */
+  public setOriginalPath(path: string, originalPath: string): void {
+    if (!originalPath || this.originalPaths.get(path) === originalPath) {
+      return;
+    }
+    this.originalPaths.set(path, originalPath);
+    this.saveDebounced();
+  }
+
   private getPathsUnder(folderPath: string): string[] {
     const prefix = `${folderPath}/`;
-    return [...this.names.keys()].filter((path) => path.startsWith(prefix));
+    return [...new Set([...this.names.keys(), ...this.originalPaths.keys()])].filter((path) => path.startsWith(prefix));
   }
 
   private handleCreate(file: TAbstractFile): void {
@@ -374,6 +410,12 @@ export class OriginalAttachmentNamesComponent extends Component {
 
     let isChanged = false;
     for (const [fromPath, toPath] of moves) {
+      const originalPath = this.originalPaths.get(fromPath);
+      if (originalPath !== undefined) {
+        this.originalPaths.delete(fromPath);
+        this.originalPaths.set(toPath, originalPath);
+        isChanged = true;
+      }
       const fileName = this.names.get(fromPath);
       if (fileName === undefined) {
         continue;
@@ -391,6 +433,7 @@ export class OriginalAttachmentNamesComponent extends Component {
   private async save(): Promise<void> {
     const stored: StoredOriginalAttachmentNames = {
       names: Object.fromEntries(this.names),
+      ...this.originalPaths.size > 0 && { originalPaths: Object.fromEntries(this.originalPaths) },
       version: STORE_FORMAT_VERSION
     };
     // Compact on purpose: the file grows with the vault, and nobody reads it by eye.

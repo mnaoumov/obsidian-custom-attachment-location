@@ -89,6 +89,56 @@ describe('OriginalAttachmentNamesComponent', () => {
     vi.useRealTimers();
   });
 
+  it('should retain a source path across reloads and renames and remove it when forgotten', async () => {
+    const file = await getApp().vault.createBinary('assets/source.png', new ArrayBuffer(1));
+    component.setOriginalPath(file.path, String.raw`C:\Pictures\original.png`);
+    expect(component.get(file.path)).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+    const reloaded = await createComponent();
+    expect(reloaded.getOriginalPath(file.path)).toBe(String.raw`C:\Pictures\original.png`);
+    await getApp().vault.rename(file, 'assets/renamed.png');
+    expect(reloaded.getOriginalPath('assets/source.png')).toBeUndefined();
+    expect(reloaded.getOriginalPath(file.path)).toBe(String.raw`C:\Pictures\original.png`);
+    reloaded.forget([file.path]);
+    expect(reloaded.getOriginalPath(file.path)).toBeUndefined();
+    reloaded.unload();
+  });
+
+  it('should leave the original path intact when the user changes the original name', async () => {
+    component.set('assets/a.pdf', 'old.pdf');
+    component.setOriginalPath('assets/a.pdf', '/Downloads/old.pdf');
+    component.set('assets/a.pdf', 'corrected.pdf');
+    await vi.runAllTimersAsync();
+    const write = vi.spyOn(getApp().vault.adapter, 'write');
+    component.setOriginalPath('assets/a.pdf', '/Downloads/old.pdf');
+    component.setOriginalPath('assets/a.pdf', '');
+    await vi.runAllTimersAsync();
+    expect(component.getOriginalPath('assets/a.pdf')).toBe('/Downloads/old.pdf');
+    expect(component.get('assets/a.pdf')).toBe('corrected.pdf');
+    expect(write).not.toHaveBeenCalled();
+    expect(component.forgetAll()).toBe(1);
+    expect(component.getOriginalPath('assets/a.pdf')).toBeUndefined();
+  });
+
+  it.each([null, [], 4, { 'assets/a.pdf': '/Downloads/a.pdf', 'empty': '', 'invalid': 4 }])('should load only nonempty source paths from optional metadata: %j', async (originalPaths) => {
+    await getApp().vault.adapter.write(STORE_FILE_PATH, JSON.stringify({ names: {}, originalPaths, version: 1 }));
+    const reloaded = await createComponent();
+    expect(reloaded.getOriginalPath('invalid')).toBeUndefined();
+    expect(reloaded.getOriginalPath('empty')).toBeUndefined();
+    expect(reloaded.getOriginalPath('assets/a.pdf')).toBe(originalPaths !== null && !Array.isArray(originalPaths) && typeof originalPaths === 'object' ? '/Downloads/a.pdf' : undefined);
+    reloaded.unload();
+  });
+
+  it('should move and delete source-path metadata with its folder even without an original name', async () => {
+    const folder = await getApp().vault.createFolder('assets/source');
+    component.setOriginalPath('assets/source/a.pdf', '/Downloads/a.pdf');
+    await getApp().vault.rename(folder, 'assets/moved');
+    expect(component.getOriginalPath('assets/source/a.pdf')).toBeUndefined();
+    expect(component.getOriginalPath('assets/moved/a.pdf')).toBe('/Downloads/a.pdf');
+    await getApp().fileManager.trashFile(folder);
+    expect(component.getOriginalPath('assets/moved/a.pdf')).toBeUndefined();
+  });
+
   describe('arrival', () => {
     it('should record the arrival name once the expected file is created', async () => {
       component.expectArrival('assets/Note-img.png', 'img.png');

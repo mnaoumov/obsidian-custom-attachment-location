@@ -88,6 +88,8 @@ export const defaultTranslations = {
   menuItems: {
     collectAttachmentsInFile: 'Collect attachments in file',
     collectAttachmentsInFiles: 'Collect attachments in files',
+    copyOriginalFileName: 'Copy original file name',
+    copyOriginalPath: 'Copy original path',
     deleteUnusedAttachmentsInFile: 'Delete unused attachments in file',
     deleteUnusedAttachmentsInFiles: 'Delete unused attachments in files',
     goToAttachmentFolder: 'Go to attachment folder',

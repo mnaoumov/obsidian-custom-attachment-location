@@ -90,6 +90,7 @@ describe('ArrayBufferMap', () => {
       const arrayBuffer = new ArrayBuffer(8);
       expect(await map.trySetByPath(arrayBuffer, '')).toBe(false);
       expect(map.getFileStats(arrayBuffer)).toBeUndefined();
+      expect(map.getSourcePath(arrayBuffer)).toBeUndefined();
     });
 
     it('should set file stats from the FileSystemAdapter', async () => {
@@ -104,6 +105,7 @@ describe('ArrayBufferMap', () => {
 
       expect(await map.trySetByPath(arrayBuffer, 'file.png')).toBe(true);
       expect(stat).toHaveBeenCalledWith('file.png');
+      expect(map.getSourcePath(arrayBuffer)).toBe('file.png');
       expect(map.getFileStats(arrayBuffer)).toStrictEqual({ ctime: 111, mtime: 222, size: 333 });
     });
 

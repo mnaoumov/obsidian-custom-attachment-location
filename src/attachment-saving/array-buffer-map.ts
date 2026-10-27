@@ -16,6 +16,7 @@ export class ArrayBufferMap {
   private readonly app: App;
   private readonly fileStatsMap = new WeakMap<ArrayBuffer, FileStats>();
   private readonly pastedImageArrayBuffers = new WeakSet<ArrayBuffer>();
+  private readonly sourcePaths = new WeakMap<ArrayBuffer, string>();
 
   public constructor(params: ArrayBufferMapConstructorParams) {
     this.app = params.app;
@@ -23,6 +24,16 @@ export class ArrayBufferMap {
 
   public getFileStats(arrayBuffer: ArrayBuffer): FileStats | undefined {
     return this.fileStatsMap.get(arrayBuffer);
+  }
+
+  /**
+   * Gets the source path exposed when the content was imported.
+   *
+   * @param arrayBuffer - The imported content.
+   * @returns The source path, if the import supplied one.
+   */
+  public getSourcePath(arrayBuffer: ArrayBuffer): string | undefined {
+    return this.sourcePaths.get(arrayBuffer);
   }
 
   /**
@@ -58,6 +69,7 @@ export class ArrayBufferMap {
     if (!filePath) {
       return false;
     }
+    this.sourcePaths.set(arrayBuffer, filePath);
 
     if (this.app.vault.adapter instanceof FileSystemAdapter) {
       const stats = await this.app.vault.adapter.fsPromises.stat(filePath);
