@@ -17,6 +17,7 @@ import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-
 import type { ArrayBufferMap } from '../attachment-saving/array-buffer-map.ts';
 import type { ImageSizeMap } from '../markdown-links/image-size-map.ts';
 import type { MarkdownUrlMap } from '../markdown-links/markdown-url-map.ts';
+import type { SidecarAttachmentsComponent } from '../sidecars/sidecar-attachments-component.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 
 import { FileArrayBufferPatchComponent } from '../attachment-saving/file-array-buffer-patch-component.ts';
@@ -48,6 +49,7 @@ interface CustomAttachmentLocationComponentConstructorParams {
   readonly pluginId: string;
   readonly pluginName: string;
   readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly sidecarAttachmentsComponent?: SidecarAttachmentsComponent;
   readonly tokenValidator: TokenValidator;
 }
 
@@ -74,8 +76,8 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   private readonly attachmentPathManager: AttachmentPathManager;
 
   private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
-  private readonly imageSizeMap: ImageSizeMap;
 
+  private readonly imageSizeMap: ImageSizeMap;
   private readonly insertGestureTrackerComponent: InsertGestureTrackerComponent;
 
   private isMarkdownViewPatched = false;
@@ -83,14 +85,17 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   private lastOpenFilePath: null | string = null;
 
   private readonly markdownUrlMap: MarkdownUrlMap;
+
   private readonly pastedImageMarker: PastedImageMarker;
   private readonly pluginId: string;
   private readonly pluginName: string;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
+  private readonly sidecarAttachmentsComponent: SidecarAttachmentsComponent | undefined;
   private readonly tokenValidator: TokenValidator;
 
   public constructor(params: CustomAttachmentLocationComponentConstructorParams) {
     super(params.app);
+    this.sidecarAttachmentsComponent = params.sidecarAttachmentsComponent;
     this.arrayBufferMap = params.arrayBufferMap;
     this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.pluginId = params.pluginId;
@@ -334,6 +339,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       new ClipboardManagerInsertFilesPatchComponent({
         clipboardManager: markdownView.editMode.clipboardManager,
         insertGestureTrackerComponent: this.insertGestureTrackerComponent,
+        ...this.sidecarAttachmentsComponent && { sidecarAttachmentsComponent: this.sidecarAttachmentsComponent },
         pastedImageMarker: this.pastedImageMarker
       })
     );

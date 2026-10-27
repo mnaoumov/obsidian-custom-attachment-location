@@ -1,5 +1,13 @@
 # AGENTS.md
 
+## Sidecar names belong to the base, and imports have a batch lifetime
+
+`src/sidecars/sidecar-attachments-component.ts` keeps the `ImportedAttachment.data` buffers in a batch until the editor or app import finishes. A sidecar saves its base first through the same saver, and memoizes that save, so reversed order and nested import sinks still generate one base name. Match the full base name first (`document.html.p7s`), then a unique non-sidecar stem (`video.srt` beside `video.mkv`). `sidecarExtensions` accepts case-insensitive extensions with an optional dot; file names match exactly. Paired imports preserve bytes so JPEG conversion cannot invalidate a signature. A later standalone signature uses the original-name store only when it identifies one base in the current note's resolved destination folder; ambiguous or absent bases keep their names and report a notice.
+
+The component intercepts `vault.rename` and awaits companion moves, including unlinked companions and chained signatures. It refuses occupied companion destinations before moving the base and rolls back earlier moves on failure. Collect's proper-path resolver skips independent sidecar moves. The `RenameNote` resolver likewise returns a sidecar's current path: the dependency may plan linked files before or after the base, and only the base's eventual move owns the companion destination. New import and API read contexts retain their own semantics.
+
+The real editor drop test waits for the clipboard interception as well as the editor element. `LayoutReadyComponent` waits for ancestry loading, so a visible editor alone can precede patch installation in a fresh harness vault; dropping during that interval exercises core's original import instead of the feature.
+
 ## Inserted link text is prepared before synchronous link generation
 
 Obsidian's `generateMarkdownLink` returns a string, while a token may be asynchronous. `AttachmentPathManager` evaluates `insertedLinkText` while resolving an import destination and keeps at most 100 results for one minute, keyed by attachment and source note and checked against the current template. The link patch consumes the prepared value even when an explicit alias wins, so it cannot leak into a later link. For an existing attachment with no import in flight, original-name/extension-only templates read the persistent original-name store synchronously, using the same parser, string schema and formatter as those tokens. Other templates apply during imports only. Images skip this template because numeric aliases change embed size; explicit aliases and cached sizes take priority. Link delimiters are converted to full width equivalents so a name cannot become part of the target or terminate the link.

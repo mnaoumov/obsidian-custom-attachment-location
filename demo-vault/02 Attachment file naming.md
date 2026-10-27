@@ -83,3 +83,24 @@ These patterns apply to attachments saved through Obsidian itself — a paste, a
 The drawing keeps showing the image under its new name, whether `Excalidraw`'s **Compress `Excalidraw` JSON** setting is on or off. `Excalidraw` records each image as an ordinary `[[link]]` line under `## Embedded Files`, outside the compressed data, so Obsidian updates that line like any other link.
 
 Related settings you can explore: `renamedAttachmentFileName`, `shouldRenameAttachmentFiles`, `attachmentRenameMode`, `renameAttachmentsCreatedByOtherPluginsMode`, `otherPluginIdsForAttachmentRename`, `duplicateNameSeparator`, and `collectedAttachmentFileName`. Every key is described in [06 Settings](<./06 Settings.md>). The tokens themselves live in [03 Tokens and patterns](<./03 Tokens and patterns.md>).
+
+## Sidecar files
+
+A detached signature belongs beside the document it signs. When `document.html` and `document.html.p7s` are pasted or dropped together, the plugin generates the document's name once, for example `k3x9q2m7v1a8.html`, then saves the companion as `k3x9q2m7v1a8.html.p7s`. Import order does not matter. A unique same-stem companion such as `video.srt` follows `video.mkv` as well. The mobile share sheet uses a separate naming path and does not support pairing yet.
+
+`sidecarExtensions` (**Sidecar extensions**) defaults to `p7s`, `sig`, `asc`, `srt` and `vtt`. Entries accept an optional leading dot and ignore case; an empty list disables pairing. Full-name matches take priority. Several possible bases are ambiguous: the sidecar keeps its own name, with a notice, just as when its base is missing. File names themselves must match exactly, including case.
+
+Renaming or moving a base file inside Obsidian carries its companions, including ones no note links to. An occupied companion destination refuses the group move before changing the base. Importing paired files together is the most reliable way to retain their relationship; batch matches are scoped to their source directory. A signature imported later can use a unique base in the note's destination folder, including its remembered arrival name. If no such base can be established, its own name is kept. Files imported as a group keep their bytes, so image conversion cannot invalidate a detached signature. Naming alone does not check a signature's validity.
+
+```code-button
+---
+caption: Import an HTML document and its companion with one random name
+---
+await require('/demoSetup.ts').saveSidecarDemo(app);
+```
+
+The button creates a demonstration pair under `Materials/02 Attachment file naming/Sidecars`, links both files, and opens its note. The `.p7s` contains sample text, not a real digital signature. Rename the HTML file in the File explorer: the `.p7s` follows it. The **Restore this vault's default patterns** button above restores the naming pattern afterward.
+
+Manual equivalent: enable attachment renaming for all files, set **Generated attachment file name** to `{{random}}`, and drag a document and its signature into a note together.
+
+Keep a link to each companion if you use **Delete unused attachments**: companion naming does not yet make an unlinked sidecar count as used. Copy modes still copy linked files individually.

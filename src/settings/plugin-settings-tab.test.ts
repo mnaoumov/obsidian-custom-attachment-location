@@ -80,7 +80,7 @@ const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 // Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
 // 38 = 37 setting rows + the overlap banner row that rides at the top.
-const EXPECTED_ROW_COUNT = 40;
+const EXPECTED_ROW_COUNT = 41;
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 

@@ -258,6 +258,10 @@ export class PluginSettings {
    * that the current name was used instead. One notice per operation, never one per file.
    */
   public shouldWarnWhenOriginalAttachmentNameIsUnknown = true;
+  /**
+  File types named after a base attachment. An empty list disables companion handling.
+  */
+  public sidecarExtensions: string[] = ['p7s', 'sig', 'asc', 'srt', 'vtt'];
   public specialCharacters = String.raw`#^[]|*\<>:?/`;
   public specialCharactersReplacement = '-';
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.

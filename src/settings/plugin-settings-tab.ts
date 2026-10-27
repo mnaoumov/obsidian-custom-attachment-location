@@ -504,6 +504,15 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       }),
       this.settingEx({
+        desc: t(($) => $.pluginSettingsTab.sidecarExtensions.description),
+        name: t(($) => $.pluginSettingsTab.sidecarExtensions.name),
+        render: (setting) => {
+          setting.addMultipleText((multipleText) => {
+            this.bind({ propertyName: 'sidecarExtensions', valueComponent: multipleText });
+          });
+        }
+      }),
+      this.settingEx({
         desc: createFragment((f) => {
           appendCodeBlock(f, '{{originalAttachmentFileName}}');
           f.appendText(' ');

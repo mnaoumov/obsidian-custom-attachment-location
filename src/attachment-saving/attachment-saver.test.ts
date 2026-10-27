@@ -24,6 +24,7 @@ import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-
 import type { AttachmentPathManager } from '../attachment-location/attachment-path-manager.ts';
 import type { ImageSizeMap } from '../markdown-links/image-size-map.ts';
 import type { MarkdownUrlMap } from '../markdown-links/markdown-url-map.ts';
+import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { PluginSettings } from '../settings/plugin-settings.ts';
 import type { TokenValidator } from '../tokens/token-validator.ts';
@@ -78,7 +79,8 @@ function createSaver(): TestContext {
   const getGeneratedAttachmentFileBaseName = vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>().mockResolvedValue('generated');
   const attachmentPathManager = strictProxy<AttachmentPathManager>({
     getAvailablePathForAttachments,
-    getGeneratedAttachmentFileBaseName
+    getGeneratedAttachmentFileBaseName,
+    originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ expectArrival: vi.fn() })
   });
 
   const convertToJpeg = vi.fn<ImageManager['convertToJpeg']>().mockImplementation((params) =>
@@ -421,5 +423,38 @@ describe('AttachmentSaver', () => {
       });
       expect(context.createBinary).toHaveBeenCalledWith('assets/saved.png', content, {});
     });
+  });
+});
+
+describe('sidecar save controls', () => {
+  beforeEach(() => {
+    context = createSaver();
+  });
+
+  it('preserves the original bytes when a signed base must not be converted', async () => {
+    context.settings.attachmentRenameMode = AttachmentRenameMode.All;
+    const content = new ArrayBuffer(4);
+    await context.saver.saveAttachment({ attachmentFileBaseName: 'photo', attachmentFileContent: content, attachmentFileExtension: 'png', shouldPreserveContent: true });
+    expect(context.convertToJpeg).not.toHaveBeenCalled();
+    expect(context.createBinary).toHaveBeenCalledWith('assets/saved.png', content, {});
+  });
+
+  it('keeps an orphan sidecar name under rename-all', async () => {
+    context.settings.attachmentRenameMode = AttachmentRenameMode.All;
+    await context.saver.saveAttachment({ attachmentFileBaseName: 'missing.html', attachmentFileContent: new ArrayBuffer(1), attachmentFileExtension: 'p7s', shouldKeepName: true });
+    expect(context.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
+    expect(context.getAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({ attachmentFileBaseName: 'missing.html', attachmentFileExtension: 'p7s' }));
+  });
+
+  it.each([true, false])('honors an exact companion destination with an active note (%s)', async (hasActiveNote) => {
+    context.settings.attachmentRenameMode = AttachmentRenameMode.All;
+    if (!hasActiveNote) {
+      context.getActiveFile.mockReturnValue(null);
+    }
+    const content = new ArrayBuffer(1);
+    await context.saver.saveAttachment({ attachmentFileBaseName: 'document.html', attachmentFileContent: content, attachmentFileExtension: 'p7s', destinationPath: 'assets/base.html.p7s' });
+    expect(context.getGeneratedAttachmentFileBaseName).not.toHaveBeenCalled();
+    expect(context.getAvailablePathForAttachments).not.toHaveBeenCalled();
+    expect(context.createBinary).toHaveBeenCalledWith('assets/base.html.p7s', content, {});
   });
 });

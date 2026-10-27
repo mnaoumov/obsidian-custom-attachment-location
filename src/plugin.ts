@@ -82,6 +82,7 @@ import { createReleaseNotesComponent } from './release-notes-component.ts';
 import { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
 import { PluginSettingsTab } from './settings/plugin-settings-tab.ts';
 import { NoteOwnerResolver } from './shared-attachments/note-owner-resolver.ts';
+import { SidecarAttachmentsComponent } from './sidecars/sidecar-attachments-component.ts';
 import { TokenValidator } from './tokens/token-validator.ts';
 import { createTokenizedStringLanguageComponent } from './tokens/tokenized-string-language.ts';
 
@@ -271,6 +272,16 @@ export class Plugin extends PluginBase {
       tokenValidator: validator
     });
 
+    const sidecarAttachmentsComponent = this.addChild(
+      new SidecarAttachmentsComponent({
+        app: this.app,
+        attachmentPathManager,
+        attachmentSaver,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        pluginSettingsComponent
+      })
+    );
+
     this.addChild(
       new CustomAttachmentLocationComponent({
         app: this.app,
@@ -282,6 +293,7 @@ export class Plugin extends PluginBase {
         pluginId: this.manifest.id,
         pluginName: this.manifest.name,
         pluginSettingsComponent,
+        sidecarAttachmentsComponent,
         tokenValidator: validator
       })
     );

@@ -36,6 +36,7 @@ import type { InsertGestureTrackerComponent } from '../pasted-images/insert-gest
 import type { PastedImageMarker } from '../pasted-images/pasted-image-marker.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { PluginSettings } from '../settings/plugin-settings.ts';
+import type { SidecarAttachmentsComponent } from '../sidecars/sidecar-attachments-component.ts';
 import type { TokenValidator } from '../tokens/token-validator.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 
@@ -69,6 +70,7 @@ interface GenerateMarkdownLinkHolder {
 interface InsertFilesChildParams {
   readonly insertGestureTrackerComponent: InsertGestureTrackerComponent;
   readonly pastedImageMarker: PastedImageMarker;
+  readonly sidecarAttachmentsComponent?: SidecarAttachmentsComponent;
 }
 
 interface LayoutReadyTrigger {
@@ -191,6 +193,14 @@ beforeAll(async () => {
 });
 
 describe('CustomAttachmentLocationComponent', () => {
+  it('hands the sidecar batch component to the real editor interception', async () => {
+    const sidecars = strictProxy<SidecarAttachmentsComponent>({});
+    context.getLeavesOfTypeMock.mockReturnValue([createMarkdownLeaf(ViewType.Markdown)]);
+    const component = createComponent(undefined, sidecars);
+    await loadAndReachLayoutReady(component);
+    const child = hoisted.capturedChildren.find((entry) => entry.type === 'ClipboardManagerInsertFilesPatchComponent');
+    expect(castTo<InsertFilesChildParams>(child?.params).sidecarAttachmentsComponent).toBe(sidecars);
+  });
   beforeEach(() => {
     hoisted.capturedChildren.length = 0;
     hoisted.isWebUtilsAvailable = true;
@@ -621,7 +631,7 @@ async function createChildStub(type: string): Promise<new (params: unknown) => o
   };
 }
 
-function createComponent(arrayBufferMap = strictProxy<ArrayBufferMap>({})): CustomAttachmentLocationComponent {
+function createComponent(arrayBufferMap = strictProxy<ArrayBufferMap>({}), sidecarAttachmentsComponent?: SidecarAttachmentsComponent): CustomAttachmentLocationComponent {
   const component = new CustomAttachmentLocationComponent({
     app: context.app,
     arrayBufferMap,
@@ -632,6 +642,7 @@ function createComponent(arrayBufferMap = strictProxy<ArrayBufferMap>({})): Cust
     pluginId: 'custom-attachment-location',
     pluginName: 'Custom Attachment Location',
     pluginSettingsComponent: context.pluginSettingsComponent,
+    ...sidecarAttachmentsComponent && { sidecarAttachmentsComponent },
     tokenValidator: strictProxy<TokenValidator>({})
   });
   loadedComponents.push(component);
