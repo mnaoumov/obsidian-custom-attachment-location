@@ -61,6 +61,18 @@ interface TieDemoReport {
 const COLLECT_MATERIALS_FOLDER_PATH = 'Materials/05 Collect attachments';
 const TEST_TIMEOUT_IN_MILLISECONDS = 120_000;
 
+describe('sidecar naming demo', () => {
+  it('imports a companion named after the randomly named document', async () => {
+    const result = await callDemoSetup({ functionName: 'saveSidecarDemo', helperArguments: [] });
+    expect(result.error).toBeNull();
+    expect(result.value).toEqual([expect.stringMatching(/\.html\.p7s$/u), expect.stringMatching(/\.html$/u)]);
+    if (!Array.isArray(result.value) || typeof result.value[1] !== 'string') {
+      throw new TypeError('Demo did not return its two saved paths');
+    }
+    expect(result.value[0]).toBe(`${result.value[1]}.p7s`);
+  }, TEST_TIMEOUT_IN_MILLISECONDS);
+});
+
 describe('original-name link text demo', () => {
   it('shows the arrival name beside a renamed PDF only while enabled', async () => {
     const enabled = await callDemoSetup({ functionName: 'insertOriginalNameLinkDemo', helperArguments: [true] });

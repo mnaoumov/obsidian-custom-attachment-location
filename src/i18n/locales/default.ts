@@ -134,7 +134,9 @@ export const defaultTranslations = {
       part2: 'Collected attachments are set to be renamed, but',
       part3: 'is empty, which keeps each attachment\'s current name, so there is nothing left for the collect to change.'
     },
-    noUnusedAttachments: 'No unused attachments found.'
+    noUnusedAttachments: 'No unused attachments found.',
+    sidecarBaseMissing: 'Keeping sidecar \'{{path}}\' unchanged: its base file is missing or ambiguous.',
+    sidecarDestinationExists: 'Cannot move the attachment group: sidecar destination \'{{path}}\' already exists.'
   },
   originalAttachmentNames: {
     forgotAllNotice: 'Forgot {{count}} original attachment name(s).',
@@ -657,6 +659,10 @@ export const defaultTranslations = {
         part2: 'and never warns.'
       },
       name: 'Warn when an original attachment name is unknown'
+    },
+    sidecarExtensions: {
+      description: 'Companion file extensions, one per line (with or without a leading dot). For example, document.html.p7s follows document.html, and video.srt follows a unique video.mkv. Missing or ambiguous bases keep their sidecar names. Clear the list to disable pairing.',
+      name: 'Sidecar extensions'
     },
     specialCharacters: {
       description: {

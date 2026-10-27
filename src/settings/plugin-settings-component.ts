@@ -527,6 +527,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     this.registerValidator('excludeExtensionsFromMultipleNotesCheck', (value): MaybeReturn<string> => {
       return extensionsValidator(value);
     });
+    this.registerValidator('sidecarExtensions', (value): MaybeReturn<string> => extensionsValidator(value));
 
     // The vault path lists are `PathSettings`, so the library that matches them is the one that says which entries are valid.
     this.registerValidator('attachmentUnitFolderPaths', (value): MaybeReturn<string> => {

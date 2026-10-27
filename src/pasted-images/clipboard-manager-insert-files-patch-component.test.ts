@@ -3,6 +3,7 @@ import type {
   ImportedAttachment
 } from '@obsidian-typings/obsidian-public-latest';
 
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   beforeEach,
@@ -12,6 +13,7 @@ import {
   vi
 } from 'vitest';
 
+import type { SidecarAttachmentsComponent } from '../sidecars/sidecar-attachments-component.ts';
 import type { InsertGestureTrackerComponent } from './insert-gesture-tracker-component.ts';
 import type { PastedImageMarker } from './pasted-image-marker.ts';
 
@@ -33,6 +35,35 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
   let insertFilesMock: ReturnType<typeof vi.fn<InsertFilesFunction>>;
   let clipboardManager: ClipboardManager;
   let recordMock: ReturnType<typeof vi.fn<PastedImageMarker['record']>>;
+
+  it('keeps sidecar batch handling around the full editor import after gesture recording', async () => {
+    const trace: string[] = [];
+    const attachments = [createAttachment('doc.html'), createAttachment('doc.html.p7s')];
+    recordMock.mockImplementation(() => {
+      trace.push('gesture');
+      return noopAsync();
+    });
+    async function runImportBatch<T>(items: readonly ImportedAttachment[], run: () => Promise<T>): Promise<T> {
+      expect(items).toBe(attachments);
+      trace.push('batch-start');
+      const result = await run();
+      trace.push('batch-end');
+      return result;
+    }
+    insertFilesMock.mockImplementation(() => {
+      trace.push('save');
+      return noopAsync();
+    });
+    const component = new ClipboardManagerInsertFilesPatchComponent({
+      clipboardManager,
+      insertGestureTrackerComponent: strictProxy<InsertGestureTrackerComponent>({ gesture: InsertGesture.Drop }),
+      pastedImageMarker: strictProxy<PastedImageMarker>({ record: recordMock }),
+      sidecarAttachmentsComponent: strictProxy<SidecarAttachmentsComponent>({ runImportBatch })
+    });
+    component.load();
+    await clipboardManager.insertFiles(attachments);
+    expect(trace).toEqual(['gesture', 'batch-start', 'save', 'batch-end']);
+  });
 
   beforeEach(() => {
     gestureHolder = { gesture: null };

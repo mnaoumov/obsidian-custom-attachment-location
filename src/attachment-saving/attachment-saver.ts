@@ -50,6 +50,7 @@ interface AttachmentSaverSaveAttachmentCoreParams {
   readonly attachmentFileBaseName: string;
   readonly attachmentFileContent: ArrayBuffer;
   readonly attachmentFileExtension: string;
+  readonly destinationPath?: string;
   readonly originalAttachmentFileName: string;
   readonly shouldReplaceSpecialCharactersInKeptFileName?: boolean;
 }
@@ -58,6 +59,9 @@ interface AttachmentSaverSaveAttachmentParams {
   readonly attachmentFileBaseName: string;
   readonly attachmentFileContent: ArrayBuffer;
   readonly attachmentFileExtension: string;
+  readonly destinationPath?: string;
+  readonly shouldKeepName?: boolean;
+  readonly shouldPreserveContent?: boolean;
 }
 
 export class AttachmentSaver {
@@ -97,6 +101,7 @@ export class AttachmentSaver {
     const activeNoteFile = this.app.workspace.getActiveFile();
     if (!activeNoteFile || this.handedOverSettingsComponent.isPathIgnored(activeNoteFile.path)) {
       return await this.saveAttachmentCore({
+        ...params.destinationPath && { destinationPath: params.destinationPath },
         attachmentFileBaseName,
         attachmentFileContent,
         attachmentFileExtension,
@@ -120,7 +125,7 @@ export class AttachmentSaver {
       }
     }
 
-    const convertImageToJpegResult = await this.imageManager.convertToJpeg({
+    const convertImageToJpegResult = params.shouldPreserveContent ? { attachmentFileContent, attachmentFileExtension } : await this.imageManager.convertToJpeg({
       attachmentFileContent,
       attachmentFileExtension,
       isPastedImage
@@ -147,7 +152,7 @@ export class AttachmentSaver {
       }
     }
 
-    if (shouldRename) {
+    if (shouldRename && !params.shouldKeepName && !params.destinationPath) {
       attachmentFileBaseName = await this.attachmentPathManager.getGeneratedAttachmentFileBaseName(
         new Substitutions({
           actionContext: ActionContext.SaveAttachment,
@@ -167,6 +172,7 @@ export class AttachmentSaver {
     }
 
     const attachmentFile = await this.saveAttachmentCore({
+      ...params.destinationPath && { destinationPath: params.destinationPath },
       attachmentFileBaseName,
       attachmentFileContent,
       attachmentFileExtension,
@@ -202,7 +208,7 @@ export class AttachmentSaver {
     const attachmentFileStats = this.arrayBufferMap.getFileStats(params.attachmentFileContent);
 
     const attachmentFileContent = params.attachmentFileContent;
-    const attachmentPath = await this.attachmentPathManager.getAvailablePathForAttachments({
+    const attachmentPath = params.destinationPath ?? await this.attachmentPathManager.getAvailablePathForAttachments({
       attachmentFileBaseName: params.attachmentFileBaseName,
       attachmentFileExtension: params.attachmentFileExtension,
       attachmentFileStats,
@@ -219,6 +225,10 @@ export class AttachmentSaver {
       shouldSkipGeneratedAttachmentFileName: true,
       shouldSkipMissingAttachmentFolderCreation: false
     });
+
+    if (params.destinationPath) {
+      this.attachmentPathManager.originalAttachmentNamesComponent.expectArrival(attachmentPath, params.originalAttachmentFileName);
+    }
 
     const imageSize = await this.imageManager.getImageSize({
       content: params.attachmentFileContent,

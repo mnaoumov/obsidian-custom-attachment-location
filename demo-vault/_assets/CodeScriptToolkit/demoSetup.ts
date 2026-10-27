@@ -114,6 +114,7 @@ interface DemoSettingsPatch {
   customTokensStr?: string;
   excludeExtensionsFromMultipleNotesCheck?: string[];
   generatedAttachmentFileName?: string;
+  sidecarExtensions?: string[];
   insertedLinkText?: string;
   shouldDeduplicateIdenticalAttachments?: boolean;
   shouldFollowObsidianAttachmentLocation?: boolean;
@@ -495,6 +496,37 @@ export async function insertOriginalNameLinkDemo(app: App, shouldEnable: boolean
   await openFile(app, notePath);
   new Notice(`Inserted: ${link}`, NOTICE_DURATION_IN_MILLISECONDS);
   return link;
+}
+
+/**
+ * Imports a document and a companion under one random name, with the companion first.
+ *
+ * Manual equivalent: drop document.html and document.html.p7s into a note together with attachment renaming on.
+ * The companion contains demonstration text, not a cryptographic signature.
+ *
+ * @param app - The demo vault app.
+ * @returns The two paths, in import order.
+ */
+export async function saveSidecarDemo(app: App): Promise<string[]> {
+  const folderPath = 'Materials/02 Attachment file naming/Sidecars';
+  const notePath = `${folderPath}/Sidecar demo.md`;
+  await recreateFolder(app, folderPath, { 'Sidecar demo.md': '' });
+  await changeSettings(app, {
+    attachmentFolderPath: `${folderPath}/assets`,
+    attachmentRenameMode: 'All',
+    generatedAttachmentFileName: '{{random}}',
+    shouldFollowObsidianAttachmentLocation: false,
+    sidecarExtensions: ['p7s', 'sig', 'asc', 'srt', 'vtt']
+  });
+  await openFile(app, notePath);
+  const files = await app.importAttachments([
+    { name: 'document.html', extension: 'p7s', data: Promise.resolve(new TextEncoder().encode('Demonstration companion, not a real signature.').buffer) },
+    { name: 'document', extension: 'html', data: Promise.resolve(new TextEncoder().encode('<html>Demonstration document</html>').buffer) }
+  ], null);
+  await app.vault.modify(getFile(app, notePath), files.map((file) => app.fileManager.generateMarkdownLink(file, notePath)).join('\n'));
+  await openFile(app, notePath);
+  new Notice('The HTML and its companion share one random name. Rename the HTML to see the companion follow.', NOTICE_DURATION_IN_MILLISECONDS);
+  return files.map((file) => file.path);
 }
 
 /**

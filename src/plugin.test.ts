@@ -160,6 +160,13 @@ vi.mock('./attachment-saving/attachment-saver.ts', () => ({
   AttachmentSaver: vi.fn()
 }));
 
+vi.mock('./sidecars/sidecar-attachments-component.ts', () => ({
+  // eslint-disable-next-line prefer-arrow-callback -- A constructor stub returns a real loadable component, matching the other collaborator fixtures.
+  SidecarAttachmentsComponent: vi.fn(function sidecarAttachmentsComponentStub() {
+    return new Component();
+  })
+}));
+
 vi.mock('./collect/collect-attachments-entire-vault-command-handler.ts', () => ({
   CollectAttachmentsEntireVaultCommandHandler: vi.fn()
 }));

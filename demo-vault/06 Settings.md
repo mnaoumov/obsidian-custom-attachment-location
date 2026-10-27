@@ -128,3 +128,7 @@ Two things follow:
   - the settings schema version; managed by the plugin, not edited by hand.
 - `proposedRenameDeleteSettings`
   - the rename/delete values this plugin held before 12.0.0, waiting to be offered to `Advanced Rename and Delete Handler`. `null` once the migration is applied, and `null` on a fresh install, which is how the plugin knows never to offer a migration of values you never set. Managed by the plugin, not edited by hand.
+
+## Sidecar extensions
+
+`sidecarExtensions` lists companion extensions. Defaults: `p7s`, `sig`, `asc`, `srt`, `vtt`. An empty list disables pairing. See [02 Attachment file naming](<./02 Attachment file naming.md#sidecar-files>) for matching, imports and grouped renames.
