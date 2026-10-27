@@ -1,7 +1,7 @@
 import { MonkeyAroundComponent } from '@mnaoumov/obsidian-lib/components/monkey-around-component';
 
 interface FileEx {
-  path: string;
+  readonly path: string;
 }
 
 interface WebUtilsGetPathForFilePatchComponentConstructorParams {

@@ -17,6 +17,7 @@ import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settin
  */
 
 interface FileExplorerLike {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   revealInFolder: (abstractFile: TAbstractFile) => void;
 }
 
@@ -35,8 +36,9 @@ describe('Navigation between a note and its attachments', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<NavigationResult> {
         interface Settings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
-          generatedAttachmentFileName: string;
+          readonly generatedAttachmentFileName: string;
         }
         function isSettings(value: unknown): value is Settings {
           return typeof value === 'object' && value !== null

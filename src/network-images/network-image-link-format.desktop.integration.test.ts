@@ -71,7 +71,9 @@ describe('Network image link format (issue #50)', () => {
         lib: { waitUntil }
       }): Promise<ProbeResult> {
         interface NetworkImageSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           downloadNetworkImages: boolean;
         }
 

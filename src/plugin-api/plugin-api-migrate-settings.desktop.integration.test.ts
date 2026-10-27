@@ -70,7 +70,7 @@ describe('migrateSettings', () => {
         }
 
         interface ApiLike {
-          migrateSettings: (params: MigrateSettingsParams) => Promise<MigrateSettingsResult>;
+          readonly migrateSettings: (params: MigrateSettingsParams) => Promise<MigrateSettingsResult>;
         }
 
         interface ApiRecord {
@@ -96,8 +96,8 @@ describe('migrateSettings', () => {
         }
 
         interface CollectSettings {
-          collectAttachmentUsedByMultipleNotesMode: string;
-          shouldCollectAttachmentsAutomatically: boolean;
+          readonly collectAttachmentUsedByMultipleNotesMode: string;
+          readonly shouldCollectAttachmentsAutomatically: boolean;
         }
 
         const EMPTY: ProbeResult = {

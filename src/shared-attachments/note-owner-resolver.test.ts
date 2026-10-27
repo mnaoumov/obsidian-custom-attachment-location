@@ -31,7 +31,8 @@ import type { PluginSettings } from '../settings/plugin-settings.ts';
 import { NoteOwnerResolver } from './note-owner-resolver.ts';
 
 interface SettingsLike {
-  isAttachmentUnitFolder: Mock<(path: string) => boolean>;
+  readonly isAttachmentUnitFolder: Mock<(path: string) => boolean>;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   notePriorities: readonly string[];
 }
 

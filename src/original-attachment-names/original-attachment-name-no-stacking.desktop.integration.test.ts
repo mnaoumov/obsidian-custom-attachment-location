@@ -65,12 +65,19 @@ describe('{{originalAttachmentFileName}} is the arrival name, so a collect templ
         waitTimeoutInMilliseconds
       }): Promise<NoStackingResult> {
         interface NoStackingSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           collectedAttachmentFileName: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           collectedAttachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldCollectAttachmentsAutomatically: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldRenameCollectedAttachments: boolean;
         }
 

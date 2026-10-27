@@ -53,10 +53,15 @@ async function runPhase(phase: Phase): Promise<PhaseResult> {
       waitTimeoutInMilliseconds
     }): Promise<PhaseResult> {
       interface AutoCollectSettings {
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         attachmentFolderPath: string;
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         collectedAttachmentFileName: string;
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         collectedAttachmentFolderPath: string;
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         shouldCollectAttachmentsAutomatically: boolean;
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         shouldRenameCollectedAttachments: boolean;
       }
 

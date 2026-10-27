@@ -26,17 +26,18 @@ import {
 } from './share-receiver-import-files-patch-component.ts';
 
 interface CapacitorApi {
-  convertFileSrc: (uri: string) => string;
+  readonly convertFileSrc: (uri: string) => string;
 }
 
 interface CapacitorGlobal {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   Capacitor: CapacitorApi;
 }
 
 type ImportFilesFunction = (files: SharedFile[]) => Promise<void>;
 
 interface ShareReceiverPrototype {
-  importFiles: ImportFilesFunction;
+  readonly importFiles: ImportFilesFunction;
 }
 
 describe('ShareReceiverImportFilesPatchComponent', () => {

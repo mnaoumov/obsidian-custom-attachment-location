@@ -52,12 +52,13 @@ import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to
 import { selectMode } from './move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
 
 interface ActiveFileProviderHolder {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   _activeFileProvider: ActiveFileProvider;
 }
 
 interface LoopBuildNoticeMessageParamsLike {
-  item: TFile;
-  iterationString: string;
+  readonly item: TFile;
+  readonly iterationString: string;
 }
 
 interface LoopParams {
@@ -71,16 +72,16 @@ interface LoopParams {
 }
 
 interface TestableHandler {
-  canExecute: () => boolean;
-  canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
-  canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
-  executeAbstractFile: (abstractFile: TAbstractFile) => Promise<void>;
-  executeAbstractFiles: (abstractFiles: TAbstractFile[]) => Promise<void>;
-  icon: string;
-  id: string;
-  name: string;
-  shouldAddToAbstractFileMenu: () => boolean;
-  shouldAddToAbstractFilesMenu: () => boolean;
+  readonly canExecute: () => boolean;
+  readonly canExecuteAbstractFile: (abstractFile: TAbstractFile) => boolean;
+  readonly canExecuteAbstractFiles: (abstractFiles: TAbstractFile[]) => boolean;
+  readonly executeAbstractFile: (abstractFile: TAbstractFile) => Promise<void>;
+  readonly executeAbstractFiles: (abstractFiles: TAbstractFile[]) => Promise<void>;
+  readonly icon: string;
+  readonly id: string;
+  readonly name: string;
+  readonly shouldAddToAbstractFileMenu: () => boolean;
+  readonly shouldAddToAbstractFilesMenu: () => boolean;
 }
 
 vi.mock('../attachment-location/identical-attachment.ts', () => ({

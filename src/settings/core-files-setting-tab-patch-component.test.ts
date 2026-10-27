@@ -28,9 +28,9 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { CoreFilesSettingTabPatchComponent } from './core-files-setting-tab-patch-component.ts';
 
 interface CoreFilesSettingTabDouble {
-  getSettingDefinitions: () => SettingDefinitionItem[];
+  readonly getSettingDefinitions: () => SettingDefinitionItem[];
   readonly id: string;
-  update: ReturnType<typeof vi.fn<() => void>>;
+  readonly update: ReturnType<typeof vi.fn<() => void>>;
 }
 
 interface SettingsState {

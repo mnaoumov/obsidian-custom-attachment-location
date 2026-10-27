@@ -43,7 +43,7 @@ describe('The attachment unit folder designation is published through the plugin
         pluginId
       }): Promise<ProbeResult> {
         interface ApiLike {
-          isAttachmentUnitFolder: (params: UnitFolderParams) => boolean;
+          readonly isAttachmentUnitFolder: (params: UnitFolderParams) => boolean;
         }
 
         interface ApiRecord {
@@ -72,8 +72,9 @@ describe('The attachment unit folder designation is published through the plugin
         }
 
         interface UnitFolderSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder: (path: string) => boolean;
+          readonly isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         function isApiLike(value: unknown): value is ApiLike {

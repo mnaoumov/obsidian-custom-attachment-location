@@ -20,18 +20,18 @@ import {
 } from './tokenized-string-language.ts';
 
 interface PrismLike {
-  languages: Record<string, unknown>;
+  readonly languages: Record<string, unknown>;
 }
 
 interface PrismTokenWithInside {
-  alias?: string;
-  inside: unknown;
-  pattern: RegExp;
+  readonly alias?: string;
+  readonly inside: unknown;
+  readonly pattern: RegExp;
 }
 
 interface PrismTokenWithNestedInside {
-  inside: Record<string, PrismTokenWithInside | undefined>;
-  pattern: RegExp;
+  readonly inside: Record<string, PrismTokenWithInside | undefined>;
+  readonly pattern: RegExp;
 }
 
 type RegisteredGrammar = Record<string, PrismTokenWithNestedInside | undefined>;

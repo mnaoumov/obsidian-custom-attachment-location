@@ -90,35 +90,35 @@ const renderConflictWarningBannerMock = vi.fn<(containerEl: HTMLElement) => void
 const hasActiveWarningConflictsMock = vi.fn<() => boolean>();
 
 interface CapturedMultipleValueComponent {
-  name: string;
-  setValue: (value: readonly string[]) => unknown;
+  readonly name: string;
+  readonly setValue: (value: readonly string[]) => unknown;
 }
 
 interface CapturedToggle {
-  name: string;
-  toggle: ToggleComponent;
+  readonly name: string;
+  readonly toggle: ToggleComponent;
 }
 
 interface CapturedValueComponent {
-  inputEl?: HTMLInputElement | HTMLTextAreaElement;
-  name: string;
-  setValue: (value: string) => unknown;
+  readonly inputEl?: HTMLInputElement | HTMLTextAreaElement;
+  readonly name: string;
+  readonly setValue: (value: string) => unknown;
 }
 
 interface CreatedTab {
-  buttons: ButtonComponentClass[];
-  multipleDropdownComponents: CapturedMultipleValueComponent[];
-  multipleTextComponents: CapturedMultipleValueComponent[];
-  names: string[];
-  pluginSettingsComponent: PluginSettingsComponent;
-  tab: PluginSettingsTab;
-  textLikeComponents: CapturedValueComponent[];
-  toggles: CapturedToggle[];
+  readonly buttons: ButtonComponentClass[];
+  readonly multipleDropdownComponents: CapturedMultipleValueComponent[];
+  readonly multipleTextComponents: CapturedMultipleValueComponent[];
+  readonly names: string[];
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly tab: PluginSettingsTab;
+  readonly textLikeComponents: CapturedValueComponent[];
+  readonly toggles: CapturedToggle[];
 }
 
 interface DeclaredRow {
-  disabled?: (() => boolean) | boolean;
-  visible?: (() => boolean) | boolean;
+  readonly disabled?: (() => boolean) | boolean;
+  readonly visible?: (() => boolean) | boolean;
 }
 
 class MockDataHandler implements DataHandler {

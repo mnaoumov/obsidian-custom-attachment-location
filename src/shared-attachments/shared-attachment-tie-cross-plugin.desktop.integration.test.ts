@@ -175,8 +175,9 @@ describe('Deleting a folder whose shared attachment ties at the top of the note-
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface AttachmentFolderSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
-          isAttachmentUnitFolder: (path: string) => boolean;
+          readonly isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         interface MigratableSettingsLike {
@@ -203,8 +204,8 @@ describe('Deleting a folder whose shared attachment ties at the top of the note-
         }
 
         interface HandlerApiLike {
-          getSettings: () => HandedOverSettingsLike;
-          migrateSettings: (params: MigrateSettingsParamsLike) => Promise<MigrateSettingsResultLike>;
+          readonly getSettings: () => HandedOverSettingsLike;
+          readonly migrateSettings: (params: MigrateSettingsParamsLike) => Promise<MigrateSettingsResultLike>;
         }
 
         interface ApiRecord {

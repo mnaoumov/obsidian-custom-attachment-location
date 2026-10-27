@@ -37,7 +37,8 @@ describe('Link display text = attachment file name (issue #24)', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<LinkDisplayResult> {
         interface DisplayTextSettings {
-          attachmentFolderPath: string;
+          readonly attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldSetLinkDisplayTextToAttachmentFileName: boolean;
         }
 

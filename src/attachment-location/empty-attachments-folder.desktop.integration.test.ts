@@ -34,8 +34,9 @@ describe('Empty attachments folder is not created on a dry resolution (issue #26
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ProbeResult> {
         interface Settings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
-          generatedAttachmentFileName: string;
+          readonly generatedAttachmentFileName: string;
         }
         function isSettings(value: unknown): value is Settings {
           return typeof value === 'object' && value !== null

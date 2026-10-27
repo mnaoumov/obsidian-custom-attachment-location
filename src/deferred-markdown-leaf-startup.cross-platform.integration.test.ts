@@ -39,7 +39,7 @@ describe('A deferred markdown tab at startup', () => {
         }
 
         interface ClipboardManagerLike {
-          insertFiles: unknown;
+          readonly insertFiles: unknown;
         }
 
         interface MarkdownEditModeLike {

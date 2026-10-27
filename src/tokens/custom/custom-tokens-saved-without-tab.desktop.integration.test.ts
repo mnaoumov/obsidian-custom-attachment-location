@@ -29,9 +29,12 @@ describe('Custom tokens saved without the settings tab', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent, pluginId }): Promise<ProbeResult> {
         interface TokenSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
-          // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key.
+
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members, unicorn/name-replacements -- This persisted settings key is reassigned by settings editors and must retain its spelling.
           customTokensStr: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldFollowObsidianAttachmentLocation: boolean;
         }
 

@@ -23,8 +23,11 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { CopyOriginalAttachmentMetadataComponent } from './copy-original-attachment-metadata-component.ts';
 
 interface CapturedItem {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   click: Parameters<MenuItem['onClick']>[0];
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   isDisabled: boolean;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   title: string;
 }
 

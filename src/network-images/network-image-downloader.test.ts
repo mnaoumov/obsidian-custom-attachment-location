@@ -33,14 +33,14 @@ vi.mock('obsidian', async (importOriginal) => ({
 const mockRequestUrl = vi.mocked(requestUrl);
 
 interface TestContext {
-  cachedRead: ReturnType<typeof vi.fn<Vault['cachedRead']>>;
-  createBinary: ReturnType<typeof vi.fn<Vault['createBinary']>>;
-  downloader: NetworkImageDownloader;
-  generateMarkdownLink: ReturnType<typeof vi.fn<FileManager['generateMarkdownLink']>>;
-  getDownloadedImagePath: ReturnType<typeof vi.fn<AttachmentPathManager['getDownloadedImagePath']>>;
-  modify: ReturnType<typeof vi.fn<Vault['modify']>>;
-  noteFile: TFile;
-  settings: PluginSettings;
+  readonly cachedRead: ReturnType<typeof vi.fn<Vault['cachedRead']>>;
+  readonly createBinary: ReturnType<typeof vi.fn<Vault['createBinary']>>;
+  readonly downloader: NetworkImageDownloader;
+  readonly generateMarkdownLink: ReturnType<typeof vi.fn<FileManager['generateMarkdownLink']>>;
+  readonly getDownloadedImagePath: ReturnType<typeof vi.fn<AttachmentPathManager['getDownloadedImagePath']>>;
+  readonly modify: ReturnType<typeof vi.fn<Vault['modify']>>;
+  readonly noteFile: TFile;
+  readonly settings: PluginSettings;
 }
 
 let context: TestContext;

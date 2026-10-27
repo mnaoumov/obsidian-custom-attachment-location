@@ -44,9 +44,11 @@ describe('Collect attachments — exclude attachment extensions from the multipl
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<ProbeResult> {
         interface MultipleNotesSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           collectAttachmentUsedByMultipleNotesMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           excludeExtensionsFromMultipleNotesCheck: string[];
-          isExtensionExcludedFromMultipleNotesCheck: (path: string) => boolean;
+          readonly isExtensionExcludedFromMultipleNotesCheck: (path: string) => boolean;
         }
 
         function isMultipleNotesSettings(value: unknown): value is MultipleNotesSettings {

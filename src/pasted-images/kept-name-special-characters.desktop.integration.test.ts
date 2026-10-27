@@ -20,11 +20,11 @@ import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settin
  */
 
 interface EditorLike {
-  cm?: EditorViewLike;
+  readonly cm?: EditorViewLike;
 }
 
 interface EditorViewLike {
-  contentDOM: HTMLElement;
+  readonly contentDOM: HTMLElement;
 }
 
 interface KeptNameResult {
@@ -36,7 +36,7 @@ interface KeptNameResult {
 }
 
 interface MarkdownViewLike {
-  editor?: EditorLike;
+  readonly editor?: EditorLike;
 }
 
 describe('special characters in a kept attachment name', () => {
@@ -44,9 +44,13 @@ describe('special characters in a kept attachment name', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent, lib: { waitUntil } }): Promise<KeptNameResult> {
         interface KeptNameSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           specialCharacters: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           specialCharactersReplacement: string;
         }
 

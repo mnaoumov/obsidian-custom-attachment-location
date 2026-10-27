@@ -2,6 +2,7 @@ import type { ObsidianPluginVitestConfigContext } from '@mnaoumov/obsidian-dev-t
 import type { TestProjectConfiguration } from 'vitest/config';
 
 import { defineObsidianPluginVitestConfig } from '@mnaoumov/obsidian-dev-toolkit/test-runners/vitest-config';
+import process from 'node:process';
 
 /**
  * The screenshot-capture suites that write
@@ -161,6 +162,13 @@ export const config = defineObsidianPluginVitestConfig({
     ];
   },
   editContext(context: ObsidianPluginVitestConfigContext): void {
+    context.unitTests.setupFiles = [...toSetupFileList(context.unitTests.setupFiles), './scripts/vitest-setup-data-stores.ts'];
+    const bulkCores = Number(process.env['BULK_CORES']);
+    if (Number.isSafeInteger(bulkCores) && bulkCores > 0) {
+      context.unitTests.maxWorkers = bulkCores;
+      context.desktop.maxWorkers = bulkCores;
+      context.android.maxWorkers = bulkCores;
+    }
     // This plugin declares `Advanced Rename and Delete Handler` as a dependency and loads nothing without it, so
     // every vault these projects open has it seeded. The capture projects spread these same objects and so
     // inherit it; the demo-vault and performance projects bring setups of their own that seed it too.
@@ -172,6 +180,7 @@ export const config = defineObsidianPluginVitestConfig({
     context.desktop.environmentOptions = {
       obsidianTransport: {
         commandTimeoutInMilliseconds: CDP_COMMAND_TIMEOUT_IN_MILLISECONDS,
+        obsidianVersion: process.env['OBSIDIAN_VERSION'] ?? 'public-latest',
         type: 'obsidian-cdp'
       }
     };

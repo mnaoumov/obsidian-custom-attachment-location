@@ -1,10 +1,13 @@
 import type { ConsoleDebugComponent } from '@mnaoumov/obsidian-lib/components/console-debug-component';
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 
+import { LocalDataStore } from '@mnaoumov/obsidian-lib/data-stores/local-data-store';
+import { SharedDataStore } from '@mnaoumov/obsidian-lib/data-stores/shared-data-store';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import { IDBFactory } from 'fake-indexeddb';
 import { ButtonComponent } from 'obsidian';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
@@ -66,7 +69,11 @@ describe('OriginalAttachmentNamesComponent', () => {
   }
 
   async function readStoreFile(): Promise<unknown> {
-    return JSON.parse(await getApp().vault.adapter.read(STORE_FILE_PATH));
+    await component.flush();
+    const reloaded = await createComponent();
+    const names = Object.fromEntries(reloaded.getRecords().map(({ originalFileName, path }) => [path, originalFileName]));
+    reloaded.unload();
+    return { names, version: 1 };
   }
 
   beforeAll(async () => {
@@ -74,7 +81,7 @@ describe('OriginalAttachmentNamesComponent', () => {
   });
 
   beforeEach(async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
     app = App.createConfigured__();
     consoleDebug = vi.fn<ConsoleDebugComponent['consoleDebug']>();
     showNotice = vi.fn<PluginNoticeComponent['showNotice']>();
@@ -239,13 +246,14 @@ describe('OriginalAttachmentNamesComponent', () => {
   });
 
   describe('persistence', () => {
-    it('should write a compact file of its own and read it back on the next load', async () => {
+    it('should publish shared Markdown records and read them back on the next load', async () => {
       component.set('assets/img.png', 'Pasted image 1.png');
       vi.advanceTimersByTime(SAVE_DEBOUNCE_IN_MILLISECONDS);
       await vi.runAllTimersAsync();
 
-      const raw = await getApp().vault.adapter.read(STORE_FILE_PATH);
-      expect(raw).not.toContain('\n');
+      await component.flush();
+      expect(await getApp().vault.adapter.exists(STORE_FILE_PATH)).toBe(false);
+      expect(await getApp().vault.adapter.exists('Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1')).toBe(true);
       expect(await readStoreFile()).toStrictEqual({ names: { 'assets/img.png': 'Pasted image 1.png' }, version: 1 });
 
       const reloaded = await createComponent();
@@ -258,7 +266,9 @@ describe('OriginalAttachmentNamesComponent', () => {
       component.unload();
       await vi.runAllTimersAsync();
 
-      expect(await readStoreFile()).toStrictEqual({ names: { 'assets/img.png': 'img.png' }, version: 1 });
+      const reloaded = await createComponent();
+      expect(reloaded.get('assets/img.png')).toBe('img.png');
+      reloaded.unload();
     });
 
     it('should load nothing from a damaged file', async () => {
@@ -312,6 +322,176 @@ describe('OriginalAttachmentNamesComponent', () => {
 
       expect(reloaded.getRecords().map((record) => record.path)).toStrictEqual(['a.png']);
       reloaded.unload();
+    });
+  });
+
+  describe('shared persistence', () => {
+    it('persists a replacement source path independently of the original name', async () => {
+      component.set('assets/a.pdf', 'first.pdf');
+      component.setOriginalPath('assets/a.pdf', '/old/a.pdf');
+      component.setOriginalPath('assets/a.pdf', '/new/a.pdf');
+      await component.flush();
+      const reloaded = await createComponent();
+      expect(reloaded.get('assets/a.pdf')).toBe('first.pdf');
+      expect(reloaded.getOriginalPath('assets/a.pdf')).toBe('/new/a.pdf');
+      reloaded.unload();
+    });
+
+    it('closes its local connection when the shared store cannot open', async () => {
+      vi.spyOn(SharedDataStore, 'open').mockRejectedValueOnce(new Error('transport unavailable'));
+      const close = vi.spyOn(LocalDataStore.prototype, 'close');
+      await expect(createComponent()).rejects.toThrow('transport unavailable');
+      expect(close).toHaveBeenCalledOnce();
+    });
+
+    it('serializes concurrent windows using the same device identity without losing either write', async () => {
+      const other = await createComponent();
+      component.set('assets/first.pdf', 'first.pdf');
+      other.set('assets/second.pdf', 'second.pdf');
+      await Promise.all([component.flush(), other.flush()]);
+      await component.flush();
+      await other.flush();
+      expect(component.get('assets/second.pdf')).toBe('second.pdf');
+      expect(other.get('assets/first.pdf')).toBe('first.pdf');
+      other.unload();
+    });
+
+    it('syncs optional source paths and explicit name corrections without resurrecting a deleted path', async () => {
+      component.set('assets/a.pdf', 'first.pdf');
+      component.setOriginalPath('assets/a.pdf', '/Downloads/first.pdf');
+      await component.flush();
+      vi.stubGlobal('indexedDB', new IDBFactory());
+      const other = await createComponent();
+      expect(other.getOriginalPath('assets/a.pdf')).toBe('/Downloads/first.pdf');
+      other.set('assets/a.pdf', 'corrected.pdf');
+      await other.flush();
+      await component.flush();
+      expect(component.get('assets/a.pdf')).toBe('corrected.pdf');
+      expect(component.getOriginalPath('assets/a.pdf')).toBe('/Downloads/first.pdf');
+      other.forget(['assets/a.pdf']);
+      await other.flush();
+      await component.flush();
+      expect(component.get('assets/a.pdf')).toBeUndefined();
+      expect(component.getOriginalPath('assets/a.pdf')).toBeUndefined();
+      component.set('assets/a.pdf', 'new.pdf');
+      await component.flush();
+      await other.flush();
+      expect(other.get('assets/a.pdf')).toBe('new.pdf');
+      expect(other.getOriginalPath('assets/a.pdf')).toBeUndefined();
+      other.unload();
+    });
+
+    it('migrates source-only records and keeps them forgotten when a new device imports the old JSON', async () => {
+      const legacy = JSON.stringify({ names: {}, originalPaths: { 'assets/a.pdf': '/Downloads/a.pdf' }, version: 1 });
+      await getApp().vault.adapter.write(STORE_FILE_PATH, legacy);
+      const migrated = await createComponent();
+      expect(migrated.getOriginalPath('assets/a.pdf')).toBe('/Downloads/a.pdf');
+      migrated.forgetAll();
+      await migrated.flush();
+      vi.stubGlobal('indexedDB', new IDBFactory());
+      const newDevice = await createComponent();
+      expect(newDevice.getOriginalPath('assets/a.pdf')).toBeUndefined();
+      expect(await getApp().vault.adapter.read(STORE_FILE_PATH)).toBe(legacy);
+      migrated.unload();
+      newDevice.unload();
+    });
+
+    it('compacts published history without turning transport deletion or rename into attachment records', async () => {
+      for (let index = 0; index < 100; index++) {
+        component.set(`assets/${index.toString()}.pdf`, 'arrival.pdf');
+      }
+      const compact = vi.spyOn(SharedDataStore.prototype, 'compact');
+      await component.flush();
+      expect(compact).toHaveBeenCalledOnce();
+      const publish = vi.spyOn(SharedDataStore.prototype, 'setMany');
+      const transportPath = 'Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1/devices/a/log-1.md';
+      await getApp().vault.createFolder('Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1/devices/a');
+      const transport = await getApp().vault.create(transportPath, 'transport');
+      await getApp().vault.rename(transport, transportPath.replace('log-1', 'log-2'));
+      await getApp().fileManager.trashFile(transport);
+      await component.flush();
+      expect(publish).not.toHaveBeenCalled();
+      const reloaded = await createComponent();
+      expect(reloaded.size).toBe(100);
+      expect(reloaded.get('assets/0.pdf')).toBe('arrival.pdf');
+      reloaded.unload();
+    });
+
+    it('converges independent device replicas to the earliest arrival despite reversed publication', async () => {
+      component.set('assets/a.png', 'first.png');
+      vi.advanceTimersByTime(10);
+      vi.stubGlobal('indexedDB', new IDBFactory());
+      const other = await createComponent();
+      other.set('assets/a.png', 'later.png');
+      await other.flush();
+      await component.flush();
+      await other.flush();
+      expect(component.get('assets/a.png')).toBe('first.png');
+      expect(other.get('assets/a.png')).toBe('first.png');
+      other.unload();
+    });
+
+    it('migrates once and never resurrects a forgotten record on another device', async () => {
+      const legacy = JSON.stringify({ names: { 'assets/a.png': 'legacy.png' }, version: 1 });
+      await getApp().vault.adapter.write(STORE_FILE_PATH, legacy);
+      const migrated = await createComponent();
+      expect(migrated.get('assets/a.png')).toBe('legacy.png');
+      migrated.forget(['assets/a.png']);
+      await migrated.flush();
+      const reloaded = await createComponent();
+      expect(reloaded.get('assets/a.png')).toBeUndefined();
+      vi.stubGlobal('indexedDB', new IDBFactory());
+      const newDevice = await createComponent();
+      expect(newDevice.get('assets/a.png')).toBeUndefined();
+      expect(await getApp().vault.adapter.read(STORE_FILE_PATH)).toBe(legacy);
+      migrated.unload();
+      reloaded.unload();
+      newDevice.unload();
+    });
+
+    it('retries a failed publication without losing its pending record', async () => {
+      component.set('assets/a.png', 'first.png');
+      const publish = vi.spyOn(SharedDataStore.prototype, 'setMany').mockRejectedValueOnce(new Error('disk full'));
+      await expect(component.flush()).rejects.toThrow('disk full');
+      expect(component.get('assets/a.png')).toBe('first.png');
+      await component.flush();
+      expect(publish).toHaveBeenCalledTimes(2);
+      const reloaded = await createComponent();
+      expect(reloaded.get('assets/a.png')).toBe('first.png');
+      reloaded.unload();
+    });
+
+    it('preserves a synchronous import made while publication is in progress', async () => {
+      component.set('assets/a.png', 'first.png');
+      const firstFlush = component.flush();
+      component.set('assets/b.png', 'second.png');
+      await firstFlush;
+      await component.flush();
+      const reloaded = await createComponent();
+      expect(reloaded.get('assets/a.png')).toBe('first.png');
+      expect(reloaded.get('assets/b.png')).toBe('second.png');
+      reloaded.unload();
+    });
+
+    it('ignores acknowledgement events and synchronizes journal events and foreground changes', async () => {
+      const synchronize = vi.spyOn(SharedDataStore.prototype, 'synchronize');
+      getApp().vault.trigger('raw', 'Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1/devices/a/have.md');
+      getApp().vault.trigger('raw', 'Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1/devices/a');
+      await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+      expect(synchronize).not.toHaveBeenCalled();
+      vi.spyOn(document, 'visibilityState', 'get').mockReturnValueOnce('hidden');
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+      expect(synchronize).not.toHaveBeenCalled();
+      getApp().vault.trigger('raw', 'Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1/devices/a/log-1.md');
+      await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+      await component.flush();
+      expect(synchronize).toHaveBeenCalled();
+      synchronize.mockClear();
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+      await component.flush();
+      expect(synchronize).toHaveBeenCalled();
     });
   });
 

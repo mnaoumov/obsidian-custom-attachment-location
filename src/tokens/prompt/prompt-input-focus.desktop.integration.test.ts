@@ -58,8 +58,11 @@ describe('The prompt token modal (issue #59)', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent }): Promise<PromptFocusResult> {
         interface PromptSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
         }
 

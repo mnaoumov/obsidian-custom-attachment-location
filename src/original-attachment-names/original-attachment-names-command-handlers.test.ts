@@ -35,15 +35,15 @@ import { RememberCurrentNameAsOriginalCommandHandler } from './remember-current-
 import { ShowOriginalAttachmentNamesCommandHandler } from './show-original-attachment-names-command-handler.ts';
 
 interface TestableExecute {
-  execute: () => Promise<void>;
+  readonly execute: () => Promise<void>;
 }
 
 interface TestableFileHandler {
-  canExecuteFile: (file: TFile) => boolean;
-  executeFile: (file: TFile) => void;
-  executeFiles: (files: TFile[]) => void;
-  shouldAddToFileMenu: () => boolean;
-  shouldAddToFilesMenu: () => boolean;
+  readonly canExecuteFile: (file: TFile) => boolean;
+  readonly executeFile: (file: TFile) => void;
+  readonly executeFiles: (files: TFile[]) => void;
+  readonly shouldAddToFileMenu: () => boolean;
+  readonly shouldAddToFilesMenu: () => boolean;
 }
 
 vi.mock('./original-attachment-names-modal.ts', async (importOriginal) => ({

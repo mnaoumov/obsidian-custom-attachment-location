@@ -23,11 +23,11 @@ import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settin
 
 interface EditableViewLike {
   readonly editor?: EditorLike;
-  save?: () => Promise<void>;
+  readonly save?: () => Promise<void>;
 }
 
 interface EditorLike {
-  replaceSelection: (text: string) => void;
+  readonly replaceSelection: (text: string) => void;
 }
 
 interface ForeignAttachmentResult {
@@ -58,9 +58,12 @@ describe('Attachments created by other plugins (issue #59)', () => {
     return await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent, isLinked, isRelativeLinkScenario, shouldRename: isRenameEnabled }): Promise<ForeignAttachmentResult> {
         interface ForeignSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
-          attachmentRenameMode: string;
+          readonly attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           renameAttachmentsCreatedByOtherPluginsMode: string;
         }
 

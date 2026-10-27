@@ -64,9 +64,11 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
         const SETTLE_DELAY_IN_MILLISECONDS = 1000;
 
         interface UnitFolderSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder: (path: string) => boolean;
+          readonly isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         /*
@@ -77,16 +79,17 @@ describe('Delete unused attachments in entire vault, attachment unit folders (is
          * PREDICATE's answer, supplied by a stub parked on the read-back component's live ref.
          */
         interface HandedOverProvider {
-          getSettings: () => Record<string, unknown>;
-          isPathIgnored: (path: string) => boolean;
-          isTreatedAsAttachment: (path: string) => boolean;
+          readonly getSettings: () => Record<string, unknown>;
+          readonly isPathIgnored: (path: string) => boolean;
+          readonly isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface HandedOverProviderRef {
-          value: HandedOverProvider | null;
+          readonly value: HandedOverProvider | null;
         }
 
         interface HandedOverSettingsHolder {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           apiRef: HandedOverProviderRef | null;
         }
 

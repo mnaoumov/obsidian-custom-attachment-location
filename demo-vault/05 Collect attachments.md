@@ -120,7 +120,7 @@ A collect that renames (`shouldRenameCollectedAttachments`) builds the new name 
 
 An attachment the plugin never saw arrive has no remembered name: one that predates the plugin, one renamed outside Obsidian, one synced from another device. Its current name is used, it is remembered from then on, and one notice per collect says how many there were. Its **Details** button lists them. `shouldWarnWhenOriginalAttachmentNameIsUnknown` turns that notice off.
 
-The names are kept in `original-attachment-names.json`, in the plugin's folder beside its settings. Three commands look after them:
+The names and optional original source paths sync between devices through Markdown records in `Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1/`. Keep this folder included in your sync tool. You can add `Plugin data` to Obsidian's **Excluded files** to hide these records from search, graph and the quick switcher. The earliest arrival name wins when devices record the same attachment; deliberate name edits still replace it. Existing `original-attachment-names.json` records migrate automatically, and that old file stays untouched as a recovery copy. Three commands look after the records:
 
 - **Show original attachment names**
   - lists every remembered name as `current path → original name`, sorted by path, with a filter box, the totals, a *missing* badge on a path with no file any more, and **Copy as CSV**. Each row can be edited, forgotten, or set to the file's current name, and several selected rows can be forgotten or set at once. That is how a pasted screenshot remembered as `Pasted image 20250101120000.png`, which you have since renamed to something meaningful, gets the meaningful name to build on.

@@ -35,7 +35,7 @@ describe('Token syntax migration', () => {
         }
 
         interface ApiLike {
-          getAttachmentFolderPath: (params: GetAttachmentFolderPathParams) => Promise<null | string>;
+          readonly getAttachmentFolderPath: (params: GetAttachmentFolderPathParams) => Promise<null | string>;
         }
 
         interface ApiRecord {

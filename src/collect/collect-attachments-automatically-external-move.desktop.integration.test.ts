@@ -43,9 +43,13 @@ async function runExternalMove(): Promise<ExternalMoveResult> {
       waitTimeoutInMilliseconds
     }): Promise<ExternalMoveResult> {
       interface ExternalMoveSettings {
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         attachmentFolderPath: string;
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         collectedAttachmentFolderPath: string;
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         shouldCollectAttachmentsAutomatically: boolean;
+        // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
         shouldRenameCollectedAttachments: boolean;
       }
 

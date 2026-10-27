@@ -31,7 +31,7 @@ describe('Move attachment to proper folder — an attachment used by a single no
     const result = await evalInObsidian({
       async callback({ app, moveCommandId }): Promise<ProbeResult> {
         interface AvailabilityCheckableCommand {
-          checkCallback?: (isChecking: boolean) => boolean | undefined;
+          readonly checkCallback?: (isChecking: boolean) => boolean | undefined;
         }
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;

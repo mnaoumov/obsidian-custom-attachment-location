@@ -59,8 +59,11 @@ describe('Collect attachments honors a destination of its own (issue #78)', () =
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface CollectDestinationSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           collectedAttachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldRenameCollectedAttachments: boolean;
         }
 

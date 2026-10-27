@@ -61,13 +61,15 @@ describe('A drawing marked by its excalidraw-plugin property is an attachment (i
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface UnitFolderSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentUnitFolderPaths: string[];
-          isAttachmentUnitFolder: (path: string) => boolean;
+          readonly isAttachmentUnitFolder: (path: string) => boolean;
         }
 
         interface HandlerApiLike {
-          isTreatedAsAttachment: (path: string) => boolean;
+          readonly isTreatedAsAttachment: (path: string) => boolean;
         }
 
         interface ApiRecord {

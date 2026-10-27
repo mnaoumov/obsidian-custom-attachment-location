@@ -26,7 +26,7 @@ vi.mock('@mnaoumov/typescript-lib/object-utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@mnaoumov/typescript-lib/object-utils')>();
   return {
     ...actual,
-    getNestedPropertyValue: vi.fn<(object: object, path: string) => unknown>()
+    getNestedPropertyValue: vi.fn<($object: object, path: string) => unknown>()
   };
 });
 

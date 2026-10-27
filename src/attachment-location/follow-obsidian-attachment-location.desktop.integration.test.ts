@@ -66,10 +66,10 @@ describe('Follow Obsidian attachment location', () => {
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface FollowSettings {
-          attachmentFolderPath: string;
-          collectedAttachmentFolderPath: string;
-          shouldFollowObsidianAttachmentLocation: boolean;
-          shouldRenameCollectedAttachments: boolean;
+          readonly attachmentFolderPath: string;
+          readonly collectedAttachmentFolderPath: string;
+          readonly shouldFollowObsidianAttachmentLocation: boolean;
+          readonly shouldRenameCollectedAttachments: boolean;
         }
 
         type CollectAttachmentsInAbstractFilesFunction = (this: unknown, abstractFiles: unknown[]) => void;

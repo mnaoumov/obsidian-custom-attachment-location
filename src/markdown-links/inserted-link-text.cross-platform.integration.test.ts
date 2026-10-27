@@ -13,11 +13,17 @@ describe('inserted attachment link text', () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { waitUntil }, obsidianModule: { Platform }, shouldUseMarkdownLinks: useMarkdownLinks }) {
         interface Settings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentRenameMode: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           generatedAttachmentFileName: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           insertedLinkText: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldFollowObsidianAttachmentLocation: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldSetLinkDisplayTextToAttachmentFileName: boolean;
         }
         function isSettings(value: unknown): value is Settings {

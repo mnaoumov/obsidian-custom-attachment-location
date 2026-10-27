@@ -129,31 +129,33 @@ const mockFindIdenticalAttachmentFile = vi.mocked(findIdenticalAttachmentFile);
 // The handed-over settings live in `Advanced Rename and Delete Handler` since 12.0.0. Mutable here so a test
 // can still change one mid-run, exactly as it used to change .
 interface MutableHandedOverSettings {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   emptyFolderBehavior: EmptyFolderBehavior;
-  notePriorities: readonly string[];
+  readonly notePriorities: readonly string[];
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   shouldRenameAttachmentFiles: boolean;
-  treatAsAttachmentExtensions: readonly string[];
+  readonly treatAsAttachmentExtensions: readonly string[];
 }
 
 interface TestContext {
-  create: ReturnType<typeof vi.fn<Vault['create']>>;
-  exists: ReturnType<typeof vi.fn<Vault['exists']>>;
-  expectArrival: ReturnType<typeof vi.fn<OriginalAttachmentNamesComponent['expectArrival']>>;
-  getAvailablePath: ReturnType<typeof vi.fn<Vault['getAvailablePath']>>;
-  getAvailablePathForAttachmentsOriginal: ReturnType<typeof vi.fn<Vault['getAvailablePathForAttachments']>>;
-  getConfig: ReturnType<typeof vi.fn<(name: string) => unknown>>;
-  handedOverSettings: MutableHandedOverSettings;
-  isNoteEx: ReturnType<typeof vi.fn<PluginSettingsComponent['isNoteEx']>>;
-  isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
-  manager: AttachmentPathManager;
-  originalAttachmentNames: Map<string, string>;
-  pluginSettingsComponent: PluginSettingsComponent;
-  readBinary: ReturnType<typeof vi.fn<Vault['readBinary']>>;
-  reportUnknown: ReturnType<typeof vi.fn<OriginalAttachmentNamesComponent['reportUnknown']>>;
-  settings: PluginSettings;
-  tokenValidator: TokenValidator;
-  validateFileName: ReturnType<typeof vi.fn<TokenValidator['validateFileName']>>;
-  validatePath: ReturnType<typeof vi.fn<TokenValidator['validatePath']>>;
+  readonly create: ReturnType<typeof vi.fn<Vault['create']>>;
+  readonly exists: ReturnType<typeof vi.fn<Vault['exists']>>;
+  readonly expectArrival: ReturnType<typeof vi.fn<OriginalAttachmentNamesComponent['expectArrival']>>;
+  readonly getAvailablePath: ReturnType<typeof vi.fn<Vault['getAvailablePath']>>;
+  readonly getAvailablePathForAttachmentsOriginal: ReturnType<typeof vi.fn<Vault['getAvailablePathForAttachments']>>;
+  readonly getConfig: ReturnType<typeof vi.fn<(name: string) => unknown>>;
+  readonly handedOverSettings: MutableHandedOverSettings;
+  readonly isNoteEx: ReturnType<typeof vi.fn<PluginSettingsComponent['isNoteEx']>>;
+  readonly isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
+  readonly manager: AttachmentPathManager;
+  readonly originalAttachmentNames: Map<string, string>;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
+  readonly readBinary: ReturnType<typeof vi.fn<Vault['readBinary']>>;
+  readonly reportUnknown: ReturnType<typeof vi.fn<OriginalAttachmentNamesComponent['reportUnknown']>>;
+  readonly settings: PluginSettings;
+  readonly tokenValidator: TokenValidator;
+  readonly validateFileName: ReturnType<typeof vi.fn<TokenValidator['validateFileName']>>;
+  readonly validatePath: ReturnType<typeof vi.fn<TokenValidator['validatePath']>>;
 }
 
 let context: TestContext;

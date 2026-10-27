@@ -96,29 +96,29 @@ import { selectMode } from '../shared-attachments/collect-attachment-used-by-mul
 import { AttachmentCollector } from './attachment-collector.ts';
 
 interface ApplyFileChangesParamsLike {
-  changesProvider: FileChangeLike[];
-  pathOrFile: TFile;
+  readonly changesProvider: FileChangeLike[];
+  readonly pathOrFile: TFile;
 }
 
 interface FileChangeLike {
-  newContent: string;
-  reference: Reference;
+  readonly newContent: string;
+  readonly reference: Reference;
 }
 
 interface LoopBuildNoticeMessageParamsLike {
-  item: TFile;
-  iterationString: string;
+  readonly item: TFile;
+  readonly iterationString: string;
 }
 
 interface LoopOptionsLike {
-  buildNoticeMessage: (params: LoopBuildNoticeMessageParamsLike) => string;
-  items: TFile[];
-  processItem: (item: TFile) => Promise<void>;
+  readonly buildNoticeMessage: (params: LoopBuildNoticeMessageParamsLike) => string;
+  readonly items: TFile[];
+  readonly processItem: (item: TFile) => Promise<void>;
 }
 
 interface QueueParamsLike {
-  operationFunction: (abortSignal: AbortSignal) => Promise<void>;
-  operationName: string;
+  readonly operationFunction: (abortSignal: AbortSignal) => Promise<void>;
+  readonly operationName: string;
 }
 
 interface RenderInternalLinkParamsLike {
@@ -126,17 +126,22 @@ interface RenderInternalLinkParamsLike {
 }
 
 interface SettingsLike {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   collectAttachmentUsedByMultipleNotesMode: CollectAttachmentUsedByMultipleNotesMode;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   collectedAttachmentFileName: string;
-  emptyFolderBehavior: EmptyFolderBehavior;
-  getTimeoutInMilliseconds: () => number;
-  isAttachmentUnitFolder: (path: string) => boolean;
-  isExcludedFromAttachmentCollecting: (path: string) => boolean;
-  isExcludedFromMultipleNotesCheck: (path: string) => boolean;
-  isExtensionExcludedFromMultipleNotesCheck: (path: string) => boolean;
-  isPathIgnored: (path: string) => boolean;
+  readonly emptyFolderBehavior: EmptyFolderBehavior;
+  readonly getTimeoutInMilliseconds: () => number;
+  readonly isAttachmentUnitFolder: (path: string) => boolean;
+  readonly isExcludedFromAttachmentCollecting: (path: string) => boolean;
+  readonly isExcludedFromMultipleNotesCheck: (path: string) => boolean;
+  readonly isExtensionExcludedFromMultipleNotesCheck: (path: string) => boolean;
+  readonly isPathIgnored: (path: string) => boolean;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   notePriorities: readonly string[];
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   shouldRenameCollectedAttachments: boolean;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   shouldSkipCollectingAttachmentsReferencedByRawPath: boolean;
 }
 

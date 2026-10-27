@@ -69,8 +69,11 @@ describe('Network image downloaded by the automatic collect (issue #15)', () => 
         imageUrl: url
       }): Promise<ProbeResult> {
         interface AutomaticDownloadSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           downloadNetworkImages: boolean;
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldCollectAttachmentsAutomatically: boolean;
         }
 

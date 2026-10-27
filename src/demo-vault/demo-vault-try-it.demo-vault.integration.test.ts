@@ -26,7 +26,7 @@ declare global {
     /**
      * Installed by `CodeScript Toolkit` when it loads. Resolves a `/`-rooted id against its modules root.
      */
-    requireAsync?: (id: string) => Promise<Record<string, unknown>>;
+    readonly requireAsync?: (id: string) => Promise<Record<string, unknown>>;
   }
 }
 

@@ -99,29 +99,29 @@ export interface TokenEvaluatorContext {
   /**
    * An abort signal to control the execution of the function.
    */
-  abortSignal: AbortSignal;
+  readonly abortSignal: AbortSignal;
 
   /**
    * An action context.
    */
-  actionContext: ActionContext;
+  readonly actionContext: ActionContext;
 
   /**
    * An Obsidian app instance.
    */
-  app: App;
+  readonly app: App;
 
   /**
    * An extension of the attachment file as it is right now, without its dot. For a paste or a drop, the incoming
    * file's.
    */
-  attachmentFileExtension: string;
+  readonly attachmentFileExtension: string;
 
   /**
    * A name of the attachment file as it is right now, without its extension. For a paste or a drop, the incoming
    * file's.
    */
-  attachmentFileName: string;
+  readonly attachmentFileName: string;
 
   /**
    * Stats of the attachment file.
@@ -130,44 +130,44 @@ export interface TokenEvaluatorContext {
    *
    * @remark It may be initialized only partially. Uninitialized {@link FileStats.ctime} and {@link FileStats.mtime} will be `0`.
    */
-  attachmentFileStats: FileStats | undefined;
+  readonly attachmentFileStats: FileStats | undefined;
 
   /**
    * A cursor line.
    *
    * `null` if the cursor line is not known.
    */
-  cursorLine: null | number;
+  readonly cursorLine: null | number;
 
   /**
    * Fills a template with the current context.
    */
-  fillTemplate: (template: string) => Promise<string>;
+  readonly fillTemplate: (template: string) => Promise<string>;
 
   /**
    * The format of the token: `null` for none, the text itself for the scalar shorthand (`{{date:YYYY-MM-DD}}`),
    * and the parsed JSON5 object otherwise.
    */
-  format: null | Record<string, unknown> | string;
+  readonly format: null | Record<string, unknown> | string;
 
   /**
    * A full template string.
    */
-  fullTemplate: string;
+  readonly fullTemplate: string;
 
   /**
    * A generated attachment file name.
    *
    * Empty string if the attachment file name is not fully generated yet.
    */
-  generatedAttachmentFileName: string;
+  readonly generatedAttachmentFileName: string;
 
   /**
    * A generated attachment file path.
    *
    * Empty string if the attachment file path is not fully generated yet.
    */
-  generatedAttachmentFilePath: string;
+  readonly generatedAttachmentFilePath: string;
 
   /**
    * Lazily reads the content of the attachment file, memoizing the result.
@@ -179,60 +179,61 @@ export interface TokenEvaluatorContext {
    * @returns A {@link Promise} that resolves to the content of the attachment file, or `undefined`
    * when there is no attachment file to read.
    */
-  getAttachmentFileContent: () => Promise<ArrayBuffer | undefined>;
+  readonly getAttachmentFileContent: () => Promise<ArrayBuffer | undefined>;
 
   /**
    * A name of the note file.
    */
-  noteFileName: string;
+  readonly noteFileName: string;
 
   /**
    * A path of the note file.
    */
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   noteFilePath: string;
 
   /**
    * A name of the note folder.
    */
-  noteFolderName: string;
+  readonly noteFolderName: string;
 
   /**
    * A path of the note folder.
    */
-  noteFolderPath: string;
+  readonly noteFolderPath: string;
 
   /**
    * An Obsidian API.
    *
    * {@link https://github.com/obsidianmd/obsidian-api/blob/master/obsidian.d.ts}
    */
-  obsidian: typeof import('obsidian');
+  readonly obsidian: typeof import('obsidian');
 
   /**
    * A name of the old note file.
    */
-  oldNoteFileName: string;
+  readonly oldNoteFileName: string;
 
   /**
    * A path of the old note file.
    */
-  oldNoteFilePath: string;
+  readonly oldNoteFilePath: string;
 
   /**
    * A name of the old note folder.
    */
-  oldNoteFolderName: string;
+  readonly oldNoteFolderName: string;
 
   /**
    * A path of the old note folder.
    */
-  oldNoteFolderPath: string;
+  readonly oldNoteFolderPath: string;
 
   /**
    * An extension of the name the attachment arrived with, without its dot. Pairs with
    * {@link originalAttachmentFileName}.
    */
-  originalAttachmentFileExtension: string;
+  readonly originalAttachmentFileExtension: string;
 
   /**
    * A name the attachment arrived with, without its extension: the name it had when it was pasted, dropped, shared or
@@ -241,50 +242,50 @@ export interface TokenEvaluatorContext {
    * When it is not known — the file predates the record, or was renamed outside Obsidian — this is
    * {@link attachmentFileName}, and the plugin warns that it used the current name.
    */
-  originalAttachmentFileName: string;
+  readonly originalAttachmentFileName: string;
 
   /**
    * Plugin settings component.
    */
-  pluginSettingsComponent: PluginSettingsComponent;
+  readonly pluginSettingsComponent: PluginSettingsComponent;
 
   /**
    * A sequence number of the attachment file.
    *
    * `0` if the sequence number is not known.
    */
-  sequenceNumber: number;
+  readonly sequenceNumber: number;
 
   /**
    * Which template the token is being evaluated in — the generated file name, the attachment folder
    * path, or neither.
    */
-  templatePart: TemplatePart;
+  readonly templatePart: TemplatePart;
 
   /**
    * A token being evaluated.
    */
-  token: string;
+  readonly token: string;
 
   /**
    * An end offset of the token within the full template.
    */
-  tokenEndOffset: number;
+  readonly tokenEndOffset: number;
 
   /**
    * A start offset of the token within the full template.
    */
-  tokenStartOffset: number;
+  readonly tokenStartOffset: number;
 
   /**
    * Validator.
    */
-  tokenValidator: TokenValidator;
+  readonly tokenValidator: TokenValidator;
 
   /**
    * A token with the format.
    */
-  tokenWithFormat: string;
+  readonly tokenWithFormat: string;
 }
 
 /**

@@ -16,7 +16,7 @@ import { PluginSettings } from '../settings/plugin-settings.ts';
 import { VaultGetAvailablePathPatchComponent } from './vault-get-available-path-patch-component.ts';
 
 interface VaultWithGetAvailablePath {
-  getAvailablePath: (attachmentFileName: string, attachmentExtension: string) => string;
+  readonly getAvailablePath: (attachmentFileName: string, attachmentExtension: string) => string;
 }
 
 describe('VaultGetAvailablePathPatchComponent', () => {
