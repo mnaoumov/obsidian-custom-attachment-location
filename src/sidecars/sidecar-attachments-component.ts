@@ -79,6 +79,14 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
+  /**
+  Pairs a name with its base among `names`, using the configured sidecar extensions.
+  @returns `undefined` for a non-sidecar, `null` for an orphan or ambiguous sidecar.
+  */
+  public findBase(name: string, names: readonly string[]): null | SidecarBase | undefined {
+    return findSidecarBase({ extensions: this.pluginSettingsComponent.settings.sidecarExtensions, name, names });
+  }
+
   public override onload(): void {
     const { app, attachmentPathManager, attachmentSaver } = this;
     this.registerMethodPatch({
@@ -215,6 +223,13 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
   }
 
   /**
+  Tells the user a sidecar kept its own name because no single base was found.
+  */
+  public reportUnpaired(path: string): void {
+    this.pluginNoticeComponent.showNotice(t(($) => $.notice.sidecarBaseMissing, { path }));
+  }
+
+  /**
   Keeps the batch alive until the editor or app finishes saving its files.
   @typeParam T - The import sink's result.
   */
@@ -241,10 +256,6 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
         this.entries.delete(entry.content);
       }
     }
-  }
-
-  private findBase(name: string, names: readonly string[]): null | SidecarBase | undefined {
-    return findSidecarBase({ extensions: this.pluginSettingsComponent.settings.sidecarExtensions, name, names });
   }
 
   private async findExistingBase(name: string): Promise<ExistingSidecarBase | undefined> {
@@ -303,9 +314,5 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
       }
     }
     return moves.slice(1);
-  }
-
-  private reportUnpaired(path: string): void {
-    this.pluginNoticeComponent.showNotice(t(($) => $.notice.sidecarBaseMissing, { path }));
   }
 }

@@ -213,6 +213,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         attachmentPathManager: this.attachmentPathManager,
         pluginSettingsComponent: this.pluginSettingsComponent,
         shareReceiver: this.app.shareReceiver,
+        ...this.sidecarAttachmentsComponent && { sidecarAttachmentsComponent: this.sidecarAttachmentsComponent },
         tokenValidator: this.tokenValidator
       })
     );
