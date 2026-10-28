@@ -120,6 +120,24 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
     expect(importFilesMock).toHaveBeenCalledWith(files);
   });
 
+  it('should leave a shared note to core, which saves it through getAvailablePath and never strips the prefix', async () => {
+    const component = createComponent();
+    component.load();
+
+    const files: SharedFile[] = [
+      { name: 'Note.md', uri: 'file:///shared/Note.md' },
+      { name: 'Upper.MD', uri: 'file:///shared/Upper.MD' },
+      { name: 'photo.png', uri: 'file:///shared/photo.png' }
+    ];
+
+    await strictProxy<ShareReceiverPrototype>(shareReceiver).importFiles(files);
+
+    expect(files.map((file) => file.name)).toEqual(['Note.md', 'Upper.MD', `${IMPORT_FILES_PREFIX}generated-name.png`]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getShareImportOriginalFileName('Note.md')).toBeUndefined();
+    expect(importFilesMock).toHaveBeenCalledWith(files);
+  });
+
   it('should remember the name each shared file arrived with under the name it generated', async () => {
     vi.mocked(attachmentPathManager.getGeneratedAttachmentFileBaseName).mockResolvedValue('generated-for-memory');
     const component = createComponent();
@@ -241,6 +259,16 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
         'same.pdf.p7s',
         'same 1.html'
       ]);
+    });
+
+    it('should leave a shared note out of pairing, so its signature is reported as an orphan', async () => {
+      const component = createSidecarComponent();
+      component.load();
+      const files: SharedFile[] = ['note.md', 'note.md.p7s'].map((name) => ({ name, uri: `file:///shared/${name}` }));
+      await strictProxy<ShareReceiverPrototype>(shareReceiver).importFiles(files);
+
+      expect(files.map((file) => file.name)).toEqual(['note.md', `${IMPORT_FILES_PREFIX}note.md.p7s`]);
+      expect(reportUnpairedMock.mock.calls).toEqual([['note.md.p7s']]);
     });
 
     it('should leave a batch without sidecars to core collision handling', async () => {
