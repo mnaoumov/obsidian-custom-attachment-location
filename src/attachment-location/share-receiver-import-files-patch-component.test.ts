@@ -16,9 +16,12 @@ import {
 } from 'vitest';
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+import type { PluginSettings } from '../settings/plugin-settings.ts';
+import type { SidecarAttachmentsComponent } from '../sidecars/sidecar-attachments-component.ts';
 import type { TokenValidator } from '../tokens/token-validator.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 
+import { findSidecarBase } from '../sidecars/sidecar-matcher.ts';
 import {
   getShareImportOriginalFileName,
   IMPORT_FILES_PREFIX,
@@ -146,6 +149,104 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
 
     expect(getShareImportOriginalFileName('bounded-0.png')).toBeUndefined();
     expect(getShareImportOriginalFileName('bounded-100.png')).toBe('shared-100.png');
+  });
+
+  describe('sidecars', () => {
+    let reportUnpairedMock: ReturnType<typeof vi.fn<(path: string) => void>>;
+    let sidecarAttachmentsComponent: SidecarAttachmentsComponent;
+
+    beforeEach(() => {
+      reportUnpairedMock = vi.fn<(path: string) => void>();
+      sidecarAttachmentsComponent = strictProxy<SidecarAttachmentsComponent>({
+        findBase: (name: string, names: readonly string[]) => findSidecarBase({ extensions: ['p7s', '.ASC', 'srt'], name, names }),
+        reportUnpaired: reportUnpairedMock
+      });
+      pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
+        settings: strictProxy<PluginSettings>({ duplicateNameSeparator: ' ' })
+      });
+      // Each generated name follows the shared file just fetched, so a test can tell which file was named.
+      vi.mocked(attachmentPathManager.getGeneratedAttachmentFileBaseName).mockImplementation(() => {
+        const uri = String(fetchMock.mock.lastCall?.[0]);
+        return Promise.resolve(`gen-${uri.slice(uri.lastIndexOf('/') + 1).split('.', 1)[0] ?? ''}`);
+      });
+      vi.spyOn(app.vault, 'getAvailablePathForAttachments').mockImplementation((fileBaseName, extension) => Promise.resolve(`assets/${fileBaseName}.${extension}`));
+    });
+
+    function createSidecarComponent(): ShareReceiverImportFilesPatchComponent {
+      return new ShareReceiverImportFilesPatchComponent({
+        app,
+        attachmentPathManager,
+        pluginSettingsComponent,
+        shareReceiver,
+        sidecarAttachmentsComponent,
+        tokenValidator
+      });
+    }
+
+    async function importNames(names: readonly string[]): Promise<string[]> {
+      const component = createSidecarComponent();
+      component.load();
+      const files: SharedFile[] = names.map((name) => ({ name, uri: `file:///shared/${name}` }));
+      await strictProxy<ShareReceiverPrototype>(shareReceiver).importFiles(files);
+      expect(importFilesMock).toHaveBeenCalledWith(files);
+      return files.map((file) => file.name.slice(IMPORT_FILES_PREFIX.length));
+    }
+
+    it('should derive a companion name from its base, whichever comes first, and keep the input order', async () => {
+      expect(await importNames(['document.html.p7s', 'document.html'])).toEqual(['gen-document.html.p7s', 'gen-document.html']);
+      expect(vi.mocked(attachmentPathManager.getGeneratedAttachmentFileBaseName)).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(getShareImportOriginalFileName('gen-document.html.p7s')).toBe('document.html.p7s');
+      expect(getShareImportOriginalFileName('gen-document.html')).toBe('document.html');
+      expect(reportUnpairedMock).not.toHaveBeenCalled();
+    });
+
+    it('should follow chained signatures', async () => {
+      expect(await importNames(['document.html.p7s.asc', 'document.html', 'document.html.p7s'])).toEqual([
+        'gen-document.html.p7s.asc',
+        'gen-document.html',
+        'gen-document.html.p7s'
+      ]);
+    });
+
+    it('should replace the extension of a companion that shares only the stem', async () => {
+      expect(await importNames(['video.srt', 'video.mkv'])).toEqual(['gen-video.srt', 'gen-video.mkv']);
+    });
+
+    it('should keep and report an orphan or ambiguous sidecar', async () => {
+      expect(await importNames(['signature.p7s', 'clip.srt', 'clip.mkv', 'clip.mp4'])).toEqual([
+        'signature.p7s',
+        'clip.srt',
+        'gen-clip.mkv',
+        'gen-clip.mp4'
+      ]);
+      expect(reportUnpairedMock.mock.calls).toEqual([['signature.p7s'], ['clip.srt']]);
+    });
+
+    it('should give a whole group the first suffix under which none of its names is taken', async () => {
+      await app.vault.createFolder('assets');
+      await app.vault.create('assets/gen-document.html.p7s', '');
+
+      expect(await importNames(['document.html', 'document.html.p7s'])).toEqual(['gen-document 1.html', 'gen-document 1.html.p7s']);
+      expect(getShareImportOriginalFileName('gen-document 1.html.p7s')).toBe('document.html.p7s');
+    });
+
+    it('should not hand two roots of one batch the same name', async () => {
+      vi.mocked(attachmentPathManager.getGeneratedAttachmentFileBaseName).mockResolvedValue('same');
+
+      expect(await importNames(['a.html', 'a.html.p7s', 'b.pdf', 'b.pdf.p7s', 'c.html'])).toEqual([
+        'same.html',
+        'same.html.p7s',
+        'same.pdf',
+        'same.pdf.p7s',
+        'same 1.html'
+      ]);
+    });
+
+    it('should leave a batch without sidecars to core collision handling', async () => {
+      expect(await importNames(['photo.png'])).toEqual(['gen-photo.png']);
+      expect(app.vault.getAvailablePathForAttachments).not.toHaveBeenCalled();
+    });
   });
 
   it('should delegate to the original method when there are no shared files', async () => {
