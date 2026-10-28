@@ -84,8 +84,10 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
       methodName: 'importFiles',
       patchHandler: async ({
         fallback,
-        originalArguments: [files]
+        originalArguments: [sharedFiles]
       }) => {
+        // Core saves a shared note through `getAvailablePath`, which never strips the prefix, so a note keeps core's behavior.
+        const files = sharedFiles.filter((file) => !isSavedAsNote(file));
         const names = files.map((file) => file.name);
         const note = this.app.workspace.getActiveFile();
         const pairings = names.map((name) => this.sidecarAttachmentsComponent?.findBase(name, names));
@@ -206,6 +208,16 @@ function getFileName(batch: ShareBatch, index: number): string {
 function getRootIndex(batch: ShareBatch, index: number): number {
   const baseIndex = getBaseIndex(batch, index);
   return baseIndex === undefined ? index : getRootIndex(batch, baseIndex);
+}
+
+/**
+ * Whether core saves a shared file as a note rather than as an attachment. Core compares the lowercased extension.
+ *
+ * @param file - The shared file.
+ * @returns `true` when core sends it to `getAvailablePath` instead of `getAvailablePathForAttachments`.
+ */
+function isSavedAsNote(file: SharedFile): boolean {
+  return extname(file.name).slice(1).toLowerCase() === 'md';
 }
 
 function rememberShareImportOriginalFileName(generatedFileName: string, originalFileName: string): void {
