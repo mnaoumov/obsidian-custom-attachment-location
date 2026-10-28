@@ -44,6 +44,12 @@ interface GetCompanionDestinationsParams {
   readonly paths: readonly string[];
 }
 
+interface GetSidecarDescendantPathsParams {
+  readonly app: App;
+  readonly extensions: readonly string[];
+  readonly path: string;
+}
+
 interface GetSidecarGroupPathsParams {
   readonly extensions: readonly string[];
   readonly path: string;
@@ -85,6 +91,18 @@ export async function copyWithSidecars(params: CopyWithSidecarsParams): Promise<
     }
     throw error;
   }
+}
+
+/**
+Returns the companions `copyWithSidecars` carries with `path`: its descendants, chained signatures included, never its ancestors.
+*/
+export function getSidecarDescendantPaths(params: GetSidecarDescendantPathsParams): string[] {
+  const { app, extensions, path } = params;
+  if (extensions.length === 0) {
+    return [];
+  }
+  const paths = app.vault.getFiles().map((file) => file.path).filter((filePath) => dirname(filePath) === dirname(path));
+  return [...getCompanionDestinations({ basePath: path, extensions, oldPath: path, paths }).keys()];
 }
 
 /**
