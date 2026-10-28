@@ -28,6 +28,7 @@ import {
   DeleteIfNotUsedResult
 } from '@mnaoumov/obsidian-lib/vault-delete';
 import { abortSignalAny } from '@mnaoumov/typescript-lib/abort-controller';
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import { Vault } from 'obsidian';
@@ -915,6 +916,81 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
       expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'note1.md/renamed.png.p7s', oldPathOrFile: signature.path });
       expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'note2.md/renamed.png.p7s', oldPathOrFile: signature.path });
+    });
+
+    describe('post-copy cleanup of a sidecar group', () => {
+      const reference = createReference('[[attachment.png]]');
+
+      async function runProcessItem(attachment: TFile): Promise<void> {
+        mockIsFile.mockReturnValue(true);
+        mockIsFolder.mockReturnValue(false);
+        mockIsNoteEx.mockReturnValue(false);
+        mockLoop.mockImplementation(async (params) => {
+          await castTo<LoopParams>(params).processItem(attachment);
+        });
+        await castTo<TestableHandler>(handler).executeAbstractFiles([attachment]);
+      }
+
+      function arrangeSingleNoteMove(files: TFile[], backlinksByPath: Map<string, string[]>): void {
+        sidecarExtensions.push('p7s', 'asc');
+        app.vault.getFiles = (): TFile[] => files;
+        app.vault.getAbstractFileByPathInsensitive = (): null => null;
+        let isRelinked = false;
+        mockGetBacklinksForFileSafe.mockImplementation(({ pathOrFile }) => {
+          const path = typeof pathOrFile === 'string' ? pathOrFile : pathOrFile.path;
+          const notePaths = path === 'attachment.png'
+            ? (isRelinked ? [] : ['note1.md'])
+            : backlinksByPath.get(path) ?? [];
+          return Promise.resolve(createBacklinks(new Map(notePaths.map((notePath) => [notePath, [reference]]))));
+        });
+        getFileByPath.mockImplementation((path) => createFile(path));
+        mockGetProperAttachmentPath.mockResolvedValue('new/attachment.png');
+        mockEditLinks.mockImplementation(() => {
+          isRelinked = true;
+          return noopAsync();
+        });
+        mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
+      }
+
+      it('retires an unlinked original signature together with its base', async () => {
+        const attachment = createFile('attachment.png');
+        arrangeSingleNoteMove([attachment, createFile('attachment.png.p7s'), createFile('attachment.png.p7s.asc')], new Map());
+
+        await runProcessItem(attachment);
+
+        expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'new/attachment.png.p7s.asc', oldPathOrFile: 'attachment.png.p7s.asc' });
+        expect(mockDeleteIfNotUsed.mock.calls.map(([params]) => params.pathOrFile)).toEqual([
+          'attachment.png.p7s.asc',
+          'attachment.png.p7s',
+          attachment
+        ]);
+      });
+
+      it('keeps the original group when its signature is still linked from another note', async () => {
+        const attachment = createFile('attachment.png');
+        arrangeSingleNoteMove([attachment, createFile('attachment.png.p7s')], new Map([['attachment.png.p7s', ['note2.md']]]));
+
+        await runProcessItem(attachment);
+
+        expect(mockCopySafe).toHaveBeenCalledWith({ app, newPath: 'new/attachment.png.p7s', oldPathOrFile: 'attachment.png.p7s' });
+        expect(mockDeleteIfNotUsed).not.toHaveBeenCalled();
+      });
+
+      it('never deletes the ancestor base of a moved signature', async () => {
+        const signature = createFile('attachment.png.p7s');
+        arrangeSingleNoteMove([createFile('attachment.png'), signature], new Map([['attachment.png.p7s', ['note1.md']]]));
+        let isSignatureRelinked = false;
+        mockGetBacklinksForFileSafe.mockImplementation(() => Promise.resolve(createBacklinks(new Map(isSignatureRelinked ? [] : [['note1.md', [reference]]]))));
+        mockGetProperAttachmentPath.mockResolvedValue('new/attachment.png.p7s');
+        mockEditLinks.mockImplementation(() => {
+          isSignatureRelinked = true;
+          return noopAsync();
+        });
+
+        await runProcessItem(signature);
+
+        expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: signature });
+      });
     });
 
     it('should copy all backlinks for CopyAll mode', async () => {

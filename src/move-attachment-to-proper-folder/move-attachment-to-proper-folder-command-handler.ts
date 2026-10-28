@@ -33,7 +33,10 @@ import type { PluginSettingsComponent } from '../settings/plugin-settings-compon
 
 import { findIdenticalAttachmentFile } from '../attachment-location/identical-attachment.ts';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
-import { copyWithSidecars } from '../sidecars/sidecar-group.ts';
+import {
+  copyWithSidecars,
+  getSidecarDescendantPaths
+} from '../sidecars/sidecar-group.ts';
 import { ActionContext } from '../tokens/token-evaluator-context.ts';
 import { selectMode } from './move-attachment-to-proper-folder-used-by-multiple-notes-modal.ts';
 
@@ -169,6 +172,26 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     return true;
   }
 
+  /**
+   * Whether the original group may be retired with its base. A companion still linked from another note keeps the
+   * whole group, base included, so the pair it belongs to stays intact.
+   *
+   * @param companionPaths - The base's copied companions.
+   * @returns Whether no companion has a backlink.
+   */
+  private async areCompanionsUnused(companionPaths: readonly string[]): Promise<boolean> {
+    for (const companionPath of companionPaths) {
+      const companionBacklinks = await getBacklinksForFileSafe({
+        app: this.app,
+        pathOrFile: companionPath
+      });
+      if (companionBacklinks.keys().length > 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private async moveAttachmentToProperFolder(attachmentFile: TFile, context: MoveAttachmentToProperFolderContext): Promise<boolean> {
     const app = this.app;
     const pluginSettingsComponent = this.pluginSettingsComponent;
@@ -207,6 +230,13 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       const destinationNotePath = ensureNonNullable([...ownerCandidates].sort((a, b) => a.localeCompare(b))[0]);
       movePlan = [{ destinationNotePath, relinkedNotePaths: backlinks.keys() }];
     }
+
+    // Snapshot before copying: a copy into the same folder must not join the original group.
+    const companionPaths = getSidecarDescendantPaths({
+      app: this.app,
+      extensions: this.pluginSettingsComponent.settings.sidecarExtensions,
+      path: attachmentFile.path
+    });
 
     for (const { destinationNotePath, relinkedNotePaths } of movePlan) {
       if (!this.app.vault.getFileByPath(destinationNotePath)) {
@@ -267,7 +297,14 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       pathOrFile: attachmentFile
     });
 
-    if (backlinks.keys().length === 0) {
+    if (backlinks.keys().length === 0 && await this.areCompanionsUnused(companionPaths)) {
+      // Companions first, so the base, deleted last, is the one that may take its emptied folder with it.
+      for (const companionPath of [...companionPaths].reverse()) {
+        await deleteIfNotUsed({
+          app: this.app,
+          pathOrFile: companionPath
+        });
+      }
       await deleteIfNotUsed({
         app: this.app,
         pathOrFile: attachmentFile
