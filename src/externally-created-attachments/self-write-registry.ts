@@ -93,15 +93,23 @@ class SelfWriteRegistry {
    */
   public register(path: string, claim: SelfWriteClaim.OutsideCaller | SelfWriteClaim.Plugin = SelfWriteClaim.Plugin): void {
     this.prune();
+    // Delete first, so a re-claimed path moves to the end and the map stays in registration order for `prune`.
+    this.registrationByPath.delete(path);
     this.registrationByPath.set(path, { claim, registeredAt: Date.now() });
   }
 
+  /**
+   * Drops the expired claims. The map is in registration order, so the expired ones are a prefix and the walk stops
+   * at the first live one: a burst of resolver calls (a vault-wide audit asks once per reference) would otherwise
+   * pay for every claim of the last minute on each call.
+   */
   private prune(): void {
     const cutoff = Date.now() - PRUNE_THRESHOLD_IN_MILLISECONDS;
     for (const [path, registration] of this.registrationByPath) {
-      if (registration.registeredAt < cutoff) {
-        this.registrationByPath.delete(path);
+      if (registration.registeredAt >= cutoff) {
+        break;
       }
+      this.registrationByPath.delete(path);
     }
   }
 }

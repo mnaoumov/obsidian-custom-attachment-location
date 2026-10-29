@@ -118,6 +118,14 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     this.registerEvent(this.app.workspace.on('file-open', convertAsyncToSync(this.handleFileOpen.bind(this))));
     this.registerEvent(this.app.vault.on('rename', convertAsyncToSync(this.handleRename.bind(this))));
 
+    const invalidateNoteReferenceResolutions = (): void => {
+      this.attachmentPathManager.invalidateNoteReferenceResolutions();
+    };
+    this.registerEvent(this.app.vault.on('create', invalidateNoteReferenceResolutions));
+    this.registerEvent(this.app.vault.on('delete', invalidateNoteReferenceResolutions));
+    this.registerEvent(this.app.vault.on('rename', invalidateNoteReferenceResolutions));
+    this.registerEvent(this.app.metadataCache.on('changed', invalidateNoteReferenceResolutions));
+
     this.registerEvent(this.app.workspace.on('receive-text-menu', this.handleReceiveTextMenu.bind(this)));
     this.registerEvent(this.app.workspace.on('receive-files-menu', this.handleReceiveFilesMenu.bind(this)));
   }
