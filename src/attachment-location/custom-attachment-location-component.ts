@@ -243,6 +243,9 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
     const handler = this.patchClipboardManagerFromLoadedMarkdownView.bind(this);
     this.registerEvent(this.app.workspace.on('active-leaf-change', handler));
     this.registerEvent(this.app.workspace.on('layout-change', handler));
+    // A note opened into the tab that is already active raises no `active-leaf-change`, and `layout-change` can arrive
+    // after the user has already pasted. `file-open` fires once the markdown view has loaded the note.
+    this.registerEvent(this.app.workspace.on('file-open', handler));
   }
 
   private async handleFileOpen(file: null | TFile): Promise<void> {
