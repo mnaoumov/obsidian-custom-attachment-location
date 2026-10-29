@@ -50,6 +50,7 @@ import type { PluginSettingsComponent } from '../settings/plugin-settings-compon
 import type { PluginSettings } from '../settings/plugin-settings.ts';
 import type { TokenValidator } from '../tokens/token-validator.ts';
 
+import { selfWriteRegistry } from '../externally-created-attachments/self-write-registry.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { promptWithPreview } from '../tokens/prompt/prompt-with-preview-modal.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
@@ -1678,6 +1679,100 @@ describe('AttachmentPathManager', () => {
       // The first match (line 0) wins, so cursorLine is 0 → the heading token treats it as "no cursor" and
       // emits nothing. A last-match regression would pick line 5 → cutoff line <= 5 → "Later" (line 3).
       expect(result).toBe('assets/.png');
+    });
+
+    describe('remembered link resolution', () => {
+      const cache = strictProxy<CachedMetadataEx>({});
+      const noteFile = createTFile({ path: 'note.md' });
+      const files = ['a.png', 'b.png', 'c.png'].map((path) => createTFile({ path }));
+      const links = files.map((_file, index) =>
+        strictProxy<ReferenceCache>({
+          position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: index, offset: 0 } }
+        })
+      );
+
+      async function askFor(path: string): Promise<string> {
+        return await context.manager.getAvailablePathForAttachments({
+          attachmentFileBaseName: 'img',
+          attachmentFileExtension: 'png',
+          context: AttachmentPathContext.Unknown,
+          notePathOrFile: 'note.md',
+          oldAttachmentPathOrFile: path,
+          readAttachmentFileContent: null,
+          shouldSkipDuplicateCheck: true,
+          shouldSkipMissingAttachmentFolderCreation: true
+        });
+      }
+
+      beforeEach(() => {
+        context.settings.attachmentFolderPath = 'assets';
+        context.settings.generatedAttachmentFileName = '{{sequenceNumber}}';
+        mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : files.find((file) => file.path === pathOrFile) ?? null);
+        mockIsNote.mockImplementation((pathOrFile) => pathOrFile === 'note.md');
+        mockGetCacheSafe.mockResolvedValue(cache);
+        mockGetLinks.mockReturnValue(links);
+        mockExtractLinkFile.mockImplementation(({ reference }) => files[links.indexOf(reference as ReferenceCache)] ?? null);
+      });
+
+      it('should resolve a note\'s references once for a burst of questions about it', async () => {
+        expect(await askFor('a.png')).toBe('assets/1.png');
+        expect(await askFor('b.png')).toBe('assets/2.png');
+        expect(await askFor('c.png')).toBe('assets/3.png');
+
+        // One question per reference used to resolve every reference each time: 9 lookups for 3 links.
+        expect(mockExtractLinkFile).toHaveBeenCalledTimes(links.length);
+      });
+
+      it('should resolve the edited note again after an invalidation', async () => {
+        await askFor('a.png');
+        mockGetLinks.mockReturnValue([links[2], links[0]].filter((link) => link !== undefined));
+        context.manager.invalidateNoteReferenceResolutions();
+
+        expect(await askFor('a.png')).toBe('assets/2.png');
+        expect(mockExtractLinkFile).toHaveBeenCalledTimes(links.length + 2);
+      });
+
+      it('should resolve again after an invalidation, since a vault change can change what a link resolves to', async () => {
+        await askFor('a.png');
+        mockExtractLinkFile.mockImplementation(({ reference }) => reference === links[0] ? null : files[links.indexOf(reference as ReferenceCache)] ?? null);
+        context.manager.invalidateNoteReferenceResolutions();
+
+        expect(await askFor('b.png')).toBe('assets/2.png');
+        expect(await askFor('c.png')).toBe('assets/3.png');
+        expect(mockExtractLinkFile).toHaveBeenCalledTimes(links.length * 2);
+      });
+    });
+  });
+
+  describe('a query that writes nothing', () => {
+    it('should claim no path, expect no arrival and prepare no link text', async () => {
+      const register = vi.spyOn(selfWriteRegistry, 'register');
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : null);
+      mockIsNote.mockImplementation((pathOrFile) => pathOrFile === 'note.md');
+      context.settings.insertedLinkText = '{{originalAttachmentFileName}}';
+      const query = {
+        attachmentFileBaseName: 'doc',
+        attachmentFileExtension: 'pdf',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'doc.pdf',
+        readAttachmentFileContent: null,
+        shouldSkipMissingAttachmentFolderCreation: true
+      } as const;
+
+      const path = await context.manager.getAvailablePathForAttachments({ ...query, shouldSkipDuplicateCheck: true });
+
+      expect(register).not.toHaveBeenCalled();
+      expect(context.expectArrival).not.toHaveBeenCalled();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+
+      // The same call WITH the duplicate check is a save in the making, so it still claims its path.
+      const savedPath = await context.manager.getAvailablePathForAttachments(query);
+
+      expect(register).toHaveBeenCalledExactlyOnceWith(savedPath);
+      expect(context.expectArrival).toHaveBeenCalledOnce();
+      register.mockRestore();
     });
   });
 });

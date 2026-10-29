@@ -2,6 +2,7 @@ import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/pl
 import type { PathOrFile } from '@mnaoumov/obsidian-lib/file-system';
 import type {
   App,
+  CachedMetadata,
   FileStats,
   Reference,
   TFile,
@@ -83,6 +84,7 @@ const ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN = 'originalAttachmentFileName'.toLower
 const ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN = 'originalAttachmentFileExtension'.toLowerCase();
 const MAX_INSERTED_LINK_TEXTS = 100;
 const INSERTED_LINK_TEXT_LIFETIME_IN_MILLISECONDS = 60_000;
+const MAX_NOTE_REFERENCE_RESOLUTIONS = 100;
 
 interface AttachmentPathManagerCleanKeptFileBaseNameParams {
   readonly fileBaseName: string;
@@ -198,6 +200,11 @@ interface NoteLinkWalkResult {
   readonly sequenceNumberByAttachmentPath: Map<string, number>;
 }
 
+interface ResolvedNoteReference {
+  readonly linkFile: null | TFile;
+  readonly reference: Reference;
+}
+
 interface ResolvedOriginalAttachmentFileName {
   /**
    * The name a NEW attachment arrives with. Unused for an existing one.
@@ -220,6 +227,7 @@ export class AttachmentPathManager {
   private readonly getAvailablePathForAttachmentsOriginal: GetAvailablePathForAttachmentsFunction;
   private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly insertedLinkTexts = new Map<string, InsertedLinkTextEntry>();
+  private readonly noteReferenceResolutions = new Map<string, readonly ResolvedNoteReference[]>();
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly tokenValidator: TokenValidator;
@@ -378,32 +386,23 @@ export class AttachmentPathManager {
      * Not when the name was the CALLER's, though. `VaultGetAvailablePathForAttachmentsPatchComponent` hands
      * out paths whose file name it passed through untouched, so it downgrades this claim to one that holds only
      * while core Obsidian is the writer (issue #65).
+     *
+     * Not for a QUERY either: a caller that skips both the duplicate check and the folder creation is asking where
+     * an attachment belongs, and the answer may be occupied, under a folder that does not exist. Nothing is written
+     * there, so it claims nothing, expects no arrival and prepares no link text. A vault-wide audit asks this once
+     * per reference, and each of those three would otherwise pile up a minute's worth of entries.
      */
+    const isQuery = params.shouldSkipDuplicateCheck === true && params.shouldSkipMissingAttachmentFolderCreation === true;
+    if (isQuery) {
+      return attachmentPath;
+    }
+
     selfWriteRegistry.register(attachmentPath);
 
     this.expectArrivalOfNewAttachment(attachmentPath, resolvedOriginalAttachmentFileName);
 
     if (!params.shouldSkipMissingAttachmentFolderCreation) {
-      const folderPath = parentFolderPath(attachmentPath);
-      if (!await this.app.vault.exists(folderPath)) {
-        await createFolderSafe(this.app, folderPath);
-        if (this.handedOverSettingsComponent.settings.emptyFolderBehavior === EmptyFolderBehavior.Keep) {
-          /*
-           * Materialize the Keep placeholder idempotently. On a multi-device sync
-           * (iCloud/Git), a peer may have already synced the same `.gitkeep` onto
-           * disk in the window between the folder-existence check above and this
-           * write. An unconditional `create` would then throw (file already exists)
-           * and, worse, overwrite it, re-emitting a change event that feeds a
-           * cross-device sync loop (issue #16). Skip the write when the placeholder
-           * is already present.
-           */
-          const gitKeepPath = join(folderPath, '.gitkeep');
-          if (!await this.app.vault.exists(gitKeepPath)) {
-            selfWriteRegistry.register(gitKeepPath);
-            await this.app.vault.create(gitKeepPath, '');
-          }
-        }
-      }
+      await this.ensureAttachmentFolder(parentFolderPath(attachmentPath));
     }
 
     await this.prepareInsertedLinkText({ attachmentFileBaseName, attachmentFileStats, attachmentPath, noteFilePath, originalAttachmentFileNameParams, params });
@@ -638,6 +637,14 @@ export class AttachmentPathManager {
     return sequenceNumberByAttachmentPath;
   }
 
+  /**
+   * Forgets every remembered link resolution. A file appearing, disappearing or moving can change what any link
+   * resolves to, and a note edit replaces its cache, so the plugin calls this on each such vault and metadata event.
+   */
+  public invalidateNoteReferenceResolutions(): void {
+    this.noteReferenceResolutions.clear();
+  }
+
   public takeInsertedLinkText(params: AttachmentPathManagerTakeInsertedLinkTextParams): string | undefined {
     const entry = this.insertedLinkTexts.get(params.attachmentPath);
     if (!entry || entry.expiresAt < Date.now() || entry.notePath !== params.notePath || entry.template !== this.pluginSettingsComponent.settings.insertedLinkText) {
@@ -674,6 +681,34 @@ export class AttachmentPathManager {
    */
   private cleanKeptFileBaseName(params: AttachmentPathManagerCleanKeptFileBaseNameParams): string {
     return !params.shouldReplace || params.isGeneratedByShareReceiver ? params.fileBaseName : this.pluginSettingsComponent.replaceSpecialCharacters(params.fileBaseName) || params.fileBaseName;
+  }
+
+  private async ensureAttachmentFolder(folderPath: string): Promise<void> {
+    if (await this.app.vault.exists(folderPath)) {
+      return;
+    }
+
+    await createFolderSafe(this.app, folderPath);
+    if (this.handedOverSettingsComponent.settings.emptyFolderBehavior !== EmptyFolderBehavior.Keep) {
+      return;
+    }
+
+    /*
+     * Materialize the Keep placeholder idempotently. On a multi-device sync
+     * (iCloud/Git), a peer may have already synced the same `.gitkeep` onto
+     * disk in the window between the folder-existence check above and this
+     * write. An unconditional `create` would then throw (file already exists)
+     * and, worse, overwrite it, re-emitting a change event that feeds a
+     * cross-device sync loop (issue #16). Skip the write when the placeholder
+     * is already present.
+     */
+    const gitKeepPath = join(folderPath, '.gitkeep');
+    if (await this.app.vault.exists(gitKeepPath)) {
+      return;
+    }
+
+    selfWriteRegistry.register(gitKeepPath);
+    await this.app.vault.create(gitKeepPath, '');
   }
 
   /**
@@ -822,6 +857,42 @@ export class AttachmentPathManager {
   }
 
   /**
+   * Resolves every reference of a note, remembering the answer until {@link invalidateNoteReferenceResolutions}.
+   *
+   * A caller auditing a note asks the resolver once per reference, and each answer walks the whole note, so without
+   * this a note with `k` attachment links costs `k²` resolutions, each a vault-wide name lookup. Only the resolution
+   * is remembered: the filtering in {@link walkNoteLinks} reads settings, which change without either signal.
+   *
+   * The key is the note's path alone. `getCacheSafe` wraps the cache in a new object on every call, so the object
+   * cannot be the key, and it brings a stale note up to date through Obsidian, whose `changed` event invalidates
+   * this before the lookup.
+   *
+   * @param noteFilePath - The note.
+   * @param cache - Its current cache.
+   * @returns Its references in order, each with the file it resolves to.
+   */
+  private resolveNoteReferences(noteFilePath: string, cache: CachedMetadata): readonly ResolvedNoteReference[] {
+    const remembered = this.noteReferenceResolutions.get(noteFilePath);
+    if (remembered) {
+      return remembered;
+    }
+
+    const references = getReferences({ cache }).map((reference) => ({
+      linkFile: extractReferenceFile({
+        app: this.app,
+        reference,
+        sourcePathOrFile: noteFilePath
+      }),
+      reference
+    }));
+    this.noteReferenceResolutions.set(noteFilePath, references);
+    if (this.noteReferenceResolutions.size > MAX_NOTE_REFERENCE_RESOLUTIONS) {
+      this.noteReferenceResolutions.delete(ensureNonNullable(this.noteReferenceResolutions.keys().next().value));
+    }
+    return references;
+  }
+
+  /**
    * What a template reads as the original name of the attachment `getAvailablePathForAttachments` is asked about.
    *
    * A note rename or delete asks about an attachment that already exists, so its original name is the one on record.
@@ -917,13 +988,7 @@ export class AttachmentPathManager {
     }
 
     let sequenceNumber = 1;
-    for (const link of getReferences({ cache })) {
-      const linkFile = extractReferenceFile({
-        app: this.app,
-        reference: link,
-        sourcePathOrFile: noteFilePath
-      });
-
+    for (const { linkFile, reference: link } of this.resolveNoteReferences(noteFilePath, cache)) {
       // Cursor line: the first reference-cache link resolving to the target attachment. Checked before the
       // note-link filter below, matching the former getCursorLine which never applied that filter.
       if (oldAttachmentFile && !isCursorLineFound && isReferenceCache(link) && linkFile === oldAttachmentFile) {
@@ -946,6 +1011,7 @@ export class AttachmentPathManager {
 
     return { cursorLine, sequenceNumberByAttachmentPath };
   }
+
 }
 
 function isRelativePath(path: string): boolean {

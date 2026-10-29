@@ -72,4 +72,17 @@ describe('selfWriteRegistry', () => {
     expect(selfWriteRegistry.hasOutsideCallerClaim('abandoned-outside.png')).toBe(false);
     expect(selfWriteRegistry.consume('abandoned.png')).toBe(SelfWriteClaim.None);
   });
+
+  it('should keep a re-claimed path alive for a full threshold from its latest claim', () => {
+    vi.useFakeTimers();
+    selfWriteRegistry.register('renewed.png');
+    selfWriteRegistry.register('older.png');
+    vi.advanceTimersByTime(30_000);
+    // The renewal moves the path behind `older.png`, so the prune that drops `older.png` cannot stop at a stale slot.
+    selfWriteRegistry.register('renewed.png');
+    vi.advanceTimersByTime(30_001);
+
+    expect(selfWriteRegistry.consume('older.png')).toBe(SelfWriteClaim.None);
+    expect(selfWriteRegistry.consume('renewed.png')).toBe(SelfWriteClaim.Plugin);
+  });
 });
