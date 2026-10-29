@@ -56,7 +56,11 @@ describe('sidecar attachment groups', () => {
           const html = '<html>Document to sign</html>';
           await waitUntil({
             message: 'the clipboard interception to finish loading before the first drop',
-            predicate: () => leaf.view instanceof MarkdownView && leaf.view.editMode.clipboardManager.insertFiles.name !== 'insertFiles',
+            // Obsidian's own `insertFiles` is an anonymous function, so its name proves nothing. A monkey-around wrapper
+            // Chains its prototype to the method it wraps, which the unpatched method never has.
+            predicate: () =>
+              leaf.view instanceof MarkdownView
+              && Object.getPrototypeOf(leaf.view.editMode.clipboardManager.insertFiles) !== Function.prototype,
             timeoutInMilliseconds: 5000
           });
           const signature = 'detached signature bytes';

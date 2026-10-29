@@ -546,6 +546,17 @@ describe('CustomAttachmentLocationComponent', () => {
       expect(capturedChildTypes()).toContain('ClipboardManagerInsertFilesPatchComponent');
     });
 
+    it('should patch the clipboard manager when a note opens into the already active leaf', async () => {
+      const component = createComponent();
+      const spy = spyOnWorkspaceOn();
+      await loadAndReachLayoutReady(component);
+      context.getLeavesOfTypeMock.mockReturnValue([createMarkdownLeaf(ViewType.Markdown)]);
+      // `onload` registers its own `file-open` handler first; the layout-ready one is the last.
+      const fileOpenCalls = spy.mock.calls.filter((entry) => entry[0] === 'file-open');
+      castTo<EventHandler>(fileOpenCalls.at(-1)?.[1])();
+      expect(capturedChildTypes()).toContain('ClipboardManagerInsertFilesPatchComponent');
+    });
+
     it('should leave a deferred markdown leaf unloaded and wait for a loaded one', async () => {
       const component = createComponent();
       context.getLeavesOfTypeMock.mockReturnValue([createMarkdownLeaf(ViewType.Markdown, true)]);

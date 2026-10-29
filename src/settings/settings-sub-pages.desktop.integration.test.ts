@@ -147,6 +147,7 @@ describe('Settings sub-pages (issue #68)', () => {
       'Follow Obsidian attachment location',
       'Location for new attachments',
       'Generated attachment file name',
+      'Sidecar extensions',
       'Warn when an original attachment name is unknown',
       ...EXPECTED_PAGE_NAMES
     ]);
