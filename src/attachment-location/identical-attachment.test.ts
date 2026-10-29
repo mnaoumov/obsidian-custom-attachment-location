@@ -12,8 +12,8 @@ import type {
 import { getCanvasReferences } from '@mnaoumov/obsidian-lib/canvas';
 import { applyFileChanges } from '@mnaoumov/obsidian-lib/file-change';
 import {
-  editLinks,
-  extractLinkFile,
+  editReferences,
+  extractReferenceFile,
   updateLink
 } from '@mnaoumov/obsidian-lib/link';
 import { getBacklinksForFileSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
@@ -56,8 +56,8 @@ vi.mock('@mnaoumov/obsidian-lib/file-change', async (importOriginal) => ({
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
-  editLinks: vi.fn(),
-  extractLinkFile: vi.fn(),
+  editReferences: vi.fn(),
+  extractReferenceFile: vi.fn(),
   updateLink: vi.fn()
 }));
 
@@ -67,8 +67,8 @@ vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
 }));
 
 const mockApplyFileChanges = vi.mocked(applyFileChanges);
-const mockEditLinks = vi.mocked(editLinks);
-const mockExtractLinkFile = vi.mocked(extractLinkFile);
+const mockEditLinks = vi.mocked(editReferences);
+const mockExtractLinkFile = vi.mocked(extractReferenceFile);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockGetCanvasReferences = vi.mocked(getCanvasReferences);
 const mockUpdateLink = vi.mocked(updateLink);
@@ -220,7 +220,7 @@ describe('identical-attachment', () => {
       mockApplyFileChanges.mockResolvedValue();
       mockGetCanvasReferences.mockResolvedValue([]);
       mockUpdateLink.mockReturnValue('![[assets/image.png]]');
-      mockExtractLinkFile.mockImplementation(({ link }) => link.link === ATTACHMENT_PATH ? attachmentFile : null);
+      mockExtractLinkFile.mockImplementation(({ reference: link }) => link.link === ATTACHMENT_PATH ? attachmentFile : null);
     });
 
     function merge(skippedCanvasPaths?: ReadonlySet<string>): Promise<void> {
@@ -252,15 +252,15 @@ describe('identical-attachment', () => {
       await merge();
 
       expect(mockEditLinks).toHaveBeenCalledOnce();
-      const { linkConverter, pathOrFile } = ensureNonNullable(mockEditLinks.mock.calls[0])[0];
+      const { pathOrFile, referenceConverter } = ensureNonNullable(mockEditLinks.mock.calls[0])[0];
       expect(pathOrFile).toBe(note);
-      expect(await linkConverter(reference(ATTACHMENT_PATH))).toBe('![[assets/image.png]]');
+      expect(await referenceConverter(reference(ATTACHMENT_PATH))).toBe('![[assets/image.png]]');
       expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({
         newSourcePathOrFile: note,
         newTargetPathOrFile: identicalFile,
         oldTargetPathOrFile: attachmentFile
       }));
-      expect(await linkConverter(reference('other.png'))).toBeUndefined();
+      expect(await referenceConverter(reference('other.png'))).toBeUndefined();
       expect(trashFileSpy).toHaveBeenCalledExactlyOnceWith(attachmentFile);
       expect(getApp().vault.getFileByPath(DESTINATION_PATH)).toBe(identicalFile);
     });

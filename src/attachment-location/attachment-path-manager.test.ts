@@ -22,10 +22,10 @@ import {
   isNote
 } from '@mnaoumov/obsidian-lib/file-system';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
-import { extractLinkFile } from '@mnaoumov/obsidian-lib/link';
+import { extractReferenceFile } from '@mnaoumov/obsidian-lib/link';
 import {
   getCacheSafe,
-  getLinks
+  getReferences
 } from '@mnaoumov/obsidian-lib/metadata-cache';
 import {
   createFolderSafe,
@@ -91,13 +91,13 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
-  extractLinkFile: vi.fn<typeof extractLinkFile>()
+  extractReferenceFile: vi.fn<typeof extractReferenceFile>()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
   getCacheSafe: vi.fn<typeof getCacheSafe>(),
-  getLinks: vi.fn<typeof getLinks>()
+  getReferences: vi.fn<typeof getReferences>()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
@@ -119,8 +119,8 @@ const mockGetAbstractFileOrNull = vi.mocked(getAbstractFileOrNull);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const mockGetPath = vi.mocked(getPath);
 const mockIsNote = vi.mocked(isNote);
-const mockExtractLinkFile = vi.mocked(extractLinkFile);
-const mockGetLinks = vi.mocked(getLinks);
+const mockExtractLinkFile = vi.mocked(extractReferenceFile);
+const mockGetLinks = vi.mocked(getReferences);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockCreateFolderSafe = vi.mocked(createFolderSafe);
 const mockPromptWithPreview = vi.mocked(promptWithPreview);
@@ -656,7 +656,7 @@ describe('AttachmentPathManager', () => {
       const linkB = strictProxy<Reference>({});
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([linkA1, linkA2, linkB]);
-      mockExtractLinkFile.mockImplementation(({ link }) => link === linkB ? fileB : fileA);
+      mockExtractLinkFile.mockImplementation(({ reference }) => reference === linkB ? fileB : fileA);
       const result = await context.manager.getSequenceNumberMap('note.md');
       // `a.png` keeps its first-occurrence number (1); its repeat still advances the slot, so `b.png` is 3.
       expect(result.get('a.png')).toBe(1);
@@ -670,7 +670,7 @@ describe('AttachmentPathManager', () => {
       const attachmentLink = strictProxy<Reference>({});
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([sectionEmbedLink, attachmentLink]);
-      mockExtractLinkFile.mockImplementation(({ link }) => link === sectionEmbedLink ? noteFile : attachmentFile);
+      mockExtractLinkFile.mockImplementation(({ reference }) => reference === sectionEmbedLink ? noteFile : attachmentFile);
       context.isNoteEx.mockImplementation((pathOrFile) => pathOrFile === noteFile);
       const result = await context.manager.getSequenceNumberMap('note.md');
       // The section embed is skipped and must not advance the slot, so the attachment stays at 1.
@@ -685,7 +685,7 @@ describe('AttachmentPathManager', () => {
       const attachmentLink = strictProxy<Reference>({});
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([unresolvableLink, attachmentLink]);
-      mockExtractLinkFile.mockImplementation(({ link }) => link === attachmentLink ? attachmentFile : null);
+      mockExtractLinkFile.mockImplementation(({ reference }) => reference === attachmentLink ? attachmentFile : null);
       const result = await context.manager.getSequenceNumberMap('note.md');
       // The broken link still occupies slot 1, so the resolved attachment is numbered 2.
       expect(result.get('old.png')).toBe(2);
@@ -1595,7 +1595,7 @@ describe('AttachmentPathManager', () => {
       mockIsNote.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([otherLink, oldLink]);
-      mockExtractLinkFile.mockImplementation(({ link }) => link === oldLink ? oldFile : otherFile);
+      mockExtractLinkFile.mockImplementation(({ reference }) => reference === oldLink ? oldFile : otherFile);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',

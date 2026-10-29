@@ -25,8 +25,8 @@ import {
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import {
-  editLinks,
-  extractLinkFile,
+  editReferences,
+  extractReferenceFile,
   updateLink
 } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
@@ -34,7 +34,7 @@ import { renderInternalLink } from '@mnaoumov/obsidian-lib/markdown';
 import {
   getBacklinksForFileSafe,
   getCacheSafe,
-  getLinks
+  getReferences
 } from '@mnaoumov/obsidian-lib/metadata-cache';
 import { confirm } from '@mnaoumov/obsidian-lib/modals/confirm';
 import {
@@ -374,7 +374,7 @@ export class AttachmentCollector {
         return;
       }
 
-      const links = isCanvas ? await getCanvasReferences(app, params.note) : getLinks({ cache });
+      const links = isCanvas ? await getCanvasReferences(app, params.note) : getReferences({ cache });
       params.abortSignal.throwIfAborted();
 
       // Snapshot the attachment numbering from the pristine note, before any move rewrites its links.
@@ -385,14 +385,14 @@ export class AttachmentCollector {
       const oldParentFolderPaths = new Set<string>();
 
       // Canvas references resolved to their pre-move target paths.
-      // Obsidian does not index canvas into the metadata cache, so canvas embeds cannot be rewritten via `editLinks`.
+      // Obsidian does not index canvas into the metadata cache, so canvas embeds cannot be rewritten via `editReferences`.
       // After the loop we rewrite every canvas reference pointing to a moved attachment.
       // File-node moves are additionally rewritten by Obsidian core on rename (see below).
       const canvasReferenceTargets = isCanvas
         ? (links as CanvasReference[]).map((reference) => ({
-          oldTargetPath: extractLinkFile({
+          oldTargetPath: extractReferenceFile({
             app,
-            link: reference,
+            reference,
             shouldAllowNonExistingFile: true,
             sourcePathOrFile: params.note
           })?.path,
@@ -606,27 +606,27 @@ export class AttachmentCollector {
                   newAttachmentPath: ensureNonNullable(result.newAttachmentPath),
                   wasCopied: true
                 });
-                await editLinks({
+                await editReferences({
                   app,
-                  linkConverter: (link2): MaybeReturn<string> => {
-                    const linkFile = extractLinkFile({
+                  pathOrFile: params.note,
+                  pluginNoticeComponent,
+                  referenceConverter: (link2): MaybeReturn<string> => {
+                    const linkFile = extractReferenceFile({
                       app,
-                      link: link2,
+                      reference: link2,
                       sourcePathOrFile: params.note
                     });
                     return linkFile?.path === result.oldAttachmentPath
                       ? updateLink({
                         app,
-                        link: link2,
                         newSourcePathOrFile: params.note,
                         newTargetPathOrFile: ensureNonNullable(result.newAttachmentPath),
                         oldSourcePathOrFile: params.note,
-                        oldTargetPathOrFile: result.oldAttachmentPath
+                        oldTargetPathOrFile: result.oldAttachmentPath,
+                        reference: link2
                       })
                       : undefined;
                   },
-                  pathOrFile: params.note,
-                  pluginNoticeComponent,
                   resourceLockComponent
                 });
                 break;
@@ -943,9 +943,9 @@ export class AttachmentCollector {
   }
 
   private async prepareAttachmentToMove(params: AttachmentCollectorPrepareAttachmentToMoveParams): Promise<AttachmentMoveResult | null> {
-    const oldAttachmentFile = extractLinkFile({
+    const oldAttachmentFile = extractReferenceFile({
       app: this.app,
-      link: params.reference,
+      reference: params.reference,
       shouldAllowNonExistingFile: true,
       sourcePathOrFile: params.oldNotePath
     });
@@ -1083,11 +1083,11 @@ export class AttachmentCollector {
       if (isCanvasTextNodeReference(reference)) {
         const newContent = updateLink({
           app: this.app,
-          link: reference.originalReference,
           newSourcePathOrFile: params.note,
           newTargetPathOrFile: moved.newAttachmentPath,
           oldSourcePathOrFile: params.note,
-          oldTargetPathOrFile: oldTargetPath
+          oldTargetPathOrFile: oldTargetPath,
+          reference: reference.originalReference
         });
         changes.push(referenceToFileChange(reference, newContent));
       } else if (moved.wasCopied) {

@@ -16,7 +16,7 @@ import {
 } from '@mnaoumov/obsidian-lib/file-system';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import {
-  editLinks,
+  editReferences,
   updateLink
 } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
@@ -102,7 +102,7 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
-  editLinks: vi.fn(),
+  editReferences: vi.fn(),
   updateLink: vi.fn()
 }));
 
@@ -133,7 +133,7 @@ const mockAbortSignalAny = vi.mocked(abortSignalAny);
 const mockCopySafe = vi.mocked(copySafe);
 const mockFindIdenticalAttachmentFile = vi.mocked(findIdenticalAttachmentFile);
 const mockDeleteIfNotUsed = vi.mocked(deleteIfNotUsed);
-const mockEditLinks = vi.mocked(editLinks);
+const mockEditLinks = vi.mocked(editReferences);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockIsFile = vi.mocked(isFile);
 const mockIsFolder = vi.mocked(isFolder);
@@ -465,8 +465,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         .mockResolvedValueOnce(createBacklinks(new Map()));
       getFileByPath.mockReturnValue(backlinkFile);
       mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
-      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
-        await linkConverter(reference);
+      mockEditLinks.mockImplementation(async ({ referenceConverter }) => {
+        await referenceConverter(reference);
       });
       mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
@@ -477,10 +477,10 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'new-folder/attachment.png', oldPathOrFile: attachment });
       expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith({
         app,
-        link: reference,
         newSourcePathOrFile: backlinkFile,
         newTargetPathOrFile: 'new-folder/attachment.png',
-        oldTargetPathOrFile: attachment
+        oldTargetPathOrFile: attachment,
+        reference
       });
       expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
     });
@@ -495,8 +495,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       getFileByPath.mockReturnValue(backlinkFile);
       mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
       mockFindIdenticalAttachmentFile.mockResolvedValue(createFile('new-folder/Attachment.png'));
-      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
-        await linkConverter(reference);
+      mockEditLinks.mockImplementation(async ({ referenceConverter }) => {
+        await referenceConverter(reference);
       });
       mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
@@ -523,8 +523,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       getFileByPath.mockReturnValue(createFile('note1.md'));
       mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
       mockCopySafe.mockResolvedValue('new-folder/attachment 1.png');
-      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
-        await linkConverter(reference);
+      mockEditLinks.mockImplementation(async ({ referenceConverter }) => {
+        await referenceConverter(reference);
       });
       mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
@@ -570,8 +570,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const filesByPath = new Map([['drawing.excalidraw.md', drawingFile], ['note1.md', noteFile]]);
       getFileByPath.mockImplementation((path) => filesByPath.get(path) ?? null);
       mockGetProperAttachmentPath.mockResolvedValue('note1-assets/attachment.png');
-      mockEditLinks.mockImplementation(async ({ linkConverter, pathOrFile }) => {
-        await linkConverter(pathOrFile === drawingFile ? drawingReference : noteReference);
+      mockEditLinks.mockImplementation(async ({ pathOrFile, referenceConverter }) => {
+        await referenceConverter(pathOrFile === drawingFile ? drawingReference : noteReference);
       });
       mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
@@ -581,8 +581,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       expect(mockGetProperAttachmentPath).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ noteFilePath: 'note1.md', reference: noteReference }));
       expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'note1-assets/attachment.png', oldPathOrFile: attachment });
       expect(mockUpdateLink).toHaveBeenCalledTimes(2);
-      expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ link: drawingReference, newSourcePathOrFile: drawingFile }));
-      expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ link: noteReference, newSourcePathOrFile: noteFile }));
+      expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ newSourcePathOrFile: drawingFile, reference: drawingReference }));
+      expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({ newSourcePathOrFile: noteFile, reference: noteReference }));
       expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
     });
 
@@ -597,8 +597,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         .mockResolvedValueOnce(createBacklinks(new Map()));
       getFileByPath.mockReturnValue(drawingFile);
       mockGetProperAttachmentPath.mockResolvedValue('drawing-assets/attachment.png');
-      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
-        await linkConverter(drawingReference);
+      mockEditLinks.mockImplementation(async ({ referenceConverter }) => {
+        await referenceConverter(drawingReference);
       });
       mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
@@ -608,7 +608,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         expect.objectContaining({ noteFilePath: 'drawing.excalidraw.md', reference: drawingReference })
       );
       expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'drawing-assets/attachment.png', oldPathOrFile: attachment });
-      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ link: drawingReference, newSourcePathOrFile: drawingFile }));
+      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ newSourcePathOrFile: drawingFile, reference: drawingReference }));
     });
 
     it('should skip relinking a note that no longer resolves to a file and still move into the one that does', async () => {
@@ -627,8 +627,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         .mockResolvedValueOnce(createBacklinks(new Map()));
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? noteFile : null);
       mockGetProperAttachmentPath.mockResolvedValue('note1-assets/attachment.png');
-      mockEditLinks.mockImplementation(async ({ linkConverter }) => {
-        await linkConverter(noteReference);
+      mockEditLinks.mockImplementation(async ({ referenceConverter }) => {
+        await referenceConverter(noteReference);
       });
       mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
@@ -636,7 +636,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
 
       expect(mockCopySafe).toHaveBeenCalledExactlyOnceWith({ app, newPath: 'note1-assets/attachment.png', oldPathOrFile: attachment });
       expect(mockEditLinks).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ pathOrFile: noteFile }));
-      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ link: noteReference, newSourcePathOrFile: noteFile }));
+      expect(mockUpdateLink).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ newSourcePathOrFile: noteFile, reference: noteReference }));
       expect(mockDeleteIfNotUsed).toHaveBeenCalledExactlyOnceWith({ app, pathOrFile: attachment });
     });
 
@@ -660,8 +660,8 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
       const filesByPath = new Map([['a.md', noteA], ['b.md', noteB]]);
       getFileByPath.mockImplementation((path) => filesByPath.get(path) ?? null);
       mockGetProperAttachmentPath.mockResolvedValue('a-assets/attachment.af');
-      mockEditLinks.mockImplementation(async ({ linkConverter, pathOrFile }) => {
-        await linkConverter(pathOrFile === noteA ? referenceA : referenceB);
+      mockEditLinks.mockImplementation(async ({ pathOrFile, referenceConverter }) => {
+        await referenceConverter(pathOrFile === noteA ? referenceA : referenceB);
       });
       mockDeleteIfNotUsed.mockResolvedValue(DeleteIfNotUsedResult.Deleted);
 
@@ -689,7 +689,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         .mockResolvedValueOnce(createBacklinks(new Map()));
       getFileByPath.mockImplementation((path) => path === 'note1.md' ? backlinkFile : null);
       mockGetProperAttachmentPath.mockResolvedValue('new-folder/attachment.png');
-      mockEditLinks.mockImplementation(async ({ linkConverter: converter }) => {
+      mockEditLinks.mockImplementation(async ({ referenceConverter: converter }) => {
         await converter(reference);
         await converter(createReference('non-matching'));
       });

@@ -16,13 +16,13 @@ import {
   isFolder
 } from '@mnaoumov/obsidian-lib/file-system';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
-import { extractLinkFile } from '@mnaoumov/obsidian-lib/link';
+import { extractReferenceFile } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
 import { renderInternalLink } from '@mnaoumov/obsidian-lib/markdown';
 import {
   getBacklinksForFileSafe,
   getCacheSafe,
-  getLinks
+  getReferences
 } from '@mnaoumov/obsidian-lib/metadata-cache';
 import {
   parseLinks,
@@ -262,7 +262,7 @@ export class UnusedAttachmentsRemover {
       return referencedAttachmentPaths;
     }
 
-    const references: Reference[] = isCanvasFile(note) ? [...await getCanvasReferences(this.app, note)] : [...getLinks({ cache })];
+    const references: Reference[] = isCanvasFile(note) ? [...await getCanvasReferences(this.app, note)] : [...getReferences({ cache })];
     abortSignal.throwIfAborted();
 
     /*
@@ -283,9 +283,9 @@ export class UnusedAttachmentsRemover {
     }
 
     for (const reference of references) {
-      const referencedFile = extractLinkFile({
+      const referencedFile = extractReferenceFile({
         app: this.app,
-        link: reference,
+        reference,
         shouldAllowNonExistingFile: true,
         sourcePathOrFile: note
       });

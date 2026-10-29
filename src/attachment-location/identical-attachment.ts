@@ -16,8 +16,8 @@ import {
   isFile
 } from '@mnaoumov/obsidian-lib/file-system';
 import {
-  editLinks,
-  extractLinkFile,
+  editReferences,
+  extractReferenceFile,
   updateLink
 } from '@mnaoumov/obsidian-lib/link';
 import { getBacklinksForFileSafe } from '@mnaoumov/obsidian-lib/metadata-cache';
@@ -127,20 +127,20 @@ export async function mergeIntoIdenticalAttachment(params: MergeIntoIdenticalAtt
       continue;
     }
 
-    await editLinks({
+    await editReferences({
       app,
-      linkConverter: (link) =>
-        extractLinkFile({ app, link, sourcePathOrFile: noteFile }) === attachmentFile
-          ? updateLink({
-            app,
-            link,
-            newSourcePathOrFile: noteFile,
-            newTargetPathOrFile: identicalFile,
-            oldTargetPathOrFile: attachmentFile
-          })
-          : undefined,
       pathOrFile: noteFile,
       pluginNoticeComponent: params.pluginNoticeComponent,
+      referenceConverter: (reference) =>
+        extractReferenceFile({ app, reference, sourcePathOrFile: noteFile }) === attachmentFile
+          ? updateLink({
+            app,
+            newSourcePathOrFile: noteFile,
+            newTargetPathOrFile: identicalFile,
+            oldTargetPathOrFile: attachmentFile,
+            reference
+          })
+          : undefined,
       resourceLockComponent: params.resourceLockComponent
     });
   }
@@ -187,9 +187,9 @@ async function repointCanvasReferences(params: RepointCanvasReferencesParams): P
   const changes: FileChange[] = [];
 
   for (const reference of await getCanvasReferences(app, canvasFile)) {
-    const linkFile = extractLinkFile({
+    const linkFile = extractReferenceFile({
       app,
-      link: reference,
+      reference,
       sourcePathOrFile: canvasFile
     });
     if (linkFile !== attachmentFile) {
@@ -201,11 +201,11 @@ async function repointCanvasReferences(params: RepointCanvasReferencesParams): P
       isCanvasTextNodeReference(reference)
         ? updateLink({
           app,
-          link: reference.originalReference,
           newSourcePathOrFile: canvasFile,
           newTargetPathOrFile: identicalFile,
           oldSourcePathOrFile: canvasFile,
-          oldTargetPathOrFile: attachmentFile
+          oldTargetPathOrFile: attachmentFile,
+          reference: reference.originalReference
         })
         : identicalFile.path
     ));

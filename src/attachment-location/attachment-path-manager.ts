@@ -21,10 +21,10 @@ import {
 } from '@mnaoumov/obsidian-lib/file-system';
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
-import { extractLinkFile } from '@mnaoumov/obsidian-lib/link';
+import { extractReferenceFile } from '@mnaoumov/obsidian-lib/link';
 import {
   getCacheSafe,
-  getLinks
+  getReferences
 } from '@mnaoumov/obsidian-lib/metadata-cache';
 import {
   createFolderSafe,
@@ -903,7 +903,7 @@ export class AttachmentPathManager {
    *   (identity match, including a match whose line is `0`); `0` when there is none.
    * - `sequenceNumberByAttachmentPath` — the 1-based numbering of the note's distinct attachments by path.
    *
-   * Both `{{cursorLine}}` and `{{sequenceNumber}}` are derived from the same `getCacheSafe`/`getLinks`
+   * Both `{{cursorLine}}` and `{{sequenceNumber}}` are derived from the same `getCacheSafe`/`getReferences`
    * traversal instead of walking the metadata cache twice on the rename/delete hot path.
    */
   private async walkNoteLinks(noteFilePath: string, oldAttachmentFile: null | TFile): Promise<NoteLinkWalkResult> {
@@ -917,10 +917,10 @@ export class AttachmentPathManager {
     }
 
     let sequenceNumber = 1;
-    for (const link of getLinks({ cache })) {
-      const linkFile = extractLinkFile({
+    for (const link of getReferences({ cache })) {
+      const linkFile = extractReferenceFile({
         app: this.app,
-        link,
+        reference: link,
         sourcePathOrFile: noteFilePath
       });
 
