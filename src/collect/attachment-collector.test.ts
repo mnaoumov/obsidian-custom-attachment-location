@@ -31,15 +31,15 @@ import {
 } from '@mnaoumov/obsidian-lib/file-system';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import {
-  editLinks,
-  extractLinkFile,
+  editReferences,
+  extractReferenceFile,
   updateLink
 } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
 import {
   getBacklinksForFileSafe,
   getCacheSafe,
-  getLinks
+  getReferences
 } from '@mnaoumov/obsidian-lib/metadata-cache';
 import { confirm } from '@mnaoumov/obsidian-lib/modals/confirm';
 import { NoPriorityWinnerReason } from '@mnaoumov/obsidian-lib/note-priority';
@@ -171,8 +171,8 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
-  editLinks: vi.fn(),
-  extractLinkFile: vi.fn(),
+  editReferences: vi.fn(),
+  extractReferenceFile: vi.fn(),
   updateLink: vi.fn()
 }));
 
@@ -195,7 +195,7 @@ vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
   getBacklinksForFileSafe: vi.fn(),
   getCacheSafe: vi.fn(),
-  getLinks: vi.fn()
+  getReferences: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/modals/confirm', async (importOriginal) => ({
@@ -231,11 +231,11 @@ const mockIsCanvasFile = vi.mocked(isCanvasFile);
 const mockIsFile = vi.mocked(isFile);
 const mockIsFolder = vi.mocked(isFolder);
 const mockIsNote = vi.mocked(isNote);
-const mockEditLinks = vi.mocked(editLinks);
-const mockExtractLinkFile = vi.mocked(extractLinkFile);
+const mockEditLinks = vi.mocked(editReferences);
+const mockExtractLinkFile = vi.mocked(extractReferenceFile);
 const mockUpdateLink = vi.mocked(updateLink);
 const mockLoop = vi.mocked(loop);
-const mockGetLinks = vi.mocked(getLinks);
+const mockGetLinks = vi.mocked(getReferences);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockConfirm = vi.mocked(confirm);
@@ -1255,11 +1255,11 @@ describe('AttachmentCollector', () => {
         mockCopySafe.mockResolvedValue('attachments/img.png');
         let matchingResult: unknown;
         let nonMatchingResult: unknown;
-        mockEditLinks.mockImplementation(async ({ linkConverter }) => {
-          matchingResult = await linkConverter(createReference({ link: 'img.png' }));
-          nonMatchingResult = await linkConverter(createReference({ link: 'other.png' }));
+        mockEditLinks.mockImplementation(async ({ referenceConverter }) => {
+          matchingResult = await referenceConverter(createReference({ link: 'img.png' }));
+          nonMatchingResult = await referenceConverter(createReference({ link: 'other.png' }));
         });
-        mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link === 'other.png' ? 'other.png' : 'img.png'));
+        mockExtractLinkFile.mockImplementation(({ reference }) => createFile(reference.link === 'other.png' ? 'other.png' : 'img.png'));
         mockUpdateLink.mockReturnValue('![](attachments/img.png)');
         await runSingleFile(note);
         expect(mockCopySafe).toHaveBeenCalledWith({
@@ -1275,8 +1275,8 @@ describe('AttachmentCollector', () => {
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
         mockFindIdenticalAttachmentFile.mockResolvedValue(createFile('attachments/img.png'));
         let matchingResult: unknown;
-        mockEditLinks.mockImplementation(async ({ linkConverter }) => {
-          matchingResult = await linkConverter(createReference({ link: 'img.png' }));
+        mockEditLinks.mockImplementation(async ({ referenceConverter }) => {
+          matchingResult = await referenceConverter(createReference({ link: 'img.png' }));
         });
         mockExtractLinkFile.mockReturnValue(createFile('img.png'));
         mockUpdateLink.mockReturnValue('![](attachments/img.png)');
@@ -1365,7 +1365,7 @@ describe('AttachmentCollector', () => {
         await runSingleFile(note);
         // Second link in the same note must reuse the remembered Skip mode without re-prompting.
         mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
+        mockExtractLinkFile.mockImplementation(({ reference }) => createFile(reference.link));
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
         mockSelectMode.mockClear();
         await runSingleFile(note);
@@ -1385,7 +1385,7 @@ describe('AttachmentCollector', () => {
           shouldUseSameActionForOtherProblematicAttachments: true
         });
         mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
+        mockExtractLinkFile.mockImplementation(({ reference }) => createFile(reference.link));
         await runSingleFile(note);
         // Prompt chosen once, then context mode (Skip) reused for the second link.
         expect(mockSelectMode).toHaveBeenCalledTimes(1);
@@ -1397,7 +1397,7 @@ describe('AttachmentCollector', () => {
         // iteration returns early before requesting its backlinks.
         settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
         mockGetLinks.mockReturnValue([createReference({ link: 'a.png' }), createReference({ link: 'b.png' })]);
-        mockExtractLinkFile.mockImplementation(({ link }) => createFile(link.link));
+        mockExtractLinkFile.mockImplementation(({ reference }) => createFile(reference.link));
         await runSingleFile(note);
         expect(mockGetBacklinksForFileSafe).toHaveBeenCalledTimes(1);
       });
@@ -1553,9 +1553,9 @@ describe('AttachmentCollector', () => {
           oldPathOrAbstractFile: 'img.png'
         });
         expect(mockUpdateLink).toHaveBeenCalledWith(expect.objectContaining({
-          link: textRef.originalReference,
           newTargetPathOrFile: 'attachments/img.png',
-          oldTargetPathOrFile: 'img.png'
+          oldTargetPathOrFile: 'img.png',
+          reference: textRef.originalReference
         }));
         expect(mockApplyFileChanges).toHaveBeenCalledTimes(1);
         const applyParams = castTo<ApplyFileChangesParamsLike>(mockApplyFileChanges.mock.calls[0]?.[0]);

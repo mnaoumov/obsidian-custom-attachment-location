@@ -358,10 +358,10 @@ export class ExternallyCreatedAttachmentHandlerComponent extends Component {
           newText += text.slice(lastOffset, parseLinkResult.startOffset);
           newText += updateLink({
             app: this.app,
-            link: toParseLinkReference({ content: text, parseLinkResult }),
             newSourcePathOrFile: noteFile,
             newTargetPathOrFile: attachmentFile,
-            oldTargetPathOrFile: oldPath
+            oldTargetPathOrFile: oldPath,
+            reference: toParseLinkReference({ content: text, parseLinkResult })
           });
           lastOffset = parseLinkResult.endOffset;
         }

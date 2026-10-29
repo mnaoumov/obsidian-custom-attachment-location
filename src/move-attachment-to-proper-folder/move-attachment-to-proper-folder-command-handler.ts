@@ -16,7 +16,7 @@ import {
 } from '@mnaoumov/obsidian-lib/file-system';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import {
-  editLinks,
+  editReferences,
   updateLink
 } from '@mnaoumov/obsidian-lib/link';
 import { loop } from '@mnaoumov/obsidian-lib/loop';
@@ -365,22 +365,22 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
 
     const linkJsons = new Set(params.references.map((reference) => toJson(reference)));
 
-    await editLinks({
+    await editReferences({
       app: this.app,
-      linkConverter: (link) => {
+      pathOrFile: noteFile,
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      referenceConverter: (link) => {
         const linkJson = toJson(link);
         return linkJsons.has(linkJson)
           ? updateLink({
             app: this.app,
-            link,
             newSourcePathOrFile: noteFile,
             newTargetPathOrFile: params.newAttachmentPath,
-            oldTargetPathOrFile: params.attachmentFile
+            oldTargetPathOrFile: params.attachmentFile,
+            reference: link
           })
           : undefined;
       },
-      pathOrFile: noteFile,
-      pluginNoticeComponent: this.pluginNoticeComponent,
       resourceLockComponent: this.resourceLockComponent
     });
   }

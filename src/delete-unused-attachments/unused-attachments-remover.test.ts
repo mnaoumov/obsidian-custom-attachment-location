@@ -24,12 +24,12 @@ import {
   isFolder
 } from '@mnaoumov/obsidian-lib/file-system';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
-import { extractLinkFile } from '@mnaoumov/obsidian-lib/link';
+import { extractReferenceFile } from '@mnaoumov/obsidian-lib/link';
 import { renderInternalLink } from '@mnaoumov/obsidian-lib/markdown';
 import {
   getBacklinksForFileSafe,
   getCacheSafe,
-  getLinks
+  getReferences
 } from '@mnaoumov/obsidian-lib/metadata-cache';
 import { publishPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
 import { addToQueue } from '@mnaoumov/obsidian-lib/queue';
@@ -100,14 +100,14 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
-  extractLinkFile: vi.fn()
+  extractReferenceFile: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
   getBacklinksForFileSafe: vi.fn(),
   getCacheSafe: vi.fn(),
-  getLinks: vi.fn()
+  getReferences: vi.fn()
 }));
 
 // The real renderer goes through Obsidian's markdown renderer; a bare anchor naming the path is all the
@@ -140,10 +140,10 @@ const mockGetCanvasReferences = vi.mocked(getCanvasReferences);
 const mockIsCanvasFile = vi.mocked(isCanvasFile);
 const mockIsFile = vi.mocked(isFile);
 const mockIsFolder = vi.mocked(isFolder);
-const mockExtractLinkFile = vi.mocked(extractLinkFile);
+const mockExtractLinkFile = vi.mocked(extractReferenceFile);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
-const mockGetLinks = vi.mocked(getLinks);
+const mockGetLinks = vi.mocked(getReferences);
 const mockConfirm = vi.mocked(confirmMinimizable);
 const mockRenderInternalLink = vi.mocked(renderInternalLink);
 const mockAddToQueue = vi.mocked(addToQueue);
@@ -600,7 +600,7 @@ describe('UnusedAttachmentsRemover', () => {
     it('should keep an attachment the note text embeds when the cache misses the embed', async () => {
       const image = createFile(`${ATTACHMENT_FOLDER_PATH}/test.png`);
       cachedRead.mockResolvedValue('- Item\n$$\nx\n\n$$\n![[test.png]]\n');
-      mockExtractLinkFile.mockImplementation((params) => params.link.link === 'test.png' ? image : null);
+      mockExtractLinkFile.mockImplementation((params) => params.reference.link === 'test.png' ? image : null);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         callback(image);
       });
@@ -639,7 +639,7 @@ describe('UnusedAttachmentsRemover', () => {
         vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note || f === other);
         // Only the other note's text names the image, and the backlink index knows nothing of it.
         cachedRead.mockImplementation((file) => Promise.resolve(file === other ? '![[test.png]]\n' : ''));
-        mockExtractLinkFile.mockImplementation((params) => params.link.link === 'test.png' ? image : null);
+        mockExtractLinkFile.mockImplementation((params) => params.reference.link === 'test.png' ? image : null);
         getAttachmentFolderFullPathForPath.mockImplementation((params) => Promise.resolve(params.notePath === note.path ? ATTACHMENT_FOLDER_PATH : 'none'));
         getFolderByPath.mockImplementation((path) => path === ATTACHMENT_FOLDER_PATH ? attachmentFolder : null);
         vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
@@ -762,7 +762,7 @@ describe('UnusedAttachmentsRemover', () => {
       const other = createFile('other.md');
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note || f === other);
       cachedRead.mockImplementation((file) => Promise.resolve(file === other ? '![[img.png]]\n' : ''));
-      mockExtractLinkFile.mockImplementation((params) => params.link.link === 'img.png' ? image : null);
+      mockExtractLinkFile.mockImplementation((params) => params.reference.link === 'img.png' ? image : null);
       backlinksByPath.set(image.path, [drawing.path]);
       await runOperation([note, other]);
       expect(mockTrashSafe).not.toHaveBeenCalled();
@@ -775,7 +775,7 @@ describe('UnusedAttachmentsRemover', () => {
        * unit describing itself either way.
        */
       cachedRead.mockImplementation((file) => Promise.resolve(file === drawing ? '![[img.png]]\n' : ''));
-      mockExtractLinkFile.mockImplementation((params) => params.link.link === 'img.png' ? image : null);
+      mockExtractLinkFile.mockImplementation((params) => params.reference.link === 'img.png' ? image : null);
       backlinksByPath.set(image.path, [drawing.path]);
       await runOperation([note, drawing]);
       expect(cachedRead).not.toHaveBeenCalledWith(drawing);
