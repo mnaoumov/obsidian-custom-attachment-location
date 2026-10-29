@@ -32,7 +32,7 @@ const INDEX_WAIT_IN_MS = 180_000;
 const INDEX_POLL_IN_MS = 2000;
 const SETTLE_DELAY_IN_MS = 5000;
 const SCENARIO_TIMEOUT_IN_MS = 480_000;
-const PROBE_FILE_PATH = 'audit-burst-probe/probe.md';
+const PROBE_FILE_PATH = 'audit-burst-probe/probe';
 
 describe('Attachment-path audit burst', () => {
   it('resolves a note\'s links once for a burst of questions about it, and again after a vault change', async () => {
@@ -123,13 +123,15 @@ describe('Attachment-path audit burst', () => {
         }
 
         try {
+          // A file appearing can change what a link resolves to, so it forgets every remembered walk. Another suite in
+          // this vault may already have asked about the fat note, so the burst starts from such a change.
+          await app.vault.createFolder('audit-burst-probe').catch(() => undefined);
+          await app.vault.create(`${probeFilePath}-1.md`, '');
           const start = performance.now();
           const burstResolutionCount = await countResolutions(attachments);
           const burstMs = performance.now() - start;
 
-          // A file appearing can change what a link resolves to, so the next question resolves afresh.
-          await app.vault.createFolder('audit-burst-probe').catch(() => undefined);
-          await app.vault.create(probeFilePath, '');
+          await app.vault.create(`${probeFilePath}-2.md`, '');
           const afterChangeResolutionCount = await countResolutions(attachments);
 
           // So does an edit of the note itself: its cache is recomputed, and `changed` fires before the walk.
