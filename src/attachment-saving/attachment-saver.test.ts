@@ -335,6 +335,26 @@ describe('AttachmentSaver', () => {
       }));
     });
 
+    it('should resolve the folder against the note active when the save started, even after a note switch mid-conversion', async () => {
+      const firstNote = createTFile({ path: 'first.md' });
+      context.getActiveFile.mockReturnValue(firstNote);
+      context.convertToJpeg.mockImplementation((params) => {
+        context.getActiveFile.mockReturnValue(createTFile({ path: 'second.md' }));
+        return Promise.resolve({
+          attachmentFileContent: params.attachmentFileContent,
+          attachmentFileExtension: params.attachmentFileExtension
+        });
+      });
+      await context.saver.saveAttachment({
+        attachmentFileBaseName: 'img',
+        attachmentFileContent: new ArrayBuffer(0),
+        attachmentFileExtension: 'png'
+      });
+      expect(context.getAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({
+        notePathOrFile: firstNote
+      }));
+    });
+
     it('should hand over the arrival name when there is no active note file', async () => {
       context.getActiveFile.mockReturnValue(null);
       await context.saver.saveAttachment({

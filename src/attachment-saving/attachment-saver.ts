@@ -51,6 +51,7 @@ interface AttachmentSaverSaveAttachmentCoreParams {
   readonly attachmentFileContent: ArrayBuffer;
   readonly attachmentFileExtension: string;
   readonly destinationPath?: string;
+  readonly noteFile: null | TFile;
   readonly originalAttachmentFileName: string;
   readonly shouldReplaceSpecialCharactersInKeptFileName?: boolean;
 }
@@ -100,7 +101,6 @@ export class AttachmentSaver {
   }
 
   private async saveAttachmentCore(params: AttachmentSaverSaveAttachmentCoreParams): Promise<TFile> {
-    const noteFile = this.app.workspace.getActiveFile();
     const attachmentFileStats = this.arrayBufferMap.getFileStats(params.attachmentFileContent);
 
     const attachmentFileContent = params.attachmentFileContent;
@@ -109,7 +109,7 @@ export class AttachmentSaver {
       attachmentFileExtension: params.attachmentFileExtension,
       attachmentFileStats,
       context: actionContextToAttachmentPathContext(ActionContext.SaveAttachment),
-      notePathOrFile: noteFile,
+      notePathOrFile: params.noteFile,
       oldAttachmentPathOrFile: makeFileName({
         fileBaseName: params.attachmentFileBaseName,
         fileExtension: params.attachmentFileExtension
@@ -154,6 +154,7 @@ export class AttachmentSaver {
       fileExtension: params.attachmentFileExtension
     });
 
+    // Read once, before any await: the user may switch notes while the attachment is converted or named.
     const activeNoteFile = this.app.workspace.getActiveFile();
     if (!activeNoteFile || this.handedOverSettingsComponent.isPathIgnored(activeNoteFile.path)) {
       return await this.saveAttachmentCore({
@@ -161,6 +162,7 @@ export class AttachmentSaver {
         attachmentFileBaseName,
         attachmentFileContent,
         attachmentFileExtension,
+        noteFile: activeNoteFile,
         originalAttachmentFileName
       });
     }
@@ -232,6 +234,7 @@ export class AttachmentSaver {
       attachmentFileBaseName,
       attachmentFileContent,
       attachmentFileExtension,
+      noteFile: activeNoteFile,
       originalAttachmentFileName,
       shouldReplaceSpecialCharactersInKeptFileName: !shouldRename
     });
