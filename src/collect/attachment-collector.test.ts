@@ -475,9 +475,9 @@ describe('AttachmentCollector', () => {
   });
 
   describe('collectAttachmentsEntireVault', () => {
-    it('should enqueue an operation for the vault root', () => {
-      collector.collectAttachmentsEntireVault();
-      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+    it('should enqueue an operation for the vault root', async () => {
+      await collector.collectAttachmentsEntireVault();
+      const params = castTo<QueueParamsLike>(mockAddToQueueAndWait.mock.calls[0]?.[0]);
       expect(params.operationName).toBe('Collect attachments in entire vault');
     });
 
@@ -487,8 +487,8 @@ describe('AttachmentCollector', () => {
       mockConfirm.mockResolvedValue(true);
       mockIsFile.mockReturnValue(false);
       mockIsFolder.mockReturnValue(false);
-      collector.collectAttachmentsEntireVault();
-      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+      await collector.collectAttachmentsEntireVault();
+      const params = castTo<QueueParamsLike>(mockAddToQueueAndWait.mock.calls[0]?.[0]);
       await params.operationFunction(new AbortController().signal);
       expect(getRoot).toHaveBeenCalled();
       expect(mockLoop).toHaveBeenCalled();

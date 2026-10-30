@@ -5,6 +5,7 @@ import type {
   TFile
 } from 'obsidian';
 
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
@@ -102,10 +103,23 @@ describe('ShowOriginalAttachmentNamesCommandHandler', () => {
 });
 
 describe('PruneOriginalAttachmentNamesCommandHandler', () => {
+  let bulkOperationCommitComponent: BulkOperationCommitComponent;
+
+  beforeEach(() => {
+    // The real component with its setting off, which runs the operation as it is.
+    bulkOperationCommitComponent = new BulkOperationCommitComponent({
+      app,
+      isEnabled: (): boolean => false,
+      pluginId: 'test-plugin',
+      pluginNoticeComponent: strictProxy<PluginNoticeComponent>({ showNotice })
+    });
+  });
+
   function createHandler(): TestableExecute {
     return castTo<TestableExecute>(
       new PruneOriginalAttachmentNamesCommandHandler({
         app,
+        bulkOperationCommitComponent,
         originalAttachmentNamesComponent,
         pluginNoticeComponent: strictProxy<PluginNoticeComponent>({ showNotice })
       })
@@ -114,8 +128,11 @@ describe('PruneOriginalAttachmentNamesCommandHandler', () => {
 
   it('should remove the stale records and keep the live ones when the user prunes', async () => {
     mockShowPruneOriginalAttachmentNamesModal.mockResolvedValue(PruneOriginalAttachmentNamesChoice.Prune);
+    const runBulkOperationSpy = vi.spyOn(bulkOperationCommitComponent, 'runBulkOperation');
 
     await createHandler().execute();
+
+    expect(runBulkOperationSpy.mock.calls[0]?.[0].summary).toBe('Prune original attachment names');
 
     expect(originalAttachmentNamesComponent.get('assets/gone.png')).toBeUndefined();
     expect(originalAttachmentNamesComponent.get('assets/live.png')).toBe('arrived.png');
@@ -124,8 +141,11 @@ describe('PruneOriginalAttachmentNamesCommandHandler', () => {
 
   it('should forget every record when the user forgets all', async () => {
     mockShowPruneOriginalAttachmentNamesModal.mockResolvedValue(PruneOriginalAttachmentNamesChoice.ForgetAll);
+    const runBulkOperationSpy = vi.spyOn(bulkOperationCommitComponent, 'runBulkOperation');
 
     await createHandler().execute();
+
+    expect(runBulkOperationSpy.mock.calls[0]?.[0].summary).toBe('Forget all original attachment names');
 
     expect(originalAttachmentNamesComponent.size).toBe(0);
     expect(showNotice).toHaveBeenCalledExactlyOnceWith('Forgot 2 original attachment name(s).');

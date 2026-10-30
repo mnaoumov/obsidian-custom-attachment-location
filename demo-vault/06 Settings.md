@@ -120,6 +120,11 @@ Two things follow:
 - `networkImageDownloadTimeoutInSeconds`
   - how long to wait for each network image download.
 
+## Undoing bulk commands with git
+
+- `shouldCommitBulkOperations`
+  - **Off by default, desktop only.** When the vault is in a git repository, each run of **Collect attachments**, **Delete unused attachments**, **Move attachment to proper folder** and **Prune original attachment names** is recorded as its own commit: whatever was pending first, as `chore: before OP<n>`, then the run itself, as `OP<n>: <command> in <scope>`. **Undo a bulk operation...** lists those runs and reverts the one you pick, and plain `git revert` does the same. A revert that conflicts is left for you to finish with `git revert --continue` or `git revert --abort`. Outside a git repository the setting does nothing, and the commands run as before. Add `.obsidian/` to your `.gitignore` if you do not keep it in git, so the workspace layout Obsidian rewrites on its own does not land in the commits.
+
 ## Timing and bookkeeping
 
 - `timeoutInSeconds`

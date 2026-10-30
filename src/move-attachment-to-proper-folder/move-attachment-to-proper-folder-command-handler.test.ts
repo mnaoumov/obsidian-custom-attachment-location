@@ -9,6 +9,7 @@ import type {
   TFolder
 } from 'obsidian';
 
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import {
   isFile,
@@ -189,6 +190,7 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
   let abortSignalComponent: AbortSignalComponent;
   let app: App;
   let attachmentPathManager: AttachmentPathManager;
+  let bulkOperationCommitComponent: BulkOperationCommitComponent;
   let combinedAbortSignal: AbortSignal;
   let getFileByPath: ReturnType<typeof vi.fn<(path: string) => null | TFile>>;
   let handler: MoveAttachmentToProperFolderCommandHandler;
@@ -238,10 +240,18 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
     });
     pluginNoticeComponent = new PluginNoticeComponent({ app, pluginName: 'My Plugin' });
     resourceLockComponent = strictProxy<ResourceLockComponent>({});
+    // The real component with its setting off, which runs the operation as it is.
+    bulkOperationCommitComponent = new BulkOperationCommitComponent({
+      app,
+      isEnabled: (): boolean => false,
+      pluginId: 'test-plugin',
+      pluginNoticeComponent
+    });
     handler = new MoveAttachmentToProperFolderCommandHandler({
       abortSignalComponent,
       app,
       attachmentPathManager,
+      bulkOperationCommitComponent,
       handedOverSettingsComponent: strictProxy<HandedOverSettingsComponent>({
         isPathIgnored: mockIsPathIgnored
       }),
@@ -376,9 +386,11 @@ describe('MoveAttachmentToProperFolderCommandHandler', () => {
         callback(childNote);
       });
       mockLoop.mockResolvedValue();
+      const runBulkOperationSpy = vi.spyOn(bulkOperationCommitComponent, 'runBulkOperation');
 
       await castTo<TestableHandler>(handler).executeAbstractFiles([attachmentA, attachmentB, note, folder]);
 
+      expect(runBulkOperationSpy.mock.calls[0]?.[0].summary).toBe('Move attachments to proper folder in z-a.png and 3 more');
       const params = getLoopParams();
       expect(params.items.map((file) => file.path)).toEqual(['a-b.png', 'folder/child.png', 'z-a.png']);
       expect(params.buildNoticeMessage({ item: attachmentA, iterationString: '1/3' })).toBe('Moving attachment to proper folder 1/3 - \'z-a.png\'.');

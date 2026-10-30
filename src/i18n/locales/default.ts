@@ -614,6 +614,10 @@ export const defaultTranslations = {
       description: 'Collect a note\'s attachments each time the note changes, as if Collect attachments in current note had been run on it. This moves files without asking, on every save of the note, so it is off by default.',
       name: 'Collect attachments automatically'
     },
+    shouldCommitBulkOperations: {
+      description: 'If enabled and the vault is in a git repository, each run of Collect attachments, Delete unused attachments, Move attachment to proper folder and Prune original attachment names is recorded as its own commit, so Undo a bulk operation, or git revert, can undo it. Whatever was pending before the run is committed first, separately. Desktop only.',
+      name: 'Commit bulk operations to git'
+    },
     shouldConvertPastedImagesToJpeg: {
       description: 'Whether to convert pasted images to JPEG. Applies only when the PNG image content is pasted from the clipboard directly. Typically, for pasting screenshots.',
       name: 'Should convert pasted images to JPEG'

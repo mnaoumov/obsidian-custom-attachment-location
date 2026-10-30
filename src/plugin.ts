@@ -8,6 +8,8 @@ import type { PluginApiDeclaration } from '@mnaoumov/obsidian-lib/plugin/plugin-
 import type { TAbstractFile } from 'obsidian';
 
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
+import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import { PluginConflictSeverity } from '@mnaoumov/obsidian-lib/components/plugin-gate-component';
 import { PluginSettingsTabComponent } from '@mnaoumov/obsidian-lib/components/plugin-settings-tab-component';
 import { SettingsMigrationComponent } from '@mnaoumov/obsidian-lib/components/settings-migration-component';
@@ -390,6 +392,20 @@ export class Plugin extends PluginBase {
       pluginSettingsComponent
     });
 
+    // Opt-in, read on every run; the bulk commands below wrap their work in it, outside the operation queue,
+    // because its settle step flushes that queue.
+    function isBulkOperationCommitEnabled(): boolean {
+      return pluginSettingsComponent.settings.shouldCommitBulkOperations;
+    }
+    const bulkOperationCommitComponent = this.addChild(
+      new BulkOperationCommitComponent({
+        app: this.app,
+        isEnabled: isBulkOperationCommitEnabled,
+        pluginId: this.manifest.id,
+        pluginNoticeComponent: this.pluginNoticeComponent
+      })
+    );
+
     const noteOwnerResolver = new NoteOwnerResolver({
       app: this.app,
       handedOverSettingsComponent,
@@ -398,25 +414,31 @@ export class Plugin extends PluginBase {
 
     await this.commandHandlerComponent.registerCommandHandlers(() => [
       new CollectAttachmentsInFileCommandHandler({
-        attachmentCollector
+        attachmentCollector,
+        bulkOperationCommitComponent
       }),
       new DeleteUnusedAttachmentsInFileCommandHandler({
+        bulkOperationCommitComponent,
         pluginSettingsComponent,
         unusedAttachmentsRemover
       }),
       new CollectAttachmentsInCurrentFolderCommandHandler({
-        attachmentCollector
+        attachmentCollector,
+        bulkOperationCommitComponent
       }),
       new CollectAttachmentsEntireVaultCommandHandler({
-        attachmentCollector
+        attachmentCollector,
+        bulkOperationCommitComponent
       }),
       new DeleteUnusedAttachmentsEntireVaultCommandHandler({
+        bulkOperationCommitComponent,
         unusedAttachmentsRemover
       }),
       new MoveAttachmentToProperFolderCommandHandler({
         abortSignalComponent: this.abortSignalComponent,
         app: this.app,
         attachmentPathManager,
+        bulkOperationCommitComponent,
         handedOverSettingsComponent,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent,
@@ -443,6 +465,7 @@ export class Plugin extends PluginBase {
       }),
       new PruneOriginalAttachmentNamesCommandHandler({
         app: this.app,
+        bulkOperationCommitComponent,
         originalAttachmentNamesComponent,
         pluginNoticeComponent: this.pluginNoticeComponent
       }),
@@ -450,6 +473,10 @@ export class Plugin extends PluginBase {
         originalAttachmentNamesComponent,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent
+      }),
+      new UndoBulkOperationCommandHandler({
+        bulkOperationCommitComponent,
+        isEnabled: isBulkOperationCommitEnabled
       }),
       new OpenDemoVaultCommandHandler({
         app: this.app,

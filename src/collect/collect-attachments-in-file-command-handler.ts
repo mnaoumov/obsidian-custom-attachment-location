@@ -1,3 +1,4 @@
+import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { TAbstractFile } from 'obsidian';
 import type { Promisable } from 'type-fest';
 
@@ -7,16 +8,19 @@ import {
   isNote
 } from '@mnaoumov/obsidian-lib/file-system';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
-import { noopAsync } from '@mnaoumov/typescript-lib/function';
 
 import type { AttachmentCollector } from './attachment-collector.ts';
 
+import { buildBulkOperationSummary } from '../bulk-operations/bulk-operation-summary.ts';
+
 interface CollectAttachmentsInFileCommandHandlerConstructorParams {
   readonly attachmentCollector: AttachmentCollector;
+  readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
 }
 
 export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandHandler {
   private readonly attachmentCollector: AttachmentCollector;
+  private readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
 
   public constructor(params: CollectAttachmentsInFileCommandHandlerConstructorParams) {
     super({
@@ -28,6 +32,7 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
     });
 
     this.attachmentCollector = params.attachmentCollector;
+    this.bulkOperationCommitComponent = params.bulkOperationCommitComponent;
   }
 
   /**
@@ -56,9 +61,11 @@ export class CollectAttachmentsInFileCommandHandler extends AbstractFileCommandH
     return this.executeAbstractFiles([abstractFile]);
   }
 
-  protected override executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void> {
-    this.attachmentCollector.collectAttachmentsInAbstractFiles(abstractFiles);
-    return noopAsync();
+  protected override async executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void> {
+    await this.bulkOperationCommitComponent.runBulkOperation({
+      operation: () => this.attachmentCollector.collectAttachmentsInAbstractFilesAndWait(abstractFiles),
+      summary: buildBulkOperationSummary('Collect attachments', abstractFiles)
+    });
   }
 
   protected override shouldAddToAbstractFileMenu(): boolean {

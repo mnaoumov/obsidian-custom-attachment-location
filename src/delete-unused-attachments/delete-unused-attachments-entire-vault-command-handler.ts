@@ -1,10 +1,14 @@
+import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
+
 import { GlobalCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/global-command-handler';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
-import { noopAsync } from '@mnaoumov/typescript-lib/function';
 
 import type { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
+import { buildBulkOperationSummary } from '../bulk-operations/bulk-operation-summary.ts';
+
 interface DeleteUnusedAttachmentsEntireVaultCommandHandlerConstructorParams {
+  readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   readonly unusedAttachmentsRemover: UnusedAttachmentsRemover;
 }
 
@@ -16,6 +20,7 @@ interface DeleteUnusedAttachmentsEntireVaultCommandHandlerConstructorParams {
  * command grew an option.
  */
 export class DeleteUnusedAttachmentsEntireVaultCommandHandler extends GlobalCommandHandler {
+  private readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   private readonly unusedAttachmentsRemover: UnusedAttachmentsRemover;
 
   public constructor(params: DeleteUnusedAttachmentsEntireVaultCommandHandlerConstructorParams) {
@@ -24,11 +29,14 @@ export class DeleteUnusedAttachmentsEntireVaultCommandHandler extends GlobalComm
       id: 'delete-unused-attachments-entire-vault',
       name: t(($) => $.commands.deleteUnusedAttachmentsEntireVault)
     });
+    this.bulkOperationCommitComponent = params.bulkOperationCommitComponent;
     this.unusedAttachmentsRemover = params.unusedAttachmentsRemover;
   }
 
   protected override async execute(): Promise<void> {
-    await noopAsync();
-    this.unusedAttachmentsRemover.deleteUnusedAttachmentsEntireVault();
+    await this.bulkOperationCommitComponent.runBulkOperation({
+      operation: () => this.unusedAttachmentsRemover.deleteUnusedAttachmentsEntireVault(),
+      summary: buildBulkOperationSummary('Delete unused attachments')
+    });
   }
 }

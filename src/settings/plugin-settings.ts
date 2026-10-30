@@ -207,6 +207,12 @@ export class PluginSettings {
   public shouldCollectAttachmentsAutomatically = false;
 
   /**
+   * Whether each bulk command (collect, delete unused, move to proper folder, prune original names) is recorded as
+   * its own git commit, so `git revert` undoes it. Desktop only, and only for a vault inside a git work tree.
+   */
+  public shouldCommitBulkOperations = false;
+
+  /**
    * Whether an attachment moved onto a path already holding a byte-identical file is merged into that file
    * instead of being placed beside it under a duplicate-name suffix (discussion #96).
    *

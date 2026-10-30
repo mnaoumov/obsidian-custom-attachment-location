@@ -1,3 +1,4 @@
+import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { App } from 'obsidian';
 
@@ -14,6 +15,7 @@ import {
 
 interface PruneOriginalAttachmentNamesCommandHandlerConstructorParams {
   readonly app: App;
+  readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   readonly originalAttachmentNamesComponent: OriginalAttachmentNamesComponent;
   readonly pluginNoticeComponent: PluginNoticeComponent;
 }
@@ -23,6 +25,7 @@ interface PruneOriginalAttachmentNamesCommandHandlerConstructorParams {
  */
 export class PruneOriginalAttachmentNamesCommandHandler extends GlobalCommandHandler {
   private readonly app: App;
+  private readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   private readonly originalAttachmentNamesComponent: OriginalAttachmentNamesComponent;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
 
@@ -33,6 +36,7 @@ export class PruneOriginalAttachmentNamesCommandHandler extends GlobalCommandHan
       name: t(($) => $.commands.pruneOriginalAttachmentNames)
     });
     this.app = params.app;
+    this.bulkOperationCommitComponent = params.bulkOperationCommitComponent;
     this.originalAttachmentNamesComponent = params.originalAttachmentNamesComponent;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
   }
@@ -48,12 +52,12 @@ export class PruneOriginalAttachmentNamesCommandHandler extends GlobalCommandHan
         return;
       }
       case PruneOriginalAttachmentNamesChoice.ForgetAll: {
-        const count = this.originalAttachmentNamesComponent.forgetAll();
+        const count = await this.runAndPublish('Forget all original attachment names', () => this.originalAttachmentNamesComponent.forgetAll());
         this.pluginNoticeComponent.showNotice(t(($) => $.originalAttachmentNames.forgotAllNotice, { count }));
         return;
       }
       case PruneOriginalAttachmentNamesChoice.Prune: {
-        const count = this.originalAttachmentNamesComponent.prune().length;
+        const count = await this.runAndPublish('Prune original attachment names', () => this.originalAttachmentNamesComponent.prune().length);
         this.pluginNoticeComponent.showNotice(t(($) => $.originalAttachmentNames.prunedNotice, { count }));
         return;
       }
@@ -61,5 +65,27 @@ export class PruneOriginalAttachmentNamesCommandHandler extends GlobalCommandHan
         assertNever(choice);
       }
     }
+  }
+
+  /**
+   * Runs one change to the store as a bulk operation, publishing it before the operation ends.
+   *
+   * The store writes its observations into vault files on a debounce, so without the flush its commit could hold
+   * nothing and the files would land in whatever commit came next. The dialog stays outside: a bulk operation
+   * covers only what changes the vault.
+   *
+   * @param summary - The commit summary.
+   * @param change - The change; returns how many records it touched.
+   * @returns How many records the change touched.
+   */
+  private async runAndPublish(summary: string, change: () => number): Promise<number> {
+    return await this.bulkOperationCommitComponent.runBulkOperation({
+      operation: async () => {
+        const count = change();
+        await this.originalAttachmentNamesComponent.flush();
+        return count;
+      },
+      summary
+    });
   }
 }

@@ -1,9 +1,12 @@
 import type { ActiveFileProvider } from '@mnaoumov/obsidian-lib/active-file-provider';
+import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type {
+  App,
   TAbstractFile,
   TFile
 } from 'obsidian';
 
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import {
   isFile,
   isNote
@@ -49,7 +52,7 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
   isNote: vi.fn()
 }));
 
-const mockCollectAttachmentsInAbstractFiles = vi.fn<AttachmentCollector['collectAttachmentsInAbstractFiles']>();
+const mockCollectAttachmentsInAbstractFilesAndWait = vi.fn<AttachmentCollector['collectAttachmentsInAbstractFilesAndWait']>();
 const mockIsFile = vi.mocked(isFile);
 const mockIsNote = vi.mocked(isNote);
 
@@ -59,7 +62,7 @@ function createAbstractFile(path: string): TAbstractFile {
 
 function createAttachmentCollector(): AttachmentCollector {
   return strictProxy<AttachmentCollector>({
-    collectAttachmentsInAbstractFiles: mockCollectAttachmentsInAbstractFiles
+    collectAttachmentsInAbstractFilesAndWait: mockCollectAttachmentsInAbstractFilesAndWait
   });
 }
 
@@ -83,12 +86,20 @@ beforeAll(async () => {
 
 describe('CollectAttachmentsInFileCommandHandler', () => {
   let attachmentCollector: AttachmentCollector;
+  let bulkOperationCommitComponent: BulkOperationCommitComponent;
   let handler: CollectAttachmentsInFileCommandHandler;
 
   beforeEach(() => {
     vi.clearAllMocks();
     attachmentCollector = createAttachmentCollector();
-    handler = new CollectAttachmentsInFileCommandHandler({ attachmentCollector });
+    // The real component with its setting off, which runs the operation as it is.
+    bulkOperationCommitComponent = new BulkOperationCommitComponent({
+      app: strictProxy<App>({}),
+      isEnabled: (): boolean => false,
+      pluginId: 'test-plugin',
+      pluginNoticeComponent: strictProxy<PluginNoticeComponent>({})
+    });
+    handler = new CollectAttachmentsInFileCommandHandler({ attachmentCollector, bulkOperationCommitComponent });
   });
 
   it('should construct with the correct command metadata', () => {
@@ -168,15 +179,17 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
     it('should delegate the single file wrapped in an array', async () => {
       const file = createAbstractFile('note.md');
       await toTestable(handler).executeAbstractFile(file);
-      expect(mockCollectAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith([file]);
+      expect(mockCollectAttachmentsInAbstractFilesAndWait).toHaveBeenCalledExactlyOnceWith([file]);
     });
   });
 
   describe('executeAbstractFiles', () => {
-    it('should delegate all files to the attachment collector', async () => {
+    it('should delegate all files to the attachment collector, as one bulk operation', async () => {
+      const runBulkOperationSpy = vi.spyOn(bulkOperationCommitComponent, 'runBulkOperation');
       const files = [createAbstractFile('a.md'), createAbstractFile('b.md')];
       await toTestable(handler).executeAbstractFiles(files);
-      expect(mockCollectAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith(files);
+      expect(mockCollectAttachmentsInAbstractFilesAndWait).toHaveBeenCalledExactlyOnceWith(files);
+      expect(runBulkOperationSpy.mock.calls[0]?.[0].summary).toBe('Collect attachments in a.md and 1 more');
     });
   });
 

@@ -1011,7 +1011,6 @@ export class AttachmentPathManager {
 
     return { cursorLine, sequenceNumberByAttachmentPath };
   }
-
 }
 
 function isRelativePath(path: string): boolean {
