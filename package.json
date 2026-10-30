@@ -58,7 +58,7 @@
     "typescript": "$typescript"
   },
   "dependencies": {
-    "@mnaoumov/obsidian-lib": "^10.4.0",
+    "@mnaoumov/obsidian-lib": "^10.5.0",
     "@mnaoumov/typescript-lib": "^2.0.0",
     "@noble/hashes": "^2.4.0"
   },

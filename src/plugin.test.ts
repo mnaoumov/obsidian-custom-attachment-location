@@ -18,6 +18,7 @@ import type {
 import type { Mock } from 'vitest';
 
 import { CommandHandlerComponent } from '@mnaoumov/obsidian-lib/command-handlers/command-handler-component';
+import { OpenBugReportCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-bug-report-command-handler';
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
 import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
 import { PluginConflictSeverity } from '@mnaoumov/obsidian-lib/components/plugin-gate-component';
@@ -425,6 +426,7 @@ describe('Plugin', () => {
       expect.any(PruneOriginalAttachmentNamesCommandHandler),
       expect.any(RememberCurrentNameAsOriginalCommandHandler),
       expect.any(UndoBulkOperationCommandHandler),
+      expect.any(OpenBugReportCommandHandler),
       expect.any(OpenDemoVaultCommandHandler)
     ]);
     expect(AppSaveAttachmentPatchComponent).toHaveBeenCalledOnce();
