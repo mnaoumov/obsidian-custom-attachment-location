@@ -180,6 +180,7 @@ interface ComponentContext {
   readonly getAttachmentFolderFullPathForPathMock: ReturnType<typeof vi.fn>;
   readonly getLeavesOfTypeMock: ReturnType<typeof vi.fn>;
   readonly handedOverSettingsComponent: HandedOverSettingsComponent;
+  readonly invalidateNoteReferenceResolutionsMock: ReturnType<typeof vi.fn>;
   readonly isPathIgnoredMock: ReturnType<typeof vi.fn>;
   readonly loadFromFileMock: ReturnType<typeof vi.fn>;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -227,8 +228,10 @@ describe('CustomAttachmentLocationComponent', () => {
     });
 
     const getAttachmentFolderFullPathForPathMock = vi.fn((): Promise<string> => Promise.resolve('attachments/note'));
+    const invalidateNoteReferenceResolutionsMock = vi.fn();
     const attachmentPathManager = strictProxy<AttachmentPathManager>({
-      getAttachmentFolderFullPathForPath: getAttachmentFolderFullPathForPathMock
+      getAttachmentFolderFullPathForPath: getAttachmentFolderFullPathForPathMock,
+      invalidateNoteReferenceResolutions: invalidateNoteReferenceResolutionsMock
     });
 
     const app = App.createConfigured__().asOriginalType__();
@@ -251,6 +254,7 @@ describe('CustomAttachmentLocationComponent', () => {
       getAttachmentFolderFullPathForPathMock,
       getLeavesOfTypeMock,
       handedOverSettingsComponent,
+      invalidateNoteReferenceResolutionsMock,
       isPathIgnoredMock,
       loadFromFileMock,
       pluginSettingsComponent,
@@ -285,6 +289,24 @@ describe('CustomAttachmentLocationComponent', () => {
       expect(workspaceEventNames).toContain('receive-text-menu');
       expect(workspaceEventNames).toContain('receive-files-menu');
       expect(vaultOnSpy.mock.calls.map((call) => call[0])).toContain('rename');
+    });
+
+    it('should forget the remembered link resolutions on every vault create, delete and rename and metadata change', () => {
+      const component = createComponent();
+      const vaultOnSpy = spyOnVaultOn();
+      const metadataCacheOnSpy = castTo<EventOnSpy>(vi.spyOn(context.app.metadataCache, 'on'));
+      component.load();
+      const invalidationHandlers = [
+        findHandler(vaultOnSpy, 'create'),
+        findHandler(vaultOnSpy, 'delete'),
+        // The first `rename` listener is `handleRename`; the second is the invalidation.
+        castTo<EventHandler>(vaultOnSpy.mock.calls.filter((call) => call[0] === 'rename')[1]?.[1]),
+        findHandler(metadataCacheOnSpy, 'changed')
+      ];
+      for (const [index, handler] of invalidationHandlers.entries()) {
+        handler();
+        expect(context.invalidateNoteReferenceResolutionsMock).toHaveBeenCalledTimes(index + 1);
+      }
     });
   });
 
