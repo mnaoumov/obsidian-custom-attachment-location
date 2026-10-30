@@ -983,7 +983,8 @@ describe('AttachmentPathManager', () => {
         oldAttachmentPathOrFile: attachmentFile.path,
         oldNotePathOrFile: 'note.md',
         readAttachmentFileContent: null,
-        shouldSkipDuplicateCheck: true,
+        // Not a query: a query returns before the arrival decision, so it would pass whatever that decision did.
+        shouldSkipDuplicateCheck: false,
         shouldSkipMissingAttachmentFolderCreation: true
       });
 
@@ -1691,12 +1692,12 @@ describe('AttachmentPathManager', () => {
         })
       );
 
-      async function askFor(path: string): Promise<string> {
+      async function askFor(path: string, notePath = 'note.md'): Promise<string> {
         return await context.manager.getAvailablePathForAttachments({
           attachmentFileBaseName: 'img',
           attachmentFileExtension: 'png',
           context: AttachmentPathContext.Unknown,
-          notePathOrFile: 'note.md',
+          notePathOrFile: notePath,
           oldAttachmentPathOrFile: path,
           readAttachmentFileContent: null,
           shouldSkipDuplicateCheck: true,
@@ -1740,6 +1741,29 @@ describe('AttachmentPathManager', () => {
         expect(await askFor('b.png')).toBe('assets/2.png');
         expect(await askFor('c.png')).toBe('assets/3.png');
         expect(mockExtractLinkFile).toHaveBeenCalledTimes(links.length * 2);
+      });
+
+      it('should forget the oldest note once more than 100 notes are remembered', async () => {
+        const MAX_NOTE_REFERENCE_RESOLUTIONS = 100;
+        const notePaths = Array.from({ length: MAX_NOTE_REFERENCE_RESOLUTIONS + 1 }, (_value, index) => `note-${String(index)}.md`);
+        mockGetFileOrNull.mockImplementation(({ pathOrFile }) =>
+          typeof pathOrFile === 'string' && notePaths.includes(pathOrFile)
+            ? createTFile({ path: pathOrFile })
+            : files.find((file) => file.path === pathOrFile) ?? null
+        );
+        mockIsNote.mockImplementation((pathOrFile) => typeof pathOrFile === 'string' && notePaths.includes(pathOrFile));
+
+        for (const notePath of notePaths) {
+          await askFor('a.png', notePath);
+        }
+        const resolutionCount = notePaths.length * links.length;
+        expect(mockExtractLinkFile).toHaveBeenCalledTimes(resolutionCount);
+
+        // The second note is still remembered; the first was evicted when the 101st arrived.
+        await askFor('a.png', 'note-1.md');
+        expect(mockExtractLinkFile).toHaveBeenCalledTimes(resolutionCount);
+        await askFor('a.png', 'note-0.md');
+        expect(mockExtractLinkFile).toHaveBeenCalledTimes(resolutionCount + links.length);
       });
     });
   });
