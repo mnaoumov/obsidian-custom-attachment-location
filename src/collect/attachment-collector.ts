@@ -239,8 +239,14 @@ export class AttachmentCollector {
     });
   }
 
-  public collectAttachmentsEntireVault(): void {
-    addToQueue({
+  /**
+   * Collects the attachments of every note in the vault, settling once the queued collect has finished, so the command
+   * can record the whole run as one bulk-operation commit.
+   *
+   * @returns A promise that settles once the collect has finished.
+   */
+  public async collectAttachmentsEntireVault(): Promise<void> {
+    await addToQueueAndWait({
       abortSignal: this.abortSignalComponent.abortSignal,
       operationFunction: (abortSignal) =>
         this.collectAttachmentsInAbstractFilesImpl(

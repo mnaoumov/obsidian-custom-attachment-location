@@ -1,20 +1,24 @@
+import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { TAbstractFile } from 'obsidian';
 import type { Promisable } from 'type-fest';
 
 import { AbstractFileCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/abstract-file-command-handler';
 import { isFile } from '@mnaoumov/obsidian-lib/file-system';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
-import { noopAsync } from '@mnaoumov/typescript-lib/function';
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { UnusedAttachmentsRemover } from './unused-attachments-remover.ts';
 
+import { buildBulkOperationSummary } from '../bulk-operations/bulk-operation-summary.ts';
+
 interface DeleteUnusedAttachmentsInFileCommandHandlerConstructorParams {
+  readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly unusedAttachmentsRemover: UnusedAttachmentsRemover;
 }
 
 export class DeleteUnusedAttachmentsInFileCommandHandler extends AbstractFileCommandHandler {
+  private readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly unusedAttachmentsRemover: UnusedAttachmentsRemover;
 
@@ -27,6 +31,7 @@ export class DeleteUnusedAttachmentsInFileCommandHandler extends AbstractFileCom
       name: t(($) => $.commands.deleteUnusedAttachmentsCurrentNote)
     });
 
+    this.bulkOperationCommitComponent = params.bulkOperationCommitComponent;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
     this.unusedAttachmentsRemover = params.unusedAttachmentsRemover;
   }
@@ -55,9 +60,11 @@ export class DeleteUnusedAttachmentsInFileCommandHandler extends AbstractFileCom
     return this.executeAbstractFiles([abstractFile]);
   }
 
-  protected override executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void> {
-    this.unusedAttachmentsRemover.deleteUnusedAttachmentsInAbstractFiles(abstractFiles);
-    return noopAsync();
+  protected override async executeAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void> {
+    await this.bulkOperationCommitComponent.runBulkOperation({
+      operation: () => this.unusedAttachmentsRemover.deleteUnusedAttachmentsInAbstractFiles(abstractFiles),
+      summary: buildBulkOperationSummary('Delete unused attachments', abstractFiles)
+    });
   }
 
   protected override shouldAddToAbstractFileMenu(): boolean {

@@ -32,7 +32,7 @@ import {
   getReferences
 } from '@mnaoumov/obsidian-lib/metadata-cache';
 import { publishPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
-import { addToQueue } from '@mnaoumov/obsidian-lib/queue';
+import { addToQueueAndWait } from '@mnaoumov/obsidian-lib/queue';
 import {
   cleanupEmptyFolders,
   EmptyFolderBehavior,
@@ -127,7 +127,7 @@ vi.mock('./minimizable-confirm-modal.ts', () => ({
 
 vi.mock('@mnaoumov/obsidian-lib/queue', async (importOriginal) => ({
   ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/queue')>(),
-  addToQueue: vi.fn()
+  addToQueueAndWait: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
@@ -146,7 +146,7 @@ const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockGetLinks = vi.mocked(getReferences);
 const mockConfirm = vi.mocked(confirmMinimizable);
 const mockRenderInternalLink = vi.mocked(renderInternalLink);
-const mockAddToQueue = vi.mocked(addToQueue);
+const mockAddToQueueAndWait = vi.mocked(addToQueueAndWait);
 const mockCleanupEmptyFolders = vi.mocked(cleanupEmptyFolders);
 const mockTrashSafe = vi.mocked(trashSafe);
 
@@ -305,15 +305,15 @@ describe('UnusedAttachmentsRemover', () => {
   });
 
   async function runOperation(abstractFiles: TAbstractFile[], abortSignal = new AbortController().signal): Promise<void> {
-    remover.deleteUnusedAttachmentsInAbstractFiles(abstractFiles);
-    const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+    await remover.deleteUnusedAttachmentsInAbstractFiles(abstractFiles);
+    const params = castTo<QueueParamsLike>(mockAddToQueueAndWait.mock.calls[0]?.[0]);
     await params.operationFunction(abortSignal);
   }
 
   describe('deleteUnusedAttachmentsInAbstractFiles', () => {
-    it('should enqueue an operation for the given files', () => {
-      remover.deleteUnusedAttachmentsInAbstractFiles([createFile('note.md')]);
-      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+    it('should enqueue an operation for the given files', async () => {
+      await remover.deleteUnusedAttachmentsInAbstractFiles([createFile('note.md')]);
+      const params = castTo<QueueParamsLike>(mockAddToQueueAndWait.mock.calls[0]?.[0]);
       expect(params.operationName).toBe('Delete unused attachments in file');
     });
 
@@ -1066,9 +1066,9 @@ describe('UnusedAttachmentsRemover', () => {
   });
 
   describe('deleteUnusedAttachmentsEntireVault', () => {
-    it('should enqueue an operation over the vault root under its own name', () => {
-      remover.deleteUnusedAttachmentsEntireVault();
-      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+    it('should enqueue an operation over the vault root under its own name', async () => {
+      await remover.deleteUnusedAttachmentsEntireVault();
+      const params = castTo<QueueParamsLike>(mockAddToQueueAndWait.mock.calls[0]?.[0]);
       expect(params.operationName).toBe('Delete unused attachments in entire vault');
     });
 
@@ -1085,8 +1085,8 @@ describe('UnusedAttachmentsRemover', () => {
         }
       });
 
-      remover.deleteUnusedAttachmentsEntireVault();
-      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+      await remover.deleteUnusedAttachmentsEntireVault();
+      const params = castTo<QueueParamsLike>(mockAddToQueueAndWait.mock.calls[0]?.[0]);
       await params.operationFunction(new AbortController().signal);
 
       expect(mockGetCacheSafe).toHaveBeenCalledWith(app, note);
@@ -1122,8 +1122,8 @@ describe('UnusedAttachmentsRemover', () => {
     }
 
     async function runEntireVaultOperation(): Promise<void> {
-      remover.deleteUnusedAttachmentsEntireVault();
-      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+      await remover.deleteUnusedAttachmentsEntireVault();
+      const params = castTo<QueueParamsLike>(mockAddToQueueAndWait.mock.calls[0]?.[0]);
       await params.operationFunction(new AbortController().signal);
     }
 

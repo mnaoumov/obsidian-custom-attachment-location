@@ -1,4 +1,5 @@
 import type { AbortSignalComponent } from '@mnaoumov/obsidian-lib/components/abort-signal-component';
+import type { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { ResourceLockComponent } from '@mnaoumov/obsidian-lib/resource-lock';
 import type {
@@ -32,6 +33,7 @@ import type { AttachmentPathManager } from '../attachment-location/attachment-pa
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
 import { findIdenticalAttachmentFile } from '../attachment-location/identical-attachment.ts';
+import { buildBulkOperationSummary } from '../bulk-operations/bulk-operation-summary.ts';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
 import {
   copyWithSidecars,
@@ -44,6 +46,7 @@ interface MoveAttachmentToProperFolderCommandHandlerConstructorParams {
   readonly abortSignalComponent: AbortSignalComponent;
   readonly app: App;
   readonly attachmentPathManager: AttachmentPathManager;
+  readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -75,6 +78,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
   private readonly abortSignalComponent: AbortSignalComponent;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
+  private readonly bulkOperationCommitComponent: BulkOperationCommitComponent;
   private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -90,6 +94,7 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     this.abortSignalComponent = params.abortSignalComponent;
     this.app = params.app;
     this.attachmentPathManager = params.attachmentPathManager;
+    this.bulkOperationCommitComponent = params.bulkOperationCommitComponent;
     this.handedOverSettingsComponent = params.handedOverSettingsComponent;
     this.resourceLockComponent = params.resourceLockComponent;
     this.pluginNoticeComponent = params.pluginNoticeComponent;
@@ -142,25 +147,9 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
     const combinedAbortSignal = abortSignalAny(abortController.signal, this.abortSignalComponent.abortSignal);
     const context: MoveAttachmentToProperFolderContext = {};
 
-    await loop({
-      abortSignal: combinedAbortSignal,
-      buildNoticeMessage: ({ item, iterationString }) => t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: item.path, iterationString }),
-      items: attachmentFiles,
-      pluginNoticeComponent: this.pluginNoticeComponent,
-      processItem: async (attachmentFile) => {
-        combinedAbortSignal.throwIfAborted();
-        if (this.handedOverSettingsComponent.isPathIgnored(attachmentFile.path)) {
-          console.warn(`Cannot move attachment to proper folder as attachment path is ignored: ${attachmentFile.path}.`);
-          return;
-        }
-        if (!await this.moveAttachmentToProperFolder(attachmentFile, context)) {
-          return;
-        }
-        combinedAbortSignal.throwIfAborted();
-      },
-      progressBarTitle: t(($) => $.moveAttachmentToProperFolder.progressBar.title),
-      shouldContinueOnError: true,
-      shouldShowProgressBar: true
+    await this.bulkOperationCommitComponent.runBulkOperation({
+      operation: () => this.moveAttachmentsToProperFolder(attachmentFiles, combinedAbortSignal, context),
+      summary: buildBulkOperationSummary('Move attachments to proper folder', abstractFiles)
     });
   }
 
@@ -190,6 +179,33 @@ export class MoveAttachmentToProperFolderCommandHandler extends AbstractFileComm
       }
     }
     return true;
+  }
+
+  private async moveAttachmentsToProperFolder(
+    attachmentFiles: TFile[],
+    combinedAbortSignal: AbortSignal,
+    context: MoveAttachmentToProperFolderContext
+  ): Promise<void> {
+    await loop({
+      abortSignal: combinedAbortSignal,
+      buildNoticeMessage: ({ item, iterationString }) => t(($) => $.moveAttachmentToProperFolder.progressBar.message, { attachmentFilePath: item.path, iterationString }),
+      items: attachmentFiles,
+      pluginNoticeComponent: this.pluginNoticeComponent,
+      processItem: async (attachmentFile) => {
+        combinedAbortSignal.throwIfAborted();
+        if (this.handedOverSettingsComponent.isPathIgnored(attachmentFile.path)) {
+          console.warn(`Cannot move attachment to proper folder as attachment path is ignored: ${attachmentFile.path}.`);
+          return;
+        }
+        if (!await this.moveAttachmentToProperFolder(attachmentFile, context)) {
+          return;
+        }
+        combinedAbortSignal.throwIfAborted();
+      },
+      progressBarTitle: t(($) => $.moveAttachmentToProperFolder.progressBar.title),
+      shouldContinueOnError: true,
+      shouldShowProgressBar: true
+    });
   }
 
   private async moveAttachmentToProperFolder(attachmentFile: TFile, context: MoveAttachmentToProperFolderContext): Promise<boolean> {

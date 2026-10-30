@@ -19,6 +19,7 @@ import type { Mock } from 'vitest';
 
 import { CommandHandlerComponent } from '@mnaoumov/obsidian-lib/command-handlers/command-handler-component';
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
+import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
 import { PluginConflictSeverity } from '@mnaoumov/obsidian-lib/components/plugin-gate-component';
 import { PluginSettingsTabComponent } from '@mnaoumov/obsidian-lib/components/plugin-settings-tab-component';
 import { RenameDeleteHandlerComponent } from '@mnaoumov/obsidian-lib/components/rename-delete-handler-component';
@@ -423,6 +424,7 @@ describe('Plugin', () => {
       expect.any(ShowOriginalAttachmentNamesCommandHandler),
       expect.any(PruneOriginalAttachmentNamesCommandHandler),
       expect.any(RememberCurrentNameAsOriginalCommandHandler),
+      expect.any(UndoBulkOperationCommandHandler),
       expect.any(OpenDemoVaultCommandHandler)
     ]);
     expect(AppSaveAttachmentPatchComponent).toHaveBeenCalledOnce();

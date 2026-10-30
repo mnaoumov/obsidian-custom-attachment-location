@@ -1,9 +1,12 @@
 import type { ActiveFileProvider } from '@mnaoumov/obsidian-lib/active-file-provider';
+import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type {
+  App,
   TAbstractFile,
   TFile
 } from 'obsidian';
 
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import { isFile } from '@mnaoumov/obsidian-lib/file-system';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
@@ -86,6 +89,7 @@ beforeAll(async () => {
 
 describe('DeleteUnusedAttachmentsInFileCommandHandler', () => {
   let unusedAttachmentsRemover: UnusedAttachmentsRemover;
+  let bulkOperationCommitComponent: BulkOperationCommitComponent;
   let handler: DeleteUnusedAttachmentsInFileCommandHandler;
   let pluginSettingsComponent: PluginSettingsComponent;
 
@@ -93,7 +97,14 @@ describe('DeleteUnusedAttachmentsInFileCommandHandler', () => {
     vi.clearAllMocks();
     unusedAttachmentsRemover = createUnusedAttachmentsRemover();
     pluginSettingsComponent = createPluginSettingsComponent();
-    handler = new DeleteUnusedAttachmentsInFileCommandHandler({ pluginSettingsComponent, unusedAttachmentsRemover });
+    // The real component with its setting off, which runs the operation as it is.
+    bulkOperationCommitComponent = new BulkOperationCommitComponent({
+      app: strictProxy<App>({}),
+      isEnabled: (): boolean => false,
+      pluginId: 'test-plugin',
+      pluginNoticeComponent: strictProxy<PluginNoticeComponent>({})
+    });
+    handler = new DeleteUnusedAttachmentsInFileCommandHandler({ bulkOperationCommitComponent, pluginSettingsComponent, unusedAttachmentsRemover });
   });
 
   it('should construct with the correct command metadata', () => {
@@ -191,10 +202,12 @@ describe('DeleteUnusedAttachmentsInFileCommandHandler', () => {
   });
 
   describe('executeAbstractFiles', () => {
-    it('should delegate all files to the unused attachments remover', async () => {
+    it('should delegate all files to the unused attachments remover, as one bulk operation', async () => {
+      const runBulkOperationSpy = vi.spyOn(bulkOperationCommitComponent, 'runBulkOperation');
       const files = [createAbstractFile('a.md'), createAbstractFile('b.md')];
       await toTestable(handler).executeAbstractFiles(files);
       expect(mockDeleteUnusedAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith(files);
+      expect(runBulkOperationSpy.mock.calls[0]?.[0].summary).toBe('Delete unused attachments in a.md and 1 more');
     });
   });
 

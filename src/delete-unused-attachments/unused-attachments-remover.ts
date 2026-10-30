@@ -28,7 +28,7 @@ import {
   parseLinks,
   toParseLinkReference
 } from '@mnaoumov/obsidian-lib/parse-link';
-import { addToQueue } from '@mnaoumov/obsidian-lib/queue';
+import { addToQueueAndWait } from '@mnaoumov/obsidian-lib/queue';
 import {
   cleanupEmptyFolders,
   trashSafe
@@ -170,8 +170,14 @@ export class UnusedAttachmentsRemover {
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
-  public deleteUnusedAttachmentsEntireVault(): void {
-    addToQueue({
+  /**
+   * Trashes the unused attachments of the whole vault, settling once the queued operation has finished, so the command
+   * can record the whole run as one bulk-operation commit.
+   *
+   * @returns A promise that settles once the operation has finished.
+   */
+  public async deleteUnusedAttachmentsEntireVault(): Promise<void> {
+    await addToQueueAndWait({
       abortSignal: this.abortSignalComponent.abortSignal,
       operationFunction: (abortSignal) =>
         this.deleteUnusedAttachmentsInAbstractFilesImpl({
@@ -184,8 +190,14 @@ export class UnusedAttachmentsRemover {
     });
   }
 
-  public deleteUnusedAttachmentsInAbstractFiles(abstractFiles: TAbstractFile[]): void {
-    addToQueue({
+  /**
+   * Trashes the unused attachments of the given notes and folders, settling once the queued operation has finished.
+   *
+   * @param abstractFiles - The notes, or folders of notes, to scan.
+   * @returns A promise that settles once the operation has finished.
+   */
+  public async deleteUnusedAttachmentsInAbstractFiles(abstractFiles: TAbstractFile[]): Promise<void> {
+    await addToQueueAndWait({
       abortSignal: this.abortSignalComponent.abortSignal,
       operationFunction: (abortSignal) =>
         this.deleteUnusedAttachmentsInAbstractFilesImpl({

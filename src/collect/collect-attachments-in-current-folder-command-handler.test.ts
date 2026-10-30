@@ -1,5 +1,10 @@
-import type { TFolder } from 'obsidian';
+import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import type {
+  App,
+  TFolder
+} from 'obsidian';
 
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
@@ -18,17 +23,17 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { CollectAttachmentsInCurrentFolderCommandHandler } from './collect-attachments-in-current-folder-command-handler.ts';
 
 interface TestableHandler {
-  readonly executeFolder: (folder: TFolder) => void;
+  readonly executeFolder: (folder: TFolder) => Promise<void>;
   readonly icon: string;
   readonly id: string;
   readonly name: string;
 }
 
-const mockCollectAttachmentsInAbstractFiles = vi.fn<AttachmentCollector['collectAttachmentsInAbstractFiles']>();
+const mockCollectAttachmentsInAbstractFilesAndWait = vi.fn<AttachmentCollector['collectAttachmentsInAbstractFilesAndWait']>();
 
 function createAttachmentCollector(): AttachmentCollector {
   return strictProxy<AttachmentCollector>({
-    collectAttachmentsInAbstractFiles: mockCollectAttachmentsInAbstractFiles
+    collectAttachmentsInAbstractFilesAndWait: mockCollectAttachmentsInAbstractFilesAndWait
   });
 }
 
@@ -42,12 +47,20 @@ beforeAll(async () => {
 
 describe('CollectAttachmentsInCurrentFolderCommandHandler', () => {
   let attachmentCollector: AttachmentCollector;
+  let bulkOperationCommitComponent: BulkOperationCommitComponent;
   let handler: CollectAttachmentsInCurrentFolderCommandHandler;
 
   beforeEach(() => {
     vi.clearAllMocks();
     attachmentCollector = createAttachmentCollector();
-    handler = new CollectAttachmentsInCurrentFolderCommandHandler({ attachmentCollector });
+    // The real component with its setting off, which runs the operation as it is.
+    bulkOperationCommitComponent = new BulkOperationCommitComponent({
+      app: strictProxy<App>({}),
+      isEnabled: (): boolean => false,
+      pluginId: 'test-plugin',
+      pluginNoticeComponent: strictProxy<PluginNoticeComponent>({})
+    });
+    handler = new CollectAttachmentsInCurrentFolderCommandHandler({ attachmentCollector, bulkOperationCommitComponent });
   });
 
   it('should construct with the correct command metadata', () => {
@@ -57,9 +70,11 @@ describe('CollectAttachmentsInCurrentFolderCommandHandler', () => {
     expect(toTestable(handler).name).toBe('Collect attachments in current folder');
   });
 
-  it('should delegate the folder wrapped in an array to the attachment collector on executeFolder', () => {
+  it('should delegate the folder wrapped in an array to the attachment collector, as one bulk operation', async () => {
+    const runBulkOperationSpy = vi.spyOn(bulkOperationCommitComponent, 'runBulkOperation');
     const folder = strictProxy<TFolder>({ path: 'folder' });
-    toTestable(handler).executeFolder(folder);
-    expect(mockCollectAttachmentsInAbstractFiles).toHaveBeenCalledExactlyOnceWith([folder]);
+    await toTestable(handler).executeFolder(folder);
+    expect(mockCollectAttachmentsInAbstractFilesAndWait).toHaveBeenCalledExactlyOnceWith([folder]);
+    expect(runBulkOperationSpy.mock.calls[0]?.[0].summary).toBe('Collect attachments in folder');
   });
 });

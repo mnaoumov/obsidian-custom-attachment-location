@@ -30,7 +30,8 @@ import { waitForAllAsyncOperations } from '@mnaoumov/typescript-test-toolkit/asy
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   App,
-  ButtonComponent as ButtonComponentClass
+  ButtonComponent as ButtonComponentClass,
+  Platform
 } from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
@@ -76,8 +77,8 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 // Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
-// 38 = 37 setting rows + the overlap banner row that rides at the top.
-const EXPECTED_ROW_COUNT = 41;
+// 42 = 41 setting rows + the overlap banner row that rides at the top.
+const EXPECTED_ROW_COUNT = 42;
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
@@ -880,6 +881,20 @@ describe('PluginSettingsTab', () => {
     component.setValue('42');
     await waitForAllAsyncOperations();
     expect(pluginSettingsComponent.settings.timeoutInSeconds).toBe(42);
+  });
+
+  it('should offer the bulk-operation commit setting on desktop only', async () => {
+    // The commits are made by the system git, which a mobile app cannot run.
+    const { tab } = await createTab();
+    const wasDesktopApp = Platform.isDesktopApp;
+    try {
+      Platform.isDesktopApp = true;
+      expect(isRowVisible(tab, 'Commit bulk operations to git')).toBe(true);
+      Platform.isDesktopApp = false;
+      expect(isRowVisible(tab, 'Commit bulk operations to git')).toBe(false);
+    } finally {
+      Platform.isDesktopApp = wasDesktopApp;
+    }
   });
 
   it('should hide the plugin picker while no list mode is selected', async () => {

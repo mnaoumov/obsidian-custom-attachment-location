@@ -20,7 +20,8 @@ import {
 } from '@mnaoumov/typescript-lib/async';
 import {
   debounce,
-  normalizePath
+  normalizePath,
+  Platform
 } from 'obsidian';
 
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -202,6 +203,20 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             });
           });
         }
+      }),
+      this.settingEx({
+        desc: t(($) => $.pluginSettingsTab.shouldCommitBulkOperations.description),
+        name: t(($) => $.pluginSettingsTab.shouldCommitBulkOperations.name),
+        render: (setting) => {
+          setting.addToggle((toggle) => {
+            this.bind({
+              propertyName: 'shouldCommitBulkOperations',
+              valueComponent: toggle
+            });
+          });
+        },
+        // The commits are made by the system git, which only the desktop app can run.
+        visible: () => Platform.isDesktopApp
       }),
       this.settingEx({
         desc: t(($) => $.pluginSettingsTab.shouldSetLinkDisplayTextToAttachmentFileName.description),
