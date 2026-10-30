@@ -7,6 +7,7 @@ import type { TranslationsMap } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import type { PluginApiDeclaration } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
 import type { TAbstractFile } from 'obsidian';
 
+import { OpenBugReportCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-bug-report-command-handler';
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
 import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
 import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
@@ -477,6 +478,11 @@ export class Plugin extends PluginBase {
       new UndoBulkOperationCommandHandler({
         bulkOperationCommitComponent,
         isEnabled: isBulkOperationCommitEnabled
+      }),
+      new OpenBugReportCommandHandler({
+        app: this.app,
+        gitHubRepo: 'mnaoumov/obsidian-custom-attachment-location',
+        pluginId: this.manifest.id
       }),
       new OpenDemoVaultCommandHandler({
         app: this.app,
