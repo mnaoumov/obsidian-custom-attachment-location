@@ -10,13 +10,16 @@ import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settin
 
 interface CopyOriginalAttachmentMetadataResult {
   readonly disabled: boolean[];
+  readonly fileMenuClipboard: null | string;
   readonly fileMenuCopy: string | undefined;
   readonly importedName: string;
+  readonly isDesktopApp: boolean;
+  readonly linkMenuClipboard: null | string;
   readonly linkMenuCopy: string | undefined;
 }
 
 describe('Copy original attachment metadata', () => {
-  it('sends exact imported metadata to the real clipboard writer from file and link menus and disables missing values', async () => {
+  it('copies exact imported metadata to the system clipboard from file and link menus and disables missing values', async () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { clickElement, pressKey, waitUntil }, obsidianModule: { MarkdownView, Menu, Platform } }) {
         interface Settings {
@@ -40,12 +43,15 @@ describe('Copy original attachment metadata', () => {
         const previousClipboard = Platform.isDesktopApp ? await clipboard.readText() : null;
         const writeText = clipboard.writeText;
         /*
-         * This Windows test session cannot read back even a direct Electron clipboard.writeText/readText probe.
          * Observe successful calls while still invoking the REAL writer, rather than replacing the clipboard.
-         * This proves the menu-to-writer flow, not the OS clipboard's contents; the manual round-trip walkthrough
-         * is in the demo vault's Collect attachments note.
+         * The observer tells the test when each action's write has finished; on desktop the system clipboard is then
+         * read back, so the assertion covers what a user would paste. Android's read bridge can reject, so there the
+         * observed write is the evidence.
          */
         const copiedValues: string[] = [];
+        async function readSystemClipboard(): Promise<null | string> {
+          return Platform.isDesktopApp ? await clipboard.readText() : null;
+        }
         Object.assign(clipboard, {
           async writeText(text: string): Promise<void> {
             await writeText.call(clipboard, text);
@@ -107,6 +113,7 @@ describe('Copy original attachment metadata', () => {
           await clickElement({ element: nameAction });
           await waitUntil({ message: 'The file menu did not call the clipboard writer', predicate: () => copiedValues.length === 1, timeoutInMilliseconds: 3000 });
           const fileMenuCopy = copiedValues[0];
+          const fileMenuClipboard = await readSystemClipboard();
           menu.hide();
 
           phase = 'attachment link menu';
@@ -126,6 +133,7 @@ describe('Copy original attachment metadata', () => {
           await clickElement({ element: findAction('Copy original path') });
           await waitUntil({ message: 'The link menu did not call the clipboard writer', predicate: () => copiedValues.length === 2, timeoutInMilliseconds: 3000 });
           const linkMenuCopy = copiedValues[1];
+          const linkMenuClipboard = await readSystemClipboard();
           await dismissMenu();
 
           phase = 'missing metadata';
@@ -134,7 +142,7 @@ describe('Copy original attachment metadata', () => {
           missingMenu.showAtPosition({ x: 100, y: 100 });
           const disabled = ['Copy original file name', 'Copy original path'].map((title) => findAction(title).classList.contains('is-disabled'));
           missingMenu.hide();
-          menuResult = { disabled, fileMenuCopy, importedName: file.name, linkMenuCopy };
+          menuResult = { disabled, fileMenuClipboard, fileMenuCopy, importedName: file.name, isDesktopApp: Platform.isDesktopApp, linkMenuClipboard, linkMenuCopy };
         } catch (error) {
           bodyError = new Error(`Original metadata copy failed during ${phase}: ${String(error)}`, { cause: error });
         } finally {
@@ -173,6 +181,9 @@ describe('Copy original attachment metadata', () => {
     });
     expect(result.fileMenuCopy).toBe('arrival.pdf');
     expect(result.linkMenuCopy).toBe('original/source/arrival.pdf');
+    expect([result.fileMenuClipboard, result.linkMenuClipboard]).toStrictEqual(
+      result.isDesktopApp ? ['arrival.pdf', 'original/source/arrival.pdf'] : [null, null]
+    );
     expect(result.importedName).toMatch(/^renamed-\d+\.pdf$/);
     expect(result.disabled).toStrictEqual([true, true]);
   });
