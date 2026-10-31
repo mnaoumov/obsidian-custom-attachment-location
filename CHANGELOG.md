@@ -1,5 +1,42 @@
 # CHANGELOG
 
+## 17.1.0
+
+- docs(readme): point bug reports at the Report a bug command
+- test(original-attachment-names): assert copied original metadata on the desktop system clipboard
+- docs: add issue-filing instructions for AI agents
+- feat: add a Report a bug command
+- chore(github): give the bug form the field ids bug-report links prefill
+- test(attachment-location): restore the 100% coverage gate on main
+- fix(attachment-saving): keep the folder on the note a save started from
+- build(deps): bump typescript-dev-toolkit to ^5.4.2
+- build(deps): clear GHSA-gg6h-894w-4m9c by overriding re2js to ^2.9.1
+- feat: record bulk commands as git commits, so one revert undoes a run
+- perf: answer a burst of attachment-path queries with one walk of the note
+- fix: patch the clipboard manager when a note opens into the active tab
+- build(deps): bump @mnaoumov/obsidian-lib to ^10.1.0 and adopt its Reference API names
+- test(share): check on Android that a shared Markdown note keeps its name
+- build(deps): bump @mnaoumov/typescript-dev-toolkit to ^5.1.0
+- build(deps-dev): bump obsidian-integration-testing to 17.7.2 for Android WebView session recovery
+- fix(share): leave a shared Markdown note to core so it keeps its name
+- fix(sidecars): retire the original sidecar group together after a move
+- build(deps-dev): bump undici to 7.30.1 for its security fixes
+- feat(sidecars): pair sidecars in mobile share imports
+- fix(sidecars): keep companions in deletion scans and copies
+- test: remove obsolete settings strict-proxy patches
+- feat: synchronize original attachment metadata between devices
+- feat: copy original attachment metadata from context menus
+- chore(deps): update fast-uri to patched 3.1.9
+- test(markdown-links): cover share arrival names on Android
+- feat(sidecars): keep companion names with their base attachments
+- feat: add original-name templates for inserted attachment links
+- docs(readme): combine related resources and plugin comparisons
+- docs(demo-vault): point the token context link at its new path
+- refactor: group src into feature folders
+- docs(readme): cut the README to a landing page and move the plugin API guide to docs
+- docs(readme): list similar plugins from a prior-art search
+- fix(dependency): ask for an update, not an install, while `Advanced Rename and Delete Handler` 3.0.0 is enabled
+
 ## 17.0.0
 
 - test(demo-vault): stop the startup script loading the rename handler a second time
