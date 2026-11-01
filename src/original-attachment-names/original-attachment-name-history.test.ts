@@ -4,7 +4,10 @@ import {
   it
 } from 'vitest';
 
-import { OriginalAttachmentNameHistory } from './original-attachment-name-history.ts';
+import {
+  isRetiredSourcePathOperation,
+  OriginalAttachmentNameHistory
+} from './original-attachment-name-history.ts';
 
 describe('OriginalAttachmentNameHistory', () => {
   it('ignores unrecognized or damaged shared records while retaining valid metadata', () => {
@@ -52,18 +55,28 @@ describe('OriginalAttachmentNameHistory', () => {
     expect([...history.names]).toStrictEqual([['b.pdf', 'first.pdf']]);
   });
 
-  it('keeps explicit edits and optional source paths through rename and late migration', () => {
+  it('keeps explicit edits through rename and late migration, and ignores retired source-path observations', () => {
     const history = new OriginalAttachmentNameHistory();
     history.merge([
       ['arrival', { fileName: 'first.pdf', kind: 'arrival', path: 'a.pdf', time: 1 }],
       ['source', { kind: 'source', originalPath: '/Downloads/first.pdf', path: 'a.pdf', time: 2 }],
+      ['source-edit', { kind: 'source-edit', originalPath: '/Downloads/other.pdf', path: 'c.pdf', time: 2 }],
       ['edit', { fileName: 'corrected.pdf', kind: 'edit', path: 'a.pdf', time: 3 }],
       ['rename', { kind: 'rename', path: 'a.pdf', target: 'b.pdf', time: 4 }],
       ['legacy', { fileName: 'legacy.pdf', kind: 'arrival', path: 'a.pdf', time: 0 }]
     ]);
     expect([...history.names]).toStrictEqual([['b.pdf', 'corrected.pdf']]);
-    expect([...history.originalPaths]).toStrictEqual([['b.pdf', '/Downloads/first.pdf']]);
   });
+  it('skips a lifecycle observation for a path that holds none of the arrivals it saw', () => {
+    const history = new OriginalAttachmentNameHistory();
+    history.merge([
+      ['rename', { kind: 'rename', observed: ['gone'], path: 'a.pdf', target: 'b.pdf', time: 1 }],
+      ['arrival', { fileName: 'b.pdf', kind: 'arrival', path: 'b.pdf', time: 2 }]
+    ]);
+    expect([...history.names]).toStrictEqual([['b.pdf', 'b.pdf']]);
+    expect(history.getObserved('a.pdf')).toStrictEqual([]);
+  });
+
   it('keeps the earliest arrival when devices deliver records in reverse order', () => {
     const history = new OriginalAttachmentNameHistory();
     history.merge([
@@ -117,5 +130,17 @@ describe('OriginalAttachmentNameHistory', () => {
     second.merge([...entries].reverse());
     expect([...first.names]).toStrictEqual([['a.pdf', 'a.pdf']]);
     expect([...second.names]).toStrictEqual([...first.names]);
+  });
+});
+
+describe('isRetiredSourcePathOperation', () => {
+  it.each([
+    [{ kind: 'source' }, true],
+    [{ kind: 'source-edit' }, true],
+    [{ kind: 'arrival' }, false],
+    [null, false],
+    ['source', false]
+  ])('should detect %j as %s', (value, expected) => {
+    expect(isRetiredSourcePathOperation(value)).toBe(expected);
   });
 });

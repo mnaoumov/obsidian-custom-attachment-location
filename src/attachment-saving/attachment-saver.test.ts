@@ -42,14 +42,12 @@ interface TestContext {
   readonly getFileStats: ReturnType<typeof vi.fn<ArrayBufferMap['getFileStats']>>;
   readonly getGeneratedAttachmentFileBaseName: ReturnType<typeof vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>>;
   readonly getImageSize: ReturnType<typeof vi.fn<ImageManager['getImageSize']>>;
-  readonly getSourcePath: ReturnType<typeof vi.fn<ArrayBufferMap['getSourcePath']>>;
   readonly imageSizeMapSet: ReturnType<typeof vi.fn<ImageSizeMap['set']>>;
   readonly isPastedImageBuffer: ReturnType<typeof vi.fn<ArrayBufferMap['isPastedImage']>>;
   readonly isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
   readonly markdownUrlMapDelete: ReturnType<typeof vi.fn<MarkdownUrlMap['delete']>>;
   readonly markdownUrlMapSet: ReturnType<typeof vi.fn<MarkdownUrlMap['set']>>;
   readonly saver: AttachmentSaver;
-  readonly setOriginalPath: ReturnType<typeof vi.fn<OriginalAttachmentNamesComponent['setOriginalPath']>>;
   readonly settings: PluginSettings;
 }
 
@@ -75,16 +73,14 @@ function createSaver(): TestContext {
 
   const getFileStats = vi.fn<ArrayBufferMap['getFileStats']>().mockReturnValue(undefined);
   const isPastedImageBuffer = vi.fn<ArrayBufferMap['isPastedImage']>().mockReturnValue(false);
-  const getSourcePath = vi.fn<ArrayBufferMap['getSourcePath']>();
-  const arrayBufferMap = strictProxy<ArrayBufferMap>({ getFileStats, getSourcePath, isPastedImage: isPastedImageBuffer });
+  const arrayBufferMap = strictProxy<ArrayBufferMap>({ getFileStats, isPastedImage: isPastedImageBuffer });
 
   const getAvailablePathForAttachments = vi.fn<AttachmentPathManager['getAvailablePathForAttachments']>().mockResolvedValue('assets/saved.png');
   const getGeneratedAttachmentFileBaseName = vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>().mockResolvedValue('generated');
-  const setOriginalPath = vi.fn<OriginalAttachmentNamesComponent['setOriginalPath']>();
   const attachmentPathManager = strictProxy<AttachmentPathManager>({
     getAvailablePathForAttachments,
     getGeneratedAttachmentFileBaseName,
-    originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ expectArrival: vi.fn(), setOriginalPath })
+    originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ expectArrival: vi.fn() })
   });
 
   const convertToJpeg = vi.fn<ImageManager['convertToJpeg']>().mockImplementation((params) =>
@@ -126,14 +122,12 @@ function createSaver(): TestContext {
     getFileStats,
     getGeneratedAttachmentFileBaseName,
     getImageSize,
-    getSourcePath,
     imageSizeMapSet,
     isPastedImageBuffer,
     isPathIgnored,
     markdownUrlMapDelete,
     markdownUrlMapSet,
     saver,
-    setOriginalPath,
     settings
   };
 }
@@ -152,14 +146,6 @@ beforeEach(() => {
 });
 
 describe('AttachmentSaver', () => {
-  it.each([true, false])('should retain the source path even when conversion replaces the content, ignored note: %s', async (isIgnored) => {
-    const originalContent = new ArrayBuffer(2);
-    context.getSourcePath.mockImplementation((content) => content === originalContent ? String.raw`C:\Pictures\source.png` : undefined);
-    context.isPathIgnored.mockReturnValue(isIgnored);
-    context.convertToJpeg.mockResolvedValue({ attachmentFileContent: new ArrayBuffer(3), attachmentFileExtension: 'jpg' });
-    await context.saver.saveAttachment({ attachmentFileBaseName: 'source', attachmentFileContent: originalContent, attachmentFileExtension: 'png' });
-    expect(context.setOriginalPath).toHaveBeenCalledExactlyOnceWith('assets/saved.png', String.raw`C:\Pictures\source.png`);
-  });
   describe('saveAttachment', () => {
     it('should save without renaming when there is no active note file', async () => {
       context.getActiveFile.mockReturnValue(null);

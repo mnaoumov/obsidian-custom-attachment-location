@@ -21,7 +21,7 @@ interface CopyOriginalAttachmentMetadataComponentConstructorParams {
 }
 
 /**
-Adds independent copy actions to file menus, including menus opened on resolved attachment links.
+Adds the copy-original-file-name action to file menus, including menus opened on resolved attachment links.
 */
 export class CopyOriginalAttachmentMetadataComponent extends Component {
   private readonly app: App;
@@ -37,27 +37,22 @@ export class CopyOriginalAttachmentMetadataComponent extends Component {
 
   public override onload(): void {
     this.registerEvent(this.app.workspace.on('file-menu', (menu, file) => {
-      this.addCopyActions(menu, file);
+      this.addCopyAction(menu, file);
     }));
   }
 
-  private addCopyActions(menu: Menu, file: TAbstractFile): void {
+  private addCopyAction(menu: Menu, file: TAbstractFile): void {
     if (!(file instanceof TFile) || this.pluginSettingsComponent.isNoteEx(file)) {
       return;
     }
-    const actions = [
-      { title: t(($) => $.menuItems.copyOriginalFileName), value: this.originalAttachmentNamesComponent.get(file.path) },
-      { title: t(($) => $.menuItems.copyOriginalPath), value: this.originalAttachmentNamesComponent.getOriginalPath(file.path) }
-    ];
-    for (const { title, value } of actions) {
-      menu.addItem((item) => {
-        item.setTitle(title).setIcon('copy').setSection('action').setDisabled(!value).onClick(convertAsyncToSync(async () => {
-          if (value) {
-            // eslint-disable-next-line n/no-unsupported-features/node-builtins -- Obsidian's browser clipboard, not Node's experimental navigator.
-            await window.navigator.clipboard.writeText(value);
-          }
-        }));
-      });
-    }
+    const value = this.originalAttachmentNamesComponent.get(file.path);
+    menu.addItem((item) => {
+      item.setTitle(t(($) => $.menuItems.copyOriginalFileName)).setIcon('copy').setSection('action').setDisabled(!value).onClick(convertAsyncToSync(async () => {
+        if (value) {
+          // eslint-disable-next-line n/no-unsupported-features/node-builtins -- Obsidian's browser clipboard, not Node's experimental navigator.
+          await window.navigator.clipboard.writeText(value);
+        }
+      }));
+    });
   }
 }

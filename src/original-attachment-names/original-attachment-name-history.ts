@@ -13,15 +13,11 @@ export interface OriginalAttachmentNameOperation {
   /**
   Operation to replay.
   */
-  readonly kind: 'arrival' | 'edit' | 'remove' | 'rename' | 'source-edit' | 'source';
+  readonly kind: 'arrival' | 'edit' | 'remove' | 'rename';
   /**
   Arrival observations seen by a lifecycle action; protects later path reuse from duplicate events.
   */
   readonly observed?: readonly string[];
-  /**
-  Source path exposed by the importer, when available.
-  */
-  readonly originalPath?: string;
   /**
   Path at the time of the observation.
   */
@@ -45,10 +41,6 @@ export class OriginalAttachmentNameHistory {
   Current path to earliest arrival name.
   */
   public readonly names = new Map<string, string>();
-  /**
-  Source paths are optional and independent of names.
-  */
-  public readonly originalPaths = new Map<string, string>();
   /**
   Largest observed logical wall time.
   */
@@ -93,7 +85,6 @@ export class OriginalAttachmentNameHistory {
       this.time = Math.max(this.time, value.time);
     }
     this.names.clear();
-    this.originalPaths.clear();
     this.identities.clear();
     const ordered = [...this.operations].sort(([firstKey, first], [secondKey, second]) => first.time - second.time || (firstKey < secondKey ? -1 : Number(firstKey > secondKey)));
     for (const [key, operation] of ordered) {
@@ -109,17 +100,14 @@ export class OriginalAttachmentNameHistory {
     const identities = this.identities.get(operation.path) ?? new Set<string>();
     identities.add(key);
     this.identities.set(operation.path, identities);
-    const isSource = operation.kind === 'source' || operation.kind === 'source-edit';
-    const records = isSource ? this.originalPaths : this.names;
-    const value = isSource ? operation.originalPath : operation.fileName;
-    if (value !== undefined && (operation.kind === 'edit' || operation.kind === 'source-edit' || !records.has(operation.path))) {
-      records.set(operation.path, value);
+    if (operation.fileName !== undefined && (operation.kind === 'edit' || !this.names.has(operation.path))) {
+      this.names.set(operation.path, operation.fileName);
     }
   }
 
   private applyLifecycle(operation: OriginalAttachmentNameOperation): void {
     const paths = operation.isFolder
-      ? [...new Set([...this.names.keys(), ...this.originalPaths.keys()])].filter((path) => path.startsWith(`${operation.path}/`))
+      ? [...this.names.keys()].filter((path) => path.startsWith(`${operation.path}/`))
       : [operation.path];
     for (const path of paths) {
       const identities = this.identities.get(path);
@@ -131,19 +119,31 @@ export class OriginalAttachmentNameHistory {
         const target = operation.target + path.slice(operation.path.length);
         this.identities.set(target, new Set([...this.identities.get(target) ?? [], ...identities]));
       }
-      for (const records of [this.names, this.originalPaths]) {
-        const value = records.get(path);
-        records.delete(path);
-        if (value === undefined || operation.kind !== 'rename' || operation.target === undefined) {
-          continue;
-        }
-        const target = operation.target + path.slice(operation.path.length);
-        if (!records.has(target)) {
-          records.set(target, value);
-        }
+      const value = this.names.get(path);
+      this.names.delete(path);
+      if (value === undefined || operation.kind !== 'rename' || operation.target === undefined) {
+        continue;
+      }
+      const target = operation.target + path.slice(operation.path.length);
+      if (!this.names.has(target)) {
+        this.names.set(target, value);
       }
     }
   }
+}
+
+/**
+ * Detects an observation of the retired source-path kinds, which 17.1.0 recorded beside the names.
+ *
+ * @param value - An untrusted shared record.
+ * @returns Whether the record is a `source` or `source-edit` observation.
+ */
+export function isRetiredSourcePathOperation(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const kind = (value as Partial<Record<'kind', unknown>>).kind;
+  return kind === 'source' || kind === 'source-edit';
 }
 
 function checkOptionalFields(record: Partial<Record<keyof OriginalAttachmentNameOperation, unknown>>): boolean {
@@ -170,11 +170,8 @@ function isOperation(value: unknown): value is OriginalAttachmentNameOperation {
     case 'rename': {
       return typeof record.target === 'string';
     }
-    case 'source':
-    case 'source-edit': {
-      return typeof record.originalPath === 'string' && record.originalPath.length > 0;
-    }
     default: {
+      // Includes the retired `source` and `source-edit` observations, which carried an import's source path.
       return false;
     }
   }

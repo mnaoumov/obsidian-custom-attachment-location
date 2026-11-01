@@ -96,54 +96,12 @@ describe('OriginalAttachmentNamesComponent', () => {
     vi.useRealTimers();
   });
 
-  it('should retain a source path across reloads and renames and remove it when forgotten', async () => {
-    const file = await getApp().vault.createBinary('assets/source.png', new ArrayBuffer(1));
-    component.setOriginalPath(file.path, String.raw`C:\Pictures\original.png`);
-    expect(component.get(file.path)).toBeUndefined();
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+  it.each([null, [], 4, { 'assets/a.pdf': '/Downloads/a.pdf' }])('should migrate names and ignore the retired source paths of the legacy JSON: %j', async (originalPaths) => {
+    await getApp().vault.adapter.write(STORE_FILE_PATH, JSON.stringify({ names: { 'assets/a.pdf': 'a.pdf' }, originalPaths, version: 1 }));
     const reloaded = await createComponent();
-    expect(reloaded.getOriginalPath(file.path)).toBe(String.raw`C:\Pictures\original.png`);
-    await getApp().vault.rename(file, 'assets/renamed.png');
-    expect(reloaded.getOriginalPath('assets/source.png')).toBeUndefined();
-    expect(reloaded.getOriginalPath(file.path)).toBe(String.raw`C:\Pictures\original.png`);
-    reloaded.forget([file.path]);
-    expect(reloaded.getOriginalPath(file.path)).toBeUndefined();
+    expect(reloaded.get('assets/a.pdf')).toBe('a.pdf');
+    expect(reloaded.getRecords()).toHaveLength(1);
     reloaded.unload();
-  });
-
-  it('should leave the original path intact when the user changes the original name', async () => {
-    component.set('assets/a.pdf', 'old.pdf');
-    component.setOriginalPath('assets/a.pdf', '/Downloads/old.pdf');
-    component.set('assets/a.pdf', 'corrected.pdf');
-    await vi.runAllTimersAsync();
-    const write = vi.spyOn(getApp().vault.adapter, 'write');
-    component.setOriginalPath('assets/a.pdf', '/Downloads/old.pdf');
-    component.setOriginalPath('assets/a.pdf', '');
-    await vi.runAllTimersAsync();
-    expect(component.getOriginalPath('assets/a.pdf')).toBe('/Downloads/old.pdf');
-    expect(component.get('assets/a.pdf')).toBe('corrected.pdf');
-    expect(write).not.toHaveBeenCalled();
-    expect(component.forgetAll()).toBe(1);
-    expect(component.getOriginalPath('assets/a.pdf')).toBeUndefined();
-  });
-
-  it.each([null, [], 4, { 'assets/a.pdf': '/Downloads/a.pdf', 'empty': '', 'invalid': 4 }])('should load only nonempty source paths from optional metadata: %j', async (originalPaths) => {
-    await getApp().vault.adapter.write(STORE_FILE_PATH, JSON.stringify({ names: {}, originalPaths, version: 1 }));
-    const reloaded = await createComponent();
-    expect(reloaded.getOriginalPath('invalid')).toBeUndefined();
-    expect(reloaded.getOriginalPath('empty')).toBeUndefined();
-    expect(reloaded.getOriginalPath('assets/a.pdf')).toBe(originalPaths !== null && !Array.isArray(originalPaths) && typeof originalPaths === 'object' ? '/Downloads/a.pdf' : undefined);
-    reloaded.unload();
-  });
-
-  it('should move and delete source-path metadata with its folder even without an original name', async () => {
-    const folder = await getApp().vault.createFolder('assets/source');
-    component.setOriginalPath('assets/source/a.pdf', '/Downloads/a.pdf');
-    await getApp().vault.rename(folder, 'assets/moved');
-    expect(component.getOriginalPath('assets/source/a.pdf')).toBeUndefined();
-    expect(component.getOriginalPath('assets/moved/a.pdf')).toBe('/Downloads/a.pdf');
-    await getApp().fileManager.trashFile(folder);
-    expect(component.getOriginalPath('assets/moved/a.pdf')).toBeUndefined();
   });
 
   describe('arrival', () => {
@@ -326,15 +284,24 @@ describe('OriginalAttachmentNamesComponent', () => {
   });
 
   describe('shared persistence', () => {
-    it('persists a replacement source path independently of the original name', async () => {
-      component.set('assets/a.pdf', 'first.pdf');
-      component.setOriginalPath('assets/a.pdf', '/old/a.pdf');
-      component.setOriginalPath('assets/a.pdf', '/new/a.pdf');
+    it('deletes the source-path observations 17.1.0 stored and keeps the names', async () => {
+      component.set('assets/a.pdf', 'a.pdf');
       await component.flush();
+      const local = await LocalDataStore.open({ pluginId: 'obsidian-custom-attachment-location', storeId: 'original-attachment-names-v1', vaultId: getApp().appId });
+      const shared = await SharedDataStore.open({ adapter: getApp().vault.adapter, kind: 'last-write-wins', local, pluginId: 'obsidian-custom-attachment-location', storeId: 'original-attachment-names-v1' });
+      await shared.setMany([
+        ['source', { kind: 'source', originalPath: '/Downloads/a.pdf', path: 'assets/a.pdf', time: Date.now() }],
+        ['source-edit', { kind: 'source-edit', originalPath: '/Downloads/b.pdf', path: 'assets/a.pdf', time: Date.now() }]
+      ]);
+      local.close();
       const reloaded = await createComponent();
-      expect(reloaded.get('assets/a.pdf')).toBe('first.pdf');
-      expect(reloaded.getOriginalPath('assets/a.pdf')).toBe('/new/a.pdf');
+      expect(reloaded.get('assets/a.pdf')).toBe('a.pdf');
       reloaded.unload();
+      const reopenedLocal = await LocalDataStore.open({ pluginId: 'obsidian-custom-attachment-location', storeId: 'original-attachment-names-v1', vaultId: getApp().appId });
+      const reopened = await SharedDataStore.open({ adapter: getApp().vault.adapter, kind: 'last-write-wins', local: reopenedLocal, pluginId: 'obsidian-custom-attachment-location', storeId: 'original-attachment-names-v1' });
+      expect(reopened.get('source')).toBeUndefined();
+      expect(reopened.get('source-edit')).toBeUndefined();
+      reopenedLocal.close();
     });
 
     it('closes its local connection when the shared store cannot open', async () => {
@@ -356,41 +323,36 @@ describe('OriginalAttachmentNamesComponent', () => {
       other.unload();
     });
 
-    it('syncs optional source paths and explicit name corrections without resurrecting a deleted path', async () => {
+    it('syncs explicit name corrections without resurrecting a deleted path', async () => {
       component.set('assets/a.pdf', 'first.pdf');
-      component.setOriginalPath('assets/a.pdf', '/Downloads/first.pdf');
       await component.flush();
       vi.stubGlobal('indexedDB', new IDBFactory());
       const other = await createComponent();
-      expect(other.getOriginalPath('assets/a.pdf')).toBe('/Downloads/first.pdf');
       other.set('assets/a.pdf', 'corrected.pdf');
       await other.flush();
       await component.flush();
       expect(component.get('assets/a.pdf')).toBe('corrected.pdf');
-      expect(component.getOriginalPath('assets/a.pdf')).toBe('/Downloads/first.pdf');
       other.forget(['assets/a.pdf']);
       await other.flush();
       await component.flush();
       expect(component.get('assets/a.pdf')).toBeUndefined();
-      expect(component.getOriginalPath('assets/a.pdf')).toBeUndefined();
       component.set('assets/a.pdf', 'new.pdf');
       await component.flush();
       await other.flush();
       expect(other.get('assets/a.pdf')).toBe('new.pdf');
-      expect(other.getOriginalPath('assets/a.pdf')).toBeUndefined();
       other.unload();
     });
 
-    it('migrates source-only records and keeps them forgotten when a new device imports the old JSON', async () => {
-      const legacy = JSON.stringify({ names: {}, originalPaths: { 'assets/a.pdf': '/Downloads/a.pdf' }, version: 1 });
+    it('keeps migrated records forgotten when a new device imports the old JSON', async () => {
+      const legacy = JSON.stringify({ names: { 'assets/a.pdf': 'a.pdf' }, version: 1 });
       await getApp().vault.adapter.write(STORE_FILE_PATH, legacy);
       const migrated = await createComponent();
-      expect(migrated.getOriginalPath('assets/a.pdf')).toBe('/Downloads/a.pdf');
+      expect(migrated.get('assets/a.pdf')).toBe('a.pdf');
       migrated.forgetAll();
       await migrated.flush();
       vi.stubGlobal('indexedDB', new IDBFactory());
       const newDevice = await createComponent();
-      expect(newDevice.getOriginalPath('assets/a.pdf')).toBeUndefined();
+      expect(newDevice.get('assets/a.pdf')).toBeUndefined();
       expect(await getApp().vault.adapter.read(STORE_FILE_PATH)).toBe(legacy);
       migrated.unload();
       newDevice.unload();
