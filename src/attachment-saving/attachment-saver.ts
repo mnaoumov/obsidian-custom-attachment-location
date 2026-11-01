@@ -92,12 +92,7 @@ export class AttachmentSaver {
   }
 
   public async saveAttachment(params: AttachmentSaverSaveAttachmentParams): Promise<TFile> {
-    const originalPath = this.arrayBufferMap.getSourcePath(params.attachmentFileContent);
-    const file = await this.saveAttachmentWithRenaming(params);
-    if (originalPath) {
-      this.attachmentPathManager.originalAttachmentNamesComponent.setOriginalPath(file.path, originalPath);
-    }
-    return file;
+    return await this.saveAttachmentWithRenaming(params);
   }
 
   private async saveAttachmentCore(params: AttachmentSaverSaveAttachmentCoreParams): Promise<TFile> {

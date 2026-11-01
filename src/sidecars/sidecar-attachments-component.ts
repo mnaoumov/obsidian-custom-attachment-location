@@ -128,12 +128,7 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
           selfWriteRegistry.register(destinationPath);
           return await originalMethodBound({ ...saveParams, destinationPath, shouldKeepName: true, shouldPreserveContent: true });
         };
-        const saved = save().then((file) => {
-          if (entry?.attachment.filepath) {
-            this.attachmentPathManager.originalAttachmentNamesComponent.setOriginalPath(file.path, entry.attachment.filepath);
-          }
-          return file;
-        });
+        const saved = save();
         if (entry) {
           entry.saved = saved;
         }

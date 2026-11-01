@@ -48,7 +48,10 @@ import type { ActionContext } from '../tokens/token-evaluator-context.ts';
 import type { OriginalAttachmentNameOperation } from './original-attachment-name-history.ts';
 
 import { isNonInteractiveActionContext } from '../tokens/token-evaluator-context.ts';
-import { OriginalAttachmentNameHistory } from './original-attachment-name-history.ts';
+import {
+  isRetiredSourcePathOperation,
+  OriginalAttachmentNameHistory
+} from './original-attachment-name-history.ts';
 
 /**
  * The legacy JSON migration source, kept untouched inside the plugin's folder.
@@ -124,7 +127,6 @@ interface OriginalAttachmentNamesComponentConstructorParams {
 
 interface StoredOriginalAttachmentNames {
   readonly names: Record<string, string>;
-  readonly originalPaths?: unknown;
   readonly version: number;
 }
 
@@ -148,7 +150,6 @@ export class OriginalAttachmentNamesComponent extends Component {
   private readonly history = new OriginalAttachmentNameHistory();
   private local: LocalDataStore | undefined;
   private readonly names = this.history.names;
-  private readonly originalPaths = this.history.originalPaths;
   private readonly pending = new Map<string, JsonValue>();
   private persistence: Promise<void> = noopAsync();
   private readonly pluginNoticeComponent: PluginNoticeComponent;
@@ -246,7 +247,7 @@ export class OriginalAttachmentNamesComponent extends Component {
   public forget(paths: readonly string[]): number {
     let count = 0;
     for (const path of paths) {
-      if (!this.names.has(path) && !this.originalPaths.has(path)) {
+      if (!this.names.has(path)) {
         continue;
       }
 
@@ -265,7 +266,7 @@ export class OriginalAttachmentNamesComponent extends Component {
    * @returns How many records were removed.
    */
   public forgetAll(): number {
-    const paths = new Set([...this.names.keys(), ...this.originalPaths.keys()]);
+    const paths = new Set(this.names.keys());
     const count = paths.size;
     for (const path of paths) {
       this.record({ kind: 'remove', path });
@@ -284,16 +285,6 @@ export class OriginalAttachmentNamesComponent extends Component {
    */
   public get(path: string): string | undefined {
     return this.names.get(path);
-  }
-
-  /**
-   * Returns the source path exposed by an import, without inventing one for older or pathless imports.
-   *
-   * @param path - The attachment's current vault path.
-   * @returns The recorded source path, if known.
-   */
-  public getOriginalPath(path: string): string | undefined {
-    return this.originalPaths.get(path);
   }
 
   /**
@@ -316,6 +307,7 @@ export class OriginalAttachmentNamesComponent extends Component {
     this.local = await LocalDataStore.open({ pluginId: PLUGIN_ID, storeId: STORE_ID, vaultId: this.app.appId });
     try {
       this.shared = await SharedDataStore.open({ adapter: this.app.vault.adapter, kind: 'last-write-wins', local: this.local, pluginId: PLUGIN_ID, storeId: STORE_ID });
+      await this.deleteRetiredSourcePaths(this.shared);
       this.history.merge(this.shared.entries());
       await this.migrateLegacy();
     } catch (error) {
@@ -417,17 +409,16 @@ export class OriginalAttachmentNamesComponent extends Component {
   }
 
   /**
-   * Records the optional source path independently of the arrival name.
+   * Deletes the source-path observations 17.1.0 recorded, so the paths stop syncing between devices.
    *
-   * @param path - Current vault path.
-   * @param originalPath - Source path exposed by the importer.
+   * @param shared - The opened shared store.
    */
-  public setOriginalPath(path: string, originalPath: string): void {
-    if (!originalPath || this.originalPaths.get(path) === originalPath) {
-      return;
+  private async deleteRetiredSourcePaths(shared: SharedDataStore): Promise<void> {
+    for (const [key, value] of shared.entries()) {
+      if (isRetiredSourcePathOperation(value)) {
+        await shared.delete(key);
+      }
     }
-    this.record({ kind: this.originalPaths.has(path) ? 'source-edit' : 'source', originalPath, path });
-    this.saveDebounced();
   }
 
   private handleCreate(file: TAbstractFile): void {
@@ -496,20 +487,13 @@ export class OriginalAttachmentNamesComponent extends Component {
       const operation: OriginalAttachmentNameOperation = { fileName, kind: 'arrival', path, time: 0 };
       this.pending.set(JSON.stringify(['legacy', path, fileName]), { ...operation });
     }
-    if (typeof stored.originalPaths === 'object' && stored.originalPaths !== null && !Array.isArray(stored.originalPaths)) {
-      for (const [path, originalPath] of Object.entries(stored.originalPaths)) {
-        if (typeof originalPath === 'string' && originalPath) {
-          this.pending.set(JSON.stringify(['legacy-source', path, originalPath]), { kind: 'source', originalPath, path, time: 0 });
-        }
-      }
-    }
     await this.flush();
     await local.set(MIGRATION_KEY, true);
   }
 
   private record(operation: Except<OriginalAttachmentNameOperation, 'time'>): void {
     const paths = operation.isFolder
-      ? [...new Set([...this.names.keys(), ...this.originalPaths.keys()])].filter((path) => path.startsWith(`${operation.path}/`))
+      ? [...this.names.keys()].filter((path) => path.startsWith(`${operation.path}/`))
       : [operation.path];
     const observed = paths.flatMap((path) => this.history.getObserved(path));
     const timed: OriginalAttachmentNameOperation = {

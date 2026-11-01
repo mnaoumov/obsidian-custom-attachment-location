@@ -9,17 +9,18 @@ import {
 import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settings-component-finder.ts';
 
 interface CopyOriginalAttachmentMetadataResult {
-  readonly disabled: boolean[];
   readonly fileMenuClipboard: null | string;
   readonly fileMenuCopy: string | undefined;
+  readonly hasPathAction: boolean;
   readonly importedName: string;
   readonly isDesktopApp: boolean;
+  readonly isNameActionDisabled: boolean;
   readonly linkMenuClipboard: null | string;
   readonly linkMenuCopy: string | undefined;
 }
 
-describe('Copy original attachment metadata', () => {
-  it('copies exact imported metadata to the system clipboard from file and link menus and disables missing values', async () => {
+describe('Copy original attachment file name', () => {
+  it('copies the imported name to the system clipboard from file and link menus, offers no source path, and disables a missing name', async () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { clickElement, pressKey, waitUntil }, obsidianModule: { MarkdownView, Menu, Platform } }) {
         interface Settings {
@@ -59,7 +60,6 @@ describe('Copy original attachment metadata', () => {
           }
         });
         const stamp = Date.now().toString();
-        const sourcePath = 'original/source/arrival.pdf';
         const note = await app.vault.create(`copy-original-${stamp}.md`, '');
         const missing = await app.vault.createBinary(`copy-missing-${stamp}.pdf`, new ArrayBuffer(1));
         let importedPath = '';
@@ -91,7 +91,7 @@ describe('Copy original attachment metadata', () => {
           const files = await app.importAttachments([{
             data: Promise.resolve(new TextEncoder().encode('original document').buffer),
             extension: 'pdf',
-            filepath: sourcePath,
+            filepath: 'original/source/arrival.pdf',
             name: 'arrival'
           }], null);
           const file = files[0];
@@ -130,7 +130,9 @@ describe('Copy original attachment metadata', () => {
           await clickElement({ button: 'right', element: link });
           await waitUntil({ predicate: () => document.querySelector('.menu') !== null, timeoutInMilliseconds: 3000 });
           await sleep(200);
-          await clickElement({ element: findAction('Copy original path') });
+          // The import above carried a source path; no action may expose it.
+          const hasPathAction = [...document.querySelectorAll('.menu-item-title')].some((title) => title.textContent === 'Copy original path');
+          await clickElement({ element: findAction('Copy original file name') });
           await waitUntil({ message: 'The link menu did not call the clipboard writer', predicate: () => copiedValues.length === 2, timeoutInMilliseconds: 3000 });
           const linkMenuCopy = copiedValues[1];
           const linkMenuClipboard = await readSystemClipboard();
@@ -140,9 +142,9 @@ describe('Copy original attachment metadata', () => {
           const missingMenu = new Menu().setUseNativeMenu(false);
           app.workspace.trigger('file-menu', missingMenu, missing, 'file-explorer', leaf);
           missingMenu.showAtPosition({ x: 100, y: 100 });
-          const disabled = ['Copy original file name', 'Copy original path'].map((title) => findAction(title).classList.contains('is-disabled'));
+          const isNameActionDisabled = findAction('Copy original file name').classList.contains('is-disabled');
           missingMenu.hide();
-          menuResult = { disabled, fileMenuClipboard, fileMenuCopy, importedName: file.name, isDesktopApp: Platform.isDesktopApp, linkMenuClipboard, linkMenuCopy };
+          menuResult = { fileMenuClipboard, fileMenuCopy, hasPathAction, importedName: file.name, isDesktopApp: Platform.isDesktopApp, isNameActionDisabled, linkMenuClipboard, linkMenuCopy };
         } catch (error) {
           bodyError = new Error(`Original metadata copy failed during ${phase}: ${String(error)}`, { cause: error });
         } finally {
@@ -180,11 +182,12 @@ describe('Copy original attachment metadata', () => {
       vaultPath: getTemporaryVault().path
     });
     expect(result.fileMenuCopy).toBe('arrival.pdf');
-    expect(result.linkMenuCopy).toBe('original/source/arrival.pdf');
+    expect(result.linkMenuCopy).toBe('arrival.pdf');
+    expect(result.hasPathAction).toBe(false);
     expect([result.fileMenuClipboard, result.linkMenuClipboard]).toStrictEqual(
-      result.isDesktopApp ? ['arrival.pdf', 'original/source/arrival.pdf'] : [null, null]
+      result.isDesktopApp ? ['arrival.pdf', 'arrival.pdf'] : [null, null]
     );
     expect(result.importedName).toMatch(/^renamed-\d+\.pdf$/);
-    expect(result.disabled).toStrictEqual([true, true]);
+    expect(result.isNameActionDisabled).toBe(true);
   });
 });

@@ -39,21 +39,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('Original attachment metadata copy menu', () => {
-  it.each([
-    { name: undefined, path: undefined },
-    { name: 'arrival.pdf', path: undefined },
-    { name: undefined, path: String.raw`C:\Downloads\arrival.pdf` },
-    { name: 'arrival.pdf', path: String.raw`C:\Downloads\arrival.pdf` },
-    { name: '', path: '' }
-  ])('should enable and copy each stored value independently: $name / $path', async ({ name, path }) => {
+describe('Original attachment file name copy menu', () => {
+  it.each([undefined, 'arrival.pdf', ''])('should enable and copy the stored original file name: %j', async (name) => {
     const app = App.createConfigured__().asOriginalType__();
     const file = await app.vault.createBinary('renamed.pdf', new ArrayBuffer(1));
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     const component = new CopyOriginalAttachmentMetadataComponent({
       app,
-      originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ get: () => name, getOriginalPath: () => path }),
+      originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ get: () => name }),
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ isNoteEx: (candidate) => candidate instanceof TFile && candidate.extension === 'md' })
     });
     const items: CapturedItem[] = [];
@@ -85,24 +79,23 @@ describe('Original attachment metadata copy menu', () => {
     try {
       app.workspace.trigger('file-menu', menu, file, 'file-explorer');
       expect(items.map((item) => [item.title, item.isDisabled])).toStrictEqual([
-        ['Copy original file name', !name],
-        ['Copy original path', !path]
+        ['Copy original file name', !name]
       ]);
       for (const item of items) {
         item.click(new MouseEvent('click'));
       }
       await vi.waitFor(() => {
-        expect(writeText.mock.calls).toStrictEqual([name, path].filter(Boolean).map((value) => [value]));
+        expect(writeText.mock.calls).toStrictEqual(name ? [[name]] : []);
       });
       const note = await app.vault.create('note.md', '');
       const folder = await app.vault.createFolder('folder');
       app.workspace.trigger('file-menu', menu, note, 'file-explorer');
       app.workspace.trigger('file-menu', menu, folder, 'file-explorer');
-      expect(items).toHaveLength(2);
+      expect(items).toHaveLength(1);
     } finally {
       component.unload();
     }
     app.workspace.trigger('file-menu', menu, file, 'link-context-menu');
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(1);
   });
 });
