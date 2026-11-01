@@ -120,7 +120,6 @@ interface DemoSettingsPatch {
   shouldFollowObsidianAttachmentLocation?: boolean;
   shouldRenameAttachmentFiles?: boolean;
   shouldRenameCollectedAttachments?: boolean;
-  shouldSetLinkDisplayTextToAttachmentFileName?: boolean;
   shouldSkipCollectingAttachmentsReferencedByRawPath?: boolean;
 }
 
@@ -485,8 +484,7 @@ export async function insertOriginalNameLinkDemo(app: App, shouldEnable: boolean
     attachmentRenameMode: 'All',
     generatedAttachmentFileName: 'renamed-report',
     insertedLinkText: shouldEnable ? '{{originalAttachmentFileName}}' : '',
-    shouldFollowObsidianAttachmentLocation: false,
-    shouldSetLinkDisplayTextToAttachmentFileName: false
+    shouldFollowObsidianAttachmentLocation: false
   });
   await openFile(app, notePath);
   const path = await resolveAttachmentPath({ app, kind: 'pdf', notePath, shouldCreateFolder: true });

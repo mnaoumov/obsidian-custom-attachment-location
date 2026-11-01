@@ -40,6 +40,7 @@ import {
   RenameAttachmentsCreatedByOtherPluginsMode
 } from './plugin-settings.ts';
 
+const ATTACHMENT_FILE_NAME_TEMPLATE = '{{attachmentFileName}}';
 const CUSTOM_TOKENS_VALIDATOR_DEBOUNCE_IN_MILLISECONDS = 2000;
 const EXCALIDRAW_EXTENSION = '.excalidraw.md';
 const EXCALIDRAW_PROPERTY_ENTRY = 'property:excalidraw-plugin';
@@ -134,6 +135,10 @@ class LegacySettings {
   public shouldRenameAttachmentsToLowerCase = false;
   public shouldRescueSharedAttachments = false;
   /**
+   * The switch `Inserted link text` replaced after 17.1.0: on, a link to an attachment showed its base name.
+   */
+  public shouldSetLinkDisplayTextToAttachmentFileName = false;
+  /**
    * Obsolete legacy setting that is not converted. Declared so the legacy-settings converter
    * recognizes the persisted key and strips it from saved settings during migration.
    */
@@ -164,6 +169,7 @@ class LegacySettingsConverter {
     this.convertCollectAttachmentUsedByMultipleNotesMode();
     this.convertRenameAttachmentsCreatedByOtherPluginsMode();
     this.convertMarkdownUrlFormat();
+    this.convertShouldSetLinkDisplayTextToAttachmentFileName();
     this.convertSpecialCharacters();
     this.convertLegacyTokens();
     // After every converter above, since several of them still write the `${...}` syntax.
@@ -349,6 +355,18 @@ ${commentOut(this.legacySettings.customTokensStr)}
   private convertShouldRenameAttachments(): void {
     if (this.legacySettings.shouldRenameAttachments !== undefined) {
       this.legacySettings.shouldRenameAttachmentFolder = this.legacySettings.shouldRenameAttachments;
+    }
+  }
+
+  /**
+   * Carries the `Set link display text to attachment file name` switch of 17.1.0 and earlier onto `Inserted link text`.
+   *
+   * The switch gave a link the attachment's current base name, which `{{attachmentFileName}}` yields. It only ever
+   * applied when the template produced nothing, so a template the user already wrote is kept as it is.
+   */
+  private convertShouldSetLinkDisplayTextToAttachmentFileName(): void {
+    if (this.legacySettings.shouldSetLinkDisplayTextToAttachmentFileName && !this.legacySettings.insertedLinkText) {
+      this.legacySettings.insertedLinkText = ATTACHMENT_FILE_NAME_TEMPLATE;
     }
   }
 

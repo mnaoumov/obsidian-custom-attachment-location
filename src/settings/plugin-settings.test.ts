@@ -27,7 +27,6 @@ describe('PluginSettings', () => {
       expect(settings.moveAttachmentToProperFolderUsedByMultipleNotesMode).toBe(MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll);
       expect(settings.duplicateNameSeparator).toBe(' ');
       expect(settings.jpegQuality).toBe(0.8);
-      expect(settings.shouldSetLinkDisplayTextToAttachmentFileName).toBe(false);
       expect(settings.shouldSkipCollectingAttachmentsReferencedByRawPath).toBe(false);
       expect(settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/`);
       expect(settings.specialCharactersReplacement).toBe('-');

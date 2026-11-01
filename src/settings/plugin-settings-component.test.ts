@@ -598,6 +598,22 @@ describe('PluginSettingsComponent', () => {
       expect(component.settings.renameAttachmentsCreatedByOtherPluginsMode).toBe(RenameAttachmentsCreatedByOtherPluginsMode.None);
     });
 
+    it('should map shouldSetLinkDisplayTextToAttachmentFileName true into an attachment-name inserted link text', async () => {
+      const component = await createComponent({ shouldSetLinkDisplayTextToAttachmentFileName: true });
+      expect(component.settings.insertedLinkText).toBe('{{attachmentFileName}}');
+      expect(component.settings).not.toHaveProperty('shouldSetLinkDisplayTextToAttachmentFileName');
+    });
+
+    it('should keep a written inserted link text over shouldSetLinkDisplayTextToAttachmentFileName true', async () => {
+      const component = await createComponent({ insertedLinkText: '{{originalAttachmentFileName}}', shouldSetLinkDisplayTextToAttachmentFileName: true });
+      expect(component.settings.insertedLinkText).toBe('{{originalAttachmentFileName}}');
+    });
+
+    it('should leave the inserted link text blank for shouldSetLinkDisplayTextToAttachmentFileName false', async () => {
+      const component = await createComponent({ shouldSetLinkDisplayTextToAttachmentFileName: false });
+      expect(component.settings.insertedLinkText).toBe('');
+    });
+
     it('should map keepEmptyAttachmentFolders into shouldKeepEmptyAttachmentFolders and then emptyFolderBehavior Keep', async () => {
       const component = await createComponent({ keepEmptyAttachmentFolders: true });
       expect(component.settings.proposedRenameDeleteSettings?.emptyFolderBehavior).toBe(EmptyFolderBehavior.Keep);
