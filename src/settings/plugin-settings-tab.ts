@@ -219,18 +219,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         visible: () => Platform.isDesktopApp
       }),
       this.settingEx({
-        desc: t(($) => $.pluginSettingsTab.shouldSetLinkDisplayTextToAttachmentFileName.description),
-        name: t(($) => $.pluginSettingsTab.shouldSetLinkDisplayTextToAttachmentFileName.name),
-        render: (setting) => {
-          setting.addToggle((toggle) => {
-            this.bind({
-              propertyName: 'shouldSetLinkDisplayTextToAttachmentFileName',
-              valueComponent: toggle
-            });
-          });
-        }
-      }),
-      this.settingEx({
         desc: createFragment((f) => {
           f.appendText(t(($) => $.pluginSettingsTab.timeoutInSeconds.description.part1));
           f.createEl('br');

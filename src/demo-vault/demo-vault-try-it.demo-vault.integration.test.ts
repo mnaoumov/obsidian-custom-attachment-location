@@ -375,16 +375,16 @@ describe('02 Attachment file naming, 04 Custom tokens', () => {
 
 describe('07 Link display text', () => {
   it('gives an attachment link the attachment\'s name as its text, and leaves a note link alone', async () => {
-    await runStep('changeSettings', { shouldSetLinkDisplayTextToAttachmentFileName: false });
+    await runStep('changeSettings', { insertedLinkText: '' });
     const before = await runStep<LinkDisplayTextDemoReport>('insertLinksForDisplayTextDemo');
     expect(before.attachmentLink).not.toContain('|report-2026]]');
 
-    await runStep('changeSettings', { shouldSetLinkDisplayTextToAttachmentFileName: true });
+    await runStep('changeSettings', { insertedLinkText: '{{attachmentFileName}}' });
     const after = await runStep<LinkDisplayTextDemoReport>('insertLinksForDisplayTextDemo');
     expect(after.attachmentLink).toContain('report-2026.pdf|report-2026]]');
     expect(after.noteLink).toBe(before.noteLink);
 
-    await runStep('changeSettings', { shouldSetLinkDisplayTextToAttachmentFileName: false });
+    await runStep('changeSettings', { insertedLinkText: '' });
   }, TEST_TIMEOUT_IN_MILLISECONDS);
 });
 

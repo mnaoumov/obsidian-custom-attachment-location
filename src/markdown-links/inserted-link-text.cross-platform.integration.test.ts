@@ -23,8 +23,6 @@ describe('inserted attachment link text', () => {
           insertedLinkText: string;
           // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           shouldFollowObsidianAttachmentLocation: boolean;
-          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
-          shouldSetLinkDisplayTextToAttachmentFileName: boolean;
         }
         function isSettings(value: unknown): value is Settings {
           return typeof value === 'object' && value !== null && 'insertedLinkText' in value;
@@ -47,7 +45,6 @@ describe('inserted attachment link text', () => {
             settings.generatedAttachmentFileName = 'renamed';
             settings.insertedLinkText = '{{originalAttachmentFileName}}';
             settings.shouldFollowObsidianAttachmentLocation = false;
-            settings.shouldSetLinkDisplayTextToAttachmentFileName = false;
           });
           const leaf = app.workspace.getLeaf(true);
           await leaf.openFile(note);

@@ -481,7 +481,7 @@ export const defaultTranslations = {
       specialCharacters: 'Special characters'
     },
     insertedLinkText: {
-      description: 'Display text for newly imported non-image attachments. Use {{originalAttachmentFileName}} to show the arrival name. Leave blank for the default. Explicit aliases and image sizes take priority; link delimiters use full width equivalents.',
+      description: 'Display text for inserted links to non-image attachments. Use {{attachmentFileName}} to show the attachment name, or {{originalAttachmentFileName}} to show the arrival name. Leave blank for the default. Explicit aliases and image sizes take priority; link delimiters use full width equivalents.',
       name: 'Inserted link text'
     },
     jpegQuality: {
@@ -650,10 +650,6 @@ export const defaultTranslations = {
         part4: 'setting.'
       },
       name: 'Should rename collected attachments'
-    },
-    shouldSetLinkDisplayTextToAttachmentFileName: {
-      description: 'If enabled, when a link to an attachment is inserted, its display text is set to the attachment file name (without extension). Does not affect links between notes.',
-      name: 'Set link display text to attachment file name'
     },
     shouldSkipCollectingAttachmentsReferencedByRawPath: {
       description: 'When collecting an attachment, also scan every note\'s raw text for the attachment\'s path or file name. If another note references it in a format Obsidian does not index (e.g. via other plugins\' custom syntaxes or raw HTML), the attachment is treated as still used and is left in place. This prevents losing attachments referenced by non-standard syntaxes, at the cost of a slower collect.',

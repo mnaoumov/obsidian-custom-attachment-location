@@ -44,10 +44,7 @@ Open **Settings -> Community plugins -> `Custom Attachment Location`** to config
 ## Link display text
 
 - `insertedLinkText`
-  - a token template for newly imported non-image links, empty by default. Use `{{originalAttachmentFileName}}` to keep the arrival name visible after renaming. Original-name templates also read the saved record when linking an existing attachment again; other tokens need the asynchronous import preparation. See [07 Link display text](<./07 Link display text.md>).
-
-- `shouldSetLinkDisplayTextToAttachmentFileName`
-  - when inserting a link to an **attachment**, use the attachment's base name (without extension) as the link's display text. Notes are left alone, and an explicit alias or a cached image size still wins. See [07 Link display text](<./07 Link display text.md>).
+  - a token template for the display text of links to non-image attachments, empty by default. Use `{{attachmentFileName}}` to show the attachment's base name, or `{{originalAttachmentFileName}}` to keep the arrival name visible after renaming. Templates made only of these name and extension tokens also apply when linking an existing attachment; other tokens need the asynchronous import preparation. Notes are left alone, and an explicit alias or a cached image size still wins. It replaces the `shouldSetLinkDisplayTextToAttachmentFileName` toggle of 17.1.0 and earlier, which is migrated into `{{attachmentFileName}}`. See [07 Link display text](<./07 Link display text.md>).
 
 ## Custom tokens
 

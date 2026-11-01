@@ -341,6 +341,34 @@ describe('AttachmentPathManager', () => {
       expect(context.reportUnknown).toHaveBeenCalledWith({ actionContext: ActionContext.Unknown, currentFileName: 'renamed.pdf', path: 'renamed.pdf' });
     });
 
+    it('reads the current name of an existing attachment, including string formats, without consulting the record', () => {
+      context.settings.insertedLinkText = '{{AttachmentFileName:{case:"upper"}}}.{{attachmentFileExtension}}';
+      context.originalAttachmentNames.set('renamed.pdf', 'original report.pdf');
+      const attachmentFile = createTFile({ basename: 'renamed', extension: 'pdf', name: 'renamed.pdf', path: 'renamed.pdf' });
+      expect(context.manager.getInsertedLinkText({ attachmentFile, notePath: 'note.md' })).toBe('RENAMED.pdf');
+      expect(context.reportUnknown).not.toHaveBeenCalled();
+    });
+
+    it('prepares the saved name, not the incoming one, for {{attachmentFileName}} during an import', async () => {
+      context.settings.insertedLinkText = '{{attachmentFileName}} ({{originalAttachmentFileName}})';
+      context.getAvailablePath.mockReturnValue('renamed 1.pdf');
+      const note = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? note : null);
+      const path = await context.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'renamed',
+        attachmentFileExtension: 'pdf',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'renamed.pdf',
+        originalAttachmentFileName: 'Original.pdf',
+        readAttachmentFileContent: null,
+        shouldSkipGeneratedAttachmentFileName: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      expect(path).toBe('renamed 1.pdf');
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBe('renamed 1 (Original)');
+    });
+
     it('supports literal text and leaves empty templates at the default', () => {
       context.settings.insertedLinkText = 'Read this';
       expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBe('Read this');

@@ -186,28 +186,20 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     expect(vi.mocked(imageSizeMap.getAndDelete)).not.toHaveBeenCalled();
   });
 
-  it('should set the attachment base name as the alias when the setting is enabled (issue #24)', () => {
-    settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
-    const component = createComponent();
-    component.load();
-
-    fileManager.generateMarkdownLink(attachmentFile, 'note.md');
-
-    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(attachmentFile, 'note.md', undefined, 'image');
-  });
-
-  it('should not set a base-name alias for a note when the setting is enabled', () => {
-    settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
+  it('should not apply the inserted-link template to a note', () => {
+    settings.insertedLinkText = '{{attachmentFileName}}';
     const component = createComponent();
     component.load();
 
     invoke();
 
     expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(targetFile, 'note.md', undefined, undefined);
+    expect(vi.mocked(attachmentPathManager.getInsertedLinkText)).not.toHaveBeenCalled();
   });
 
-  it('should set the base-name alias for a drawing treated as an attachment when the setting is enabled', () => {
-    settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
+  it('should apply the inserted-link template to a drawing treated as an attachment', () => {
+    settings.insertedLinkText = '{{attachmentFileName}}';
+    vi.mocked(attachmentPathManager.getInsertedLinkText).mockReturnValue('drawing.excalidraw');
     const drawingFile = ensureNonNullable(app.vault.getFileByPath('folder/drawing.excalidraw.md'));
     const component = createComponent();
     component.load();
@@ -217,18 +209,19 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(drawingFile, 'note.md', undefined, 'drawing.excalidraw');
   });
 
-  it('should not set a base-name alias when the setting is disabled', () => {
-    settings.shouldSetLinkDisplayTextToAttachmentFileName = false;
+  it('should not set an alias when the inserted-link template is blank', () => {
     const component = createComponent();
     component.load();
+    const pdf = strictProxy<TFile>({ basename: 'renamed', extension: 'pdf', path: 'renamed.pdf' });
 
-    fileManager.generateMarkdownLink(attachmentFile, 'note.md');
+    fileManager.generateMarkdownLink(pdf, 'note.md');
 
-    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(attachmentFile, 'note.md', undefined, undefined);
+    expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(pdf, 'note.md', undefined, undefined);
+    expect(vi.mocked(attachmentPathManager.getInsertedLinkText)).not.toHaveBeenCalled();
   });
 
-  it('should prefer the cached image size over the base-name alias', () => {
-    settings.shouldSetLinkDisplayTextToAttachmentFileName = true;
+  it('should prefer the cached image size over the inserted-link template', () => {
+    settings.insertedLinkText = '{{attachmentFileName}}';
     vi.mocked(imageSizeMap.getAndDelete).mockReturnValue('100x200');
     const component = createComponent();
     component.load();

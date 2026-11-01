@@ -29,7 +29,6 @@
   "shouldFollowObsidianAttachmentLocation": false,
   "shouldPreserveImageMetadata": false,
   "shouldRenameCollectedAttachments": false,
-  "shouldSetLinkDisplayTextToAttachmentFileName": false,
   "shouldSkipCollectingAttachmentsReferencedByRawPath": false,
   "specialCharacters": "#^[]|*\\<>:?/",
   "specialCharactersReplacement": "-",

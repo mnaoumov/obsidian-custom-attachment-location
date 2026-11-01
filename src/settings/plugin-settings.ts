@@ -256,7 +256,6 @@ export class PluginSettings {
 
   public shouldPreserveImageMetadata = false;
   public shouldRenameCollectedAttachments = false;
-  public shouldSetLinkDisplayTextToAttachmentFileName = false;
   public shouldSkipCollectingAttachmentsReferencedByRawPath = false;
 
   /**

@@ -64,20 +64,14 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
           const imageSize = this.imageSizeMap.getAndDelete(file.path);
           if (imageSize) {
             alias = imageSize;
-          } else if (!this.pluginSettingsComponent.isNoteEx(file)) {
-            if (this.pluginSettingsComponent.settings.insertedLinkText && !isImageExtension(file.extension)) {
-              alias = insertedLinkText ?? this.attachmentPathManager.getInsertedLinkText({ attachmentFile: file, notePath: sourcePath });
-              // Full width equivalents cannot terminate a wiki alias, become a subpath, or open Markdown/HTML.
-              alias = alias?.replaceAll(/[|[\]#^\\<>\r\n]/g, (character) => {
-                return character === '\r' || character === '\n' ? ' ' : String.fromCodePoint(ensureNonNullable(character.codePointAt(0)) + FULL_WIDTH_ASCII_OFFSET);
-              });
-            }
-            if (alias === undefined && this.pluginSettingsComponent.settings.shouldSetLinkDisplayTextToAttachmentFileName) {
-              // Issue #24: use the attachment's base name (without extension) as the link display text.
-              // Notes are excluded so wiki/markdown links between notes keep Obsidian's default behavior.
-              // A drawing the user treats as an attachment is not a note here, as it is not one when collected.
-              alias = file.basename;
-            }
+          } else if (this.pluginSettingsComponent.settings.insertedLinkText && !isImageExtension(file.extension) && !this.pluginSettingsComponent.isNoteEx(file)) {
+            // Notes are excluded so links between notes keep Obsidian's default behavior. A drawing the user
+            // treats as an attachment is not a note here, as it is not one when collected.
+            alias = insertedLinkText ?? this.attachmentPathManager.getInsertedLinkText({ attachmentFile: file, notePath: sourcePath });
+            // Full width equivalents cannot terminate a wiki alias, become a subpath, or open Markdown/HTML.
+            alias = alias?.replaceAll(/[|[\]#^\\<>\r\n]/g, (character) => {
+              return character === '\r' || character === '\n' ? ' ' : String.fromCodePoint(ensureNonNullable(character.codePointAt(0)) + FULL_WIDTH_ASCII_OFFSET);
+            });
           }
         }
         let defaultLink = originalMethodBound(file, sourcePath, subpath, alias);

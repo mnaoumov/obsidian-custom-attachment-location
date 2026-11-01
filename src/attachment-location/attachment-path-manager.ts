@@ -82,6 +82,14 @@ import {
 const ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE = '{{originalAttachmentFileName}}';
 const ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN = 'originalAttachmentFileName'.toLowerCase();
 const ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN = 'originalAttachmentFileExtension'.toLowerCase();
+const ATTACHMENT_FILE_NAME_TOKEN = 'attachmentFileName'.toLowerCase();
+const ATTACHMENT_FILE_EXTENSION_TOKEN = 'attachmentFileExtension'.toLowerCase();
+const SYNCHRONOUS_INSERTED_LINK_TEXT_TOKENS: ReadonlySet<string> = new Set([
+  ATTACHMENT_FILE_EXTENSION_TOKEN,
+  ATTACHMENT_FILE_NAME_TOKEN,
+  ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN,
+  ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN
+]);
 const MAX_INSERTED_LINK_TEXTS = 100;
 const INSERTED_LINK_TEXT_LIFETIME_IN_MILLISECONDS = 60_000;
 const MAX_NOTE_REFERENCE_RESOLUTIONS = 100;
@@ -519,24 +527,41 @@ export class AttachmentPathManager {
     if (prepared !== undefined) {
       return prepared;
     }
-    // Existing files have no asynchronous import in flight. The original-name tokens can read the durable
-    // store synchronously, including after collect/rename; other templates require an import preparation.
+    // Existing files have no asynchronous import in flight. The current-name tokens read the file and the
+    // original-name tokens read the durable store, both synchronously, including after collect/rename; other
+    // templates require an import preparation.
     const template = this.pluginSettingsComponent.settings.insertedLinkText;
     const tokens = scanTokens(template).map((token) => ({ ...token, token: token.token.toLowerCase() }));
-    if (tokens.some((token) => token.token !== ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN && token.token !== ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN)) {
+    if (tokens.some((token) => !SYNCHRONOUS_INSERTED_LINK_TEXT_TOKENS.has(token.token))) {
       return undefined;
     }
-    const originalNameParams = this.getOriginalAttachmentFileNameParams(params.attachmentFile, ActionContext.Unknown);
-    const originalName = originalNameParams.originalAttachmentFileName ?? params.attachmentFile.name;
-    if (tokens.length > 0) {
+    let originalName = params.attachmentFile.name;
+    if (tokens.some((token) => token.token === ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN || token.token === ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN)) {
+      const originalNameParams = this.getOriginalAttachmentFileNameParams(params.attachmentFile, ActionContext.Unknown);
+      originalName = originalNameParams.originalAttachmentFileName ?? originalName;
       originalNameParams.onOriginalAttachmentFileNameUnknown?.();
     }
-    const extension = extname(originalName);
+    const originalExtension = extname(originalName);
+    function getValue(token: string): string {
+      switch (token) {
+        case ATTACHMENT_FILE_EXTENSION_TOKEN: {
+          return params.attachmentFile.extension;
+        }
+        case ATTACHMENT_FILE_NAME_TOKEN: {
+          return params.attachmentFile.basename;
+        }
+        case ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN: {
+          return originalExtension.slice(1);
+        }
+        default: {
+          return basename(originalName, originalExtension);
+        }
+      }
+    }
     let text = '';
     let offset = 0;
     for (const token of tokens) {
-      const value = token.token === ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN ? basename(originalName, extension) : extension.slice(1);
-      text += template.slice(offset, token.start) + formatString(value, stringFormatSchema.parse(parseTokenFormat(token) ?? {}));
+      text += template.slice(offset, token.start) + formatString(getValue(token.token), stringFormatSchema.parse(parseTokenFormat(token) ?? {}));
       offset = token.end;
     }
     return text + template.slice(offset) || undefined;
@@ -840,7 +865,9 @@ export class AttachmentPathManager {
     const text = await new Substitutions({
       actionContext,
       app: this.app,
-      attachmentFileName: makeFileName({ fileBaseName: attachmentFileBaseName, fileExtension: params.attachmentFileExtension }),
+      // The name the attachment has when its link is written, as for an existing file; the arrival name stays
+      // the original one, which `originalAttachmentFileNameParams` always carries for an import.
+      attachmentFileName: basename(attachmentPath),
       attachmentFileStats,
       generatedAttachmentFileName: basename(attachmentPath),
       generatedAttachmentFilePath: attachmentPath,
