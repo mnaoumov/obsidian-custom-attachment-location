@@ -68,7 +68,7 @@ Moved to [06 Settings](<./demo-vault/06 Settings.md>), under `markdownUrlFormat`
 
 ## See also
 
-[My other Obsidian resources](https://github.com/mnaoumov/obsidian-resources)
+[My other Obsidian resources](https://mnaoumov.dev/obsidian/)
 
 | Plugin | Features | How `Custom Attachment Location` differs |
 | --- | --- | --- |
