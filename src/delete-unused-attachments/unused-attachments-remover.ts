@@ -684,7 +684,7 @@ export class UnusedAttachmentsRemover {
 
     const candidates: TFile[] = [];
     Vault.recurseChildren(attachmentFolder, (child) => {
-      if (isFile(child) && !this.pluginSettingsComponent.isNoteEx(child) && !referencedAttachmentPaths.has(child.path)) {
+      if (isFile(child) && !this.pluginSettingsComponent.isNoteEx(child) && !this.handedOverSettingsComponent.isPathIgnored(child.path) && !referencedAttachmentPaths.has(child.path)) {
         candidates.push(child);
       }
     });
@@ -770,6 +770,9 @@ export class UnusedAttachmentsRemover {
 
     for (const [unitFolderPath, unitCandidates] of candidatesByUnitFolderPath) {
       abortSignal.throwIfAborted();
+      if (this.handedOverSettingsComponent.isPathIgnored(unitFolderPath)) {
+        continue;
+      }
 
       const unitFolder = this.app.vault.getFolderByPath(unitFolderPath);
       if (!unitFolder) {

@@ -6,10 +6,12 @@ import {
   it
 } from 'vitest';
 
+import type { OriginalAttachmentNamesComponent } from './original-attachment-names-component.ts';
+
 import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settings-component-finder.ts';
 
 describe('Shared original attachment names', () => {
-  it('keeps an imported arrival name after a vault rename and plugin reload, using synchronized Markdown records', async () => {
+  it('keeps an imported arrival name after a vault rename and plugin reload, using synchronized JSON records', async () => {
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { pressKey, waitUntil }, renameMode }) {
         type Settings = Record<'attachmentFolderPath' | 'attachmentRenameMode' | 'generatedAttachmentFileName', string>;
@@ -24,6 +26,15 @@ describe('Shared original attachment names', () => {
           throw new Error('The plugin settings were not found.');
         }
         const prior = { ...settings.settings };
+        function storage(): OriginalAttachmentNamesComponent {
+          const tab = app.setting.pluginTabs.find((entry) => entry.id === pluginId);
+          if (!tab) {
+            throw new Error('Original name storage tab missing');
+          }
+          const getter = Reflect.get(tab, 'getOriginalAttachmentNamesComponent') as () => OriginalAttachmentNamesComponent;
+          return getter();
+        }
+        const wasSyncEnabled = storage().isSyncEnabled;
         const stamp = Date.now().toString();
         const arrivalName = `arrival-${stamp}.pdf`;
         const renamedPath = `shared-renamed-${stamp}.pdf`;
@@ -52,6 +63,7 @@ describe('Shared original attachment names', () => {
         }
 
         try {
+          await storage().setSyncEnabled(true);
           await settings.editAndSave((draft) => {
             draft.attachmentFolderPath = './';
             draft.attachmentRenameMode = renameMode;
@@ -112,6 +124,7 @@ describe('Shared original attachment names', () => {
             }
           }
           await restoreSettings();
+          await storage().setSyncEnabled(wasSyncEnabled);
         }
       },
       input: { findPluginSettingsComponent, renameMode: 'All' },
@@ -121,6 +134,6 @@ describe('Shared original attachment names', () => {
     expect(result.text).toContain(result.renamedPath);
     expect(result.text).toContain(result.arrivalName);
     expect(result.transportPaths.length).toBeGreaterThan(0);
-    expect(result.transportPaths.every((path) => path.endsWith('.md'))).toBe(true);
+    expect(result.transportPaths.every((path) => path.endsWith('.json'))).toBe(true);
   });
 });

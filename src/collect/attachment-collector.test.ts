@@ -661,6 +661,17 @@ describe('AttachmentCollector', () => {
       });
     });
 
+    it('keeps linked transport metadata in place instead of collecting it as an attachment', async () => {
+      const metadata = createFile('Plugin data/plugin/store/log-1.json');
+      mockGetLinks.mockReturnValue([createReference()]);
+      mockExtractLinkFile.mockReturnValue(metadata);
+      vi.mocked(settings.isPathIgnored).mockImplementation((path) => path === metadata.path);
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
+      await runSingleFile(note);
+      expect(mockRenameSafe).not.toHaveBeenCalled();
+      expect(mockCopySafe).not.toHaveBeenCalled();
+    });
+
     it('should merge into an identical file at the destination instead of moving beside it', async () => {
       mockGetLinks.mockReturnValue([createReference()]);
       const attachmentFile = createFile('old-folder/img.png');

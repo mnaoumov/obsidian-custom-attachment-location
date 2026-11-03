@@ -172,6 +172,31 @@ export const defaultTranslations = {
       useCurrentName: 'Use current name',
       useCurrentNameForSelected: 'Use current name for selected'
     },
+    storage: {
+      applied: 'Original name storage updated. All existing history is preserved.',
+      apply: 'Apply folder',
+      completeSetupBeforeRelocating: 'Complete synchronization setup on this device before changing its history location.',
+      description: 'Original names are kept on this device. Synchronization is optional and must be set up on every participating device. Existing device history keeps legacy Markdown sync until setup explicitly approves JSON. Update every device before switching.',
+      disable: 'Disable sync on this device',
+      enableBeforeRelocating: 'Enable synchronization on this device before relocating shared history.',
+      enabled: 'Sync enabled on this device',
+      errorTitle: 'Original name storage could not be changed',
+      externalChecklist: 'Confirm that your external sync tool includes JSON files and ALL history locations shown below, on every participating device. Update the plugin and repeat setup on each device before relocating. Keep the original discovery anchor synchronized permanently. Hidden folders require explicit support from your sync tool. The first device can enroll without a peer.',
+      externalSync: 'Set up external sync',
+      folder: 'Plugin data folder',
+      folderDescription: 'Static vault-relative folder, without tokens. Save a destination, then apply it below. Synced settings never move the active store automatically.',
+      hidden: 'Allow hidden plugin data folders',
+      hiddenDescription: 'For externally managed sync only. Obsidian Sync excludes arbitrary hidden folders, including custom files inside the vault configuration folder.',
+      hiddenFolderPermission: 'Enable Allow hidden plugin data folders before using a hidden segment.',
+      hiddenObsidianSync: 'Obsidian Sync cannot carry this hidden history location. Use a visible destination and include all retained roots, or choose an external sync provider.',
+      invalidFolder: 'Enter a nonempty vault-relative folder without traversal, tokens, backslashes or invalid path characters.',
+      local: 'Local only',
+      obsidianChecklist: 'Manual verification required: connect this vault to an Obsidian Sync remote vault and enable Sync all other types on EVERY participating device. Restart Obsidian after changing Sync settings. This plugin cannot verify other devices or change Sync settings. Arbitrary hidden folders are excluded. Confirm only after configuring this device. Update the plugin and repeat setup on every device before relocating. The first device can enroll without a peer.',
+      obsidianSync: 'Set up Obsidian Sync',
+      roots: 'History locations: {{roots}}. Keep all these locations synchronized; old history and the discovery anchor are retained.',
+      setupTitle: 'Enable original name synchronization?',
+      title: 'Original name storage'
+    },
     unknownDetails: {
       explanation: 'These attachments had no remembered original name: they predate the record, were renamed outside Obsidian, or were synced from another device. Their current name was used, and is now remembered as their original. To change one, run Show original attachment names.',
       title: 'Attachments whose original name is unknown'

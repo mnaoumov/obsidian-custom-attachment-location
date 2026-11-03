@@ -1,4 +1,12 @@
 .obsidian-custom-attachment-location {
+  .original-name-storage-controls .setting-item-control {
+    flex-wrap: wrap;
+  }
+
+  .original-name-storage-controls .setting-item-description {
+    overflow-wrap: anywhere;
+  }
+
   &.obsidian-lib.code-highlighter-component textarea.tokenized-string-setting-control {
     height: 6em;
   }

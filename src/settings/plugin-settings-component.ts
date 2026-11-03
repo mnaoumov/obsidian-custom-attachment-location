@@ -26,6 +26,7 @@ import { compare } from 'semver';
 import type { MigratableSettings } from '../advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
 
+import { validatePluginDataFolder } from '../original-attachment-names/plugin-data-folder.ts';
 import { CustomToken } from '../tokens/custom/custom-token.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
 import { migrateLegacyTokenSyntax } from '../tokens/token-parser.ts';
@@ -502,6 +503,7 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
   }
 
   protected override registerValidators(): void {
+    this.registerValidator('pluginDataFolder', (value, settings) => validatePluginDataFolder(value, settings.shouldAllowHiddenPluginDataFolder) ?? undefined);
     this.registerValidator('insertedLinkText', async (value) => await this.validator.validateTokens(value) ?? undefined);
     this.registerValidator('attachmentFolderPath', async (value) =>
       await this.validator.validatePath({

@@ -8,8 +8,8 @@
  * `Note-Note-img`, because once a file was renamed its old name was gone for good.
  *
  * The record is keyed by the attachment's path and follows every rename or move the vault reports, so it survives
- * this plugin's own renames and the user's renames inside Obsidian. Shared observations travel in vault Markdown
- * files; IndexedDB keeps the local replica. The old plugin-folder JSON is migration input only.
+ * this plugin's own renames and the user's renames inside Obsidian. IndexedDB keeps local history; optional
+ * transport writes JSON and reads legacy Markdown. The old plugin-folder JSON is migration input only.
  */
 
 import type { ConsoleDebugComponent } from '@mnaoumov/obsidian-lib/components/console-debug-component';
@@ -25,6 +25,7 @@ import type {
 } from 'type-fest';
 
 import { PluginNoticeMode } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import { DataStoreLocations } from '@mnaoumov/obsidian-lib/data-stores/data-store-locations';
 import { LocalDataStore } from '@mnaoumov/obsidian-lib/data-stores/local-data-store';
 import { SharedDataStore } from '@mnaoumov/obsidian-lib/data-stores/shared-data-store';
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
@@ -35,6 +36,10 @@ import {
   invokeAsyncSafely
 } from '@mnaoumov/typescript-lib/async';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import {
+  ensureNonNullable,
+  isStringArray
+} from '@mnaoumov/typescript-lib/type-guards';
 import {
   ButtonComponent,
   Component,
@@ -52,6 +57,7 @@ import {
   isRetiredSourcePathOperation,
   OriginalAttachmentNameHistory
 } from './original-attachment-name-history.ts';
+import { validatePluginDataFolder } from './plugin-data-folder.ts';
 
 /**
  * The legacy JSON migration source, kept untouched inside the plugin's folder.
@@ -62,6 +68,9 @@ const STORE_ID = 'original-attachment-names-v1';
 const PLUGIN_ID = 'obsidian-custom-attachment-location';
 const SYNCHRONIZE_INTERVAL_IN_MILLISECONDS = 60_000;
 const MIGRATION_KEY = 'original-attachment-names-json-migrated-v1';
+const SYNC_CONSENT_KEY = 'original-name-sync-consent-v1';
+const REQUESTED_ROOTS_KEY = 'original-name-requested-transport-roots-v1';
+const SYNC_PROVIDER_KEY = 'original-name-sync-provider-v1';
 const SAVE_DEBOUNCE_IN_MILLISECONDS = 1000;
 const WARNING_DEBOUNCE_IN_MILLISECONDS = 1000;
 const COMPACTION_OPERATION_COUNT = 100;
@@ -125,6 +134,18 @@ interface OriginalAttachmentNamesComponentConstructorParams {
   readonly storeFilePath: string;
 }
 
+/**
+Options for explicitly enabling synchronization on this device.
+*/
+interface OriginalAttachmentNamesComponentSetSyncEnabledOptions {
+  /**
+   * Whether setup must refuse history roots that Obsidian Sync cannot carry.
+   *
+   * @default `false`
+   */
+  readonly shouldUseObsidianSync?: boolean;
+}
+
 interface StoredOriginalAttachmentNames {
   readonly names: Record<string, string>;
   readonly version: number;
@@ -135,6 +156,13 @@ interface StoredOriginalAttachmentNames {
  */
 export class OriginalAttachmentNamesComponent extends Component {
   /**
+  Whether this device has enabled cross-device transport.
+  */
+  public get isSyncEnabled(): boolean {
+    return this.syncEnabled;
+  }
+
+  /**
    * How many records there are.
    *
    * @returns The count.
@@ -143,10 +171,18 @@ export class OriginalAttachmentNamesComponent extends Component {
     return this.names.size;
   }
 
+  /**
+  Active and retained transport roots, including the permanent discovery anchor.
+  */
+  public get transportRoots(): readonly string[] {
+    return [...new Set([...(this.shared?.transportRoots ?? []), ...this.requestedTransportRoots])];
+  }
+
   private readonly app: App;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
   private readonly expectedArrivals = new Map<string, ExpectedArrival>();
 
+  private hasApprovedSyncSetup = false;
   private readonly history = new OriginalAttachmentNameHistory();
   private local: LocalDataStore | undefined;
   private readonly names = this.history.names;
@@ -155,10 +191,14 @@ export class OriginalAttachmentNamesComponent extends Component {
   private readonly pluginNoticeComponent: PluginNoticeComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private publishedSinceCompaction = 0;
+  private readonly renamedTransportRoots = new Set<string>();
+  private readonly requestedTransportRoots = new Set<string>();
   private readonly saveDebounced: Debouncer<[], void>;
   private shared: SharedDataStore | undefined;
+  private shouldUseObsidianSync = false;
   private readonly showWarningDebounced: Debouncer<[], void>;
   private readonly storeFilePath: string;
+  private syncEnabled = false;
   private readonly unknownPaths = new Set<string>();
 
   public constructor(params: OriginalAttachmentNamesComponentConstructorParams) {
@@ -211,29 +251,7 @@ export class OriginalAttachmentNamesComponent extends Component {
    * @returns Completion of the serialized persistence operation.
    */
   public flush(): Promise<void> {
-    const run = this.persistence.catch(() => undefined).then(async () => {
-      const shared = this.shared;
-      if (!shared) {
-        return;
-      }
-      const batch = [...this.pending];
-      if (batch.length > 0) {
-        await shared.setMany(batch);
-        for (const [key] of batch) {
-          this.pending.delete(key);
-        }
-        this.publishedSinceCompaction += batch.length;
-      } else {
-        await shared.synchronize();
-      }
-      this.history.merge(shared.entries());
-      if (this.publishedSinceCompaction < COMPACTION_OPERATION_COUNT) {
-        return;
-      }
-
-      await shared.compact();
-      this.publishedSinceCompaction = 0;
-    });
+    const run = this.persistence.catch(() => undefined).then(() => this.flushImpl());
     this.persistence = run;
     return run;
   }
@@ -301,12 +319,48 @@ export class OriginalAttachmentNamesComponent extends Component {
   }
 
   /**
+   * Whether a path is store metadata or one of its ancestor folders, including retained and attempted roots.
+   *
+   * @param path - Vault-relative path to protect from attachment operations.
+   * @returns Whether the path intersects transport history.
+   */
+  public isTransportPath(path: string): boolean {
+    return (this.shared?.containsTransportPath(path) ?? false)
+      || [...this.renamedTransportRoots, ...this.requestedTransportRoots].some((root) => path === root || path.startsWith(`${root}/`) || root.startsWith(`${path}/`));
+  }
+
+  /**
    * Reads the records from disk. Called once, before anything asks for a name.
    */
   public async loadFromDisk(): Promise<void> {
     this.local = await LocalDataStore.open({ pluginId: PLUGIN_ID, storeId: STORE_ID, vaultId: this.app.appId });
     try {
-      this.shared = await SharedDataStore.open({ adapter: this.app.vault.adapter, kind: 'last-write-wins', local: this.local, pluginId: PLUGIN_ID, storeId: STORE_ID });
+      // A pre-existing device replica is durable evidence of the old always-enabled store. A synced
+      // settings file or a partially downloaded folder alone must never enroll a new device.
+      const localEntries = await this.local.entries();
+      const hasLocalHistory = localEntries.length > 0;
+      this.syncEnabled = await this.local.getOrCreate(SYNC_CONSENT_KEY, hasLocalHistory) === true;
+      const provider = await this.local.get(SYNC_PROVIDER_KEY);
+      this.hasApprovedSyncSetup = provider === 'obsidian' || provider === 'external';
+      this.shouldUseObsidianSync = provider === 'obsidian';
+      const requestedRoots = await this.local.get(REQUESTED_ROOTS_KEY);
+      if (requestedRoots !== undefined) {
+        if (!isStringArray(requestedRoots)) {
+          throw new Error('Invalid requested original-name transport roots.');
+        }
+        for (const root of requestedRoots) {
+          this.requestedTransportRoots.add(root);
+        }
+      }
+      this.shared = await SharedDataStore.open({
+        adapter: this.app.vault.adapter,
+        format: 'markdown',
+        isSyncEnabled: this.syncEnabled,
+        kind: 'last-write-wins',
+        local: this.local,
+        pluginId: PLUGIN_ID,
+        storeId: STORE_ID
+      });
       await this.deleteRetiredSourcePaths(this.shared);
       this.history.merge(this.shared.entries());
       await this.migrateLegacy();
@@ -324,12 +378,12 @@ export class OriginalAttachmentNamesComponent extends Component {
     const synchronize = (): void => {
       this.saveDebounced();
     };
-    function onTransportChange(path: string): void {
+    const onTransportChange = (path: string): void => {
       const name = path.slice(path.lastIndexOf('/') + 1);
-      if (path.startsWith(`Plugin data/${PLUGIN_ID}/${STORE_ID}/`) && name.endsWith('.md') && (name.startsWith('log-') || name.startsWith('snapshot-'))) {
+      if (this.isTransportPath(path) && /\.(?:md|json)$/.test(name) && (name.startsWith('log-') || name.startsWith('snapshot-') || path.includes('/locations-v1/'))) {
         synchronize();
       }
-    }
+    };
     this.registerEvent(this.app.vault.on('raw', onTransportChange));
     this.registerInterval(window.setInterval(synchronize, SYNCHRONIZE_INTERVAL_IN_MILLISECONDS));
     this.registerDomEvent(document, 'visibilitychange', () => {
@@ -362,6 +416,39 @@ export class OriginalAttachmentNamesComponent extends Component {
     const staleRecords = this.getRecords().filter((record) => record.isMissing);
     this.forget(staleRecords.map((record) => record.path));
     return staleRecords;
+  }
+
+  /**
+   * Copies and verifies history through the library's anchored relocation protocol.
+   * Settings changes alone never move the writer; every device keeps opening the original anchor.
+   *
+   * @param folder - Vault-relative parent of this plugin's store.
+   */
+  public async relocate(folder: string): Promise<void> {
+    const error = validatePluginDataFolder(folder, this.pluginSettingsComponent.settings.shouldAllowHiddenPluginDataFolder);
+    if (error) {
+      throw new Error(error);
+    }
+    const run = this.persistence.catch(() => undefined).then(async () => {
+      await this.flushImpl();
+      if (!this.shared || !this.syncEnabled) {
+        throw new Error(t(($) => $.originalAttachmentNames.storage.enableBeforeRelocating));
+      }
+      if (!this.hasApprovedSyncSetup) {
+        throw new Error(t(($) => $.originalAttachmentNames.storage.completeSetupBeforeRelocating));
+      }
+      if (this.shouldUseObsidianSync && folder.split('/').some((segment) => segment.startsWith('.'))) {
+        throw new Error(t(($) => $.originalAttachmentNames.storage.hiddenObsidianSync));
+      }
+      // An interrupted copy may leave metadata in its target before the library activates the writer.
+      // Remember exclusions first, including across a disabled restart; this never changes discovery.
+      this.requestedTransportRoots.add(`${folder}/${PLUGIN_ID}/${STORE_ID}`);
+      await ensureNonNullable(this.local).set(REQUESTED_ROOTS_KEY, [...this.requestedTransportRoots]);
+      await this.shared.relocate({ folder, format: 'json' });
+      this.history.merge(this.shared.entries());
+    });
+    this.persistence = run;
+    await run;
   }
 
   /**
@@ -409,6 +496,70 @@ export class OriginalAttachmentNamesComponent extends Component {
   }
 
   /**
+   * Changes this device's consent, retaining its full local history and all existing transport files.
+   *
+   * @param isEnabled - Whether to synchronize this device.
+   * @param options - Provider requirements checked before transport starts.
+   */
+  public async setSyncEnabled(isEnabled: boolean, options?: OriginalAttachmentNamesComponentSetSyncEnabledOptions): Promise<void> {
+    const run = this.persistence.catch(() => undefined).then(async () => {
+      if (isEnabled) {
+        await this.flushImpl();
+      }
+      const shared = this.shared;
+      const local = this.local;
+      if (!shared || !local) {
+        throw new Error('Original attachment names are not loaded.');
+      }
+      // Persist disabling first: a crash must not turn transport back on. Enabling is committed only
+      // after its initial synchronization succeeds, so a failed setup is retried explicitly.
+      if (!isEnabled) {
+        await local.set(SYNC_CONSENT_KEY, false);
+      }
+      try {
+        if (isEnabled) {
+          // Keep the legacy anchor identity on every device. The public coordinator announces JSON
+          // before an initially disabled store publishes anything, so fresh setup creates no Markdown.
+          // Existing enabled devices keep Markdown until the user approves this explicit transition.
+          const locations = new DataStoreLocations({ adapter: this.app.vault.adapter, format: 'markdown', pluginId: PLUGIN_ID, storeId: STORE_ID });
+          await locations.refresh();
+          for (const transport of locations.transports) {
+            this.requestedTransportRoots.add(transport.root);
+          }
+          await local.set(REQUESTED_ROOTS_KEY, [...this.requestedTransportRoots]);
+          if (options?.shouldUseObsidianSync && locations.transports.some((transport) => transport.root.split('/').some((segment) => segment.startsWith('.')))) {
+            throw new Error(t(($) => $.originalAttachmentNames.storage.hiddenObsidianSync));
+          }
+          const active = ensureNonNullable(locations.transports.at(-1));
+          if (active.extension !== '.json') {
+            const suffix = `/${PLUGIN_ID}/${STORE_ID}`;
+            await locations.relocate({ folder: active.root.slice(0, -suffix.length), format: 'json' });
+          }
+        }
+        await shared.setSyncEnabled(isEnabled);
+        await local.set(SYNC_CONSENT_KEY, isEnabled);
+        if (isEnabled) {
+          await local.set(SYNC_PROVIDER_KEY, options?.shouldUseObsidianSync ? 'obsidian' : 'external');
+          this.hasApprovedSyncSetup = true;
+          this.shouldUseObsidianSync = options?.shouldUseObsidianSync === true;
+        }
+        this.syncEnabled = isEnabled;
+        this.history.merge(shared.entries());
+        if (!isEnabled) {
+          await this.flushImpl();
+        }
+      } catch (error) {
+        await shared.setSyncEnabled(false);
+        await local.set(SYNC_CONSENT_KEY, false);
+        this.syncEnabled = false;
+        throw error;
+      }
+    });
+    this.persistence = run;
+    await run;
+  }
+
+  /**
    * Deletes the source-path observations 17.1.0 recorded, so the paths stop syncing between devices.
    *
    * @param shared - The opened shared store.
@@ -419,6 +570,30 @@ export class OriginalAttachmentNamesComponent extends Component {
         await shared.delete(key);
       }
     }
+  }
+
+  private async flushImpl(): Promise<void> {
+    const shared = this.shared;
+    if (!shared) {
+      return;
+    }
+    const batch = [...this.pending];
+    if (batch.length > 0) {
+      await shared.setMany(batch);
+      for (const [key] of batch) {
+        this.pending.delete(key);
+      }
+      this.publishedSinceCompaction += batch.length;
+    } else {
+      await shared.synchronize();
+    }
+    this.history.merge(shared.entries());
+    if (this.publishedSinceCompaction < COMPACTION_OPERATION_COUNT) {
+      return;
+    }
+
+    await shared.compact();
+    this.publishedSinceCompaction = 0;
   }
 
   private handleCreate(file: TAbstractFile): void {
@@ -435,6 +610,13 @@ export class OriginalAttachmentNamesComponent extends Component {
 
   private handleDelete(file: TAbstractFile): void {
     if (this.isTransportPath(file.path)) {
+      if (file instanceof TFolder) {
+        const attachmentPaths = [...this.names.keys()].filter((path) => path.startsWith(`${file.path}/`) && !this.isTransportPath(path));
+        for (const path of attachmentPaths) {
+          this.record({ kind: 'remove', path });
+          this.saveDebounced();
+        }
+      }
       return;
     }
     this.record({ isFolder: file instanceof TFolder, kind: 'remove', path: file.path });
@@ -442,16 +624,27 @@ export class OriginalAttachmentNamesComponent extends Component {
   }
 
   private handleRename(file: TAbstractFile, oldPath: string): void {
+    if (file instanceof TFolder) {
+      // A manual folder move is not a store relocation, but its descendants are still metadata during
+      // this event batch. A later delete must not publish a spurious attachment observation for it.
+      for (const root of [...this.transportRoots, ...this.renamedTransportRoots]) {
+        if (root === oldPath || root.startsWith(`${oldPath}/`)) {
+          this.renamedTransportRoots.add(`${file.path}${root.slice(oldPath.length)}`);
+        }
+      }
+    }
     if (this.isTransportPath(file.path) || this.isTransportPath(oldPath)) {
+      if (file instanceof TFolder) {
+        const attachmentPaths = [...this.names.keys()].filter((path) => path.startsWith(`${oldPath}/`) && !this.isTransportPath(path));
+        for (const path of attachmentPaths) {
+          this.record({ kind: 'rename', path, target: `${file.path}${path.slice(oldPath.length)}` });
+          this.saveDebounced();
+        }
+      }
       return;
     }
     this.record({ isFolder: file instanceof TFolder, kind: 'rename', path: oldPath, target: file.path });
     this.saveDebounced();
-  }
-
-  private isTransportPath(path: string): boolean {
-    const root = `Plugin data/${PLUGIN_ID}/${STORE_ID}`;
-    return path === root || path.startsWith(`${root}/`);
   }
 
   private async migrateLegacy(): Promise<void> {

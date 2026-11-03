@@ -137,16 +137,17 @@ export class PluginSettings {
   public excludeExtensionsFromMultipleNotesCheck: string[] = [];
 
   public generatedAttachmentFileName = 'file-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}';
+
   public insertedLinkText = '';
 
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public jpegQuality = 0.8;
   public markdownUrlFormat = '';
+
   public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public networkImageDownloadTimeoutInSeconds = 30;
   public orphanAttachmentScanMode: OrphanAttachmentScanMode = OrphanAttachmentScanMode.None;
-
   /**
    * The plugin ids the two list modes of {@link renameAttachmentsCreatedByOtherPluginsMode} are scoped to.
    *
@@ -155,6 +156,10 @@ export class PluginSettings {
    * multi-select, whose value is a `readonly string[]`, with no converter pair in between.
    */
   public otherPluginIdsForAttachmentRename: readonly string[] = [];
+  /**
+  Static vault-relative transport parent; applied only through the explicit relocation action.
+  */
+  public pluginDataFolder = 'Plugin data';
 
   /**
    * The rename/delete values this plugin held before 12.0.0, waiting to be offered to
@@ -168,8 +173,8 @@ export class PluginSettings {
   public proposedRenameDeleteSettings: MigratableSettings | null = null;
 
   public renameAttachmentsCreatedByOtherPluginsMode: RenameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.None;
-  public renamedAttachmentFileName = '';
 
+  public renamedAttachmentFileName = '';
   /**
    * Where screenshot tools leave the files they copy, so a paste of such a file counts as a pasted image.
    *
@@ -195,6 +200,11 @@ export class PluginSettings {
     String.raw`/^\/tmp\//`,
     String.raw`/^\/var\/folders\//`
   ];
+
+  /**
+  Whether a hidden transport parent is allowed for externally managed synchronization.
+  */
+  public shouldAllowHiddenPluginDataFolder = false;
 
   /**
    * Whether a note's attachments are collected each time the note changes, as if

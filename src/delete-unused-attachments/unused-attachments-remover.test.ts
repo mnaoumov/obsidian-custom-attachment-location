@@ -730,6 +730,13 @@ describe('UnusedAttachmentsRemover', () => {
       expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unitFolder);
     });
 
+    it('preserves an entire attachment unit that intersects protected transport metadata', async () => {
+      vi.mocked(settings.isPathIgnored).mockImplementation((path) => path === UNIT_FOLDER_PATH);
+      await runOperation([note]);
+      expect(mockTrashSafe).not.toHaveBeenCalled();
+      expect(mockConfirm).not.toHaveBeenCalled();
+    });
+
     it('should clean up the unit folder parent rather than the unit folder itself', async () => {
       backlinksByPath.set(image.path, [drawing.path]);
       await runOperation([note]);
@@ -992,6 +999,13 @@ describe('UnusedAttachmentsRemover', () => {
         emptyFolderBehavior: EmptyFolderBehavior.DeleteWithEmptyParents,
         folderPaths: [ATTACHMENT_FOLDER_PATH, 'other-folder']
       });
+    });
+
+    it('keeps protected metadata inside a scanned attachment folder while deleting ordinary unused files', async () => {
+      vi.mocked(settings.isPathIgnored).mockImplementation((path) => path === unusedA.path);
+      mockConfirm.mockResolvedValue(true);
+      await runOperation([note]);
+      expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unusedB);
     });
 
     // An attachment at the top level of the vault has no parent folder to clean up: `dirname` answers `.`,

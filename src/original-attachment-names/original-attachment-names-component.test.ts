@@ -52,6 +52,10 @@ describe('OriginalAttachmentNamesComponent', () => {
   }
 
   async function createComponent(): Promise<OriginalAttachmentNamesComponent> {
+    // This suite exercises opted-in synchronization. Fresh local-only behavior has its own suite.
+    const consent = await LocalDataStore.open({ pluginId: 'obsidian-custom-attachment-location', storeId: 'original-attachment-names-v1', vaultId: getApp().appId });
+    await consent.set('original-name-sync-consent-v1', true);
+    consent.close();
     const created = new OriginalAttachmentNamesComponent({
       app: getApp(),
       consoleDebugComponent: strictProxy<ConsoleDebugComponent>({ consoleDebug }),
@@ -204,7 +208,7 @@ describe('OriginalAttachmentNamesComponent', () => {
   });
 
   describe('persistence', () => {
-    it('should publish shared Markdown records and read them back on the next load', async () => {
+    it('should publish shared records and read them back on the next load', async () => {
       component.set('assets/img.png', 'Pasted image 1.png');
       vi.advanceTimersByTime(SAVE_DEBOUNCE_IN_MILLISECONDS);
       await vi.runAllTimersAsync();
@@ -308,7 +312,8 @@ describe('OriginalAttachmentNamesComponent', () => {
       vi.spyOn(SharedDataStore, 'open').mockRejectedValueOnce(new Error('transport unavailable'));
       const close = vi.spyOn(LocalDataStore.prototype, 'close');
       await expect(createComponent()).rejects.toThrow('transport unavailable');
-      expect(close).toHaveBeenCalledOnce();
+      // The consent fixture closes its connection as well as the component's failed open.
+      expect(close).toHaveBeenCalledTimes(2);
     });
 
     it('serializes concurrent windows using the same device identity without losing either write', async () => {
