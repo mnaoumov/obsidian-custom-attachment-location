@@ -176,6 +176,7 @@ export const config = defineObsidianPluginVitestConfig({
     ];
   },
   editContext(context: ObsidianPluginVitestConfigContext): void {
+    context.unitTests.include = [...context.unitTests.include ?? [], 'scripts/helpers/**/*.test.ts'];
     context.unitTests.setupFiles = [...toSetupFileList(context.unitTests.setupFiles), './scripts/vitest-setup-data-stores.ts'];
     const bulkCores = Number(process.env['BULK_CORES']);
     if (Number.isSafeInteger(bulkCores) && bulkCores > 0) {

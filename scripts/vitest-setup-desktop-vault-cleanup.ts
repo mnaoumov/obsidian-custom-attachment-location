@@ -19,6 +19,10 @@ import {
   inject
 } from 'vitest';
 
+import type { CleanupPluginApiRecord } from './helpers/cleanup-plugin-readiness.ts';
+
+import { isCleanupPluginReady } from './helpers/cleanup-plugin-readiness.ts';
+
 /**
  * The Node-side ceiling on the whole cleanup closure, kept under the desktop project's 120s `hookTimeout`.
  *
@@ -89,6 +93,10 @@ interface OperationQueueState {
   readonly items?: readonly OperationQueueItem[];
 }
 
+interface PluginApiRegistryState {
+  readonly records?: Record<string, readonly CleanupPluginApiRecord[] | undefined>;
+}
+
 /*
  * Returns the shared Obsidian instance to a pristine state after every `integration-tests:desktop` file.
  *
@@ -99,9 +107,8 @@ interface OperationQueueState {
  * - Vault entries. Left alone the vault grows to ~400 entries, and every vault-wide operation under test
  *   ("Delete unused attachments in entire vault", "Collect attachments", the link-update progress
  *   reporter) scales with that size.
- * - Plugin settings. Each file writes straight onto the live settings object, so a later file inherits
- *   whatever the ~30 before it left — an attachment path carrying a `{{prompt}}` token, a rescue toggle,
- *   a note-priority list.
+ * - Plugin settings. Suites save and restore edits through `editAndSave`; reloading here also discards
+ *   any transient in-memory state left by a file.
  *
  * Third, and the one that actually caused failures rather than merely risking them: `@mnaoumov/obsidian-lib`'s
  * operation queue. See the drain below.
@@ -176,12 +183,13 @@ afterAll(async () => {
 
   const report = await withNodeDeadline(
     evalInObsidian({
-      async callback({ app, stuckPrefix }): Promise<string[]> {
+      async callback({ app, isCleanupPluginReady: isPluginReady, lib: { waitUntil }, stuckPrefix }): Promise<string[]> {
         // The callback is serialized and evaluated inside Obsidian, so it closes over nothing: every
         // constant and helper it uses has to be declared in here.
         const MODAL_DISMISS_SETTLE_IN_MILLISECONDS = 200;
         const PLUGIN_ID = 'obsidian-custom-attachment-location';
-        const HANDLER_REGISTRATION_TIMEOUT_IN_MILLISECONDS = 10_000;
+        const DEPENDENCY_PLUGIN_ID = 'advanced-rename-and-delete-handler';
+        const PLUGIN_READINESS_TIMEOUT_IN_MILLISECONDS = 10_000;
         const QUEUE_DRAIN_POLL_IN_MILLISECONDS = 200;
         /*
          * Deliberately SHORT. A `Handle delete` entry can hold the shared queue for its own 60s ceiling,
@@ -303,54 +311,51 @@ afterAll(async () => {
         await drainQueue();
 
         /*
-         * The plugin is disabled around the wipe: deletions then run with no handlers listening, so no
-         * rescue moves an attachment back out and no empty-folder pass races the loop, and re-enabling
-         * reloads the settings from `data.json` — untouched, because the suites only mutate the in-memory
-         * object. Measured, wiping with the plugin live instead costs ~3x the wall clock (599s vs 186s)
-         * and MORE failures, because every deletion queues handler work that then has to drain.
+         * Disable this plugin around the wipe, then reload settings from `data.json`, which suites restore
+         * through `editAndSave`. The rename/delete dependency stays loaded, with its automatic handlers
+         * disabled by the vault seed; suites that change those settings must restore them themselves.
          */
+        function publishedApis(pluginId: string): readonly CleanupPluginApiRecord[] {
+          const registry = (globalThis as ObsidianLibGlobal).__obsidianLib?.['pluginApiRegistry']?.value as PluginApiRegistryState | undefined;
+          return registry?.records?.[pluginId] ?? [];
+        }
+
+        const previousPlugin = app.plugins.getPlugin(PLUGIN_ID);
+        const previousApis = publishedApis(PLUGIN_ID).map((record) => record.api);
+
         await runBounded('disabling the plugin', () => app.plugins.disablePlugin(PLUGIN_ID), PLUGIN_TOGGLE_TIMEOUT_IN_MILLISECONDS);
         await runBounded('wiping the vault', () => removeAll(loadedEntries()), VAULT_WIPE_TIMEOUT_IN_MILLISECONDS);
         await runBounded('enabling the plugin', () => app.plugins.enablePlugin(PLUGIN_ID), PLUGIN_TOGGLE_TIMEOUT_IN_MILLISECONDS);
 
         /*
-         * Wait for the plugin to reappear in `@mnaoumov/obsidian-lib`'s rename/delete handler registry.
-         *
-         * That registry is another global singleton keyed by plugin id: registering `set`s the key,
-         * unregistering `delete`s it, and `shouldInvokeHandler()` only lets the FIRST key's plugin handle
-         * anything. Unload and load are both async, so the old instance's `delete` can land AFTER the new
-         * instance's `set` — leaving the map EMPTY, at which point no plugin is the main handler and
-         * renames and deletions stop being handled at all for the rest of the session. That is invisible
-         * except as a suite reporting a rename that updated no links and raised no notice, which is what
-         * `link-update-progress` and `attachment-rescue` kept doing, in every retry of the same run.
+         * Renames and deletions belong to the dependency now. This plugin publishes its API only once
+         * that dependency has opened its feature gate and `onloadImpl` has built the new surface.
+         * Reject both the previous instance and its APIs: an async teardown must never make a stale
+         * publication look ready for the next file. The dependency stays enabled throughout cleanup.
          */
-        function handlerIds(): string[] {
-          const handlersMap = (globalThis as ObsidianLibGlobal).__obsidianLib?.['renameDeleteHandlersMap']?.value;
-          return handlersMap instanceof Map ? [...handlersMap.keys()].map(String) : [];
-        }
-
-        function isPluginRegisteredAsHandler(): boolean {
-          /*
-           * FIRST, not merely present: `shouldInvokeHandler()` compares the plugin id against
-           * `[...renameDeleteHandlersMap.keys()][0]`, so anything registered ahead of this plugin silently
-           * takes over rename/delete handling — and reloading the plugin cannot fix it, because the
-           * reload only re-adds this plugin's own key at the END of an insertion-ordered map.
-           */
-          return handlerIds()[0] === PLUGIN_ID;
-        }
-
-        const registrationDeadline = Date.now() + HANDLER_REGISTRATION_TIMEOUT_IN_MILLISECONDS;
-        while (!isPluginRegisteredAsHandler() && Date.now() < registrationDeadline) {
-          await sleep(QUEUE_DRAIN_POLL_IN_MILLISECONDS);
-        }
-
-        if (!isPluginRegisteredAsHandler()) {
-          pending.add(`HANDLER-REGISTRY: [${handlerIds().join(', ')}]`);
+        try {
+          await waitUntil({
+            intervalInMilliseconds: QUEUE_DRAIN_POLL_IN_MILLISECONDS,
+            message: 'the reloaded plugin and its dependency publish live APIs',
+            predicate: () =>
+              isPluginReady({
+                currentPlugin: app.plugins.getPlugin(PLUGIN_ID),
+                dependencyApis: publishedApis(DEPENDENCY_PLUGIN_ID),
+                dependencyPlugin: app.plugins.getPlugin(DEPENDENCY_PLUGIN_ID),
+                pluginApis: publishedApis(PLUGIN_ID),
+                previousApis,
+                previousPlugin
+              }),
+            timeoutInMilliseconds: PLUGIN_READINESS_TIMEOUT_IN_MILLISECONDS
+          });
+        } catch {
+          pending.add(`${stuckPrefix}the reloaded plugin or its dependency did not publish a fresh live API within ${String(PLUGIN_READINESS_TIMEOUT_IN_MILLISECONDS)}ms`);
         }
 
         return [...pending];
       },
       input: {
+        isCleanupPluginReady,
         stuckPrefix: STUCK_PREFIX
       }
     }),
