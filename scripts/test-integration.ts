@@ -14,4 +14,6 @@ await wrapCliTask(async () => {
   await test({
     projects: ['integration-tests:desktop']
   });
+  await test({ projects: ['integration-tests:storage:android'] });
+  await test({ projects: ['integration-tests:storage:desktop'] });
 });

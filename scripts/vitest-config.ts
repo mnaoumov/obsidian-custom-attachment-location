@@ -129,6 +129,20 @@ export const config = defineObsidianPluginVitestConfig({
       {
         test: {
           ...context.desktop,
+          include: ['src/**/*.storage.integration.test.ts'],
+          name: 'integration-tests:storage:desktop'
+        }
+      },
+      {
+        test: {
+          ...context.android,
+          include: ['src/**/*.storage.integration.test.ts'],
+          name: 'integration-tests:storage:android'
+        }
+      },
+      {
+        test: {
+          ...context.desktop,
           include: [DESKTOP_CAPTURE_TEST_FILES],
           name: 'capture-screenshots:desktop',
           setupFiles: setupFilesWithoutVaultCleanup(context)

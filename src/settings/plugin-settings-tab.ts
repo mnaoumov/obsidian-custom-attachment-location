@@ -12,6 +12,7 @@ import type { ConditionalKeys } from 'type-fest';
 
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
 import { confirm } from '@mnaoumov/obsidian-lib/modals/confirm';
 import { PluginSettingsTabBase } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
 import {
@@ -24,6 +25,7 @@ import {
   Platform
 } from 'obsidian';
 
+import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
@@ -56,6 +58,7 @@ const bindOptionsWithTrim: BindOptionsExtended<PluginSettings, string, Condition
 };
 
 interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
+  readonly getOriginalAttachmentNamesComponent?: (this: void) => OriginalAttachmentNamesComponent;
   /**
    * Reaches the plugin's gate, LAZILY.
    *
@@ -71,6 +74,7 @@ interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstr
 }
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
+  private readonly getOriginalAttachmentNamesComponent: ((this: void) => OriginalAttachmentNamesComponent) | null;
   private readonly getPluginGateComponent: (this: void) => PluginGateComponent;
   // Kept so this plugin can leave ITSELF out of the plugin picker; the base class does not expose `plugin`.
   private readonly ownPluginId: string;
@@ -79,6 +83,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   public constructor(params: PluginSettingsTabConstructorParams) {
     super(params);
     this.getPluginGateComponent = params.getPluginGateComponent;
+    this.getOriginalAttachmentNamesComponent = params.getOriginalAttachmentNamesComponent ?? null;
     this.ownPluginId = params.plugin.manifest.id;
     this.pluginSettingsComponent2 = params.pluginSettingsComponent;
   }
@@ -115,6 +120,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         heading: t(($) => $.pluginSettingsTab.groups.core),
         items: this.getCoreItems()
       }),
+      {
+        desc: t(($) => $.originalAttachmentNames.storage.description),
+        items: this.getStorageItems(),
+        name: t(($) => $.originalAttachmentNames.storage.title),
+        type: 'page'
+      },
       {
         desc: t(($) => $.pluginSettingsTab.pages.moveRenames.description),
         items: this.getMoveRenamesItems(),
@@ -1235,6 +1246,101 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               valueComponent: text
             });
           });
+        }
+      })
+    ];
+  }
+
+  private getStorageItems(): SettingDefinitionRender[] {
+    return [
+      this.settingEx({
+        desc: t(($) => $.originalAttachmentNames.storage.folderDescription),
+        name: t(($) => $.originalAttachmentNames.storage.folder),
+        render: (setting) => {
+          setting.addText((text) => {
+            this.bind({ propertyName: 'pluginDataFolder', valueComponent: text });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: t(($) => $.originalAttachmentNames.storage.hiddenDescription),
+        name: t(($) => $.originalAttachmentNames.storage.hidden),
+        render: (setting) => {
+          setting.addToggle((toggle) => {
+            this.bind({ propertyName: 'shouldAllowHiddenPluginDataFolder', valueComponent: toggle });
+          });
+        }
+      }),
+      this.settingEx({
+        name: t(($) => $.originalAttachmentNames.storage.title),
+        render: (setting) => {
+          const component = this.getOriginalAttachmentNamesComponent?.();
+          if (!component) {
+            return;
+          }
+          setting.settingEl.addClass('original-name-storage-controls');
+          function updateDescription(storage: OriginalAttachmentNamesComponent): void {
+            setting.setDesc(createFragment((fragment) => {
+              const status = t(($) => storage.isSyncEnabled ? $.originalAttachmentNames.storage.enabled : $.originalAttachmentNames.storage.local);
+              fragment.createEl('p', { text: status });
+              fragment.createEl('p', { text: t(($) => $.originalAttachmentNames.storage.roots, { roots: storage.transportRoots.join(', ') }) });
+              fragment.createEl('a', { href: 'https://help.obsidian.md/sync/settings', text: t(($) => $.originalAttachmentNames.storage.obsidianSync) });
+            }));
+          }
+          const run = async (action: () => Promise<void>): Promise<void> => {
+            try {
+              await action();
+            } catch (error) {
+              await alert({ app: this.app, message: String(error), title: t(($) => $.originalAttachmentNames.storage.errorTitle) });
+            } finally {
+              updateDescription(component);
+            }
+          };
+          const setup = async (isObsidianSync: boolean): Promise<void> => {
+            if (isObsidianSync && (component.transportRoots.some((root) => root.split('/').some((segment) => segment.startsWith('.'))) || this.pluginSettingsComponent.settings.pluginDataFolder.split('/').some((segment) => segment.startsWith('.')))) {
+              await alert({ app: this.app, message: t(($) => $.originalAttachmentNames.storage.hiddenObsidianSync) });
+              return;
+            }
+            const message = t(($) => isObsidianSync ? $.originalAttachmentNames.storage.obsidianChecklist : $.originalAttachmentNames.storage.externalChecklist);
+            if (
+              await confirm({
+                app: this.app,
+                message,
+                title: t(($) => $.originalAttachmentNames.storage.setupTitle)
+              })
+            ) {
+              await component.setSyncEnabled(true, { shouldUseObsidianSync: isObsidianSync });
+            }
+          };
+          setting.addButton((button) =>
+            button.setButtonText(t(($) => $.originalAttachmentNames.storage.obsidianSync)).onClick(convertAsyncToSync(() =>
+              run(async () => {
+                await setup(true);
+              })
+            ))
+          );
+          setting.addButton((button) =>
+            button.setButtonText(t(($) => $.originalAttachmentNames.storage.externalSync)).onClick(convertAsyncToSync(() =>
+              run(async () => {
+                await setup(false);
+              })
+            ))
+          );
+          setting.addButton((button) =>
+            button.setButtonText(t(($) => $.originalAttachmentNames.storage.disable)).onClick(convertAsyncToSync(() =>
+              run(async () => {
+                await component.setSyncEnabled(false);
+              })
+            ))
+          );
+          setting.addButton((button) =>
+            button.setButtonText(t(($) => $.originalAttachmentNames.storage.apply)).onClick(convertAsyncToSync(() =>
+              run(async () => {
+                await component.relocate(this.pluginSettingsComponent.settings.pluginDataFolder);
+              })
+            ))
+          );
+          updateDescription(component);
         }
       })
     ];

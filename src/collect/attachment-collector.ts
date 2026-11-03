@@ -956,7 +956,7 @@ export class AttachmentCollector {
       sourcePathOrFile: params.oldNotePath
     });
 
-    if (!oldAttachmentFile || this.pluginSettingsComponent.isNoteEx(oldAttachmentFile) || params.oldAttachmentPaths.has(oldAttachmentFile.path)) {
+    if (!oldAttachmentFile || this.pluginSettingsComponent.isNoteEx(oldAttachmentFile) || this.handedOverSettingsComponent.isPathIgnored(oldAttachmentFile.path) || params.oldAttachmentPaths.has(oldAttachmentFile.path)) {
       return null;
     }
 

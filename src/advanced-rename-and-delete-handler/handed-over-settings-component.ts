@@ -36,6 +36,10 @@ import {
 
 interface HandedOverSettingsComponentConstructorParams {
   readonly app: App;
+  /**
+  Additional live exclusions for this plugin's durable transport and its ancestor folders.
+  */
+  readonly shouldIgnorePath?: (path: string) => boolean;
 }
 
 export class HandedOverSettingsComponent extends ComponentEx {
@@ -50,21 +54,23 @@ export class HandedOverSettingsComponent extends ComponentEx {
   private apiRef: null | PluginApiRef<AdvancedRenameAndDeleteHandlerReadBackApi> = null;
 
   private readonly app: App;
+  private readonly shouldIgnorePath: ((path: string) => boolean) | null;
 
   public constructor(params: HandedOverSettingsComponentConstructorParams) {
     super();
     this.app = params.app;
+    this.shouldIgnorePath = params.shouldIgnorePath ?? null;
   }
 
   /**
    * Whether a path is one the handler leaves alone entirely.
    *
    * @param path - The vault-relative path.
-   * @returns Whether the path is ignored. `false` while the other plugin is unavailable — nothing is
-   * configured, so nothing is excluded.
+   * @returns Whether this plugin's metadata exclusion or the handler excludes the path. Without either
+   * exclusion, the unavailable-provider fallback is `false`.
    */
   public isPathIgnored(path: string): boolean {
-    return this.apiRef?.value?.isPathIgnored(path) ?? false;
+    return this.shouldIgnorePath?.(path) === true || (this.apiRef?.value?.isPathIgnored(path) ?? false);
   }
 
   /**

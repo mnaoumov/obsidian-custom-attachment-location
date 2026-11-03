@@ -81,6 +81,10 @@ import { createTokenizedStringLanguageComponent } from './tokens/tokenized-strin
 
 // --- Hoisted shared state ---
 
+interface HandedOverSettingsParamsProbe {
+  readonly shouldIgnorePath: (path: string) => boolean;
+}
+
 interface StubbedSettings {
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
   proposedRenameDeleteSettings: MigratableSettings | null;
@@ -98,6 +102,7 @@ const hoisted = vi.hoisted(() => {
       return noopAsync();
     }),
     isNoteEx: vi.fn((_path: string): boolean => true),
+    metadataExclusionDuringSetup: vi.fn<(isIgnored: boolean) => void>(),
     settings
   };
 });
@@ -131,7 +136,8 @@ vi.mock('@mnaoumov/obsidian-lib/components/rename-delete-handler-component', asy
 
 vi.mock('./advanced-rename-and-delete-handler/handed-over-settings-component.ts', () => ({
   // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
-  HandedOverSettingsComponent: vi.fn(function handedOverSettingsComponentStub() {
+  HandedOverSettingsComponent: vi.fn(function handedOverSettingsComponentStub(params: HandedOverSettingsParamsProbe) {
+    hoisted.metadataExclusionDuringSetup(params.shouldIgnorePath('ordinary.pdf'));
     return new Component();
   })
 }));
@@ -303,6 +309,7 @@ interface ReleaseNotesParamsProbe {
 }
 
 interface SettingsTabParamsProbe {
+  readonly getOriginalAttachmentNamesComponent: () => Component;
   readonly getPluginGateComponent: () => PluginGateComponent;
 }
 
@@ -467,6 +474,12 @@ describe('Plugin', () => {
 
       const params = castTo<SettingsTabParamsProbe>(call[0]);
       expect(params.getPluginGateComponent()).toBe(castTo<PluginGateProbe>(plugin).pluginGateComponent);
+      expect(params.getOriginalAttachmentNamesComponent()).toBeInstanceOf(Component);
+      const handedOverCall = vi.mocked(HandedOverSettingsComponent).mock.calls[0];
+      const handedOverParams = castTo<HandedOverSettingsParamsProbe>(handedOverCall?.[0]);
+      expect(hoisted.metadataExclusionDuringSetup).toHaveBeenCalledWith(false);
+      expect(handedOverParams.shouldIgnorePath('Plugin data')).toBe(true);
+      expect(handedOverParams.shouldIgnorePath('ordinary.pdf')).toBe(false);
     });
   });
 

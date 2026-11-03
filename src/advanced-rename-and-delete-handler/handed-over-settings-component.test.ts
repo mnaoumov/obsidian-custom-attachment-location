@@ -68,6 +68,17 @@ beforeEach(() => {
 });
 
 describe('HandedOverSettingsComponent', () => {
+  it('keeps live plugin metadata exclusions without changing the provider settings', () => {
+    watchedApi = null;
+    const protectedPaths = new Set(['Plugin data']);
+    const component = new HandedOverSettingsComponent({ app, shouldIgnorePath: (path): boolean => protectedPaths.has(path) });
+    component.load();
+    expect(component.isPathIgnored('Plugin data')).toBe(true);
+    expect(component.isPathIgnored('ordinary.pdf')).toBe(false);
+    protectedPaths.add('99-Meta');
+    expect(component.isPathIgnored('99-Meta')).toBe(true);
+    expect(component.settings).toBe(DEFAULT_HANDED_OVER_SETTINGS);
+  });
   it('should watch the provider under the ^1 contract', () => {
     createComponent().load();
 

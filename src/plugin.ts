@@ -184,12 +184,14 @@ export class Plugin extends PluginBase {
 
   protected override async onloadImpl(): Promise<void> {
     const validatorWrapper = ValueWrapper.unset<TokenValidator>();
+    let originalAttachmentNamesComponent: null | OriginalAttachmentNamesComponent = null;
 
     // Before the settings component, which reads back through it: `isNoteEx` consults the attachment-extension
     // list that `Advanced Rename and Delete Handler` owns since 12.0.0.
     const handedOverSettingsComponent = this.addChild(
       new HandedOverSettingsComponent({
-        app: this.app
+        app: this.app,
+        shouldIgnorePath: (path): boolean => originalAttachmentNamesComponent?.isTransportPath(path) ?? false
       })
     );
 
@@ -234,7 +236,7 @@ export class Plugin extends PluginBase {
     const getAvailablePathForAttachmentsOriginal = this.app.vault.getAvailablePathForAttachments.bind(this.app.vault);
 
     // Read before anything can ask for a name, and kept in a file of its own: it grows with the vault, the settings do not.
-    const originalAttachmentNamesComponent = new OriginalAttachmentNamesComponent({
+    originalAttachmentNamesComponent = new OriginalAttachmentNamesComponent({
       app: this.app,
       consoleDebugComponent: this.consoleDebugComponent,
       pluginNoticeComponent: this.pluginNoticeComponent,
@@ -323,6 +325,7 @@ export class Plugin extends PluginBase {
       new PluginSettingsTabComponent({
         plugin: this,
         pluginSettingsTab: new PluginSettingsTab({
+          getOriginalAttachmentNamesComponent: (): OriginalAttachmentNamesComponent => originalAttachmentNamesComponent,
           // Deliberately lazy: the gate is what loads this method, so the base has not assigned it yet.
           getPluginGateComponent: (): PluginGateComponent => this.pluginGateComponent,
           plugin: this,

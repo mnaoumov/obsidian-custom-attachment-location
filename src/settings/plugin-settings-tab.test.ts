@@ -21,10 +21,14 @@ import type {
 } from 'obsidian';
 
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
 import { confirm } from '@mnaoumov/obsidian-lib/modals/confirm';
 import { SettingEx } from '@mnaoumov/obsidian-lib/setting-ex';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
-import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import {
+  castTo,
+  normalizeOptionalProperties
+} from '@mnaoumov/typescript-lib/object-utils';
 import { ValueWrapper } from '@mnaoumov/typescript-lib/value-wrapper';
 import { waitForAllAsyncOperations } from '@mnaoumov/typescript-test-toolkit/async-operation-tracking';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
@@ -44,6 +48,7 @@ import {
 } from 'vitest';
 
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
+import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { Plugin } from '../plugin.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
@@ -63,6 +68,12 @@ vi.mock('@mnaoumov/obsidian-lib/modals/confirm', () => ({
   confirm: vi.fn((): Promise<boolean> => Promise.resolve(true))
 }));
 
+vi.mock('@mnaoumov/obsidian-lib/modals/alert', () => ({
+  alert: vi.fn(async () => {
+    await noopAsync();
+  })
+}));
+
 // The obsidian-test-mocks package does not model Obsidian's loadPrism, so return a stub prism; otherwise the real CodeHighlighterComponent's highlight-on-setValue rejects.
 vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (importOriginal) => {
   const original = await importOriginal<typeof import('@obsidian-typings/obsidian-public-latest/implementations')>();
@@ -78,7 +89,7 @@ const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 // Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
 // 41 = 40 setting rows + the overlap banner row that rides at the top.
-const EXPECTED_ROW_COUNT = 41;
+const EXPECTED_ROW_COUNT = 44;
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
@@ -119,6 +130,10 @@ interface DeclaredRow {
   readonly visible?: (() => boolean) | boolean;
 }
 
+interface StorageAccessorOptions {
+  readonly getOriginalAttachmentNamesComponent?: () => OriginalAttachmentNamesComponent;
+}
+
 class MockDataHandler implements DataHandler {
   public async loadData(): Promise<unknown> {
     await noopAsync();
@@ -151,7 +166,7 @@ function checkPredicate(predicate: (() => boolean) | boolean | undefined, should
   return typeof predicate === 'function' ? predicate() : predicate ?? shouldDefaultTo;
 }
 
-async function createTab(configure?: (settings: PluginSettings) => void): Promise<CreatedTab> {
+async function createTab(configure?: (settings: PluginSettings) => void, storage?: OriginalAttachmentNamesComponent): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const originalApp = app.asOriginalType__();
 
@@ -307,6 +322,7 @@ async function createTab(configure?: (settings: PluginSettings) => void): Promis
   });
 
   const tab = new PluginSettingsTab({
+    ...normalizeOptionalProperties<StorageAccessorOptions>({ getOriginalAttachmentNamesComponent: storage ? (): OriginalAttachmentNamesComponent => storage : undefined }),
     getPluginGateComponent: (): PluginGateComponent =>
       strictProxy<PluginGateComponent>({
         hasActiveWarningConflicts: hasActiveWarningConflictsMock,
@@ -593,6 +609,7 @@ describe('PluginSettingsTab', () => {
     expect(core.heading).toBe('Core');
 
     expect(pages.map((page) => castTo<SettingDefinitionPage>(page).name)).toEqual([
+      'Original name storage',
       'Move/renames',
       'Special characters',
       'Collected attachments',
@@ -621,6 +638,94 @@ describe('PluginSettingsTab', () => {
     findComponent(textLikeComponents, 'Inserted link text').setValue('{{originalAttachmentFileName}}');
     await waitForAllAsyncOperations();
     expect(pluginSettingsComponent.settings.insertedLinkText).toBe('{{originalAttachmentFileName}}');
+  });
+
+  it.each(['Set up Obsidian Sync', 'Set up external sync'])('asks for device setup before enabling transport: %s', async (label) => {
+    let isEnabled = false;
+    const setSyncEnabled = vi.fn(async (shouldEnable: boolean) => {
+      await noopAsync();
+      isEnabled = shouldEnable;
+    });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({
+      get isSyncEnabled(): boolean {
+        return isEnabled;
+      },
+      relocate: vi.fn(async () => {
+        await noopAsync();
+      }),
+      setSyncEnabled,
+      transportRoots: ['Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1']
+    });
+    const { buttons } = await createTab(undefined, storage);
+    const button = buttons.find((candidate) => candidate.buttonEl.textContent === label);
+    expect(button).toBeDefined();
+    button?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ title: 'Enable original name synchronization?' }));
+    expect(setSyncEnabled).toHaveBeenCalledWith(true, { shouldUseObsidianSync: label === 'Set up Obsidian Sync' });
+    expect(isEnabled).toBe(true);
+  });
+
+  it('leaves local-only history alone when setup is cancelled', async () => {
+    vi.mocked(confirm).mockResolvedValue(false);
+    const setSyncEnabled = vi.fn(async () => {
+      await noopAsync();
+    });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isSyncEnabled: false, setSyncEnabled, transportRoots: [] });
+    const { buttons } = await createTab(undefined, storage);
+    buttons.find((button) => button.buttonEl.textContent === 'Set up external sync')?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(confirm).toHaveBeenCalled();
+    expect(setSyncEnabled).not.toHaveBeenCalled();
+  });
+
+  it.each([true, false])('rejects hidden history for Obsidian Sync (retained root: %s)', async (hasHiddenRoot) => {
+    const setSyncEnabled = vi.fn(async () => {
+      await noopAsync();
+    });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isSyncEnabled: false, setSyncEnabled, transportRoots: hasHiddenRoot ? ['Meta/.names/plugin/store'] : [] });
+    const { buttons } = await createTab((settings) => {
+      settings.shouldAllowHiddenPluginDataFolder = true;
+      settings.pluginDataFolder = hasHiddenRoot ? 'Plugin data' : 'Meta/.names';
+    }, storage);
+    buttons.find((button) => button.buttonEl.textContent === 'Set up Obsidian Sync')?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(vi.mocked(alert).mock.calls[0]?.[0].message).toContain('hidden history');
+    expect(setSyncEnabled).not.toHaveBeenCalled();
+  });
+
+  it('applies the saved folder explicitly and can disable this device without deleting history', async () => {
+    const setSyncEnabled = vi.fn(async () => {
+      await noopAsync();
+    });
+    const relocate = vi.fn(async () => {
+      await noopAsync();
+    });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isSyncEnabled: true, relocate, setSyncEnabled, transportRoots: [] });
+    const { buttons } = await createTab((settings) => {
+      settings.pluginDataFolder = '99-Meta/Names';
+    }, storage);
+    buttons.find((button) => button.buttonEl.textContent === 'Apply folder')?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(relocate).toHaveBeenCalledWith('99-Meta/Names');
+    buttons.find((button) => button.buttonEl.textContent === 'Disable sync on this device')?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(setSyncEnabled).toHaveBeenCalledWith(false);
+  });
+
+  it('shows the relocation error so conflicting history cannot be silently replaced', async () => {
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({
+      isSyncEnabled: true,
+      relocate: vi.fn(async () => {
+        await noopAsync();
+        throw new Error('conflicting history');
+      }),
+      transportRoots: []
+    });
+    const { buttons } = await createTab(undefined, storage);
+    buttons.find((button) => button.buttonEl.textContent === 'Apply folder')?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(alert).toHaveBeenCalledWith(expect.objectContaining({ message: 'Error: conflicting history' }));
   });
 
   it('should enable debouncing of custom token validation while displayed', async () => {
