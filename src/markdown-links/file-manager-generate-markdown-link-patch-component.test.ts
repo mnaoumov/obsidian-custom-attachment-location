@@ -89,8 +89,8 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     });
   }
 
-  function invoke(subpath?: string, alias?: string): string {
-    return fileManager.generateMarkdownLink(targetFile, 'note.md', subpath, alias);
+  function invoke(alias?: string): string {
+    return fileManager.generateMarkdownLink(targetFile, 'note.md', undefined, alias);
   }
 
   it('uses the prepared original name for an inserted attachment link', () => {
@@ -181,7 +181,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     const component = createComponent();
     component.load();
 
-    invoke(undefined, 'My Alias');
+    invoke('My Alias');
 
     expect(vi.mocked(imageSizeMap.getAndDelete)).not.toHaveBeenCalled();
   });

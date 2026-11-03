@@ -427,10 +427,10 @@ function flattenRows(items: SettingDefinitionItem[]): SettingDefinition[] {
  * Evaluates a declared row's `disabled` predicate.
  *
  * @param tab - The settings tab.
- * @param name - The row name.
  * @returns Whether the row is disabled.
  */
-function isRowDisabled(tab: PluginSettingsTab, name: string): boolean {
+function isRowDisabled(tab: PluginSettingsTab): boolean {
+  const name = 'Should preserve image metadata';
   const row = flattenRows(tab.getSettingDefinitions()).find((candidate) => 'name' in candidate && candidate.name === name);
   if (row) {
     return checkPredicate(castTo<DeclaredRow>(row).disabled, false);
@@ -836,14 +836,14 @@ describe('PluginSettingsTab', () => {
   it('should disable the preserve-metadata row while nothing is being converted', async () => {
     // Nothing is re-encoded in `None` mode, so there is no metadata loss for the row to prevent.
     const { tab } = await createTab();
-    expect(isRowDisabled(tab, 'Should preserve image metadata')).toBe(true);
+    expect(isRowDisabled(tab)).toBe(true);
   });
 
   it('should enable the preserve-metadata row once images are converted', async () => {
     const { tab } = await createTab((settings) => {
       settings.convertImagesToJpegMode = ConvertImagesToJpegMode.AllImages;
     });
-    expect(isRowDisabled(tab, 'Should preserve image metadata')).toBe(false);
+    expect(isRowDisabled(tab)).toBe(false);
   });
 
   it('should do nothing when resetting custom tokens that already match the sample', async () => {

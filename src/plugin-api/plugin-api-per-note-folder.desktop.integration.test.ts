@@ -233,9 +233,9 @@ describe('The published API answers per note, which the getConfig patch cannot',
 
           // Read the instant the promise settles, with no wait in between: that is the promise under test.
           await api.collectAttachments({ pathsOrFiles: [`${openNoteBaseName}.md`] });
-          const collectedImagePath = properAttachmentPath !== null && app.vault.getFileByPath(properAttachmentPath) !== null
-            ? properAttachmentPath
-            : null;
+          const collectedImagePath = properAttachmentPath === null || app.vault.getFileByPath(properAttachmentPath) === null
+            ? null
+            : properAttachmentPath;
 
           return {
             apiFolderForClosedNote,

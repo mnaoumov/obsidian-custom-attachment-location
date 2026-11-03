@@ -32,12 +32,11 @@ type ForeignWriter = (vault: VaultOriginal) => Promise<unknown>;
  * Compiles `body` under a `plugin:<id>` source URL, the way Obsidian compiles a community plugin's
  * `main.js`, so the frames it produces are indistinguishable from a real plugin's.
  *
- * @param pluginId - The id the compiled code is attributed to.
  * @param body - The function body, receiving `vault`.
  * @returns The compiled writer.
  */
-function createForeignWriter(pluginId: string, body: string): ForeignWriter {
-  return new Function('vault', `${body}\n//# sourceURL=plugin:${pluginId}`) as ForeignWriter;
+function createForeignWriter(body: string): ForeignWriter {
+  return new Function('vault', `${body}\n//# sourceURL=plugin:${FOREIGN_PLUGIN_ID}`) as ForeignWriter;
 }
 
 describe('WriteAttributionPatchComponent', () => {
@@ -71,7 +70,7 @@ describe('WriteAttributionPatchComponent', () => {
 
   it('should attribute a binary attachment written through the vault', async () => {
     createComponent().load();
-    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.createBinary("shot.png", new ArrayBuffer(4));');
+    const write = createForeignWriter('return vault.createBinary("shot.png", new ArrayBuffer(4));');
 
     await write(vault);
 
@@ -80,7 +79,7 @@ describe('WriteAttributionPatchComponent', () => {
 
   it('should attribute a text attachment written through the vault', async () => {
     createComponent().load();
-    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.create("diagram.svg", "<svg/>");');
+    const write = createForeignWriter('return vault.create("diagram.svg", "<svg/>");');
 
     await write(vault);
 
@@ -89,7 +88,7 @@ describe('WriteAttributionPatchComponent', () => {
 
   it('should attribute a write that bypasses the vault for the adapter', async () => {
     createComponent().load();
-    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.adapter.writeBinary("raw.png", new ArrayBuffer(4));');
+    const write = createForeignWriter('return vault.adapter.writeBinary("raw.png", new ArrayBuffer(4));');
 
     await write(vault);
 
@@ -98,7 +97,7 @@ describe('WriteAttributionPatchComponent', () => {
 
   it('should attribute a text write that bypasses the vault for the adapter', async () => {
     createComponent().load();
-    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.adapter.write("raw.svg", "<svg/>");');
+    const write = createForeignWriter('return vault.adapter.write("raw.svg", "<svg/>");');
 
     await write(vault);
 
@@ -117,7 +116,7 @@ describe('WriteAttributionPatchComponent', () => {
   it('should attribute nothing when the mode does not consult the plugin id', async () => {
     settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.All;
     createComponent().load();
-    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.createBinary("shot.png", new ArrayBuffer(4));');
+    const write = createForeignWriter('return vault.createBinary("shot.png", new ArrayBuffer(4));');
 
     await write(vault);
 
@@ -133,7 +132,7 @@ describe('WriteAttributionPatchComponent', () => {
     settings.renameAttachmentsCreatedByOtherPluginsMode = RenameAttachmentsCreatedByOtherPluginsMode.All;
     createComponent().load();
     selfWriteRegistry.register('pasted.png', SelfWriteClaim.OutsideCaller);
-    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.createBinary("pasted.png", new ArrayBuffer(4));');
+    const write = createForeignWriter('return vault.createBinary("pasted.png", new ArrayBuffer(4));');
 
     await write(vault);
 
@@ -143,7 +142,7 @@ describe('WriteAttributionPatchComponent', () => {
 
   it('should attribute nothing for a note, which is never the attachment being renamed', async () => {
     createComponent().load();
-    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.create("Note.MD", "hello");');
+    const write = createForeignWriter('return vault.create("Note.MD", "hello");');
 
     await write(vault);
 
@@ -152,7 +151,7 @@ describe('WriteAttributionPatchComponent', () => {
 
   it('should still perform the write it observes', async () => {
     createComponent().load();
-    const write = createForeignWriter(FOREIGN_PLUGIN_ID, 'return vault.createBinary("shot.png", new ArrayBuffer(4));');
+    const write = createForeignWriter('return vault.createBinary("shot.png", new ArrayBuffer(4));');
 
     await write(vault);
 

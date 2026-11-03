@@ -9,10 +9,10 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 import { SequenceNumberToken } from './sequence-number-token.ts';
 
-function createContext(sequenceNumber: number, format: TokenEvaluatorContext['format']): TokenEvaluatorContext {
+function createContext(format: TokenEvaluatorContext['format']): TokenEvaluatorContext {
   return castTo<TokenEvaluatorContext>({
     format,
-    sequenceNumber
+    sequenceNumber: 5
   });
 }
 
@@ -24,13 +24,13 @@ describe('SequenceNumberToken', () => {
 
   it('should output the sequence number without padding by default', () => {
     const token = new SequenceNumberToken();
-    const result = token.evaluate(createContext(5, null));
+    const result = token.evaluate(createContext(null));
     expect(result).toBe('5');
   });
 
   it('should pad the sequence number to the requested length', () => {
     const token = new SequenceNumberToken();
-    const result = token.evaluate(createContext(5, { length: 3 }));
+    const result = token.evaluate(createContext({ length: 3 }));
     expect(result).toBe('005');
   });
 });

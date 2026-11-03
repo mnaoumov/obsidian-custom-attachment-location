@@ -90,7 +90,8 @@ describe('Token syntax migration', () => {
         const noteBaseName = `Note ${stamp}`;
         const notePath = `${rootFolder}/${noteBaseName}.md`;
         // Built from pieces, so no string in this file is itself a legacy token.
-        function legacyToken(name: string): string {
+        function legacyToken(): string {
+          const name = 'noteFileName';
           return ['$', '{', name, '}'].join('');
         }
 
@@ -102,8 +103,8 @@ describe('Token syntax migration', () => {
             dataPath,
             JSON.stringify({
               ...JSON.parse(originalData) as Record<string, unknown>,
-              attachmentFolderPath: `./legacy/${legacyToken('noteFileName')}`,
-              generatedAttachmentFileName: `img-${legacyToken('noteFileName')}`,
+              attachmentFolderPath: `./legacy/${legacyToken()}`,
+              generatedAttachmentFileName: `img-${legacyToken()}`,
               shouldFollowObsidianAttachmentLocation: false,
               version: '13.0.0'
             })

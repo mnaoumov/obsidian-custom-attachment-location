@@ -63,7 +63,8 @@ describe('Copy original attachment file name', () => {
         const note = await app.vault.create(`copy-original-${stamp}.md`, '');
         const missing = await app.vault.createBinary(`copy-missing-${stamp}.pdf`, new ArrayBuffer(1));
         let importedPath = '';
-        function findAction(title: string): HTMLElement {
+        function findAction(): HTMLElement {
+          const title = 'Copy original file name';
           const item = [...document.querySelectorAll<HTMLElement>('.menu-item')].find((candidate) => candidate.querySelector('.menu-item-title')?.textContent === title);
           if (!item) {
             throw new Error(`Missing menu action: ${title}`);
@@ -106,7 +107,7 @@ describe('Copy original attachment file name', () => {
           menu.showAtPosition({ x: 100, y: 100 });
           // Let the menu finish opening before sending a pointer event to its final position.
           await sleep(200);
-          const nameAction = findAction('Copy original file name');
+          const nameAction = findAction();
           if (nameAction.classList.contains('is-disabled')) {
             throw new Error(`Original name is missing for ${file.path}`);
           }
@@ -132,7 +133,7 @@ describe('Copy original attachment file name', () => {
           await sleep(200);
           // The import above carried a source path; no action may expose it.
           const hasPathAction = [...document.querySelectorAll('.menu-item-title')].some((title) => title.textContent === 'Copy original path');
-          await clickElement({ element: findAction('Copy original file name') });
+          await clickElement({ element: findAction() });
           await waitUntil({ message: 'The link menu did not call the clipboard writer', predicate: () => copiedValues.length === 2, timeoutInMilliseconds: 3000 });
           const linkMenuCopy = copiedValues[1];
           const linkMenuClipboard = await readSystemClipboard();
@@ -142,7 +143,7 @@ describe('Copy original attachment file name', () => {
           const missingMenu = new Menu().setUseNativeMenu(false);
           app.workspace.trigger('file-menu', missingMenu, missing, 'file-explorer', leaf);
           missingMenu.showAtPosition({ x: 100, y: 100 });
-          const isNameActionDisabled = findAction('Copy original file name').classList.contains('is-disabled');
+          const isNameActionDisabled = findAction().classList.contains('is-disabled');
           missingMenu.hide();
           menuResult = { fileMenuClipboard, fileMenuCopy, hasPathAction, importedName: file.name, isDesktopApp: Platform.isDesktopApp, isNameActionDisabled, linkMenuClipboard, linkMenuCopy };
         } catch (error) {

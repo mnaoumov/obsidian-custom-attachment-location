@@ -7,10 +7,7 @@ interface GetRangeStringParams {
 
 export function getRangeString(params: GetRangeStringParams): string {
   const { from, to } = params;
-  if (from.length !== 1) {
-    throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
-  }
-  if (to.length !== 1) {
+  if ((from.length !== 1) || (to.length !== 1)) {
     throw new Error(`Range must be from-to a single character: ${from} to ${to}`);
   }
 

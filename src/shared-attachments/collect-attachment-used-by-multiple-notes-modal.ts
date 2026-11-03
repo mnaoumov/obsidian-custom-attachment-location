@@ -197,16 +197,16 @@ export function selectMode(params: SelectModeParams): Promise<CollectAttachmentU
     app,
     attachmentPath,
     backlinks,
-    isCancelMode,
-    noPriorityWinnerReason
+    isCancelMode = false,
+    noPriorityWinnerReason = null
   } = params;
   return new Promise((resolve) => {
     const modal = new CollectAttachmentUsedByMultipleNotesModal({
       app,
       attachmentPath,
       backlinks,
-      isCancelMode: isCancelMode ?? false,
-      noPriorityWinnerReason: noPriorityWinnerReason ?? null,
+      isCancelMode,
+      noPriorityWinnerReason,
       resolve
     });
     modal.open();

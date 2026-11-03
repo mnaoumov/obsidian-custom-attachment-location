@@ -210,7 +210,7 @@ describe('Attachment-path bottleneck', () => {
         function resolvePair(pair: NoteAttachmentPair): null | ResolvedNoteAttachment {
           const noteFile = app.vault.getFileByPath(pair.note);
           const attachmentFile = app.vault.getFileByPath(pair.attachment);
-          return !noteFile || !attachmentFile ? null : { attachmentFile, noteFile };
+          return noteFile && attachmentFile ? { attachmentFile, noteFile } : null;
         }
 
         function buildParams(noteFile: TFile, attachmentFile: TFile, content: ArrayBuffer | undefined): GetAvailablePathForAttachmentsParams {

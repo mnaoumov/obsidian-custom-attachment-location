@@ -39,7 +39,7 @@ vi.mock('@mnaoumov/obsidian-lib/modals/confirm', () => ({
   confirm: vi.fn()
 }));
 
-const mockConfirm = vi.mocked(confirm);
+const shouldConfirmMock = vi.mocked(confirm);
 
 let app: AppOriginal;
 let buttonHandlers: Map<string, () => unknown>;
@@ -65,7 +65,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  mockConfirm.mockReset();
+  shouldConfirmMock.mockReset();
   app = App.createConfigured__().asOriginalType__();
   buttonHandlers = new Map<string, () => unknown>();
   vi.spyOn(ButtonComponent.prototype, 'onClick').mockImplementation(function onClickMock(this: ButtonComponent, callback: (mouseEvent: MouseEvent) => unknown): ButtonComponent {
@@ -115,19 +115,19 @@ describe('showPruneOriginalAttachmentNamesModal', () => {
   });
 
   it('should answer Forget all only after the confirmation', async () => {
-    mockConfirm.mockResolvedValue(true);
+    shouldConfirmMock.mockResolvedValue(true);
     const choicePromise = showPruneOriginalAttachmentNamesModal({ app, originalAttachmentNamesComponent });
 
     buttonHandlers.get('Forget all')?.();
 
     expect(await choicePromise).toBe(PruneOriginalAttachmentNamesChoice.ForgetAll);
-    expect(mockConfirm).toHaveBeenCalledOnce();
-    const message = mockConfirm.mock.calls[0]?.[0].message;
+    expect(shouldConfirmMock).toHaveBeenCalledOnce();
+    const message = shouldConfirmMock.mock.calls[0]?.[0].message;
     expect(message instanceof DocumentFragment ? message.textContent : message).toContain('{{originalAttachmentFileName}}');
   });
 
   it('should stay open when the confirmation is declined', async () => {
-    mockConfirm.mockResolvedValue(false);
+    shouldConfirmMock.mockResolvedValue(false);
     let isSettled = false;
     const choicePromise = showPruneOriginalAttachmentNamesModal({ app, originalAttachmentNamesComponent }).then((choice) => {
       isSettled = true;

@@ -1279,7 +1279,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             return;
           }
           setting.settingEl.addClass('original-name-storage-controls');
-          function updateDescription(storage: OriginalAttachmentNamesComponent): void {
+          const storage: OriginalAttachmentNamesComponent = component;
+          function updateDescription(): void {
             setting.setDesc(createFragment((fragment) => {
               const status = t(($) => storage.isSyncEnabled ? $.originalAttachmentNames.storage.enabled : $.originalAttachmentNames.storage.local);
               fragment.createEl('p', { text: status });
@@ -1293,7 +1294,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             } catch (error) {
               await alert({ app: this.app, message: String(error), title: t(($) => $.originalAttachmentNames.storage.errorTitle) });
             } finally {
-              updateDescription(component);
+              updateDescription();
             }
           };
           const setup = async (isObsidianSync: boolean): Promise<void> => {
@@ -1340,7 +1341,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               })
             ))
           );
-          updateDescription(component);
+          updateDescription();
         }
       })
     ];

@@ -320,16 +320,7 @@ export class AttachmentPathManager {
     // Plain `isNote`, not `isNoteEx`, on purpose: a drawing the user treats as an attachment still OWNS an
     // attachment folder, so an image pasted into it follows the configured template rather than Obsidian's
     // default location. Every other site asks `isNoteEx`; this one disagreeing is the decision, not a defect.
-    if (!noteFilePath || !isNote(noteFilePath)) {
-      attachmentPath = await getAvailablePathForAttachments({
-        app: this.app,
-        attachmentFileBaseName,
-        attachmentFileExtension: params.attachmentFileExtension,
-        notePathOrFile: params.notePathOrFile,
-        shouldSkipDuplicateCheck: params.shouldSkipDuplicateCheck ?? false,
-        shouldSkipMissingAttachmentFolderCreation: params.shouldSkipMissingAttachmentFolderCreation ?? true
-      });
-    } else {
+    if (noteFilePath && isNote(noteFilePath)) {
       const readAttachmentFileContent = params.readAttachmentFileContent ?? undefined;
       const attachmentFileName = makeFileName({
         fileBaseName: attachmentFileBaseName,
@@ -378,6 +369,15 @@ export class AttachmentPathManager {
         const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.attachmentFileExtension ? `.${params.attachmentFileExtension}` : '');
         attachmentPath = this.app.vault.getAvailablePath(join(directory, generatedAttachmentFileNameBaseName), params.attachmentFileExtension);
       }
+    } else {
+      attachmentPath = await getAvailablePathForAttachments({
+        app: this.app,
+        attachmentFileBaseName,
+        attachmentFileExtension: params.attachmentFileExtension,
+        notePathOrFile: params.notePathOrFile,
+        shouldSkipDuplicateCheck: params.shouldSkipDuplicateCheck ?? false,
+        shouldSkipMissingAttachmentFolderCreation: params.shouldSkipMissingAttachmentFolderCreation ?? true
+      });
     }
 
     /*

@@ -46,7 +46,7 @@ export class VaultGetAvailablePathForAttachmentsPatchComponent extends MonkeyAro
           attachmentFileBaseName,
           attachmentFileExtension,
           context: AttachmentPathContext.Unknown,
-          notePathOrFile: notePathOrFile ?? null,
+          notePathOrFile,
           oldAttachmentPathOrFile: makeFileName({
             fileBaseName: attachmentFileBaseName,
             fileExtension: attachmentFileExtension

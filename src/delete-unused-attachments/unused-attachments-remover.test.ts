@@ -137,14 +137,14 @@ vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
 }));
 
 const mockGetCanvasReferences = vi.mocked(getCanvasReferences);
-const mockIsCanvasFile = vi.mocked(isCanvasFile);
-const mockIsFile = vi.mocked(isFile);
-const mockIsFolder = vi.mocked(isFolder);
+const isCanvasFileMock = vi.mocked(isCanvasFile);
+const isFileMock = vi.mocked(isFile);
+const isFolderMock = vi.mocked(isFolder);
 const mockExtractLinkFile = vi.mocked(extractReferenceFile);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
 const mockGetLinks = vi.mocked(getReferences);
-const mockConfirm = vi.mocked(confirmMinimizable);
+const shouldConfirmMock = vi.mocked(confirmMinimizable);
 const mockRenderInternalLink = vi.mocked(renderInternalLink);
 const mockAddToQueueAndWait = vi.mocked(addToQueueAndWait);
 const mockCleanupEmptyFolders = vi.mocked(cleanupEmptyFolders);
@@ -223,7 +223,7 @@ function createReference(link: string): Reference {
 }
 
 function getConfirmMessageText(): string {
-  return castTo<ConfirmParamsLike>(mockConfirm.mock.calls[0]?.[0]).message.textContent;
+  return castTo<ConfirmParamsLike>(shouldConfirmMock.mock.calls[0]?.[0]).message.textContent;
 }
 
 beforeAll(async () => {
@@ -326,9 +326,9 @@ describe('UnusedAttachmentsRemover', () => {
 
   describe('gathering note files', () => {
     it('should skip a single file that is not a note', async () => {
-      mockIsFile.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockReturnValue(false);
-      mockIsFolder.mockReturnValue(false);
+      isFolderMock.mockReturnValue(false);
       await runOperation([createFile('image.png')]);
       expect(mockGetCacheSafe).not.toHaveBeenCalled();
       expect(showNoticeSpy).toHaveBeenCalledExactlyOnceWith('No unused attachments found.');
@@ -344,8 +344,8 @@ describe('UnusedAttachmentsRemover', () => {
       const note = createFile('note.md');
       const drawing = createFile('drawing.excalidraw.md');
       // `recurseChildren` visits the attachment folder itself first, as Obsidian does, so it must not pass for a file.
-      mockIsFile.mockImplementation((f) => f !== attachmentFolder);
-      mockIsFolder.mockReturnValue(false);
+      isFileMock.mockImplementation((f) => f !== attachmentFolder);
+      isFolderMock.mockReturnValue(false);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note);
       mockGetCacheSafe.mockResolvedValue(null);
       await runOperation([note, drawing]);
@@ -357,8 +357,8 @@ describe('UnusedAttachmentsRemover', () => {
       const folder = strictProxy<TAbstractFile>({ path: 'folder' });
       const childNote = createFile('folder/child.md');
       const childNonNote = createFile('folder/img.png');
-      mockIsFile.mockImplementation((f) => f !== folder);
-      mockIsFolder.mockImplementation((f) => f === folder);
+      isFileMock.mockImplementation((f) => f !== folder);
+      isFolderMock.mockImplementation((f) => f === folder);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note || f === childNote);
       mockGetCacheSafe.mockResolvedValue(null);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((root, callback) => {
@@ -386,8 +386,8 @@ describe('UnusedAttachmentsRemover', () => {
       const folder = strictProxy<TAbstractFile>({ path: 'folder' });
       const childFolder = strictProxy<TAbstractFile>({ path: 'folder/nested' });
       const childNote = createFile('folder/child.md');
-      mockIsFile.mockImplementation((f) => f !== folder && f !== childFolder);
-      mockIsFolder.mockImplementation((f) => f === folder || f === childFolder);
+      isFileMock.mockImplementation((f) => f !== folder && f !== childFolder);
+      isFolderMock.mockImplementation((f) => f === folder || f === childFolder);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === childNote);
       mockGetCacheSafe.mockResolvedValue(null);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((root, callback) => {
@@ -410,9 +410,9 @@ describe('UnusedAttachmentsRemover', () => {
 
     it('should skip an ignored note without scanning it', async () => {
       const note = createFile('note.md');
-      mockIsFile.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockReturnValue(true);
-      mockIsFolder.mockReturnValue(false);
+      isFolderMock.mockReturnValue(false);
       vi.mocked(settings.isPathIgnored).mockReturnValue(true);
       await runOperation([note]);
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('note path is ignored'));
@@ -427,10 +427,10 @@ describe('UnusedAttachmentsRemover', () => {
     beforeEach(() => {
       note = createFile('note.md');
       // `recurseChildren` visits the attachment folder itself first, as Obsidian does, so it must not pass for a file.
-      mockIsFile.mockImplementation((f) => f !== attachmentFolder);
+      isFileMock.mockImplementation((f) => f !== attachmentFolder);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note);
-      mockIsFolder.mockReturnValue(false);
-      mockIsCanvasFile.mockReturnValue(false);
+      isFolderMock.mockReturnValue(false);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([]);
     });
@@ -445,7 +445,7 @@ describe('UnusedAttachmentsRemover', () => {
       mockGetLinks.mockReturnValue([createReference('doc.html')]);
       mockExtractLinkFile.mockReturnValue(base);
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         for (const file of files) {
           callback(file);
@@ -457,7 +457,7 @@ describe('UnusedAttachmentsRemover', () => {
         recurseSpy.mockRestore();
       }
       expect(mockTrashSafe).not.toHaveBeenCalled();
-      expect(mockConfirm).not.toHaveBeenCalled();
+      expect(shouldConfirmMock).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -473,7 +473,7 @@ describe('UnusedAttachmentsRemover', () => {
       mockGetLinks.mockReturnValue(referencedName ? [createReference(referencedName)] : []);
       mockExtractLinkFile.mockReturnValue(files.find((file) => file.name === referencedName) ?? null);
       mockGetBacklinksForFileSafe.mockImplementation(({ pathOrFile }) => Promise.resolve(createBacklinks(typeof pathOrFile !== 'string' && pathOrFile.name === sharedName ? ['other.md'] : [])));
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         for (const file of files) {
           callback(file);
@@ -495,7 +495,7 @@ describe('UnusedAttachmentsRemover', () => {
     });
 
     it('should read references from a canvas note', async () => {
-      mockIsCanvasFile.mockReturnValue(true);
+      isCanvasFileMock.mockReturnValue(true);
       mockGetCanvasReferences.mockResolvedValue([]);
       await runOperation([note]);
       expect(mockGetCanvasReferences).toHaveBeenCalledWith(app, note);
@@ -510,7 +510,7 @@ describe('UnusedAttachmentsRemover', () => {
         callback(orphan);
       });
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       try {
         await runOperation([note]);
       } finally {
@@ -534,7 +534,7 @@ describe('UnusedAttachmentsRemover', () => {
       const unused = createFile(`${ATTACHMENT_FOLDER_PATH}/unused.png`);
       mockGetLinks.mockReturnValue([createReference('referenced.png')]);
       mockExtractLinkFile.mockReturnValue(referenced);
-      mockIsFile.mockImplementation((f) => f !== subFolder);
+      isFileMock.mockImplementation((f) => f !== subFolder);
       // One predicate answers both halves now: `note` is the note the sweep scans, and `noteInFolder` is a
       // note sitting INSIDE the attachment folder, which is therefore never a candidate to trash.
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note || f === noteInFolder);
@@ -545,7 +545,7 @@ describe('UnusedAttachmentsRemover', () => {
         callback(unused);
       });
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       try {
         await runOperation([note]);
       } finally {
@@ -583,7 +583,7 @@ describe('UnusedAttachmentsRemover', () => {
       // effective backlink count is zero and the attachment is treated as unused.
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'drawing.excalidraw.md']));
       vi.mocked(settings.isExcludedFromMultipleNotesCheck).mockImplementation((path) => path === 'drawing.excalidraw.md');
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       try {
         await runOperation([note]);
       } finally {
@@ -623,7 +623,7 @@ describe('UnusedAttachmentsRemover', () => {
     });
 
     it('should not read the text of a canvas note', async () => {
-      mockIsCanvasFile.mockReturnValue(true);
+      isCanvasFileMock.mockReturnValue(true);
       mockGetCanvasReferences.mockResolvedValue([]);
       await runOperation([note]);
       expect(cachedRead).not.toHaveBeenCalled();
@@ -646,7 +646,7 @@ describe('UnusedAttachmentsRemover', () => {
           callback(image);
         });
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
-        mockConfirm.mockResolvedValue(true);
+        shouldConfirmMock.mockResolvedValue(true);
       });
 
       it('should keep an attachment another scanned note names in its text', async () => {
@@ -698,13 +698,13 @@ describe('UnusedAttachmentsRemover', () => {
       unitMembers = [drawing, image];
       unitFolder = createFolder(UNIT_FOLDER_PATH);
 
-      mockIsFile.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note);
-      mockIsFolder.mockReturnValue(false);
-      mockIsCanvasFile.mockReturnValue(false);
+      isFolderMock.mockReturnValue(false);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([]);
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
 
       vi.mocked(settings.isAttachmentUnitFolder).mockImplementation((path) => path === UNIT_FOLDER_PATH);
       getFolderByPath.mockImplementation((path) => path === UNIT_FOLDER_PATH ? unitFolder : attachmentFolder);
@@ -734,7 +734,7 @@ describe('UnusedAttachmentsRemover', () => {
       vi.mocked(settings.isPathIgnored).mockImplementation((path) => path === UNIT_FOLDER_PATH);
       await runOperation([note]);
       expect(mockTrashSafe).not.toHaveBeenCalled();
-      expect(mockConfirm).not.toHaveBeenCalled();
+      expect(shouldConfirmMock).not.toHaveBeenCalled();
     });
 
     it('should clean up the unit folder parent rather than the unit folder itself', async () => {
@@ -861,7 +861,7 @@ describe('UnusedAttachmentsRemover', () => {
 
     it('should name the folder in the confirmation and say it goes whole', async () => {
       backlinksByPath.set(image.path, [drawing.path]);
-      mockConfirm.mockResolvedValue(false);
+      shouldConfirmMock.mockResolvedValue(false);
       await runOperation([note]);
 
       const text = getConfirmMessageText();
@@ -904,7 +904,7 @@ describe('UnusedAttachmentsRemover', () => {
       // The walk yields folders as well as files, and only the files are the unit's members.
       const subFolder = createFolder(`${UNIT_FOLDER_PATH}/sub`);
       unitMembers = [drawing, image, castTo<TFile>(subFolder)];
-      mockIsFile.mockImplementation((abstractFile) => abstractFile !== subFolder);
+      isFileMock.mockImplementation((abstractFile) => abstractFile !== subFolder);
       backlinksByPath.set(image.path, [drawing.path]);
 
       await runOperation([note]);
@@ -975,10 +975,10 @@ describe('UnusedAttachmentsRemover', () => {
       note = createFile('note.md');
       unusedA = createFile(`${ATTACHMENT_FOLDER_PATH}/a.png`);
       unusedB = createFile('other-folder/b.png');
-      mockIsFile.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => f === note);
-      mockIsFolder.mockReturnValue(false);
-      mockIsCanvasFile.mockReturnValue(false);
+      isFolderMock.mockReturnValue(false);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([]);
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
@@ -989,7 +989,7 @@ describe('UnusedAttachmentsRemover', () => {
     });
 
     it('should trash the confirmed attachments and clean up their folders', async () => {
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       await runOperation([note]);
       expect(mockTrashSafe).toHaveBeenCalledTimes(2);
       expect(mockTrashSafe).toHaveBeenCalledWith(app, unusedA);
@@ -1003,7 +1003,7 @@ describe('UnusedAttachmentsRemover', () => {
 
     it('keeps protected metadata inside a scanned attachment folder while deleting ordinary unused files', async () => {
       vi.mocked(settings.isPathIgnored).mockImplementation((path) => path === unusedA.path);
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       await runOperation([note]);
       expect(mockTrashSafe).toHaveBeenCalledExactlyOnceWith(app, unusedB);
     });
@@ -1016,7 +1016,7 @@ describe('UnusedAttachmentsRemover', () => {
       vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         callback(unusedRoot);
       });
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
 
       await runOperation([note]);
 
@@ -1029,20 +1029,20 @@ describe('UnusedAttachmentsRemover', () => {
     });
 
     it('should not trash anything when the confirmation is declined', async () => {
-      mockConfirm.mockResolvedValue(false);
+      shouldConfirmMock.mockResolvedValue(false);
       await runOperation([note]);
       expect(mockTrashSafe).not.toHaveBeenCalled();
       expect(mockCleanupEmptyFolders).not.toHaveBeenCalled();
     });
 
     it('should state the count in the confirmation', async () => {
-      mockConfirm.mockResolvedValue(false);
+      shouldConfirmMock.mockResolvedValue(false);
       await runOperation([note]);
       expect(getConfirmMessageText()).toContain('2 attachment(s) will be moved to the trash.');
     });
 
     it('should list every path while there are few of them', async () => {
-      mockConfirm.mockResolvedValue(false);
+      shouldConfirmMock.mockResolvedValue(false);
       await runOperation([note]);
       const text = getConfirmMessageText();
       expect(text).toContain(unusedA.path);
@@ -1052,7 +1052,7 @@ describe('UnusedAttachmentsRemover', () => {
 
     it('should list every path as a link to the file it names', async () => {
       // #87: the dialog is the last gate before a delete, so each entry has to be something the user can open.
-      mockConfirm.mockResolvedValue(false);
+      shouldConfirmMock.mockResolvedValue(false);
       await runOperation([note]);
       expect(mockRenderInternalLink).toHaveBeenCalledTimes(2);
       expect(mockRenderInternalLink).toHaveBeenCalledWith({ app, pathOrAbstractFile: unusedA, shouldRevealFile: true });
@@ -1068,7 +1068,7 @@ describe('UnusedAttachmentsRemover', () => {
           callback(file);
         }
       });
-      mockConfirm.mockResolvedValue(false);
+      shouldConfirmMock.mockResolvedValue(false);
       await runOperation([note]);
 
       const text = getConfirmMessageText();
@@ -1089,9 +1089,9 @@ describe('UnusedAttachmentsRemover', () => {
     it('should scan every note in the vault', async () => {
       const rootFolder = vaultRootFolder;
       const note = createFile('deep/note.md');
-      mockIsFile.mockImplementation((f) => f === note);
+      isFileMock.mockImplementation((f) => f === note);
       vi.mocked(pluginSettingsComponent.isNoteEx).mockReturnValue(true);
-      mockIsFolder.mockImplementation((f) => f === rootFolder);
+      isFolderMock.mockImplementation((f) => f === rootFolder);
       mockGetCacheSafe.mockResolvedValue(null);
       vi.spyOn(Vault, 'recurseChildren').mockImplementation((root, callback) => {
         if (root === rootFolder) {
@@ -1147,8 +1147,8 @@ describe('UnusedAttachmentsRemover', () => {
       // Nothing in these vaults is a note unless a test says so - that is the whole scenario.
       noteFiles = [];
 
-      mockIsFile.mockImplementation((f) => f !== vaultRootFolder);
-      mockIsFolder.mockImplementation((f) => f === vaultRootFolder);
+      isFileMock.mockImplementation((f) => f !== vaultRootFolder);
+      isFolderMock.mockImplementation((f) => f === vaultRootFolder);
       /*
        * ONE predicate drives both halves of the walk — the notes it gathers and the orphan candidates it
        * rejects — because the sweep reads them against each other, and two answers that disagree make a
@@ -1156,11 +1156,11 @@ describe('UnusedAttachmentsRemover', () => {
        * and a `.excalidraw.md` is exactly where they disagreed.
        */
       vi.mocked(pluginSettingsComponent.isNoteEx).mockImplementation((f) => noteFiles.includes(castTo<TFile>(f)));
-      mockIsCanvasFile.mockReturnValue(false);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([]);
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks([]));
-      mockConfirm.mockResolvedValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       mockVaultWalk();
     });
 
@@ -1210,7 +1210,7 @@ describe('UnusedAttachmentsRemover', () => {
       vaultFiles = [canvas, embedded];
       mockVaultWalk();
       noteFiles = [canvas];
-      mockIsCanvasFile.mockImplementation((f) => f === canvas);
+      isCanvasFileMock.mockImplementation((f) => f === canvas);
       mockGetCanvasReferences.mockResolvedValue([createCanvasReference(embedded.path)]);
       mockExtractLinkFile.mockReturnValue(embedded);
       vi.mocked(settings.isOrphanAttachmentScanCandidate).mockReturnValue(true);
