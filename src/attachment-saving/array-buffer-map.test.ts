@@ -22,8 +22,6 @@ import { ArrayBufferMap } from './array-buffer-map.ts';
 
 type CapacitorFs = CapacitorAdapterType['fs'];
 type FsPromises = FileSystemAdapterType['fsPromises'];
-type FsStat = (path: string) => ReturnType<FsPromises['stat']>;
-type FsStats = Awaited<ReturnType<FsPromises['stat']>>;
 
 function createApp(adapter: App['vault']['adapter']): App {
   return strictProxy<App>({
@@ -93,6 +91,8 @@ describe('ArrayBufferMap', () => {
     });
 
     it('should set file stats from the FileSystemAdapter', async () => {
+      type FsStats = Awaited<ReturnType<FsPromises['stat']>>;
+      type FsStat = (path: string) => ReturnType<FsPromises['stat']>;
       const stat = vi.fn<FsStat>().mockResolvedValue(castTo<FsStats>({
         ctimeMs: 111,
         mtimeMs: 222,

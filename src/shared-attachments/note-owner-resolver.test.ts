@@ -52,7 +52,7 @@ vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
 }));
 
 const mockFindAttachmentUnitFolderPath = vi.mocked(findAttachmentUnitFolderPath);
-const mockIsFile = vi.mocked(isFile);
+const isFileMock = vi.mocked(isFile);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 
 function createBacklinks(keys: string[]): CustomArrayDict<Reference> {
@@ -136,7 +136,7 @@ describe('NoteOwnerResolver', () => {
       const entryPoint = createFile('page_files/page.html');
       mockFindAttachmentUnitFolderPath.mockReturnValue('page_files');
       getFolderByPath.mockReturnValue(strictProxy<TFolder>({ path: 'page_files' }));
-      mockIsFile.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         callback(attachmentFile);
         callback(entryPoint);

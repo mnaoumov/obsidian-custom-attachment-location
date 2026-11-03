@@ -157,14 +157,14 @@ export function selectMode(params: SelectModeParams): Promise<MoveAttachmentToPr
     app,
     attachmentPath,
     backlinks,
-    isCancelMode
+    isCancelMode = false
   } = params;
   return new Promise((resolve) => {
     const modal = new MoveAttachmentToProperFolderUsedByMultipleNotesModal({
       app,
       attachmentPath,
       backlinks,
-      isCancelMode: isCancelMode ?? false,
+      isCancelMode,
       resolve
     });
     modal.open();

@@ -10,8 +10,6 @@ import {
   stringFormatSchema
 } from './string-token-base.ts';
 
-type StringFormat = Parameters<typeof formatString>[1];
-
 describe('stringFormatSchema', () => {
   it('should accept an empty object', () => {
     const result = stringFormatSchema.parse({});
@@ -28,6 +26,7 @@ describe('stringFormatSchema', () => {
 });
 
 describe('formatString', () => {
+  type StringFormat = Parameters<typeof formatString>[1];
   it('should return the value unchanged when format is empty', () => {
     expect(formatString('Hello', {})).toBe('Hello');
   });

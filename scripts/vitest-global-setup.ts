@@ -12,16 +12,6 @@
 
 import { createSetup } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 
-import {
-  ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID,
-  getAdvancedRenameAndDeleteHandlerPopulate
-} from './helpers/advanced-rename-and-delete-handler-seed.ts';
-import { getPluginSettingsPopulate } from './helpers/plugin-settings-seed.ts';
+import { VITEST_GLOBAL_SETUP_OPTIONS } from './helpers/vitest-global-setup-options.ts';
 
-export const { setup, teardown } = createSetup({
-  enableCommunityPlugins: [ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID],
-  populate: async () => ({
-    ...await getAdvancedRenameAndDeleteHandlerPopulate(),
-    ...getPluginSettingsPopulate()
-  })
-});
+export const { setup, teardown } = createSetup(VITEST_GLOBAL_SETUP_OPTIONS);

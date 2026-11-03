@@ -227,10 +227,10 @@ vi.mock('../shared-attachments/collect-attachment-used-by-multiple-notes-modal.t
 }));
 
 const mockAbortSignalAny = vi.mocked(abortSignalAny);
-const mockIsCanvasFile = vi.mocked(isCanvasFile);
-const mockIsFile = vi.mocked(isFile);
-const mockIsFolder = vi.mocked(isFolder);
-const mockIsNote = vi.mocked(isNote);
+const isCanvasFileMock = vi.mocked(isCanvasFile);
+const isFileMock = vi.mocked(isFile);
+const isFolderMock = vi.mocked(isFolder);
+const isNoteMock = vi.mocked(isNote);
 const mockEditLinks = vi.mocked(editReferences);
 const mockExtractLinkFile = vi.mocked(extractReferenceFile);
 const mockUpdateLink = vi.mocked(updateLink);
@@ -238,7 +238,7 @@ const mockLoop = vi.mocked(loop);
 const mockGetLinks = vi.mocked(getReferences);
 const mockGetBacklinksForFileSafe = vi.mocked(getBacklinksForFileSafe);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
-const mockConfirm = vi.mocked(confirm);
+const shouldConfirmMock = vi.mocked(confirm);
 const mockAddToQueue = vi.mocked(addToQueue);
 const mockAddToQueueAndWait = vi.mocked(addToQueueAndWait);
 const mockCleanupEmptyFolders = vi.mocked(cleanupEmptyFolders);
@@ -286,19 +286,18 @@ function createBacklinks(keys: string[]): CustomArrayDict<Reference> {
 
 // Canvas references are plain objects (not strict proxies).
 // The real `isCanvas*` guards and `referenceToFileChange` can then probe arbitrary properties without throwing.
-function createCanvasFileNodeReference(overrides: Partial<CanvasReference> = {}): CanvasReference {
+function createCanvasFileNodeReference(): CanvasReference {
   return {
     isCanvas: true,
     key: 'nodes.0.file',
     link: 'img.png',
     nodeIndex: 0,
     original: 'img.png',
-    type: 'file',
-    ...overrides
+    type: 'file'
   };
 }
 
-function createCanvasTextNodeReference(overrides: Partial<CanvasTextNodeReference> = {}): CanvasTextNodeReference {
+function createCanvasTextNodeReference(): CanvasTextNodeReference {
   return {
     isCanvas: true,
     key: 'nodes.1.text.0',
@@ -307,8 +306,7 @@ function createCanvasTextNodeReference(overrides: Partial<CanvasTextNodeReferenc
     original: '![[img.png]]',
     // A plain object (not a strict proxy) so equality matchers can probe it without throwing.
     originalReference: castTo<Reference>({ link: 'img.png', original: '![[img.png]]' }),
-    type: 'text',
-    ...overrides
+    type: 'text'
   };
 }
 
@@ -484,9 +482,9 @@ describe('AttachmentCollector', () => {
     it('should run the operation against the vault root', async () => {
       mockAbortSignalAny.mockReturnValue(new AbortController().signal);
       mockLoop.mockResolvedValue(undefined);
-      mockConfirm.mockResolvedValue(true);
-      mockIsFile.mockReturnValue(false);
-      mockIsFolder.mockReturnValue(false);
+      shouldConfirmMock.mockResolvedValue(true);
+      isFileMock.mockReturnValue(false);
+      isFolderMock.mockReturnValue(false);
       await collector.collectAttachmentsEntireVault();
       const params = castTo<QueueParamsLike>(mockAddToQueueAndWait.mock.calls[0]?.[0]);
       await params.operationFunction(new AbortController().signal);
@@ -528,8 +526,8 @@ describe('AttachmentCollector', () => {
 
     it('should queue the same collect the fire-and-forget method does', async () => {
       mockAddToQueueAndWait.mockResolvedValue(undefined);
-      mockIsFile.mockReturnValue(false);
-      mockConfirm.mockResolvedValue(false);
+      isFileMock.mockReturnValue(false);
+      shouldConfirmMock.mockResolvedValue(false);
 
       // A folder is confirmed with the user first, which is how the shared implementation shows itself.
       await collector.collectAttachmentsInAbstractFilesAndWait([strictProxy<TAbstractFile>({ path: 'folder' })]);
@@ -537,7 +535,7 @@ describe('AttachmentCollector', () => {
       expect(params.operationName).toBe('Collect attachments in file');
       await params.operationFunction(new AbortController().signal);
 
-      expect(mockConfirm).toHaveBeenCalled();
+      expect(shouldConfirmMock).toHaveBeenCalled();
     });
   });
 
@@ -554,7 +552,7 @@ describe('AttachmentCollector', () => {
 
     it('should collect the note without a progress notice, which would flash on every save', async () => {
       const note = createFile('note.md');
-      mockIsCanvasFile.mockReturnValue(false);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
@@ -577,7 +575,7 @@ describe('AttachmentCollector', () => {
     let note: TFile;
 
     async function runSingleFile(noteFile: TFile): Promise<void> {
-      mockIsFile.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
       mockAbortSignalAny.mockReturnValue(new AbortController().signal);
       mockLoop.mockImplementation(async (options) => {
         await castTo<LoopOptionsLike>(options).processItem(noteFile);
@@ -589,7 +587,7 @@ describe('AttachmentCollector', () => {
 
     beforeEach(() => {
       note = createFile('note.md');
-      mockIsCanvasFile.mockReturnValue(false);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([]);
       getProperAttachmentPath.mockResolvedValue('attachments/img.png');
@@ -602,7 +600,7 @@ describe('AttachmentCollector', () => {
     });
 
     it('should read links from a canvas file', async () => {
-      mockIsCanvasFile.mockReturnValue(true);
+      isCanvasFileMock.mockReturnValue(true);
       mockGetCanvasReferences.mockResolvedValue([]);
       await runSingleFile(note);
       expect(mockGetCanvasReferences).toHaveBeenCalledWith(app, note);
@@ -827,9 +825,9 @@ describe('AttachmentCollector', () => {
         // A folder-wide or vault-wide collect visits notes the user never singled out, so the same
         // report there would be a box per note.
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
-        mockIsFile.mockReturnValue(false);
-        mockIsFolder.mockReturnValue(false);
-        mockConfirm.mockResolvedValue(true);
+        isFileMock.mockReturnValue(false);
+        isFolderMock.mockReturnValue(false);
+        shouldConfirmMock.mockResolvedValue(true);
         mockAbortSignalAny.mockReturnValue(new AbortController().signal);
         mockLoop.mockImplementation(async (options) => {
           await castTo<LoopOptionsLike>(options).processItem(note);
@@ -1074,9 +1072,9 @@ describe('AttachmentCollector', () => {
         // report there would be a box per attachment.
         settings.notePriorities = ['.excalidraw.md', '.md'];
         const noticeTexts = captureFragmentNoticeTexts(pluginNoticeComponent);
-        mockIsFile.mockReturnValue(false);
-        mockIsFolder.mockReturnValue(false);
-        mockConfirm.mockResolvedValue(true);
+        isFileMock.mockReturnValue(false);
+        isFolderMock.mockReturnValue(false);
+        shouldConfirmMock.mockResolvedValue(true);
         mockAbortSignalAny.mockReturnValue(new AbortController().signal);
         mockLoop.mockImplementation(async (options) => {
           await castTo<LoopOptionsLike>(options).processItem(note);
@@ -1546,7 +1544,7 @@ describe('AttachmentCollector', () => {
 
     describe('canvas references', () => {
       beforeEach(() => {
-        mockIsCanvasFile.mockReturnValue(true);
+        isCanvasFileMock.mockReturnValue(true);
         mockExtractLinkFile.mockReturnValue(createFile('img.png'));
         mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md']));
         mockRenameSafe.mockResolvedValue('attachments/img.png');
@@ -1675,7 +1673,7 @@ describe('AttachmentCollector', () => {
     });
 
     it('should notice and return when the single file path is ignored', async () => {
-      mockIsFile.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
       vi.mocked(settings.isPathIgnored).mockReturnValue(true);
       await runOperation([createFile('ignored.md')]);
       expect(mockLoop).not.toHaveBeenCalled();
@@ -1683,8 +1681,8 @@ describe('AttachmentCollector', () => {
     });
 
     it('should return when confirmation is declined for multiple files', async () => {
-      mockIsFile.mockReturnValue(true);
-      mockConfirm.mockResolvedValue(false);
+      isFileMock.mockReturnValue(true);
+      shouldConfirmMock.mockResolvedValue(false);
       await runOperation([createFile('a.md'), createFile('b.md')]);
       expect(mockLoop).not.toHaveBeenCalled();
     });
@@ -1693,10 +1691,10 @@ describe('AttachmentCollector', () => {
       const noteFile = createFile('a.md');
       const folder = strictProxy<TAbstractFile>({ path: 'folder' });
       const childNote = createFile('folder/c.md');
-      mockIsFile.mockImplementation((f) => f === noteFile || f === childNote);
-      mockIsFolder.mockImplementation((f) => f === folder);
-      mockIsNote.mockReturnValue(true);
-      mockConfirm.mockResolvedValue(true);
+      isFileMock.mockImplementation((f) => f === noteFile || f === childNote);
+      isFolderMock.mockImplementation((f) => f === folder);
+      isNoteMock.mockReturnValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         callback(childNote);
       });
@@ -1713,10 +1711,10 @@ describe('AttachmentCollector', () => {
     it('should skip a non-note child during folder recursion', async () => {
       const folder = strictProxy<TAbstractFile>({ path: 'folder' });
       const childNonNote = createFile('folder/img.png');
-      mockIsFile.mockReturnValue(false);
-      mockIsFolder.mockImplementation((f) => f === folder);
-      mockIsNote.mockReturnValue(false);
-      mockConfirm.mockResolvedValue(true);
+      isFileMock.mockReturnValue(false);
+      isFolderMock.mockImplementation((f) => f === folder);
+      isNoteMock.mockReturnValue(false);
+      shouldConfirmMock.mockResolvedValue(true);
       const recurseSpy = vi.spyOn(Vault, 'recurseChildren').mockImplementation((_root, callback) => {
         callback(childNonNote);
       });
@@ -1731,9 +1729,9 @@ describe('AttachmentCollector', () => {
 
     it('should not collect a single file that is not a note', async () => {
       const fileNote = createFile('a.md');
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(false);
-      mockConfirm.mockResolvedValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(false);
+      shouldConfirmMock.mockResolvedValue(true);
       await runOperation([fileNote]);
       const loopOptions = castTo<LoopOptionsLike>(mockLoop.mock.calls[0]?.[0]);
       expect(loopOptions.items).toEqual([]);
@@ -1742,9 +1740,9 @@ describe('AttachmentCollector', () => {
     it('should skip an ignored note inside loop processItem', async () => {
       const noteFile = createFile('a.md');
       const otherFile = createFile('b.md');
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
-      mockConfirm.mockResolvedValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       vi.mocked(settings.isPathIgnored).mockImplementation((path: string) => path === 'a.md');
       mockLoop.mockImplementation(async (options) => {
         await castTo<LoopOptionsLike>(options).processItem(noteFile);
@@ -1756,8 +1754,8 @@ describe('AttachmentCollector', () => {
 
     it('should abort the controller when the context becomes aborted in processItem', async () => {
       const noteFile = createFile('a.md');
-      mockIsFile.mockReturnValue(true);
-      mockIsCanvasFile.mockReturnValue(false);
+      isFileMock.mockReturnValue(true);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
@@ -1776,10 +1774,10 @@ describe('AttachmentCollector', () => {
       // enters collectAttachments with context already aborted and returns before reading its cache.
       const noteFile1 = createFile('a.md');
       const noteFile2 = createFile('b.md');
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
-      mockConfirm.mockResolvedValue(true);
-      mockIsCanvasFile.mockReturnValue(false);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
@@ -1800,10 +1798,10 @@ describe('AttachmentCollector', () => {
       // so it returns right after the cache read without requesting any backlinks.
       const noteFile1 = createFile('a.md');
       const noteFile2 = createFile('b.md');
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
-      mockConfirm.mockResolvedValue(true);
-      mockIsCanvasFile.mockReturnValue(false);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
+      isCanvasFileMock.mockReturnValue(false);
       mockGetLinks.mockReturnValue([createReference()]);
       mockExtractLinkFile.mockReturnValue(createFile('img.png'));
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
@@ -1836,9 +1834,9 @@ describe('AttachmentCollector', () => {
 
     it('should build progress bar and notice messages', async () => {
       const noteFile = createFile('a.md');
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
-      mockConfirm.mockResolvedValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
+      shouldConfirmMock.mockResolvedValue(true);
       let noticeMessage: string | undefined;
       mockLoop.mockImplementation(async (options) => {
         noticeMessage = castTo<LoopOptionsLike>(options).buildNoticeMessage({ item: noteFile, iterationString: '1/1' });

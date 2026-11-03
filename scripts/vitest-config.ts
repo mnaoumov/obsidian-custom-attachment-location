@@ -187,6 +187,7 @@ export const config = defineObsidianPluginVitestConfig({
     // every vault these projects open has it seeded. The capture projects spread these same objects and so
     // inherit it; the demo-vault and performance projects bring setups of their own that seed it too.
     context.desktop.globalSetup = [GLOBAL_SETUP_FILE];
+    context.desktopAfterLayoutReadyGlobalSetup = ['./scripts/vitest-global-setup-after-layout-ready.ts'];
     context.android.globalSetup = [GLOBAL_SETUP_FILE];
 
     context.desktop.setupFiles = [...toSetupFileList(context.desktop.setupFiles), DESKTOP_VAULT_CLEANUP_SETUP_FILE];

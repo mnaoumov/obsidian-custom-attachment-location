@@ -32,8 +32,6 @@ import { promptWithPreview } from './prompt-with-preview-modal.ts';
 
 type EmbedByExtension = Partial<App['embedRegistry']['embedByExtension']>;
 
-type EmbedCreator = NonNullable<App['embedRegistry']['embedByExtension'][string]>;
-
 const captured = {
   buttons: [] as ButtonComponent[],
   textComponents: [] as TextComponent[]
@@ -117,7 +115,7 @@ function getInputEl(textComponent: TextComponent | undefined): HTMLInputElement 
 }
 
 function isButtonDisabled(button: ButtonComponent | undefined): boolean {
-  return button ? ButtonComponentClass.fromOriginalType2__(button).disabled : false;
+  return !!button && ButtonComponentClass.fromOriginalType2__(button).disabled;
 }
 
 beforeAll(async () => {
@@ -125,6 +123,7 @@ beforeAll(async () => {
 });
 
 describe('promptWithPreview', () => {
+  type EmbedCreator = NonNullable<App['embedRegistry']['embedByExtension'][string]>;
   beforeEach(() => {
     captured.buttons.length = 0;
     captured.textComponents.length = 0;

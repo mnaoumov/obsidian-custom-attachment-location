@@ -76,6 +76,8 @@ Until 15.0.0 the patch in `src/attachment-location/vault-get-available-path-for-
 
 ## An integration suite edits settings through `editAndSave`, never onto the settings object
 
+The ordinary desktop suites run in both `integration-tests:desktop` and `integration-tests:desktop:after-layout-ready`. Their setup modules share `scripts/helpers/vitest-global-setup-options.ts`, preserving the dependency and pattern-mode seeds; only the companion adds `pluginEnableTiming: 'after-layout-ready'`. Keep `context.desktopAfterLayoutReadyGlobalSetup` explicit in `scripts/vitest-config.ts`: the toolkit cannot infer a companion for a custom setup. The TypeScript toolkit's runner includes `integration-tests:desktop:*` when asked for `integration-tests:desktop`, so the aggregate and desktop commands already run both timings; do not add a second call for the companion. Android retains startup timing, and performance retains its pre-populated setup.
+
 A `data.json` reload replaces the settings object, so an assignment onto it reverts to the file's values mid-suite, silently. Every desktop suite therefore gets the settings component from `scripts/helpers/plugin-settings-component-finder.ts`, passed into the closure through `evalInObsidian`'s `input` (functions there are serialized by source text, so the finder stays self-contained), and both edits and the final restore go through `editAndSave`. Read values through `settingsComponent.settings` each time rather than holding the object. A saved edit outlives the suite in `data.json`, so a suite that changes settings restores them in a `finally`.
 
 ## A fresh install follows Obsidian's attachment location, so every test vault seeds pattern mode

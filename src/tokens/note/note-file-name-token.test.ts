@@ -9,10 +9,10 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 import { NoteFileNameToken } from './note-file-name-token.ts';
 
-function createContext(noteFileName: string, format: TokenEvaluatorContext['format']): TokenEvaluatorContext {
+function createContext(format: TokenEvaluatorContext['format']): TokenEvaluatorContext {
   return castTo<TokenEvaluatorContext>({
     format,
-    noteFileName
+    noteFileName: 'My Note'
   });
 }
 
@@ -24,13 +24,13 @@ describe('NoteFileNameToken', () => {
 
   it('should return the note file name unchanged by default', () => {
     const token = new NoteFileNameToken();
-    const result = token.evaluate(createContext('My Note', null));
+    const result = token.evaluate(createContext(null));
     expect(result).toBe('My Note');
   });
 
   it('should apply the string format', () => {
     const token = new NoteFileNameToken();
-    const result = token.evaluate(createContext('My Note', { case: 'upper' }));
+    const result = token.evaluate(createContext({ case: 'upper' }));
     expect(result).toBe('MY NOTE');
   });
 });

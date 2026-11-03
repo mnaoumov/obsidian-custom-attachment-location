@@ -12,8 +12,6 @@ import type { TokenEvaluatorContext } from '../token-evaluator-context.ts';
 
 import { CustomToken } from './custom-token.ts';
 
-type TokenEvaluator = ConstructorParameters<typeof CustomToken>[1];
-
 vi.mock('@mnaoumov/typescript-lib/error', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@mnaoumov/typescript-lib/error')>();
   return {
@@ -33,6 +31,7 @@ afterEach(() => {
 });
 
 describe('CustomToken', () => {
+  type TokenEvaluator = ConstructorParameters<typeof CustomToken>[1];
   it('should use the provided name', () => {
     const evaluator = vi.fn<TokenEvaluator>();
     const token = new CustomToken('myToken', evaluator);
@@ -59,17 +58,17 @@ describe('CustomToken', () => {
 describe('CustomToken.parse', () => {
   it('should register the custom tokens declared in the string', async () => {
     const tokens = CustomToken.parse(`
-      registerCustomToken('foo', () => 'fooValue');
-      registerCustomToken('bar', () => 'barValue');
+      registerCustomToken('alpha', () => 'alphaValue');
+      registerCustomToken('bravo', () => 'bravoValue');
     `);
 
     expect(tokens).not.toBeNull();
     expect(tokens).toHaveLength(2);
-    const [fooToken, barToken] = tokens ?? [];
-    expect(fooToken?.name).toBe('foo');
-    expect(barToken?.name).toBe('bar');
-    expect(await fooToken?.evaluate(createContext(null))).toBe('fooValue');
-    expect(await barToken?.evaluate(createContext(null))).toBe('barValue');
+    const [alphaToken, bravoToken] = tokens ?? [];
+    expect(alphaToken?.name).toBe('alpha');
+    expect(bravoToken?.name).toBe('bravo');
+    expect(await alphaToken?.evaluate(createContext(null))).toBe('alphaValue');
+    expect(await bravoToken?.evaluate(createContext(null))).toBe('bravoValue');
     expect(printError).not.toHaveBeenCalled();
   });
 

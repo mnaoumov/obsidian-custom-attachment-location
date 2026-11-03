@@ -119,7 +119,7 @@ const mockGetAvailablePathForAttachments = vi.mocked(getAvailablePathForAttachme
 const mockGetAbstractFileOrNull = vi.mocked(getAbstractFileOrNull);
 const mockGetFileOrNull = vi.mocked(getFileOrNull);
 const mockGetPath = vi.mocked(getPath);
-const mockIsNote = vi.mocked(isNote);
+const isNoteMock = vi.mocked(isNote);
 const mockExtractLinkFile = vi.mocked(extractReferenceFile);
 const mockGetLinks = vi.mocked(getReferences);
 const mockGetCacheSafe = vi.mocked(getCacheSafe);
@@ -187,7 +187,7 @@ function createManager(): TestContext {
     specialCharactersReplacement: '-'
   });
 
-  const exists = vi.fn<Vault['exists']>().mockResolvedValue(true);
+  const checkExists = vi.fn<Vault['exists']>().mockResolvedValue(true);
   const create = vi.fn<Vault['create']>();
   const readBinary = vi.fn<Vault['readBinary']>().mockResolvedValue(new ArrayBuffer(0));
   const getAvailablePath = vi.fn<Vault['getAvailablePath']>().mockImplementation((path, extension) => extension ? `${path}.${extension}` : path);
@@ -196,7 +196,7 @@ function createManager(): TestContext {
 
   const vault = strictProxy<Vault>({
     create,
-    exists,
+    exists: checkExists,
     getAvailablePath,
     getConfig: castTo<Vault['getConfig']>(getConfig),
     readBinary
@@ -242,7 +242,7 @@ function createManager(): TestContext {
 
   return {
     create,
-    exists,
+    exists: checkExists,
     expectArrival,
     getAvailablePath,
     getAvailablePathForAttachmentsOriginal,
@@ -288,7 +288,7 @@ beforeEach(() => {
   mockGetAbstractFileOrNull.mockReturnValue(null);
   mockGetFileOrNull.mockReturnValue(null);
   mockGetPath.mockImplementation((_app, pathOrFile) => typeof pathOrFile === 'string' ? pathOrFile : castTo<TFile>(pathOrFile).path);
-  mockIsNote.mockReturnValue(true);
+  isNoteMock.mockReturnValue(true);
   mockGetAvailablePathForAttachments.mockResolvedValue('obsidian-lib-path');
   mockGetLinks.mockReturnValue([]);
   mockGetCacheSafe.mockResolvedValue(null);
@@ -315,7 +315,7 @@ describe('AttachmentPathManager', () => {
     async function prepare(options: PrepareOptions = {}): Promise<string> {
       const note = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? note : null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       return await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: options.baseName ?? 'renamed',
         attachmentFileExtension: options.extension ?? 'pdf',
@@ -1094,7 +1094,7 @@ describe('AttachmentPathManager', () => {
     it('prepares arrival-name link text before a renamed attachment is created, once per insertion', async () => {
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       context.settings.insertedLinkText = '{{originalAttachmentFileName}} ({{generatedAttachmentFileName}})';
 
       const path = await context.manager.getAvailablePathForAttachments({
@@ -1116,7 +1116,7 @@ describe('AttachmentPathManager', () => {
 
     it('should seed default content and stats for a dummy attachment base name', async () => {
       mockGetFileOrNull.mockReturnValue(null);
-      mockIsNote.mockReturnValue(false);
+      isNoteMock.mockReturnValue(false);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: DUMMY_PATH,
         attachmentFileExtension: 'png',
@@ -1133,7 +1133,7 @@ describe('AttachmentPathManager', () => {
       context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValue(noteFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       const readAttachmentFileContent = vi.fn<() => Promise<ArrayBuffer>>().mockResolvedValue(new ArrayBuffer(8));
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
@@ -1154,7 +1154,7 @@ describe('AttachmentPathManager', () => {
       context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValue(noteFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: DUMMY_PATH,
         attachmentFileExtension: 'png',
@@ -1173,7 +1173,7 @@ describe('AttachmentPathManager', () => {
       context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValue(noteFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: 'png',
@@ -1193,7 +1193,7 @@ describe('AttachmentPathManager', () => {
         context.settings.specialCharacters = '#';
         const noteFile = createTFile({ path: 'note.md' });
         mockGetFileOrNull.mockReturnValue(noteFile);
-        mockIsNote.mockReturnValue(true);
+        isNoteMock.mockReturnValue(true);
         return await context.manager.getAvailablePathForAttachments({
           attachmentFileBaseName,
           attachmentFileExtension: 'txt',
@@ -1233,7 +1233,7 @@ describe('AttachmentPathManager', () => {
       context.settings.generatedAttachmentFileName = '{{prompt}}';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
@@ -1256,7 +1256,7 @@ describe('AttachmentPathManager', () => {
       context.settings.generatedAttachmentFileName = '{{prompt}}';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
@@ -1291,7 +1291,7 @@ describe('AttachmentPathManager', () => {
 
     it('should delegate to the obsidian-lib helper for a non-note path', async () => {
       mockGetFileOrNull.mockReturnValue(null);
-      mockIsNote.mockReturnValue(false);
+      isNoteMock.mockReturnValue(false);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
@@ -1311,7 +1311,7 @@ describe('AttachmentPathManager', () => {
 
     it('should apply default skip flags for a non-note path', async () => {
       mockGetFileOrNull.mockReturnValue(null);
-      mockIsNote.mockReturnValue(false);
+      isNoteMock.mockReturnValue(false);
       await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
@@ -1332,7 +1332,7 @@ describe('AttachmentPathManager', () => {
       context.settings.generatedAttachmentFileName = 'generated';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
         attachmentFileExtension: 'png',
@@ -1349,7 +1349,7 @@ describe('AttachmentPathManager', () => {
       context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: 'png',
@@ -1368,7 +1368,7 @@ describe('AttachmentPathManager', () => {
       context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
         attachmentFileExtension: '',
@@ -1387,7 +1387,7 @@ describe('AttachmentPathManager', () => {
       context.handedOverSettings.emptyFolderBehavior = EmptyFolderBehavior.DeleteWithEmptyParents;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       context.exists.mockResolvedValue(false);
       await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
@@ -1408,7 +1408,7 @@ describe('AttachmentPathManager', () => {
       context.handedOverSettings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       context.exists.mockResolvedValue(false);
       await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
@@ -1428,7 +1428,7 @@ describe('AttachmentPathManager', () => {
       context.handedOverSettings.emptyFolderBehavior = EmptyFolderBehavior.Keep;
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       /*
        * The attachment folder does not exist yet, but its `.gitkeep` placeholder
        * was already synced onto disk from another device.
@@ -1452,7 +1452,7 @@ describe('AttachmentPathManager', () => {
       context.settings.attachmentFolderPath = 'assets';
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       context.exists.mockResolvedValue(true);
       await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
@@ -1476,7 +1476,7 @@ describe('AttachmentPathManager', () => {
         position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 2, offset: 0 } }
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([link]);
       mockExtractLinkFile.mockReturnValue(oldFile);
@@ -1513,7 +1513,7 @@ describe('AttachmentPathManager', () => {
         position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 5, offset: 0 } }
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([nonReferenceCacheLink, unresolvedReferenceCacheLink, nonMatchingReferenceCacheLink, matchingReferenceCacheLink]);
       mockExtractLinkFile.mockReturnValueOnce(null).mockReturnValueOnce(otherFile).mockReturnValue(oldFile);
@@ -1539,7 +1539,7 @@ describe('AttachmentPathManager', () => {
         position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 7, offset: 0 } }
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([referenceCacheLink]);
       mockExtractLinkFile.mockReturnValue(oldFile);
@@ -1568,7 +1568,7 @@ describe('AttachmentPathManager', () => {
         position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 6, offset: 0 } }
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([referenceCacheLink]);
       mockExtractLinkFile.mockReturnValue(otherFile);
@@ -1592,7 +1592,7 @@ describe('AttachmentPathManager', () => {
       const noteFile = createTFile({ path: 'note.md' });
       const oldFile = createTFile({ path: 'old.png' });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(null);
       const result = await context.manager.getAvailablePathForAttachments({
         attachmentFileBaseName: 'img',
@@ -1622,7 +1622,7 @@ describe('AttachmentPathManager', () => {
         position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 2, offset: 0 } }
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({}));
       mockGetLinks.mockReturnValue([otherLink, oldLink]);
       mockExtractLinkFile.mockImplementation(({ reference }) => reference === oldLink ? oldFile : otherFile);
@@ -1651,7 +1651,7 @@ describe('AttachmentPathManager', () => {
         position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 4, offset: 0 } }
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({
         headings: [
           strictProxy<HeadingCache>({ heading: 'Early', level: 1, position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 2, offset: 0 } } }),
@@ -1687,7 +1687,7 @@ describe('AttachmentPathManager', () => {
         position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 5, offset: 0 } }
       });
       mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(oldFile);
-      mockIsNote.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       mockGetCacheSafe.mockResolvedValue(strictProxy<CachedMetadataEx>({
         headings: [
           strictProxy<HeadingCache>({ heading: 'Later', level: 1, position: { end: { col: 0, line: 0, offset: 0 }, start: { col: 0, line: 3, offset: 0 } } })
@@ -1737,7 +1737,7 @@ describe('AttachmentPathManager', () => {
         context.settings.attachmentFolderPath = 'assets';
         context.settings.generatedAttachmentFileName = '{{sequenceNumber}}';
         mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : files.find((file) => file.path === pathOrFile) ?? null);
-        mockIsNote.mockImplementation((pathOrFile) => pathOrFile === 'note.md');
+        isNoteMock.mockImplementation((pathOrFile) => pathOrFile === 'note.md');
         mockGetCacheSafe.mockResolvedValue(cache);
         mockGetLinks.mockReturnValue(links);
         mockExtractLinkFile.mockImplementation(({ reference }) => files[links.indexOf(reference as ReferenceCache)] ?? null);
@@ -1779,7 +1779,7 @@ describe('AttachmentPathManager', () => {
             ? createTFile({ path: pathOrFile })
             : files.find((file) => file.path === pathOrFile) ?? null
         );
-        mockIsNote.mockImplementation((pathOrFile) => typeof pathOrFile === 'string' && notePaths.includes(pathOrFile));
+        isNoteMock.mockImplementation((pathOrFile) => typeof pathOrFile === 'string' && notePaths.includes(pathOrFile));
 
         for (const notePath of notePaths) {
           await askFor('a.png', notePath);
@@ -1801,7 +1801,7 @@ describe('AttachmentPathManager', () => {
       const register = vi.spyOn(selfWriteRegistry, 'register');
       const noteFile = createTFile({ path: 'note.md' });
       mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : null);
-      mockIsNote.mockImplementation((pathOrFile) => pathOrFile === 'note.md');
+      isNoteMock.mockImplementation((pathOrFile) => pathOrFile === 'note.md');
       context.settings.insertedLinkText = '{{originalAttachmentFileName}}';
       const query = {
         attachmentFileBaseName: 'doc',

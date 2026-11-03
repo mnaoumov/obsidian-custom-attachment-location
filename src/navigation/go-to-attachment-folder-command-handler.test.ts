@@ -66,8 +66,8 @@ function createFile(path: string): TFile {
   });
 }
 
-function createFolder(path: string): TFolder {
-  return strictProxy<TFolder>({ path });
+function createFolder(): TFolder {
+  return strictProxy<TFolder>({ path: ATTACHMENT_FOLDER_PATH });
 }
 
 function toTestable(handler: GoToAttachmentFolderCommandHandler): TestableHandler {
@@ -159,7 +159,7 @@ describe('GoToAttachmentFolderCommandHandler', () => {
 
   describe('executeFile', () => {
     it('should reveal the existing attachment folder', async () => {
-      const attachmentFolder = createFolder(ATTACHMENT_FOLDER_PATH);
+      const attachmentFolder = createFolder();
       getFolderByPath.mockReturnValue(attachmentFolder);
       await toTestable(handler).executeFile(createFile('notes/note.md'));
       expect(revealInFolder).toHaveBeenCalledExactlyOnceWith(attachmentFolder);
@@ -167,7 +167,7 @@ describe('GoToAttachmentFolderCommandHandler', () => {
     });
 
     it('should resolve the folder without letting the prompt token open a modal', async () => {
-      getFolderByPath.mockReturnValue(createFolder(ATTACHMENT_FOLDER_PATH));
+      getFolderByPath.mockReturnValue(createFolder());
       await toTestable(handler).executeFile(createFile('notes/note.md'));
       expect(getAttachmentFolderFullPathForPath).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
         attachmentFileName: DUMMY_PATH,
@@ -184,7 +184,7 @@ describe('GoToAttachmentFolderCommandHandler', () => {
     });
 
     it('should report a disabled file explorer', async () => {
-      getFolderByPath.mockReturnValue(createFolder(ATTACHMENT_FOLDER_PATH));
+      getFolderByPath.mockReturnValue(createFolder());
       getEnabledPluginById.mockReturnValue(null);
       await toTestable(handler).executeFile(createFile('notes/note.md'));
       expect(revealInFolder).not.toHaveBeenCalled();
@@ -207,7 +207,7 @@ describe('GoToAttachmentFolderCommandHandler', () => {
       });
 
       it('should create and reveal the folder when the button is clicked', async () => {
-        const createdFolder = createFolder(ATTACHMENT_FOLDER_PATH);
+        const createdFolder = createFolder();
         getFolderByPath.mockReturnValue(createdFolder);
         fragment.querySelector('button')?.click();
         await vi.waitFor(() => {

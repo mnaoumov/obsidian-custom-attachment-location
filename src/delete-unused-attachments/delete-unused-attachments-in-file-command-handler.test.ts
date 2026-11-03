@@ -50,8 +50,8 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
 }));
 
 const mockDeleteUnusedAttachmentsInAbstractFiles = vi.fn<UnusedAttachmentsRemover['deleteUnusedAttachmentsInAbstractFiles']>();
-const mockIsFile = vi.mocked(isFile);
-const mockIsNoteEx = vi.fn<PluginSettingsComponent['isNoteEx']>();
+const isFileMock = vi.mocked(isFile);
+const isNoteExMock = vi.fn<PluginSettingsComponent['isNoteEx']>();
 
 function createAbstractFile(path: string): TAbstractFile {
   return strictProxy<TAbstractFile>({ path });
@@ -63,7 +63,7 @@ function createFile(path: string): TFile {
 
 function createPluginSettingsComponent(): PluginSettingsComponent {
   return strictProxy<PluginSettingsComponent>({
-    isNoteEx: (pathOrFile) => mockIsNoteEx(pathOrFile)
+    isNoteEx: (pathOrFile) => isNoteExMock(pathOrFile)
   });
 }
 
@@ -116,14 +116,14 @@ describe('DeleteUnusedAttachmentsInFileCommandHandler', () => {
 
   describe('canExecuteAbstractFile', () => {
     it('should accept a note', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteExMock.mockReturnValue(true);
       expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('a.md'))).toBe(true);
     });
 
     it('should reject an attachment', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(false);
+      isFileMock.mockReturnValue(true);
+      isNoteExMock.mockReturnValue(false);
       expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('image.png'))).toBe(false);
     });
 
@@ -134,15 +134,15 @@ describe('DeleteUnusedAttachmentsInFileCommandHandler', () => {
      * command has to refuse it too rather than run and report nothing found.
      */
     it('should reject a drawing the user treats as an attachment', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockImplementation((pathOrFile) => castTo<TFile>(pathOrFile).path !== 'drawing.excalidraw.md');
+      isFileMock.mockReturnValue(true);
+      isNoteExMock.mockImplementation((pathOrFile) => castTo<TFile>(pathOrFile).path !== 'drawing.excalidraw.md');
       expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('drawing.excalidraw.md'))).toBe(false);
     });
 
     it('should accept a folder without asking the predicate, because the walk inside it filters', () => {
-      mockIsFile.mockReturnValue(false);
+      isFileMock.mockReturnValue(false);
       expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('folder'))).toBe(true);
-      expect(mockIsNoteEx).not.toHaveBeenCalled();
+      expect(isNoteExMock).not.toHaveBeenCalled();
     });
   });
 
@@ -153,14 +153,14 @@ describe('DeleteUnusedAttachmentsInFileCommandHandler', () => {
    */
   describe('canExecuteAbstractFiles', () => {
     it('should return true when all files are notes', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteExMock.mockReturnValue(true);
       expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('a.md'), createAbstractFile('b.md')])).toBe(true);
     });
 
     it('should return false when one of the files is a drawing', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockImplementation((pathOrFile) => castTo<TFile>(pathOrFile).path !== 'drawing.excalidraw.md');
+      isFileMock.mockReturnValue(true);
+      isNoteExMock.mockImplementation((pathOrFile) => castTo<TFile>(pathOrFile).path !== 'drawing.excalidraw.md');
       expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('a.md'), createAbstractFile('drawing.excalidraw.md')])).toBe(false);
     });
   });
@@ -180,15 +180,15 @@ describe('DeleteUnusedAttachmentsInFileCommandHandler', () => {
 
     it('should offer the command while a note is open', () => {
       setActiveFile(handler, createFile('active.md'));
-      mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteExMock.mockReturnValue(true);
       expect(toTestable(handler).canExecute()).toBe(true);
     });
 
     it('should refuse while a drawing is open', () => {
       setActiveFile(handler, createFile('drawing.excalidraw.md'));
-      mockIsFile.mockReturnValue(true);
-      mockIsNoteEx.mockReturnValue(false);
+      isFileMock.mockReturnValue(true);
+      isNoteExMock.mockReturnValue(false);
       expect(toTestable(handler).canExecute()).toBe(false);
     });
   });

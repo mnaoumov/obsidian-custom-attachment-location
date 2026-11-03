@@ -53,8 +53,8 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
 }));
 
 const mockCollectAttachmentsInAbstractFilesAndWait = vi.fn<AttachmentCollector['collectAttachmentsInAbstractFilesAndWait']>();
-const mockIsFile = vi.mocked(isFile);
-const mockIsNote = vi.mocked(isNote);
+const isFileMock = vi.mocked(isFile);
+const isNoteMock = vi.mocked(isNote);
 
 function createAbstractFile(path: string): TAbstractFile {
   return strictProxy<TAbstractFile>({ path });
@@ -111,21 +111,21 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
 
   describe('canExecuteAbstractFile', () => {
     it('should accept a note', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('a.md'))).toBe(true);
     });
 
     it('should reject an attachment', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(false);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(false);
       expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('image.png'))).toBe(false);
     });
 
     it('should accept a folder without asking the predicate, because the walk inside it filters', () => {
-      mockIsFile.mockReturnValue(false);
+      isFileMock.mockReturnValue(false);
       expect(toTestable(handler).canExecuteAbstractFile(createAbstractFile('folder'))).toBe(true);
-      expect(mockIsNote).not.toHaveBeenCalled();
+      expect(isNoteMock).not.toHaveBeenCalled();
     });
   });
 
@@ -136,14 +136,14 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
    */
   describe('canExecuteAbstractFiles', () => {
     it('should return true when all files are notes', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('a.md'), createAbstractFile('b.md')])).toBe(true);
     });
 
     it('should return false when one of the files is not a note', () => {
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockImplementation((file) => castTo<TFile>(file).path !== 'image.png');
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockImplementation((file) => castTo<TFile>(file).path !== 'image.png');
       expect(toTestable(handler).canExecuteAbstractFiles([createAbstractFile('a.md'), createAbstractFile('image.png')])).toBe(false);
     });
   });
@@ -162,15 +162,15 @@ describe('CollectAttachmentsInFileCommandHandler', () => {
 
     it('should offer the command while a note is open', () => {
       setActiveFile(handler, createFile('active.md'));
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(true);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(true);
       expect(toTestable(handler).canExecute()).toBe(true);
     });
 
     it('should refuse while an attachment is open', () => {
       setActiveFile(handler, createFile('image.png'));
-      mockIsFile.mockReturnValue(true);
-      mockIsNote.mockReturnValue(false);
+      isFileMock.mockReturnValue(true);
+      isNoteMock.mockReturnValue(false);
       expect(toTestable(handler).canExecute()).toBe(false);
     });
   });
