@@ -24,6 +24,13 @@
       "expect": "^7.0.3",
       "manualCheck": "The check reads the range @wdio/utils declares, not a version, because that range is what forces the override. When it moves to ^8 or later the override and this entry can both go. Before lifting it, re-run the deepmergeCustom probe rather than trusting the range alone: @wdio/config passes a handler that reads `meta.key`, and that is precisely the API 8.0.0 renamed, so a regression there would be silent rather than a crash."
     },
+    "glob": {
+      "section": "overrides",
+      "why": "Clears GHSA-3g3m-2fjr-6pw4 (AbortSignal cancellation bypass, glob >=9 <=14.0.1; patched 14.0.2). The latest obsidian-integration-testing 17.8.1 pins webdriverio 9.27.0, whose @wdio/config and archiver-utils still require glob ^10.2.2 and ^10.0.0. Both call the retained sync API (sync/globSync), so 14.0.3 preserves their API. No direct dependency update reaches the fix. Never use npm audit fix --force: it proposes downgrading the integration harness to 1.1.2.",
+      "check": "node -e \"const fs=require('node:fs');for(const p of ['@wdio/config','archiver-utils'])console.log(JSON.parse(fs.readFileSync('node_modules/'+p+'/package.json','utf8')).dependencies.glob)\"",
+      "expect": "^10.2.2\n^10.0.0",
+      "manualCheck": "Remove the override when both consumers admit >=14.0.2. Re-run npm audit, the project gate and the integration harness glob/archive smoke checks."
+    },
     "katex": {
       "section": "overrides",
       "why": "Clears GHSA-238p-pmpm-9mq7 (KaTeX prototype pollution bypassing trust restrictions, >=0.11.0 <0.18.2). Reached only through the toolkit packages and markdownlint-cli2 -> markdownlint -> micromark-extension-math@3.1.0, its newest release, which declares katex ^0.16.0, so no direct bump reaches the fix. The 0.x minor jump is safe because nothing here runs KaTeX: markdownlint imports only `math`, the micromark syntax extension, and katex is required solely by the `mathHtml` half, which markdownlint never loads. Never take the `npm audit fix --force` remedy: it downgrades markdownlint.",
