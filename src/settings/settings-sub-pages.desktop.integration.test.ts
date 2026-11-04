@@ -27,6 +27,7 @@ const SEARCH_SETTLE_TIMEOUT_IN_MILLISECONDS = 1200;
 // No `Deletion` page since 12.0.0: every row it held belonged to the rename/delete handler this plugin
 // stopped registering, so the page emptied and was dropped rather than left as a bare label.
 const EXPECTED_PAGE_NAMES = [
+  'Original name storage',
   'Move/renames',
   'Special characters',
   'Collected attachments',
