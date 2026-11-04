@@ -56,11 +56,17 @@ describe('sidecar attachment groups', () => {
           const html = '<html>Document to sign</html>';
           await waitUntil({
             message: 'the clipboard interception to finish loading before the first drop',
-            // Obsidian's own `insertFiles` is an anonymous function, so its name proves nothing. A monkey-around wrapper
-            // Chains its prototype to the method it wraps, which the unpatched method never has.
-            predicate: () =>
-              leaf.view instanceof MarkdownView
-              && Object.getPrototypeOf(leaf.view.editMode.clipboardManager.insertFiles) !== Function.prototype,
+            // Obsidian's own `insertFiles` is anonymous, so its name proves nothing, and it is `async`, so its prototype is
+            // `AsyncFunction.prototype`, which is not `Function.prototype` either. A monkey-around wrapper chains its
+            // Prototype to the function it wraps, so only a patched method has a callable prototype other than
+            // `Function.prototype`. The patch goes in on a debounced workspace event, which can come after this drop.
+            predicate: () => {
+              if (!(leaf.view instanceof MarkdownView)) {
+                return false;
+              }
+              const prototype: unknown = Object.getPrototypeOf(leaf.view.editMode.clipboardManager.insertFiles);
+              return typeof prototype === 'function' && prototype !== Function.prototype;
+            },
             timeoutInMilliseconds: 5000
           });
           const signature = 'detached signature bytes';
