@@ -20,7 +20,7 @@ describe('Shared original attachment names', () => {
         }
         const pluginId = 'obsidian-custom-attachment-location';
         const commandId = `${pluginId}:show-original-attachment-names`;
-        const root = `Plugin data/${pluginId}/original-attachment-names-v1`;
+        const root = `@Plugin sync data (DO NOT REMOVE)/${pluginId}/original-attachment-names-v1`;
         const settings = findSettings(app.plugins.getPlugin(pluginId), isSettings);
         if (!settings) {
           throw new Error('The plugin settings were not found.');

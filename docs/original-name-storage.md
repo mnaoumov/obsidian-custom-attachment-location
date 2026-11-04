@@ -12,13 +12,23 @@ For Obsidian Sync, connect the vault to its remote vault and enable **Sync all o
 
 For Git, WebDAV or another external provider, explicitly include JSON files and every history location listed in settings, on every participating device. Hidden folders need support and configuration in that provider. Excluding a folder from Obsidian search is separate from excluding it from synchronization.
 
+## The synchronized folder
+
+When this device first turns synchronization on, the history goes into `@Plugin sync data (DO NOT REMOVE)` at the root of the vault. A device or vault that already synchronized with an earlier version keeps using `Plugin data`, the folder those versions used, so devices on one vault never split their history between two folders. Use **Apply folder** below to move it.
+
+Each folder that holds history gets a `README.md` saying what it is for. The plugin rewrites that file whenever its text differs, so edits to it do not last.
+
+The plugin also lists each such folder, and the **Plugin data folder** while synchronization is on, in **Settings → Files and links → Excluded files**, so the history stays out of search, the graph and the quick switcher. When the folder changes, the plugin replaces only the entry it added itself. An entry you added yourself is never removed. A hidden folder gets no entry, because Obsidian never indexes it.
+
+Do not delete, move or rename the folder or anything in it. It is history, not a cache, and what is removed cannot be rebuilt.
+
 ## Change the folder
 
-**Plugin data folder** is a static vault-relative parent, defaulting to `Plugin data`. For example, use `99-Meta/Plugin data`. Enable **Allow hidden plugin data folders** to use a destination such as `99-Meta/.plugin-data` with an external sync provider. Paths cannot contain tokens, absolute paths, traversal or backslashes.
+**Plugin data folder** is a static vault-relative parent, defaulting to `@Plugin sync data (DO NOT REMOVE)`. For example, use `99-Meta/Plugin sync data`. Enable **Allow hidden plugin data folders** to use a destination such as `99-Meta/.plugin-data` with an external sync provider. Paths cannot contain tokens, absolute paths, traversal or backslashes.
 
 Save the destination, complete synchronization setup on this device, then choose **Apply folder**. Merely receiving a settings file never relocates the writer. The plugin copies and verifies only its own `obsidian-custom-attachment-location/original-attachment-names-v1` subtree through the shared library. Sibling plugins' data is untouched. A conflicting occupied file refuses the transition; byte-identical retries are safe. If interrupted, restore file delivery and apply the same destination again. Do not overwrite conflicting histories to force it through. Attempted destinations remain excluded from attachment lifecycle events even after a disabled restart.
 
-History locations are retained, including the original `Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1` discovery anchor and its `locations-v1` records. Keep ALL listed roots synchronized permanently. Relocation changes where new records are written; it does not promise to remove the original top-level folder. Disabling synchronization stops transport I/O but does not remove files. There is no automatic old-root cleanup or arbitrary relocation back to a previously used root.
+History locations are retained, including the original `obsidian-custom-attachment-location/original-attachment-names-v1` discovery anchor under the folder this device first synchronized in, and its `locations-v1` records. Keep ALL listed roots synchronized permanently. Relocation changes where new records are written; it does not promise to remove the original top-level folder. Disabling synchronization stops transport I/O but does not remove files. There is no automatic old-root cleanup or arbitrary relocation back to a previously used root.
 
 Update the plugin on every participating device before relocating. Offline devices can deliver late records to retained roots, which upgraded devices continue merging. Older clients do not understand the relocation protocol; retire or upgrade them rather than deleting their history. New documents use JSON to stay outside ordinary Markdown note indexing. Legacy Markdown is read and retained during migration, and can remain indexed until you exclude it from search. Do not rename or move transport files manually.
 
