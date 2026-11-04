@@ -4,6 +4,8 @@ import { escapeRegExp } from '@mnaoumov/typescript-lib/reg-exp';
 
 import type { MigratableSettings } from '../advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
 
+import { DEFAULT_PLUGIN_DATA_FOLDER } from '../original-attachment-names/plugin-data-folder.ts';
+
 export const SAMPLE_CUSTOM_TOKENS = String.raw`registerCustomToken('foo', (ctx) => {
   const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
   return ctx.noteFileName + ctx.app.appId + formatValue + ctx.obsidian.apiVersion;
@@ -159,7 +161,7 @@ export class PluginSettings {
   /**
   Static vault-relative transport parent; applied only through the explicit relocation action.
   */
-  public pluginDataFolder = 'Plugin data';
+  public pluginDataFolder = DEFAULT_PLUGIN_DATA_FOLDER;
 
   /**
    * The rename/delete values this plugin held before 12.0.0, waiting to be offered to

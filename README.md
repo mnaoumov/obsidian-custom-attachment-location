@@ -53,7 +53,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Keep it true over time**: attachments follow their note on rename, move and delete, through `Advanced Rename and Delete Handler`. [06 Settings](<./demo-vault/06 Settings.md>)
 - **Link display text**: show an attachment's name or its original arrival name after renaming, using a token template. [07 Link display text](<./demo-vault/07 Link display text.md>)
 - **Jump between a note and its attachments**, both ways. [10 Navigation](<./demo-vault/10 Navigation.md>)
-- **Remember original file names**, locally by default, with optional cross-device synchronization and a configurable `Plugin data` folder. [Original name storage](./docs/original-name-storage.md) covers setup, hidden folders and safe relocation.
+- **Remember original file names**, locally by default, with optional cross-device synchronization in a configurable `@Plugin sync data (DO NOT REMOVE)` folder, which the plugin explains with a `README.md` and lists in Obsidian's **Excluded files**. [Original name storage](./docs/original-name-storage.md) covers setup, hidden folders and safe relocation.
 
 ## Tokens
 

@@ -74,6 +74,7 @@ import {
   ORIGINAL_ATTACHMENT_NAMES_FILE_NAME,
   OriginalAttachmentNamesComponent
 } from './original-attachment-names/original-attachment-names-component.ts';
+import { PluginDataFolderExclusionComponent } from './original-attachment-names/plugin-data-folder-exclusion-component.ts';
 import { PruneOriginalAttachmentNamesCommandHandler } from './original-attachment-names/prune-original-attachment-names-command-handler.ts';
 import { RememberCurrentNameAsOriginalCommandHandler } from './original-attachment-names/remember-current-name-as-original-command-handler.ts';
 import { ShowOriginalAttachmentNamesCommandHandler } from './original-attachment-names/show-original-attachment-names-command-handler.ts';
@@ -245,6 +246,13 @@ export class Plugin extends PluginBase {
     });
     await originalAttachmentNamesComponent.loadFromDisk();
     this.addChild(originalAttachmentNamesComponent);
+    this.addChild(
+      new PluginDataFolderExclusionComponent({
+        app: this.app,
+        originalAttachmentNamesComponent,
+        pluginSettingsComponent
+      })
+    );
     this.addChild(
       new CopyOriginalAttachmentMetadataComponent({
         app: this.app,

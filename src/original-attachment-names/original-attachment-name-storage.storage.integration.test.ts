@@ -187,7 +187,7 @@ it('keeps visible JSON transport history out of per-note and orphan attachment d
   const state = await evalInObsidian({
     async callback({ app, findPluginSettingsComponent: findSettings, readStorage: storage }) {
       const pluginId = 'obsidian-custom-attachment-location';
-      const root = `Plugin data/${pluginId}/original-attachment-names-v1`;
+      const root = `@Plugin sync data (DO NOT REMOVE)/${pluginId}/original-attachment-names-v1`;
       type CleanupSettings = Record<'attachmentFolderPath' | 'orphanAttachmentScanMode', string>;
       function isSettings(value: unknown): value is CleanupSettings {
         return typeof value === 'object' && value !== null && 'orphanAttachmentScanMode' in value;
@@ -208,7 +208,7 @@ it('keeps visible JSON transport history out of per-note and orphan attachment d
       await app.vault.create('storage-cleanup.md', 'A note whose attachment folder contains plugin metadata.');
       await app.vault.create('storage-unused.pdf', 'ordinary unused attachment');
       await settings.editAndSave((draft) => {
-        draft.attachmentFolderPath = 'Plugin data';
+        draft.attachmentFolderPath = '@Plugin sync data (DO NOT REMOVE)';
         draft.orphanAttachmentScanMode = 'Entire vault';
       });
       return { bytesBefore, metadataPath, prior, wasEnabled };
@@ -255,6 +255,20 @@ it('keeps visible JSON transport history out of per-note and orphan attachment d
       vaultPath
     });
     expect(bytesAfter).toBe(state.bytesBefore);
+    const explanation = await pollInObsidian({
+      async poll({ app }) {
+        const readmePath = '@Plugin sync data (DO NOT REMOVE)/README.md';
+        return {
+          filters: app.vault.getConfig('userIgnoreFilters') ?? [],
+          readme: await app.vault.adapter.exists(readmePath) ? await app.vault.adapter.read(readmePath) : ''
+        };
+      },
+      timeoutInMilliseconds: 15_000,
+      timeoutMessage: 'The synchronized folder must get its README and its Excluded files entry',
+      until: (found) => found.readme !== '' && found.filters.includes('@Plugin sync data (DO NOT REMOVE)/'),
+      vaultPath
+    });
+    expect(explanation.readme).toContain('do not remove');
   } finally {
     await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, readStorage: storage, state: saved }) {

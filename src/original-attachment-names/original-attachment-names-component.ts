@@ -57,7 +57,11 @@ import {
   isRetiredSourcePathOperation,
   OriginalAttachmentNameHistory
 } from './original-attachment-name-history.ts';
-import { validatePluginDataFolder } from './plugin-data-folder.ts';
+import {
+  DEFAULT_PLUGIN_DATA_FOLDER,
+  LEGACY_PLUGIN_DATA_FOLDER,
+  validatePluginDataFolder
+} from './plugin-data-folder.ts';
 
 /**
  * The legacy JSON migration source, kept untouched inside the plugin's folder.
@@ -71,6 +75,8 @@ const MIGRATION_KEY = 'original-attachment-names-json-migrated-v1';
 const SYNC_CONSENT_KEY = 'original-name-sync-consent-v1';
 const REQUESTED_ROOTS_KEY = 'original-name-requested-transport-roots-v1';
 const SYNC_PROVIDER_KEY = 'original-name-sync-provider-v1';
+const ANCHOR_FOLDER_KEY = 'original-name-anchor-folder-v1';
+const PENDING_ANCHOR_FOLDER = '';
 const SAVE_DEBOUNCE_IN_MILLISECONDS = 1000;
 const WARNING_DEBOUNCE_IN_MILLISECONDS = 1000;
 const COMPACTION_OPERATION_COUNT = 100;
@@ -178,6 +184,7 @@ export class OriginalAttachmentNamesComponent extends Component {
     return [...new Set([...(this.shared?.transportRoots ?? []), ...this.requestedTransportRoots])];
   }
 
+  private anchorFolder = DEFAULT_PLUGIN_DATA_FOLDER;
   private readonly app: App;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
   private readonly expectedArrivals = new Map<string, ExpectedArrival>();
@@ -197,6 +204,7 @@ export class OriginalAttachmentNamesComponent extends Component {
   private shared: SharedDataStore | undefined;
   private shouldUseObsidianSync = false;
   private readonly showWarningDebounced: Debouncer<[], void>;
+  private readonly storageChangedCallbacks = new Set<() => void>();
   private readonly storeFilePath: string;
   private syncEnabled = false;
   private readonly unknownPaths = new Set<string>();
@@ -306,6 +314,24 @@ export class OriginalAttachmentNamesComponent extends Component {
   }
 
   /**
+   * The parent folders of the store's history locations that exist in the vault: the anchor and every location a
+   * relocation used.
+   *
+   * @returns The folders, vault-relative, in transition order.
+   */
+  public async getExistingStoreFolders(): Promise<string[]> {
+    // Every root is `<folder>/<plugin id>/<store id>`, and the roots are unique, so their folders are too.
+    const suffix = `/${PLUGIN_ID}/${STORE_ID}`;
+    const folders: string[] = [];
+    for (const root of this.transportRoots) {
+      if (await this.app.vault.adapter.exists(root)) {
+        folders.push(root.slice(0, -suffix.length));
+      }
+    }
+    return folders;
+  }
+
+  /**
    * Every record, sorted by path.
    *
    * @returns The records.
@@ -352,15 +378,12 @@ export class OriginalAttachmentNamesComponent extends Component {
           this.requestedTransportRoots.add(root);
         }
       }
-      this.shared = await SharedDataStore.open({
-        adapter: this.app.vault.adapter,
-        format: 'markdown',
-        isSyncEnabled: this.syncEnabled,
-        kind: 'last-write-wins',
-        local: this.local,
-        pluginId: PLUGIN_ID,
-        storeId: STORE_ID
-      });
+      if (await this.local.get(ANCHOR_FOLDER_KEY) === undefined) {
+        // Every earlier version wrote its history under the legacy folder, so its replica keeps that anchor.
+        await this.local.set(ANCHOR_FOLDER_KEY, hasLocalHistory ? LEGACY_PLUGIN_DATA_FOLDER : PENDING_ANCHOR_FOLDER);
+      }
+      this.anchorFolder = await this.resolveAnchorFolder();
+      this.shared = await this.openShared();
       await this.deleteRetiredSourcePaths(this.shared);
       this.history.merge(this.shared.entries());
       await this.migrateLegacy();
@@ -393,8 +416,22 @@ export class OriginalAttachmentNamesComponent extends Component {
     });
   }
 
+  /**
+   * Calls back after this device's storage changed: synchronization turned on or off, or the folder applied.
+   *
+   * @param callback - The callback.
+   * @returns A function that stops the callbacks.
+   */
+  public onStorageChanged(callback: () => void): () => void {
+    this.storageChangedCallbacks.add(callback);
+    return () => {
+      this.storageChangedCallbacks.delete(callback);
+    };
+  }
+
   public override onunload(): void {
     super.onunload();
+    this.storageChangedCallbacks.clear();
     this.showWarningDebounced.cancel();
     // A record changed in the last second would otherwise be lost with the plugin.
     this.saveDebounced.cancel();
@@ -449,6 +486,7 @@ export class OriginalAttachmentNamesComponent extends Component {
     });
     this.persistence = run;
     await run;
+    this.notifyStorageChanged();
   }
 
   /**
@@ -506,7 +544,7 @@ export class OriginalAttachmentNamesComponent extends Component {
       if (isEnabled) {
         await this.flushImpl();
       }
-      const shared = this.shared;
+      let shared = this.shared;
       const local = this.local;
       if (!shared || !local) {
         throw new Error('Original attachment names are not loaded.');
@@ -521,7 +559,14 @@ export class OriginalAttachmentNamesComponent extends Component {
           // Keep the legacy anchor identity on every device. The public coordinator announces JSON
           // before an initially disabled store publishes anything, so fresh setup creates no Markdown.
           // Existing enabled devices keep Markdown until the user approves this explicit transition.
-          const locations = new DataStoreLocations({ adapter: this.app.vault.adapter, format: 'markdown', pluginId: PLUGIN_ID, storeId: STORE_ID });
+          const anchorFolder = await this.resolveAnchorFolder();
+          if (anchorFolder !== this.anchorFolder) {
+            // The vault delivered an earlier version's history after this device opened; join it instead.
+            this.anchorFolder = anchorFolder;
+            shared = await this.openShared();
+            this.shared = shared;
+          }
+          const locations = new DataStoreLocations({ adapter: this.app.vault.adapter, folder: this.anchorFolder, format: 'markdown', pluginId: PLUGIN_ID, storeId: STORE_ID });
           await locations.refresh();
           for (const transport of locations.transports) {
             this.requestedTransportRoots.add(transport.root);
@@ -539,6 +584,8 @@ export class OriginalAttachmentNamesComponent extends Component {
         await shared.setSyncEnabled(isEnabled);
         await local.set(SYNC_CONSENT_KEY, isEnabled);
         if (isEnabled) {
+          // Fixed only once transport works: from now on this device writes under this anchor for good.
+          await local.set(ANCHOR_FOLDER_KEY, this.anchorFolder);
           await local.set(SYNC_PROVIDER_KEY, options?.shouldUseObsidianSync ? 'obsidian' : 'external');
           this.hasApprovedSyncSetup = true;
           this.shouldUseObsidianSync = options?.shouldUseObsidianSync === true;
@@ -557,6 +604,7 @@ export class OriginalAttachmentNamesComponent extends Component {
     });
     this.persistence = run;
     await run;
+    this.notifyStorageChanged();
   }
 
   /**
@@ -684,6 +732,25 @@ export class OriginalAttachmentNamesComponent extends Component {
     await local.set(MIGRATION_KEY, true);
   }
 
+  private notifyStorageChanged(): void {
+    for (const callback of this.storageChangedCallbacks) {
+      callback();
+    }
+  }
+
+  private async openShared(): Promise<SharedDataStore> {
+    return await SharedDataStore.open({
+      adapter: this.app.vault.adapter,
+      folder: this.anchorFolder,
+      format: 'markdown',
+      isSyncEnabled: this.syncEnabled,
+      kind: 'last-write-wins',
+      local: ensureNonNullable(this.local),
+      pluginId: PLUGIN_ID,
+      storeId: STORE_ID
+    });
+  }
+
   private record(operation: Except<OriginalAttachmentNameOperation, 'time'>): void {
     const paths = operation.isFolder
       ? [...this.names.keys()].filter((path) => path.startsWith(`${operation.path}/`))
@@ -698,6 +765,31 @@ export class OriginalAttachmentNamesComponent extends Component {
     const key = window.crypto.randomUUID();
     this.history.add(key, timed);
     this.pending.set(key, { ...timed });
+  }
+
+  /**
+   * Picks the folder this device opens the store at: its permanent discovery anchor.
+   *
+   * The choice lives in IndexedDB and never in the synchronized settings, because a different anchor is an independent
+   * store. A device that is still undecided joins an earlier version's history as soon as the vault holds it, and
+   * otherwise uses the new default folder. It is fixed when synchronization is first enabled.
+   *
+   * @returns The anchor folder.
+   */
+  private async resolveAnchorFolder(): Promise<string> {
+    const local = ensureNonNullable(this.local);
+    const stored = await local.get(ANCHOR_FOLDER_KEY);
+    if (stored !== undefined && typeof stored !== 'string') {
+      throw new Error('Invalid original-name anchor folder.');
+    }
+    if (stored !== undefined && stored !== PENDING_ANCHOR_FOLDER) {
+      return stored;
+    }
+    if (await this.app.vault.adapter.exists(`${LEGACY_PLUGIN_DATA_FOLDER}/${PLUGIN_ID}/${STORE_ID}`)) {
+      await local.set(ANCHOR_FOLDER_KEY, LEGACY_PLUGIN_DATA_FOLDER);
+      return LEGACY_PLUGIN_DATA_FOLDER;
+    }
+    return DEFAULT_PLUGIN_DATA_FOLDER;
   }
 
   private showWarning(): void {

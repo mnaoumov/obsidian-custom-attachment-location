@@ -211,6 +211,13 @@ vi.mock('./attachment-location/custom-attachment-location-component.ts', () => (
   })
 }));
 
+vi.mock('./original-attachment-names/plugin-data-folder-exclusion-component.ts', () => ({
+  // eslint-disable-next-line prefer-arrow-callback -- a vi.fn constructor stub must be a function (not an arrow) so `new` works and returns a loadable Component.
+  PluginDataFolderExclusionComponent: vi.fn(function pluginDataFolderExclusionComponentStub() {
+    return new Component();
+  })
+}));
+
 vi.mock('./attachment-saving/image-manager.ts', () => ({
   ImageManager: vi.fn()
 }));
@@ -478,7 +485,7 @@ describe('Plugin', () => {
       const handedOverCall = vi.mocked(HandedOverSettingsComponent).mock.calls[0];
       const handedOverParams = castTo<HandedOverSettingsParamsProbe>(handedOverCall?.[0]);
       expect(hoisted.metadataExclusionDuringSetup).toHaveBeenCalledWith(false);
-      expect(handedOverParams.shouldIgnorePath('Plugin data')).toBe(true);
+      expect(handedOverParams.shouldIgnorePath('@Plugin sync data (DO NOT REMOVE)')).toBe(true);
       expect(handedOverParams.shouldIgnorePath('ordinary.pdf')).toBe(false);
     });
   });
