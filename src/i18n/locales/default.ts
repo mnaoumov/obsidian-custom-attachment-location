@@ -173,10 +173,16 @@ export const defaultTranslations = {
       useCurrentNameForSelected: 'Use current name for selected'
     },
     storage: {
+      advice: {
+        enabledWithoutObsidianSync: 'This device was set up to synchronize original names through Obsidian Sync, but Obsidian Sync is not connected to a remote vault here, so nothing reaches your other devices. Reconnect it in Settings → Sync, or disable sync on this device if you stopped using Obsidian Sync.',
+        notNeeded: 'Obsidian Sync is connected, but no template reads {{originalAttachmentFileName}}, so other devices do not need these names yet. Set up Obsidian Sync once a template uses it.',
+        obsidianSyncNotConnected: 'Obsidian Sync is not connected to a remote vault on this device, so original names stay here and no folder is created. Set up external sync only if another tool (Git, Syncthing, iCloud, a WebDAV client) carries this vault to your other devices and a template reads {{originalAttachmentFileName}}.',
+        recommended: 'Recommended: this vault uses Obsidian Sync and a template reads {{originalAttachmentFileName}}. Without synchronization, your other devices compute names from whatever an attachment is called by then. Choose Set up Obsidian Sync.'
+      },
       applied: 'Original name storage updated. All existing history is preserved.',
       apply: 'Apply folder',
       completeSetupBeforeRelocating: 'Complete synchronization setup on this device before changing its history location.',
-      description: 'Original names are kept on this device. Synchronization is optional and must be set up on every participating device. Existing device history keeps legacy Markdown sync until setup explicitly approves JSON. Update every device before switching.',
+      description: 'Original names are kept on this device. Synchronize them only when another device uses the vault and a template reads {{originalAttachmentFileName}}. Each device opts in on its own. Existing device history keeps legacy Markdown sync until setup explicitly approves JSON. Update every device before switching.',
       disable: 'Disable sync on this device',
       enableBeforeRelocating: 'Enable synchronization on this device before relocating shared history.',
       enabled: 'Sync enabled on this device',
@@ -191,8 +197,10 @@ export const defaultTranslations = {
       hiddenObsidianSync: 'Obsidian Sync cannot carry this hidden history location. Use a visible destination and include all retained roots, or choose an external sync provider.',
       invalidFolder: 'Enter a nonempty vault-relative folder without traversal, tokens, backslashes or invalid path characters.',
       local: 'Local only',
-      obsidianChecklist: 'Manual verification required: connect this vault to an Obsidian Sync remote vault and enable Sync all other types on EVERY participating device. Restart Obsidian after changing Sync settings. This plugin cannot verify other devices or change Sync settings. Arbitrary hidden folders are excluded. Confirm only after configuring this device. Update the plugin and repeat setup on every device before relocating. The first device can enroll without a peer.',
+      obsidianChecklist: 'This device is connected to an Obsidian Sync remote vault, and its Sync settings carry the history. Every other participating device needs the same: connect the same remote vault, enable Sync all other types and keep the history locations out of Excluded folders in Settings → Sync, restart Obsidian, update this plugin and run this setup there too. This plugin cannot check other devices or change Sync settings. Arbitrary hidden folders are excluded. The first device can enroll without a peer.',
       obsidianSync: 'Set up Obsidian Sync',
+      obsidianSyncNotCarried: 'Obsidian Sync on this device would not carry {{path}}. The history is stored as JSON files, so turn on Sync all other types in Settings → Sync, and make sure the folder is not in its Excluded folders. Restart Obsidian after changing Sync settings, then try again.',
+      obsidianSyncUnavailable: 'Obsidian Sync is not connected to a remote vault on this device. Connect it in Settings → Sync first, or set up external sync if another tool carries this vault.',
       roots: 'History locations: {{roots}}. Keep all these locations synchronized; old history and the discovery anchor are retained.',
       setupTitle: 'Enable original name synchronization?',
       title: 'Original name storage'

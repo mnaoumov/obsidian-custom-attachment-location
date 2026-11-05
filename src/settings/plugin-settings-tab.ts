@@ -29,6 +29,16 @@ import type { OriginalAttachmentNamesComponent } from '../original-attachment-na
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
+import {
+  getObsidianSyncStatus,
+  ObsidianSyncState
+} from '../original-attachment-names/obsidian-sync-status.ts';
+import { getOriginalNameTransportRoot } from '../original-attachment-names/original-attachment-names-component.ts';
+import {
+  doesAnySettingReadOriginalAttachmentFileName,
+  getOriginalNameSyncAdvice,
+  OriginalNameSyncAdvice
+} from '../original-attachment-names/original-name-sync-advice.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
 import { TOKENIZED_STRING_LANGUAGE } from '../tokens/tokenized-string-language.ts';
 import {
@@ -45,6 +55,11 @@ import {
 const VISIBLE_SPACE_CHARACTER = '␣';
 const JPEG_QUALITY_PRECISION = 2;
 const REGISTER_CUSTOM_TOKENS_DEBOUNCE_IN_MILLISECONDS = 2000;
+
+/**
+ * A file name to ask Obsidian Sync's filter about. Only its extension matters: the history is stored as JSON.
+ */
+const SYNC_PROBE_FILE_NAME = 'history.json';
 
 const bindOptionsWithTrim: BindOptionsExtended<PluginSettings, string, ConditionalKeys<PluginSettings, string>> = {
   componentToPluginSettingsValueConverter(uiValue: string): string {
@@ -1280,14 +1295,25 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           }
           setting.settingEl.addClass('original-name-storage-controls');
           const storage: OriginalAttachmentNamesComponent = component;
-          function updateDescription(): void {
+          const updateDescription = (): void => {
+            const obsidianSyncStatus = getObsidianSyncStatus(this.app);
+            const advice = getOriginalNameSyncAdvice({
+              doesTemplateReadOriginalName: doesAnySettingReadOriginalAttachmentFileName(this.pluginSettingsComponent.settings),
+              isObsidianSyncProvider: storage.isObsidianSyncProvider,
+              isSyncEnabled: storage.isSyncEnabled,
+              obsidianSyncState: obsidianSyncStatus.state
+            });
             setting.setDesc(createFragment((fragment) => {
               const status = t(($) => storage.isSyncEnabled ? $.originalAttachmentNames.storage.enabled : $.originalAttachmentNames.storage.local);
               fragment.createEl('p', { text: status });
+              const adviceText = getAdviceText(advice);
+              if (adviceText) {
+                fragment.createEl('p', { cls: 'original-name-storage-advice', text: adviceText });
+              }
               fragment.createEl('p', { text: t(($) => $.originalAttachmentNames.storage.roots, { roots: storage.transportRoots.join(', ') }) });
               fragment.createEl('a', { href: 'https://help.obsidian.md/sync/settings', text: t(($) => $.originalAttachmentNames.storage.obsidianSync) });
             }));
-          }
+          };
           const run = async (action: () => Promise<void>): Promise<void> => {
             try {
               await action();
@@ -1301,6 +1327,21 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             if (isObsidianSync && (component.transportRoots.some((root) => root.split('/').some((segment) => segment.startsWith('.'))) || this.pluginSettingsComponent.settings.pluginDataFolder.split('/').some((segment) => segment.startsWith('.')))) {
               await alert({ app: this.app, message: t(($) => $.originalAttachmentNames.storage.hiddenObsidianSync) });
               return;
+            }
+            if (isObsidianSync) {
+              const obsidianSyncStatus = getObsidianSyncStatus(this.app);
+              if (obsidianSyncStatus.state !== ObsidianSyncState.Connected) {
+                await alert({ app: this.app, message: t(($) => $.originalAttachmentNames.storage.obsidianSyncUnavailable) });
+                return;
+              }
+              // Ask Sync's own filter about every root history can be written to, so a JSON file it would skip is caught
+              // here, on this device, instead of silently never reaching the others.
+              const roots = [...component.transportRoots, getOriginalNameTransportRoot(this.pluginSettingsComponent.settings.pluginDataFolder)];
+              const notCarriedRoot = roots.find((root) => obsidianSyncStatus.doesCarryFile(`${root}/${SYNC_PROBE_FILE_NAME}`) === false);
+              if (notCarriedRoot !== undefined) {
+                await alert({ app: this.app, message: t(($) => $.originalAttachmentNames.storage.obsidianSyncNotCarried, { path: notCarriedRoot }) });
+                return;
+              }
             }
             const message = t(($) => isObsidianSync ? $.originalAttachmentNames.storage.obsidianChecklist : $.originalAttachmentNames.storage.externalChecklist);
             if (
@@ -1386,6 +1427,24 @@ function generateJpegQualityOptions(): Record<string, string> {
   }
 
   return ans;
+}
+
+/**
+ * The text shown for an advice kind.
+ *
+ * @param advice - The advice.
+ * @returns The text, or
+ull when there is nothing to say.
+ */
+function getAdviceText(advice: OriginalNameSyncAdvice): null | string {
+  const texts: Record<OriginalNameSyncAdvice, () => null | string> = {
+    [OriginalNameSyncAdvice.EnabledWithoutObsidianSync]: () => t(($) => $.originalAttachmentNames.storage.advice.enabledWithoutObsidianSync),
+    [OriginalNameSyncAdvice.None]: () => null,
+    [OriginalNameSyncAdvice.NotNeeded]: () => t(($) => $.originalAttachmentNames.storage.advice.notNeeded),
+    [OriginalNameSyncAdvice.ObsidianSyncNotConnected]: () => t(($) => $.originalAttachmentNames.storage.advice.obsidianSyncNotConnected),
+    [OriginalNameSyncAdvice.Recommended]: () => t(($) => $.originalAttachmentNames.storage.advice.recommended)
+  };
+  return texts[advice]();
 }
 
 function handleWhitespace(text: TextComponent): void {

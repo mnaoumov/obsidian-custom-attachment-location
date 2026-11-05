@@ -349,13 +349,16 @@ it('starts fresh setup directly in JSON and retains the provider restriction acr
   settings.shouldAllowHiddenPluginDataFolder = true;
   const component = await createComponent();
   component.set('assets/alpha.pdf', 'arrival.pdf');
+  expect(component.isObsidianSyncProvider).toBe(false);
   await component.setSyncEnabled(true, { shouldUseObsidianSync: true });
+  expect(component.isObsidianSyncProvider).toBe(true);
   const devices = await app.vault.adapter.list(`${ROOT}/devices`);
   const documents = await app.vault.adapter.list(String(devices.folders[0]));
   expect(documents.files.length).toBeGreaterThan(0);
   expect(documents.files.every((path) => path.endsWith('.json'))).toBe(true);
   const reloaded = await createComponent();
   expect(reloaded.isSyncEnabled).toBe(true);
+  expect(reloaded.isObsidianSyncProvider).toBe(true);
   await expect(reloaded.relocate(TARGET)).rejects.toThrow('hidden history');
   expect(await app.vault.adapter.exists(TARGET_ROOT)).toBe(false);
   await reloaded.relocate('99-Meta/Names');

@@ -119,6 +119,8 @@ Two things follow:
 
 ## Original name storage
 
+Synchronizing original names is worth it only when another device uses this vault and a template reads `{{originalAttachmentFileName}}`. The page says which case this device is in: with Obsidian Sync not connected to a remote vault, the names stay on this device and no folder is created; with it connected and a template reading the name, it recommends **Set up Obsidian Sync**. **Set up Obsidian Sync** refuses when Sync is not connected, or when Sync's own settings would skip the history (it is JSON, so **Sync all other types** must be on). **Set up external sync** is always there for Git, Syncthing, iCloud or a WebDAV client, which the plugin cannot see.
+
 - `pluginDataFolder`
   - the vault folder that should hold the synchronized original-name records, `@Plugin sync data (DO NOT REMOVE)` by default. Changing the value only proposes a destination: nothing moves until you run the relocation action under **Original name storage**, which copies and verifies the full history first. Keep every folder the records have lived in included in your sync tool. See [05 Collect attachments](<./05 Collect attachments.md#original-attachment-names>).
 - `shouldAllowHiddenPluginDataFolder`
