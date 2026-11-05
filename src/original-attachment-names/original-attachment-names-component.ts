@@ -162,6 +162,13 @@ interface StoredOriginalAttachmentNames {
  */
 export class OriginalAttachmentNamesComponent extends Component {
   /**
+   * Whether this device's synchronization was set up for Obsidian Sync, rather than an external sync tool.
+   */
+  public get isObsidianSyncProvider(): boolean {
+    return this.shouldUseObsidianSync;
+  }
+
+  /**
   Whether this device has enabled cross-device transport.
   */
   public get isSyncEnabled(): boolean {
@@ -820,6 +827,16 @@ export class OriginalAttachmentNamesComponent extends Component {
       { mode: PluginNoticeMode.Separate }
     );
   }
+}
+
+/**
+ * Where this plugin's history goes under a plugin data folder.
+ *
+ * @param folder - The vault-relative plugin data folder.
+ * @returns The vault-relative history root.
+ */
+export function getOriginalNameTransportRoot(folder: string): string {
+  return `${folder}/${PLUGIN_ID}/${STORE_ID}`;
 }
 
 function isStoredOriginalAttachmentNames(value: unknown): value is StoredOriginalAttachmentNames {

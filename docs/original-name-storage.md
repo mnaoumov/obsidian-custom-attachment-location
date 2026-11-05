@@ -4,11 +4,31 @@
 
 Open **Settings → `Custom Attachment Location` → Original name storage** to configure this device. Disabling synchronization keeps local names, corrections and causal history; it never deletes existing shared files. Local history belongs to this device's vault identity. Clearing Obsidian's local application data can remove it; enable file synchronization if you need another copy.
 
+## When synchronization is worth turning on
+
+Synchronize original names only when both of these hold:
+
+1. Another device uses this vault, through Obsidian Sync or another sync tool.
+2. A template reads `{{originalAttachmentFileName}}`: an attachment folder or file name, a collected or renamed file name, the inserted link text, the Markdown URL format, or a custom token.
+
+Without the first, nobody else needs the names. Without the second, no template reads them, so nothing is computed differently on another device. On a single device, local history already keeps `{{originalAttachmentFileName}}` stable.
+
+The **Original name storage** page applies this to the device you are on and shows one line of advice:
+
+| This device | Advice |
+| --- | --- |
+| Obsidian Sync is off, or on without a remote vault | Names stay here and no folder is created. Use **Set up external sync** only if another tool carries the vault and a template reads the name. |
+| Obsidian Sync is connected, and a template reads the name | Recommended: choose **Set up Obsidian Sync**. |
+| Obsidian Sync is connected, and no template reads the name | Not needed yet. |
+| Set up for Obsidian Sync, which is no longer connected here | Nothing reaches other devices. Reconnect Obsidian Sync, or disable sync on this device. |
+
+The plugin cannot see Git, Syncthing, iCloud or a WebDAV client, so it never assumes they are absent: **Set up external sync** is always available. It never turns synchronization on by itself, and a device that synchronized under an earlier version keeps doing so until you disable it.
+
 ## Enable synchronization
 
 Choose **Set up Obsidian Sync** or **Set up external sync** and complete the confirmation checklist. Consent is local to each device and does not travel in `data.json`. The first device can join without waiting for another participant.
 
-For Obsidian Sync, connect the vault to its remote vault and enable **Sync all other types** on every participating device. Restart Obsidian after changing Sync settings. The setup is a manual verification checklist: the plugin does not change Sync settings or claim that remote devices are ready. Arbitrary hidden folders are excluded, including arbitrary plugin data under `.obsidian`; the special configuration-folder sync mechanism does not promise to carry these files. See [Obsidian Sync settings](https://help.obsidian.md/sync/settings).
+For Obsidian Sync, the plugin checks this device first. **Set up Obsidian Sync** refuses when Obsidian Sync is not connected to a remote vault, or when Sync's own settings would skip a history location: the history is JSON, so it needs **Sync all other types**, and no history location may be in Sync's **Excluded folders**. The message names the location. Every other participating device needs the same settings: connect the same remote vault, enable **Sync all other types**, restart Obsidian after changing Sync settings, and run the setup there too. The plugin does not change Sync settings and cannot check other devices. Arbitrary hidden folders are excluded, including arbitrary plugin data under `.obsidian`; the special configuration-folder sync mechanism does not promise to carry these files. See [Obsidian Sync settings](https://help.obsidian.md/sync/settings).
 
 For Git, WebDAV or another external provider, explicitly include JSON files and every history location listed in settings, on every participating device. Hidden folders need support and configuration in that provider. Excluding a folder from Obsidian search is separate from excluding it from synchronization.
 

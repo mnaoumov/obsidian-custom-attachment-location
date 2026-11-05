@@ -1,0 +1,73 @@
+import type { App } from 'obsidian';
+
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
+import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import {
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest';
+
+import {
+  getObsidianSyncStatus,
+  ObsidianSyncState
+} from './obsidian-sync-status.ts';
+
+interface CreatedApp {
+  readonly app: App;
+  readonly getEnabledPluginById: (id: string) => unknown;
+}
+
+function createApp(syncInstance: unknown): CreatedApp {
+  const getEnabledPluginById = vi.fn((_id: string): unknown => syncInstance);
+  const app = strictProxy<App>({
+    internalPlugins: strictProxy<App['internalPlugins']>({
+      getEnabledPluginById: castTo<App['internalPlugins']['getEnabledPluginById']>(getEnabledPluginById)
+    })
+  });
+  return { app, getEnabledPluginById };
+}
+
+describe('getObsidianSyncStatus', () => {
+  it('reports Off when the core Sync plugin is disabled, and answers no carry question', () => {
+    const { app, getEnabledPluginById } = createApp(null);
+    const status = getObsidianSyncStatus(app);
+    expect(getEnabledPluginById).toHaveBeenCalledWith('sync');
+    expect(status.state).toBe(ObsidianSyncState.Off);
+    expect(status.doesCarryFile('a/b.json')).toBeUndefined();
+  });
+
+  it.each([
+    ['an empty remote vault id', { getRemoteVaultId: (): string => '' }],
+    ['a non-string remote vault id', { getRemoteVaultId: (): number => 1 }],
+    ['no remote vault getter', {}]
+  ])('reports NotConnected for %s', (_label, instance) => {
+    const status = getObsidianSyncStatus(createApp(instance).app);
+    expect(status.state).toBe(ObsidianSyncState.NotConnected);
+    expect(status.doesCarryFile('a/b.json')).toBeUndefined();
+  });
+
+  it.each([true, false])('asks the selective-sync filter whether a file is carried (%s)', (isCarried) => {
+    const filter = {
+      allowSyncFile: vi.fn(function allowsSyncFile(this: unknown, _path: string, _isFolder: boolean): boolean {
+        expect(this).toBe(filter);
+        return isCarried;
+      })
+    };
+    const status = getObsidianSyncStatus(createApp({ filter, getRemoteVaultId: (): string => 'remote' }).app);
+    expect(status.state).toBe(ObsidianSyncState.Connected);
+    expect(status.doesCarryFile('a/b.json')).toBe(isCarried);
+    expect(filter.allowSyncFile).toHaveBeenCalledWith('a/b.json', false);
+  });
+
+  it.each([
+    ['no filter', {}],
+    ['a filter without allowSyncFile', { filter: {} }],
+    ['a filter answering a non-boolean', { filter: { allowSyncFile: (): string => 'yes' } }]
+  ])('cannot answer the carry question with %s', (_label, members) => {
+    const status = getObsidianSyncStatus(createApp({ ...members, getRemoteVaultId: (): string => 'remote' }).app);
+    expect(status.state).toBe(ObsidianSyncState.Connected);
+    expect(status.doesCarryFile('a/b.json')).toBeUndefined();
+  });
+});

@@ -19,6 +19,7 @@ import type {
   SettingGroup,
   ToggleComponent
 } from 'obsidian';
+import type { Mock } from 'vitest';
 
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
@@ -155,6 +156,20 @@ const originalAddMultipleText = SettingEx.prototype.addMultipleText;
 const originalAddMultipleDropdown = SettingEx.prototype.addMultipleDropdown;
 const originalSetName = SettingEx.prototype.setName;
 
+interface CreateSyncInstanceOptions {
+  readonly isCarried?: ((path: string) => boolean) | boolean;
+  readonly remoteVaultId?: string;
+}
+
+interface SyncFilterStub {
+  readonly allowSyncFile: Mock<(path: string, isFolder: boolean) => boolean>;
+}
+
+interface SyncInstanceStub {
+  readonly filter: SyncFilterStub;
+  readonly getRemoteVaultId: () => string;
+}
+
 /**
  * Resolves a declarative predicate that may be a boolean, a function, or absent.
  *
@@ -166,7 +181,21 @@ function checkPredicate(predicate: (() => boolean) | boolean | undefined, should
   return typeof predicate === 'function' ? predicate() : predicate ?? shouldDefaultTo;
 }
 
-async function createTab(configure?: (settings: PluginSettings) => void, storage?: OriginalAttachmentNamesComponent): Promise<CreatedTab> {
+/**
+ * A stand-in for the core Sync plugin instance, with the two members the storage row reads.
+ *
+ * @param options - The remote vault and what its filter carries.
+ * @returns The stand-in.
+ */
+function createSyncInstance(options: CreateSyncInstanceOptions): SyncInstanceStub {
+  const isCarried = options.isCarried ?? true;
+  return {
+    filter: { allowSyncFile: vi.fn((path: string) => typeof isCarried === 'function' ? isCarried(path) : isCarried) },
+    getRemoteVaultId: (): string => options.remoteVaultId ?? 'remote-vault'
+  };
+}
+
+async function createTab(configure?: (settings: PluginSettings) => void, storage?: OriginalAttachmentNamesComponent, syncInstance: unknown = null): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const originalApp = app.asOriginalType__();
 
@@ -178,6 +207,10 @@ async function createTab(configure?: (settings: PluginSettings) => void, storage
       'custom-attachment-location': { id: 'custom-attachment-location', name: 'Custom Attachment Location' },
       'excalidraw': { id: 'excalidraw', name: 'Excalidraw' }
     }
+  });
+  // The storage row asks the core Sync plugin how it stands on this device; `null` is Sync turned off.
+  seedOnRawTarget(originalApp, 'internalPlugins', {
+    getEnabledPluginById: (id: string): unknown => id === 'sync' ? syncInstance : null
   });
   const validatorWrapper = ValueWrapper.unset<TokenValidator>();
   const pluginSettingsComponent = new PluginSettingsComponent({
@@ -647,6 +680,7 @@ describe('PluginSettingsTab', () => {
       isEnabled = shouldEnable;
     });
     const storage = strictProxy<OriginalAttachmentNamesComponent>({
+      isObsidianSyncProvider: false,
       get isSyncEnabled(): boolean {
         return isEnabled;
       },
@@ -656,7 +690,7 @@ describe('PluginSettingsTab', () => {
       setSyncEnabled,
       transportRoots: ['Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1']
     });
-    const { buttons } = await createTab(undefined, storage);
+    const { buttons } = await createTab(undefined, storage, createSyncInstance({ isCarried: true }));
     const button = buttons.find((candidate) => candidate.buttonEl.textContent === label);
     expect(button).toBeDefined();
     button?.simulateClick__();
@@ -666,12 +700,73 @@ describe('PluginSettingsTab', () => {
     expect(isEnabled).toBe(true);
   });
 
+  it.each([
+    ['Sync off', null, false, 'Obsidian Sync is not connected to a remote vault on this device'],
+    ['Sync on without a remote vault', createSyncInstance({ remoteVaultId: '' }), true, 'Obsidian Sync is not connected to a remote vault on this device'],
+    ['Sync connected, a template reads the name', createSyncInstance({ isCarried: true }), true, 'Recommended: this vault uses Obsidian Sync and a template reads {{originalAttachmentFileName}}'],
+    ['Sync connected, no template reads the name', createSyncInstance({ isCarried: true }), false, 'no template reads {{originalAttachmentFileName}}']
+  ])('advises a local-only device: %s', async (_label, syncInstance, doesTemplateReadOriginalName, expected) => {
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: false, transportRoots: [] });
+    const { tab } = await createTab(
+      (settings) => {
+        settings.generatedAttachmentFileName = doesTemplateReadOriginalName ? '{{originalAttachmentFileName}}' : 'file';
+      },
+      storage,
+      syncInstance
+    );
+    expect(tab.containerEl.querySelector('.original-name-storage-advice')?.textContent).toContain(expected);
+  });
+
+  it('warns a device set up for Obsidian Sync that Sync is no longer connected, and says nothing otherwise', async () => {
+    const obsidianStorage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: true, isSyncEnabled: true, transportRoots: [] });
+    const { tab } = await createTab(undefined, obsidianStorage);
+    expect(tab.containerEl.querySelector('.original-name-storage-advice')?.textContent).toContain('Obsidian Sync is not connected to a remote vault here');
+
+    const externalStorage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: true, transportRoots: [] });
+    const { tab: externalTab } = await createTab(undefined, externalStorage);
+    expect(externalTab.containerEl.querySelector('.original-name-storage-advice')).toBeNull();
+  });
+
+  it('refuses Obsidian Sync setup without a remote vault, and offers no checklist', async () => {
+    const setSyncEnabled = vi.fn(async () => {
+      await noopAsync();
+    });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: false, setSyncEnabled, transportRoots: [] });
+    const { buttons } = await createTab(undefined, storage, createSyncInstance({ remoteVaultId: '' }));
+    buttons.find((button) => button.buttonEl.textContent === 'Set up Obsidian Sync')?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(vi.mocked(alert).mock.calls[0]?.[0].message).toContain('Connect it in Settings → Sync first');
+    expect(confirm).not.toHaveBeenCalled();
+    expect(setSyncEnabled).not.toHaveBeenCalled();
+  });
+
+  it('refuses Obsidian Sync setup when Sync would not carry a history location', async () => {
+    const setSyncEnabled = vi.fn(async () => {
+      await noopAsync();
+    });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: false, setSyncEnabled, transportRoots: ['Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1'] });
+    const syncInstance = createSyncInstance({ isCarried: (path) => path.startsWith('Plugin data/') });
+    const { buttons } = await createTab(
+      (settings) => {
+        settings.pluginDataFolder = 'Meta/Sync data';
+      },
+      storage,
+      syncInstance
+    );
+    buttons.find((button) => button.buttonEl.textContent === 'Set up Obsidian Sync')?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(syncInstance.filter.allowSyncFile).toHaveBeenCalledWith('Plugin data/obsidian-custom-attachment-location/original-attachment-names-v1/history.json', false);
+    expect(vi.mocked(alert).mock.calls[0]?.[0].message).toContain('would not carry Meta/Sync data/obsidian-custom-attachment-location/original-attachment-names-v1');
+    expect(confirm).not.toHaveBeenCalled();
+    expect(setSyncEnabled).not.toHaveBeenCalled();
+  });
+
   it('leaves local-only history alone when setup is cancelled', async () => {
     vi.mocked(confirm).mockResolvedValue(false);
     const setSyncEnabled = vi.fn(async () => {
       await noopAsync();
     });
-    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isSyncEnabled: false, setSyncEnabled, transportRoots: [] });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: false, setSyncEnabled, transportRoots: [] });
     const { buttons } = await createTab(undefined, storage);
     buttons.find((button) => button.buttonEl.textContent === 'Set up external sync')?.simulateClick__();
     await waitForAllAsyncOperations();
@@ -683,7 +778,7 @@ describe('PluginSettingsTab', () => {
     const setSyncEnabled = vi.fn(async () => {
       await noopAsync();
     });
-    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isSyncEnabled: false, setSyncEnabled, transportRoots: hasHiddenRoot ? ['Meta/.names/plugin/store'] : [] });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: false, setSyncEnabled, transportRoots: hasHiddenRoot ? ['Meta/.names/plugin/store'] : [] });
     const { buttons } = await createTab((settings) => {
       settings.shouldAllowHiddenPluginDataFolder = true;
       settings.pluginDataFolder = hasHiddenRoot ? 'Plugin data' : 'Meta/.names';
@@ -701,7 +796,7 @@ describe('PluginSettingsTab', () => {
     const relocate = vi.fn(async () => {
       await noopAsync();
     });
-    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isSyncEnabled: true, relocate, setSyncEnabled, transportRoots: [] });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: true, relocate, setSyncEnabled, transportRoots: [] });
     const { buttons } = await createTab((settings) => {
       settings.pluginDataFolder = '99-Meta/Names';
     }, storage);
@@ -715,6 +810,7 @@ describe('PluginSettingsTab', () => {
 
   it('shows the relocation error so conflicting history cannot be silently replaced', async () => {
     const storage = strictProxy<OriginalAttachmentNamesComponent>({
+      isObsidianSyncProvider: false,
       isSyncEnabled: true,
       relocate: vi.fn(async () => {
         await noopAsync();
