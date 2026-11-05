@@ -117,6 +117,13 @@ Two things follow:
 - `networkImageDownloadTimeoutInSeconds`
   - how long to wait for each network image download.
 
+## Original name storage
+
+- `pluginDataFolder`
+  - the vault folder that should hold the synchronized original-name records, `@Plugin sync data (DO NOT REMOVE)` by default. Changing the value only proposes a destination: nothing moves until you run the relocation action under **Original name storage**, which copies and verifies the full history first. Keep every folder the records have lived in included in your sync tool. See [05 Collect attachments](<./05 Collect attachments.md#original-attachment-names>).
+- `shouldAllowHiddenPluginDataFolder`
+  - **Off by default.** Allows a hidden folder (one whose name starts with `.`) as `pluginDataFolder`. Obsidian Sync does not carry arbitrary hidden folders, so turn it on only when another tool synchronizes the vault.
+
 ## Undoing bulk commands with git
 
 - `shouldCommitBulkOperations`
