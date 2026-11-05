@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 17.2.0
+
+- test(original-attachment-names): raise the Android link menu without a long press
+- chore(github): add the plugin-version id to the feature request form
+- docs: point the sync data folder README at its mnaoumov.dev page
+- docs(demo-vault): document pluginDataFolder and shouldAllowHiddenPluginDataFolder
+- feat: re #99
+- chore(deps): bump obsidian-integration-testing to 17.8.3
+- test(sidecars): wait for the real insertFiles patch before the paired drop
+- test(settings): expect the Original name storage sub-page in the settings integration test
+- chore: make issue attachments optional and strongly encouraged
+- test: wait for live plugin APIs after vault cleanup
+- test: run desktop suites after layout ready
+- fix: clear glob cancellation advisory
+- feat: re #99
+- docs: link to the Obsidian resources page
+- feat: store only original attachment names, and drop Copy original path
+- feat: fold the link display text toggle into Inserted link text
+
 ## 17.1.0
 
 - docs(readme): point bug reports at the Report a bug command
