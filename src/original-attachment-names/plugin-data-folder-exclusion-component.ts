@@ -31,7 +31,7 @@ export const PLUGIN_DATA_FOLDER_README_FILE_NAME = 'README.md';
 /**
  * Where the README sends a user who wants the whole story.
  */
-export const PLUGIN_DATA_FOLDER_DOCS_URL = 'https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/docs/original-name-storage.md';
+export const PLUGIN_DATA_FOLDER_DOCS_URL = 'https://mnaoumov.dev/obsidian/plugin-sync-data/';
 
 /**
  * The text of the explanation file. Public, plain wording: it is read by whoever opens the folder.
