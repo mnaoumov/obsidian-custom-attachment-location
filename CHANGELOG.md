@@ -7,7 +7,7 @@
 - docs: point the sync data folder README at its mnaoumov.dev page
 - docs(demo-vault): document pluginDataFolder and shouldAllowHiddenPluginDataFolder
 - feat: re #99
-- chore(deps): bump obsidian-integration-testing to 17.8.3
+- chore(deps): bump `obsidian-integration-testing` to 17.8.3
 - test(sidecars): wait for the real insertFiles patch before the paired drop
 - test(settings): expect the Original name storage sub-page in the settings integration test
 - chore: make issue attachments optional and strongly encouraged
@@ -28,15 +28,15 @@
 - chore(github): give the bug form the field ids bug-report links prefill
 - test(attachment-location): restore the 100% coverage gate on main
 - fix(attachment-saving): keep the folder on the note a save started from
-- build(deps): bump typescript-dev-toolkit to ^5.4.2
+- build(deps): bump `typescript-dev-toolkit` to ^5.4.2
 - build(deps): clear GHSA-gg6h-894w-4m9c by overriding re2js to ^2.9.1
-- feat: record bulk commands as git commits, so one revert undoes a run
+- feat: record bulk commands as `git` commits, so one revert undoes a run
 - perf: answer a burst of attachment-path queries with one walk of the note
 - fix: patch the clipboard manager when a note opens into the active tab
 - build(deps): bump @mnaoumov/obsidian-lib to ^10.1.0 and adopt its Reference API names
 - test(share): check on Android that a shared Markdown note keeps its name
 - build(deps): bump @mnaoumov/typescript-dev-toolkit to ^5.1.0
-- build(deps-dev): bump obsidian-integration-testing to 17.7.2 for Android WebView session recovery
+- build(deps-dev): bump `obsidian-integration-testing` to 17.7.2 for Android WebView session recovery
 - fix(share): leave a shared Markdown note to core so it keeps its name
 - fix(sidecars): retire the original sidecar group together after a move
 - build(deps-dev): bump undici to 7.30.1 for its security fixes
@@ -60,20 +60,20 @@
 
 - test(demo-vault): stop the startup script loading the rename handler a second time
 - refactor(crc32): drop the unreachable table-entry fallback that kept branch coverage under 100%
-- test: seed the obsidian-lib 6 release of `Advanced Rename and Delete Handler`
+- test: seed the `obsidian-lib` 6 release of `Advanced Rename and Delete Handler`
 - docs(demo-vault): split the token reference into one note per token
 - feat: offer every Total Commander checksum in {{attachmentFileHash}}
 - test(demo-vault): floor `CodeScript Toolkit` at 15.0.0
 - feat: add {{attachmentFileHash}} token naming attachments by a content hash
-- chore(deps)!: move to obsidian-lib 6 and off the dropped obsidian-dev-utils names
-- docs: name obsidian-lib where comments said dev-utils
-- docs: point a leftover obsidian-dev-utils pin reason at the packages in the tree now
+- chore(deps)!: move to `obsidian-lib` 6 and off the dropped `obsidian-dev-utils` names
+- docs: name `obsidian-lib` where comments said dev-utils
+- docs: point a leftover `obsidian-dev-utils` pin reason at the packages in the tree now
 - fix: show the CSV copied notice with the plugin header
 - fix: drop the plugin name from notice text
 - docs: shorten the debugging section
-- docs(changelog): escape the issue-title tags so markdownlint and cspell pass
+- docs(changelog): escape the issue-title tags so `markdownlint` and `cspell` pass
 - docs(changelog): name the issue each released entry resolved
-- chore: replace leftover obsidian-dev-utils references with @mnaoumov/obsidian-lib
+- chore: replace leftover `obsidian-dev-utils` references with @mnaoumov/obsidian-lib
 - chore(lint): turn lint:md and spellcheck green on main
 - docs(readme): lead the Debugging section with `Advanced Debug Mode`
 - feat(tokens): merge remembering each attachment's arrival name for {{originalAttachmentFileName}}
@@ -81,7 +81,7 @@
 
 ## 16.0.0
 
-- feat(settings)!: merge taking obsidian-lib 5.0.0 path settings with globs and case-insensitive matching (re #98 - Exclude file extensions (e.g. .mdenc) from Collect attachments)
+- feat(settings)!: merge taking `obsidian-lib` 5.0.0 path settings with globs and case-insensitive matching (re #98 - Exclude file extensions (e.g. .mdenc) from Collect attachments)
 - docs: mark plugin names as code
 - fix(tokens): merge registering custom tokens whenever the settings are validated
 
@@ -91,7 +91,7 @@ Migration: every entry in a path list (attachment unit folders, the two exclude 
 
 - docs(api): merge naming the validation debug switch in the contract
 - fix(paste): merge renaming every pasted image file again under Only pasted images (re #97 - \[BUG\] The newly uploaded attachment was not renamed.)
-- chore(deps): merge bumping obsidian-test-mocks to ^7.2.3
+- chore(deps): merge bumping `obsidian-test-mocks` to ^7.2.3
 - refactor(api): merge refreshing the `Advanced Rename and Delete Handler` contract copy
 - chore(github): merge linking Discussions from the issue chooser
 - refactor(paste): merge using the nullable ImportedAttachment typings
@@ -103,15 +103,15 @@ Migration: every entry in a path list (attachment unit folders, the two exclude 
 - fix(collect): merge collecting after a note is moved outside Obsidian
 - test(network-images): merge pinning the automatic collect downloading a network image
 - test(excalidraw): merge pinning a paste into a folder that does not exist yet
-- test(api-contract): verify the contract with verifyApiContract from typescript-lib 1.5.0
+- test(api-contract): verify the contract with verifyApiContract from `typescript-lib` 1.5.0
 - fix(paste): merge no longer force-loading a deferred markdown tab at startup
-- refactor(api-contract): merge building the contract guards from typescript-lib and obsidian-lib
+- refactor(api-contract): merge building the contract guards from `typescript-lib` and `obsidian-lib`
 
 ## 15.1.0
 
 - feat(paste): merge telling screenshot files apart from real files in Only pasted images
 - feat(collect): merge an opt-in setting that merges byte-identical attachments
-- build(deps): merge taking obsidian-dev-toolkit 3.1.0 without the obsidian-lib override
+- build(deps): merge taking `obsidian-dev-toolkit` 3.1.0 without the `obsidian-lib` override
 - ci: merge attesting release assets through the toolkit's reusable workflow
 - feat(dependency): merge requiring `Advanced Rename and Delete Handler` 2.2.0 or later
 
@@ -123,13 +123,13 @@ Migration: every entry in a path list (attachment unit folders, the two exclude 
   - `obsidian-dev-utils` 107.4.1 and older read these members; `@mnaoumov/obsidian-lib` 2.0.0 and later read the plugin API.
   - `Advanced Rename and Delete Handler` needs 2.2.0 or later to keep an attachment unit folder whole when it rescues attachments out of a deleted folder.
 - test: merge seeding `Advanced Rename and Delete Handler` 2.2.1, which reads the designation through the API
-- build(demo-vault): merge requiring `CodeScript Toolkit` 13.8.0 for the obsidian-lib demo script
+- build(demo-vault): merge requiring `CodeScript Toolkit` 13.8.0 for the `obsidian-lib` demo script
 - fix(ui): merge marking the plugin names in the dependency reason as code
 - refactor(demo-vault): merge importing the community-plugin helpers from @mnaoumov/obsidian-lib
 
 ## 14.2.0
 
-- refactor: merge moving off obsidian-dev-utils onto the @mnaoumov packages
+- refactor: merge moving off `obsidian-dev-utils` onto the @mnaoumov packages
 - refactor(api): merge building the API contract on @mnaoumov/typescript-lib/api-contract
 - feat(api): merge taking `Advanced Rename and Delete Handler`'s own contract, with full schemas
 - feat(api): merge the copyable api-contract.ts with full schemas
@@ -137,17 +137,17 @@ Migration: every entry in a path list (attachment unit folders, the two exclude 
 
 ## 14.1.0
 
-- test: merge using the obsidian-typings declarations of Obsidian internals
+- test: merge using the `obsidian-typings` declarations of Obsidian internals
 - test(api): read the migrate suite's expected contract version from the source
 - feat(api): merge publishing the attachment-path resolver and the unit-folder check
 
 ## 14.0.3
 
-- fix: merge updating obsidian-dev-utils to 107.4.1 (re #95 - \[BUG\] Global CSS leak via `body button:not(.clickable-icon)` breaks button text and icons in other plugins)
+- fix: merge updating `obsidian-dev-utils` to 107.4.1 (re #95 - \[BUG\] Global CSS leak via `body button:not(.clickable-icon)` breaks button text and icons in other plugins)
 
 ## 14.0.2
 
-- chore: merge updating libs onto obsidian-dev-utils 107.3.1
+- chore: merge updating libs onto `obsidian-dev-utils` 107.3.1
 
 ## 14.0.1
 
@@ -158,7 +158,7 @@ Migration: every entry in a path list (attachment unit folders, the two exclude 
 - test(screenshots): merge setting the desktop capture theme with applyObsidianTheme
 - test(android): merge verifying the overlap stub writes
 - fix(release-notes): merge naming the plugin in the release notes popup
-- chore(test): merge dropping the perf transport raise obsidian-dev-utils now provides
+- chore(test): merge dropping the perf transport raise `obsidian-dev-utils` now provides
 
 ## 14.0.0
 
@@ -168,23 +168,23 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 
 - refactor(settings): merge stating that the legacy file-name pattern is never absent
 - docs(settings): merge spelling behavior the US way so the spellcheck gate passes
-- refactor(settings): merge dropping the loadFromFile override the obsidian-dev-utils base now covers
+- refactor(settings): merge dropping the loadFromFile override the `obsidian-dev-utils` base now covers
 - test(integration): merge naming the empty-folder cleanup race behind Failed to parse path
 - feat(settings): merge recognizing a drawing by its excalidraw-plugin property through the handler (#90)
 - test(screenshots): merge capturing the desktop frames without the editor caret
 - test(screenshots): merge pinning the clock the store captures read
 - refactor(settings): merge dropping the anchored placeholder override
 - docs(agents): merge noting the capture suites as the one writer of the handler record
-- chore(deps): merge the dependency sweep onto obsidian-integration-testing 17 and the re-shot store frames
-- refactor(settings): merge dropping the private-field onSavingRecord override on obsidian-dev-utils 107
-- refactor(styles): merge dropping the local multiple-dropdown rule on obsidian-dev-utils 107 (#86)
+- chore(deps): merge the dependency sweep onto `obsidian-integration-testing` 17 and the re-shot store frames
+- refactor(settings): merge dropping the private-field onSavingRecord override on `obsidian-dev-utils` 107
+- refactor(styles): merge dropping the local multiple-dropdown rule on `obsidian-dev-utils` 107 (#86)
 - feat(external-attachments): merge renaming an image pasted into an `Excalidraw` drawing (#65)
-- test(coverage): merge covering the branches the obsidian-test-mocks 7 float left uncovered
+- test(coverage): merge covering the branches the `obsidian-test-mocks` 7 float left uncovered
 - test(delete-unused): merge pinning that the images a drawing shows are backlinks
 - refactor(tokens): merge keeping parseFormatObject file-local
 - test(integration): merge editing settings through editAndSave in every desktop suite
 - fix(tokens): merge registering the stored custom tokens when enabled after layout-ready
-- chore(deps): merge floating obsidian-test-mocks to ^7.0.0
+- chore(deps): merge floating `obsidian-test-mocks` to ^7.0.0
 - docs(demo-vault): merge stating what skipping a drawing costs the delete-unused sweep
 - docs(readme): merge linking both cross-plugin API guides
 - fix: merge moving an attachment used by a single note to its proper folder
@@ -194,9 +194,9 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - feat!: merge the move to the {{token:format}} syntax
 - build(lint): merge turning on no-soft-break-in-paragraph
 - refactor: merge dropping the local command disposal the base now makes redundant
-- chore(deps): merge raising obsidian-dev-utils to 106 and obsidian-integration-testing to 16
+- chore(deps): merge raising `obsidian-dev-utils` to 106 and `obsidian-integration-testing` to 16
 - test(demo-vault): merge installing `CodeScript Toolkit` headlessly when it is missing
-- chore: merge adopting the npm run gate branch gate
+- chore: merge adopting the `npm` run gate branch gate
 - fix(settings): merge stopping every settings load from rewriting data.json
 - fix(deps): merge restoring the lockfile's missing resolved and integrity fields
 - fix: merge never sweeping a drawing as a note for unused attachments
@@ -248,16 +248,16 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 ## 12.0.1
 
 - test: cover the three unused-attachments-remover paths the gate was short on
-- chore: bring the lockfile up to the obsidian-dev-utils floor it now declares
+- chore: bring the lockfile up to the `obsidian-dev-utils` floor it now declares
 - refactor: replace the hand-rolled settings-migration copy with the shared component
 - docs: say where the debug command is run
-- refactor(modals): take the input-spellcheck rule from obsidian-dev-utils
+- refactor(modals): take the input-spellcheck rule from `obsidian-dev-utils`
 - docs: name the unversioned demo-vault asset and the folder it unzips into
 - chore: make the LICENSE copyright line lintable and guard it against the year roll-over
 - test(test-mocks): stop replacing the plugin registry, and sweep the dependencies
 - test(unit-folder-rescue): prove issue #70 fixed with both real plugins on one vault
 - feat(ownerless-attachments): reach attachment folders whose owning note is gone
-- chore(deps): move to obsidian-dev-utils 101 and obsidian-test-mocks 5
+- chore(deps): move to `obsidian-dev-utils` 101 and `obsidian-test-mocks` 5
 - refactor(move-to-proper-folder): drop the `this` alias the directory review flags
 - feat(rename-by-plugin): scope the foreign-attachment rename to named plugins (re #77 - \[FR\] Setting to only `include` defined plugins for renames)
 
@@ -277,9 +277,9 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - style: satisfy capitalized-comments in the new tests
 - test(navigation): cover the three gaps blocking the coverage gate
 - style: exempt an aliased import from perfectionist sorting
-- style: reformat after the dprint bump
+- style: reformat after the `dprint` bump
 - chore(deps): sweep caret-ranged dependencies to latest
-- fix(deps): move to obsidian-integration-testing 11 and obsidian-dev-utils 96.5.2
+- fix(deps): move to `obsidian-integration-testing` 11 and `obsidian-dev-utils` 96.5.2
 - fix(deps): drop the brace-expansion file: override that breaks a clean install
 - feat(navigation): add commands to jump between a note and its attachments
 - test(plugin): cover the Notebook Navigator layout-ready path
@@ -289,14 +289,14 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - style(test): fix comment indentation in the attachment-rescue suite
 - fix(test): make the desktop integration suite deterministic
 - docs(test): repoint the bottleneck suite's header comment, which named a file this repo does not have
-- fix(vitest): restore the performance project's global setup and CDP timeout
+- fix(`vitest`): restore the performance project's global setup and CDP timeout
 - fix: re mnaoumov/obsidian-advanced-note-composer#259
 - fix(settings): point plugin-directory links at community.obsidian.md
 - feat: re #68
 
 ## 11.9.0
 
-- fix(test): reword a comment cspell rejects
+- fix(test): reword a comment `cspell` rejects
 - fix(test): wait for the relocation to settle, not merely to start (#65)
 - fix(delete-unused-attachments): stop showing a progress bar for a single note
 - feat(commands): delete unused attachments across the entire vault (#64)
@@ -305,8 +305,8 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - docs(demo-vault): show what deleting a note or its folder does to a shared attachment (#67)
 - feat(collect): say why the priority list left a shared attachment behind (#66)
 - docs(demo-vault): unwrap the notes so Obsidian stops rendering a break per line
-- chore(cspell): teach the dictionary Obsidian's `offref`
-- docs(readme): render the same in Obsidian's plugin page as on GitHub
+- chore(`cspell`): teach the dictionary Obsidian's `offref`
+- docs(readme): render the same in Obsidian's plugin page as on `GitHub`
 - fix(rename): stop a concurrent edit orphaning a moved note's embeds (re #60 - The image link is not updated)
 - chore: lint
 
@@ -320,16 +320,16 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - chore: update libs
 - feat(attachment-rescue): rescue a still-referenced attachment from a deletion (#57)
 - chore: update libs
-- refactor(attachment-unit-folder): take the rule from obsidian-dev-utils
+- refactor(attachment-unit-folder): take the rule from `obsidian-dev-utils`
 - feat(jpeg): keep the image's metadata across the conversion, behind a setting (#55)
-- chore: update obsidian-dev-utils to 94.6.1
-- chore: update obsidian-dev-utils to 94.6.0
+- chore: update `obsidian-dev-utils` to 94.6.1
+- chore: update `obsidian-dev-utils` to 94.6.0
 - fix: override deepmerge-ts to clear GHSA-ggr8-5vv4-36mx
 - feat(plugin): expose collecting a specific note's attachments to other plugins
 - feat(collect): let a priority list decide which note owns a shared attachment (#57)
 - feat(collect): treat designated folders as one attachment so the whole tree travels (#56)
 - test: gate the demo vault by clicking every code button
-- chore: teach cspell the advisory wording
+- chore: teach `cspell` the advisory wording
 - chore: update libs
 - docs(demo-vault): make the token patterns inspectable
 - docs: add store screenshots and surface them in the README
@@ -341,11 +341,11 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 ## 11.6.4
 
 - docs: make the demo vault the documentation, in the standard layout
-- feat(demo-vault): migrate to obsidian-dev-utils 93.3.1 and adopt the authoring convention
+- feat(demo-vault): migrate to `obsidian-dev-utils` 93.3.1 and adopt the authoring convention
 
 ## 11.6.3
 
-- chore: update libs and adopt obsidian-integration-testing 10
+- chore: update libs and adopt `obsidian-integration-testing` 10
 
 ## 11.6.2
 
@@ -355,19 +355,19 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 ## 11.6.1
 
 - chore: update libs
-- test: un-skip the #47 and #49 reproductions, now green on obsidian-dev-utils 89 (re #47, re #49)
+- test: un-skip the #47 and #49 reproductions, now green on `obsidian-dev-utils` 89 (re #47, re #49)
 - test: re #49
 - test: re #47
 - chore: update libs
-- refactor(prism): register the tokenized-string language through obsidian-dev-utils' SyntaxHighlightingComponent
-- chore(vitest): consume the shared vitest configuration and collapse the desktop-only suites
+- refactor(prism): register the tokenized-string language through `obsidian-dev-utils`' SyntaxHighlightingComponent
+- chore(`vitest`): consume the shared `vitest` configuration and collapse the desktop-only suites
 
 ## 11.6.0
 
 - test(settings): exercise the custom-tokens row teardown
 - refactor: replace the deprecated setWarning with setDestructive
 - refactor(settings): move the settings tab onto the declarative settings API
-- chore: update libs and clear the npm audit
+- chore: update libs and clear the `npm` audit
 - docs: fix the demo vault download instructions
 
 ## 11.5.0
@@ -380,7 +380,7 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 ## 11.4.0
 
 - docs: demo link-display-text setting (re #24)
-- test: behavioral integration tests for obsidian-dev-utils 88.2.0 canvas/alias fixes + clipboard/link-display
+- test: behavioral integration tests for `obsidian-dev-utils` 88.2.0 canvas/alias fixes + clipboard/link-display
 - chore: update libs
 - fix: re #16
 - fix: re #26
@@ -419,7 +419,7 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 ## 11.2.1
 
 - docs: standardize demo-vault README
-- docs: drop per-plugin demo-vault setup notes (bootstrap covered by the obsidian-dev-utils harness)
+- docs: drop per-plugin demo-vault setup notes (bootstrap covered by the `obsidian-dev-utils` harness)
 - docs: unnumber demo-vault setup notes
 - docs(demo-vault): create the `Custom Attachment Location` demo vault
 
@@ -432,7 +432,7 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 ## 11.1.1
 
 - chore: update libs
-- chore: update obsidian-dev-utils to 85.0.0
+- chore: update `obsidian-dev-utils` to 85.0.0
 - refactor: pass params objects to attachment path, maps and modal helpers
 - build: lock typescript to 6.0.3
 
@@ -690,7 +690,7 @@ Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automati
 - fix: init cursor line to extract headings
   - fix: #228
 - chore: update libs
-- chore: enable markdownlint
+- chore: enable `markdownlint`
 
 ## 9.17.3
 
