@@ -118,17 +118,35 @@ describe('Copy original attachment file name', () => {
           menu.hide();
 
           phase = 'attachment link menu';
-          await leaf.setViewState({ state: { file: note.path, mode: 'preview' }, type: 'markdown' });
-          const view = leaf.view;
-          if (!(view instanceof MarkdownView)) {
-            throw new TypeError('The note did not open in a markdown view.');
+          async function renderAttachmentLink(): Promise<HTMLElement> {
+            await leaf.setViewState({ state: { file: note.path, mode: 'preview' }, type: 'markdown' });
+            const view = leaf.view;
+            if (!(view instanceof MarkdownView)) {
+              throw new TypeError('The note did not open in a markdown view.');
+            }
+            await waitUntil({ predicate: () => view.contentEl.querySelector('a.internal-link') !== null, timeoutInMilliseconds: 4000 });
+            const rendered = view.contentEl.querySelector<HTMLElement>('a.internal-link');
+            if (!rendered) {
+              throw new Error('The attachment link did not render.');
+            }
+            return rendered;
           }
-          await waitUntil({ predicate: () => view.contentEl.querySelector('a.internal-link') !== null, timeoutInMilliseconds: 4000 });
-          const link = view.contentEl.querySelector<HTMLElement>('a.internal-link');
-          if (!link) {
-            throw new Error('The attachment link did not render.');
+          const link = await renderAttachmentLink();
+          if (Platform.isDesktopApp) {
+            await clickElement({ button: 'right', element: link });
+          } else {
+            /*
+             * On a one-core Android guest the WebView's gesture recognizer takes the trusted long press for a tap, which
+             * follows the link instead of opening its menu, and a failed long press plus a retry does not fit the
+             * 30-second per-closure cap. The gesture is the harness's and Android's; what this test owns is the menu the
+             * plugin contributes, so raise the `file-menu` event Obsidian raises for a link's menu, the way the file menu
+             * step above does. Desktop keeps the trusted right click.
+             */
+            const rect = link.getBoundingClientRect();
+            const linkMenu = new Menu().setUseNativeMenu(false);
+            app.workspace.trigger('file-menu', linkMenu, file, 'link-context-menu', leaf);
+            linkMenu.showAtPosition({ x: rect.left, y: rect.bottom });
           }
-          await clickElement({ button: 'right', element: link });
           await waitUntil({ predicate: () => document.querySelector('.menu') !== null, timeoutInMilliseconds: 3000 });
           await sleep(200);
           // The import above carried a source path; no action may expose it.
