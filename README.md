@@ -33,7 +33,7 @@ This plugin decides **where** each attachment is stored and **what** it is calle
 
 **The documentation is a demo vault.** Every feature has a note that explains what it does and why you would want it, and walks you through it with a file you supply.
 
-**[Start reading here](<./demo-vault/00 Start.md>)** — it is plain markdown, so it works on GitHub with nothing installed.
+**[Start reading here](<./demo-vault/00 Start.md>)** — it is plain markdown, so it works on `GitHub` with nothing installed.
 
 A copy of the vault ships with every release. You can access it via any of the following:
 
@@ -49,7 +49,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Catch attachments other plugins create**, such as an image pasted into an `Excalidraw` drawing, and move and rename them too. [06 Settings](<./demo-vault/06 Settings.md>)
 - **Collect attachments** a note already has into the folder your settings say, for a note, a folder or the whole vault, optionally merging identical files. [05 Collect attachments](<./demo-vault/05 Collect attachments.md>)
 - **Delete unused attachments**, after a confirmation, optionally including folders whose note is gone. [08 Delete unused attachments](<./demo-vault/08 Delete unused attachments.md>)
-- **Undo a bulk command with git**: in a vault kept in git, each collect, delete, move or prune run can be recorded as its own commit, so one revert undoes it. Off by default, desktop only. [06 Settings](<./demo-vault/06 Settings.md#undoing-bulk-commands-with-git>)
+- **Undo a bulk command with `git`**: in a vault kept in `git`, each collect, delete, move or prune run can be recorded as its own commit, so one revert undoes it. Off by default, desktop only. [06 Settings](<./demo-vault/06 Settings.md#undoing-bulk-commands-with-git>)
 - **Keep it true over time**: attachments follow their note on rename, move and delete, through `Advanced Rename and Delete Handler`. [06 Settings](<./demo-vault/06 Settings.md>)
 - **Link display text**: show an attachment's name or its original arrival name after renaming, using a token template. [07 Link display text](<./demo-vault/07 Link display text.md>)
 - **Jump between a note and its attachments**, both ways. [10 Navigation](<./demo-vault/10 Navigation.md>)

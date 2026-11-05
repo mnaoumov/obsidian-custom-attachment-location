@@ -137,7 +137,7 @@ Remove both entries from **Attachment unit folders** and repeat with a fresh cop
 
 Everything above starts from a **note**: the sweep reads a note, works out where that note's attachments belong, and looks in there. Which means there is one thing it structurally cannot find - **an attachment folder whose note is gone**.
 
-Delete `My note.md` and its `assets/My note/` folder stays behind. Nothing in the vault points at that folder any more, no note resolves to it, so no scan ever opens it. Its files sit there permanently, and even `Delete unused attachments in entire vault` walks straight past them. This is not only about deleting a note in Obsidian: a vault synced by Syncthing, git or git-annex has notes removed by the sync, so the plugin never sees a deletion event either and the settings on the next page do not fire.
+Delete `My note.md` and its `assets/My note/` folder stays behind. Nothing in the vault points at that folder any more, no note resolves to it, so no scan ever opens it. Its files sit there permanently, and even `Delete unused attachments in entire vault` walks straight past them. This is not only about deleting a note in Obsidian: a vault synced by Syncthing, `git` or git-annex has notes removed by the sync, so the plugin never sees a deletion event either and the settings on the next page do not fire.
 
 `orphanAttachmentScanMode` adds a second pass for exactly that case. It has three settings and is **off by default**:
 
