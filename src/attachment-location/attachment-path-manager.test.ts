@@ -180,6 +180,7 @@ function createManager(): TestContext {
     duplicateNameSeparator: ' ',
     generatedAttachmentFileName: 'generated',
     insertedLinkText: '',
+    manuallyRenamedAttachmentFileName: '',
     renamedAttachmentFileName: '',
     shouldFollowObsidianAttachmentLocation: false,
     shouldRenameCollectedAttachments: false,
@@ -587,6 +588,18 @@ describe('AttachmentPathManager', () => {
       expect(mockPromptWithPreview).not.toHaveBeenCalled();
     });
 
+    it('should use the manually renamed attachment file name template for RenameAttachments', async () => {
+      context.settings.manuallyRenamedAttachmentFileName = 'manual';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.RenameAttachments));
+      expect(result).toBe('manual');
+    });
+
+    it('should fall back to the generated template, not the current name, when the manual rename template is empty', async () => {
+      context.settings.manuallyRenamedAttachmentFileName = '';
+      context.settings.generatedAttachmentFileName = 'generated';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.RenameAttachments));
+      expect(result).toBe('generated');
+    });
     it('should validate the file name part of the resolved path', async () => {
       context.settings.generatedAttachmentFileName = 'folder/file';
       await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment));
@@ -1090,6 +1103,80 @@ describe('AttachmentPathManager', () => {
     });
   });
 
+  describe('getRenamedAttachmentPath', () => {
+    function createAttachment(path: string): TFile {
+      const name = path.split('/').at(-1) ?? path;
+      const extensionIndex = name.lastIndexOf('.');
+      return createTFile({
+        basename: name.slice(0, extensionIndex),
+        extension: name.slice(extensionIndex + 1),
+        name,
+        path,
+        stat: strictProxy<FileStats>({ ctime: 0, mtime: 0, size: 0 })
+      });
+    }
+
+    async function getRenamedPath(attachmentFile: TFile): Promise<null | string> {
+      return await context.manager.getRenamedAttachmentPath({
+        attachmentFile,
+        cursorLine: 3,
+        noteFilePath: 'notes/note.md',
+        sequenceNumber: 2
+      });
+    }
+
+    beforeEach(() => {
+      context.settings.manuallyRenamedAttachmentFileName = 'renamed-{{sequenceNumber}}';
+      // The folder template is never consulted: the attachment stays where it is.
+      context.settings.attachmentFolderPath = 'elsewhere';
+    });
+
+    it('should rename the attachment in its own folder, by the rename template', async () => {
+      await expect(getRenamedPath(createAttachment('notes/assets/Pasted image.png'))).resolves.toBe('notes/assets/renamed-2.png');
+      expect(context.getAvailablePath).toHaveBeenCalledWith('notes/assets/renamed-2', 'png');
+    });
+
+    it('should hand back the available path when the new name is taken', async () => {
+      context.getAvailablePath.mockReturnValue('notes/assets/renamed-2 1.png');
+      await expect(getRenamedPath(createAttachment('notes/assets/photo.png'))).resolves.toBe('notes/assets/renamed-2 1.png');
+    });
+
+    it('should keep only the file name of a template that names a subfolder', async () => {
+      context.settings.manuallyRenamedAttachmentFileName = 'sub/renamed';
+      await expect(getRenamedPath(createAttachment('notes/photo.png'))).resolves.toBe('notes/renamed.png');
+    });
+
+    it('should rename nothing when the attachment already has its name', async () => {
+      await expect(getRenamedPath(createAttachment('notes/assets/renamed-2.png'))).resolves.toBeNull();
+      expect(context.getAvailablePath).not.toHaveBeenCalled();
+    });
+
+    it('should leave an attachment parked under the duplicate suffix beside its taken name, so a second run converges', async () => {
+      mockGetAbstractFileOrNull.mockReturnValue(createTFile({ path: 'notes/assets/renamed-2.png' }));
+      await expect(getRenamedPath(createAttachment('notes/assets/renamed-2 1.png'))).resolves.toBeNull();
+    });
+
+    it('should rename a change of case alone without asking for an available path', async () => {
+      context.settings.manuallyRenamedAttachmentFileName = 'Photo';
+      await expect(getRenamedPath(createAttachment('notes/photo.png'))).resolves.toBe('notes/Photo.png');
+      expect(context.getAvailablePath).not.toHaveBeenCalled();
+    });
+
+    it('should read the attachment content only when a token asks for it', async () => {
+      await getRenamedPath(createAttachment('notes/photo.png'));
+      expect(context.readBinary).not.toHaveBeenCalled();
+
+      context.settings.manuallyRenamedAttachmentFileName = '{{attachmentFileHash}}';
+      await getRenamedPath(createAttachment('notes/photo.png'));
+      expect(context.readBinary).toHaveBeenCalledOnce();
+    });
+
+    it('should read the recorded original name', async () => {
+      context.settings.manuallyRenamedAttachmentFileName = 'from-{{originalAttachmentFileName}}';
+      context.originalAttachmentNames.set('notes/file-1.png', 'Screenshot.png');
+      await expect(getRenamedPath(createAttachment('notes/file-1.png'))).resolves.toBe('notes/from-Screenshot.png');
+    });
+  });
   describe('getAvailablePathForAttachments', () => {
     it('prepares arrival-name link text before a renamed attachment is created, once per insertion', async () => {
       const noteFile = createTFile({ path: 'note.md' });

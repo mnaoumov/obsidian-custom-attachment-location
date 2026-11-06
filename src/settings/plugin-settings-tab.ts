@@ -969,6 +969,35 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part1));
+          f.appendText(' ');
+          appendCodeBlock(f, t(($) => $.commands.renameAttachmentsCurrentNote));
+          f.appendText(' ');
+          f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part2));
+          f.appendText(' ');
+          f.createEl('a', {
+            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+            text: t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part3)
+          });
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part4));
+        }),
+        name: t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.name),
+        render: (setting) => {
+          setting.addCodeHighlighter((codeHighlighter) => {
+            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+            this.bind({
+              propertyName: 'manuallyRenamedAttachmentFileName',
+              valueComponent: codeHighlighter,
+              ...bindOptionsWithTrim
+            });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.description.part1));
           f.createEl('br');
           appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText));

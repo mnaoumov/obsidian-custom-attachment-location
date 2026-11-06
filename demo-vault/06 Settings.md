@@ -15,6 +15,8 @@ Open **Settings -> Community plugins -> `Custom Attachment Location`** to config
   - the name pattern for a newly created attachment.
 - `renamedAttachmentFileName`
   - the name pattern used when an attachment is renamed alongside its note.
+- `manuallyRenamedAttachmentFileName`
+  - the name pattern the **Rename attachments in current note** command gives each attachment of the note, in the folder it already sits in. Empty by default, which means `generatedAttachmentFileName`. See [02 Attachment file naming](<./02 Attachment file naming.md#rename-a-notes-attachments-where-they-are>).
 - `attachmentRenameMode`
   - which attachments get renamed on paste: none, only pasted images, or all.
 - `shouldKeepNamesOfPastedNonScreenshotFiles`

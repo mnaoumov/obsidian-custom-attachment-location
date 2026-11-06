@@ -144,6 +144,16 @@ export class PluginSettings {
 
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public jpegQuality = 0.8;
+
+  /**
+   * The name pattern the `Rename attachments in current note` command gives each attachment of the note.
+   *
+   * Empty means {@link generatedAttachmentFileName}, the name a new attachment would get, which is what makes the
+   * command useful with no configuration: it renames attachments that kept a pasted or dropped name to the generated
+   * one. Only the name changes; the attachment stays in its folder.
+   */
+  public manuallyRenamedAttachmentFileName = '';
+
   public markdownUrlFormat = '';
 
   public moveAttachmentToProperFolderUsedByMultipleNotesMode: MoveAttachmentToProperFolderUsedByMultipleNotesMode = MoveAttachmentToProperFolderUsedByMultipleNotesMode.CopyAll;

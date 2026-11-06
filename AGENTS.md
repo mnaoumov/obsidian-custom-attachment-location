@@ -142,3 +142,12 @@ The collect, delete-unused, move-to-proper-folder and prune commands run their w
 - **Prune flushes the original-name store inside the operation.** The store writes its Markdown files on a debounce, so without `flush()` the run's commit would hold nothing.
 - **The heartbeat comes from `loop()`.** Every wrapped command except prune iterates through `loop()`, which reports progress to the lease lock since `obsidian-lib` 10.4.0. A dialog the run opens and leaves waiting, such as the delete confirmation, reports none, so after two minutes the lock reads as stale.
 - **`src/bulk-operations/bulk-operation-commit.desktop.integration.test.ts` runs `git` asynchronously, and turns `core.autocrlf` off in its repository.** A blocking `execFileSync` stalls the renderer while `git` rewrites `.git`, and on Windows Obsidian's watcher then drops the events for the files a revert puts back, so the vault never sees them. The machine's `core.autocrlf` rewrites the note's line endings on the revert's checkout. Read an `OP<n>` commit's files with `--no-renames`: `git` otherwise reports the move's copy and delete as one rename.
+
+## `Rename attachments in current note` renames in place, and its empty template is the generated one
+
+`src/rename-attachments/rename-attachments-in-file-command-handler.ts` renames each attachment a Markdown note links, through `AttachmentPathManager.getRenamedAttachmentPath` under `ActionContext.RenameAttachments`. It never changes a folder: that is collecting's job, and an attachment kept in a shared folder on purpose stays there. A template's subfolder part is dropped, a taken name gets the duplicate suffix, and an attachment parked under that suffix beside its taken name stays put, so a rerun converges.
+
+- **`manuallyRenamedAttachmentFileName` empty means `generatedAttachmentFileName`**, unlike the collect and note-rename templates, whose empty value keeps the name. Keeping the name would make the command do nothing by default.
+- **It skips four kinds**, each counted in the closing notice and named in the console: a path the handler ignores, a file inside an attachment unit folder, a sidecar with a base (`findSidecarBase`; the base's rename carries it), and an attachment another note links too (notes the multiple-notes check excludes do not count).
+- **Canvas is out**: its text-node embeds are not in the metadata cache, so `renameSafe` would leave them on the old name.
+- It is wrapped in `runBulkOperation` from outside `addToQueueAndWait`, like the other bulk commands.

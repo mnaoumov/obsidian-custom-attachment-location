@@ -53,6 +53,7 @@ const TOKENIZED_SETTINGS_KEYS = [
   'collectedAttachmentFolderPath',
   'generatedAttachmentFileName',
   'insertedLinkText',
+  'manuallyRenamedAttachmentFileName',
   'markdownUrlFormat',
   'renamedAttachmentFileName'
 ] as const satisfies readonly (keyof PluginSettings)[];
@@ -517,6 +518,12 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
         path: value
       }));
     this.registerValidator('generatedAttachmentFileName', async (value) =>
+      await this.validator.validatePath({
+        areTokensAllowed: true,
+        path: value
+      }));
+    // Empty is legal here and means "use `generatedAttachmentFileName`".
+    this.registerValidator('manuallyRenamedAttachmentFileName', async (value) =>
       await this.validator.validatePath({
         areTokensAllowed: true,
         path: value

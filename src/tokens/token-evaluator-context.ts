@@ -49,6 +49,11 @@ export enum ActionContext {
   ReadApi = 'ReadApi',
 
   /**
+   * The `Rename attachments in current note` command: an attachment renamed where it is, its folder unchanged.
+   */
+  RenameAttachments = 'RenameAttachments',
+
+  /**
    * Rename note.
    */
   RenameNote = 'RenameNote',
