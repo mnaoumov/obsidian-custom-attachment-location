@@ -1,10 +1,25 @@
 .obsidian-custom-attachment-location {
-  .original-name-storage-controls .setting-item-control {
+  // Four action buttons leave the description no room beside them, so it is squeezed into one word per line (#99).
+  // Stack the description above the buttons instead, each taking the full width. The scope class sits on the row
+  // itself, because Obsidian renders a settings sub-page outside the plugin tab's container.
+  &.original-name-storage-controls {
     flex-wrap: wrap;
-  }
+    gap: var(--size-4-3);
 
-  .original-name-storage-controls .setting-item-description {
-    overflow-wrap: anywhere;
+    .setting-item-info {
+      flex: 1 1 100%;
+      margin-inline-end: 0;
+    }
+
+    .setting-item-description {
+      overflow-wrap: anywhere;
+    }
+
+    .setting-item-control {
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
   }
 
   &.obsidian-lib.code-highlighter-component textarea.tokenized-string-setting-control {
@@ -97,7 +112,7 @@
     color: var(--text-accent);
   }
 
-  .default-image-size-dimension-setting-control {
+  &.default-image-size-dimension-setting-control {
     margin-left: 5px;
   }
 }

@@ -14,6 +14,7 @@ import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
 import { confirm } from '@mnaoumov/obsidian-lib/modals/confirm';
+import { addPluginCssClasses } from '@mnaoumov/obsidian-lib/plugin/plugin-context';
 import { PluginSettingsTabBase } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
 import {
   convertAsyncToSync,
@@ -671,7 +672,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               });
             })
             .addDropdown((dropdown) => {
-              dropdown.selectEl.addClass('default-image-size-dimension-setting-control');
+              // A sub-page renders outside the tab's container, so the plugin's scope class has to be on the control itself.
+              addPluginCssClasses(dropdown.selectEl, 'default-image-size-dimension-setting-control');
               dropdown.addOptions({
                 /* eslint-disable perfectionist/sort-objects -- Need to keep enum order. */
                 [DefaultImageSizeDimension.Width]: t(($) => $.pluginSettings.defaultImageSizeDimension.width),
@@ -1322,7 +1324,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           if (!component) {
             return;
           }
-          setting.settingEl.addClass('original-name-storage-controls');
+          // A sub-page renders outside the tab's container, so the plugin's scope class has to be on the row itself.
+          addPluginCssClasses(setting.settingEl, 'original-name-storage-controls');
           const storage: OriginalAttachmentNamesComponent = component;
           const updateDescription = (): void => {
             const obsidianSyncStatus = getObsidianSyncStatus(this.app);
