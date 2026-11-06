@@ -24,6 +24,13 @@ interface StorageSettings {
   shouldAllowHiddenPluginDataFolder: boolean;
 }
 
+interface StoreFolderPresence {
+  readonly explorer: boolean | null;
+  readonly onDisk: boolean;
+  readonly path: string;
+  readonly vault: boolean;
+}
+
 function isStorageSettings(value: unknown): value is StorageSettings {
   return typeof value === 'object' && value !== null && 'pluginDataFolder' in value;
 }
@@ -180,6 +187,97 @@ it('keeps names locally, opts in through settings, relocates to a hidden root an
   }
   if (failure) {
     throw failure;
+  }
+}, 180_000);
+it('keeps every store folder on disk, in the vault and in the file explorer after Disable sync on this device', async () => {
+  const vaultPath = getTemporaryVault().path;
+  const input = { readStorage };
+  const wasEnabled = await evalInObsidian({
+    callback: ({ app, readStorage: storage }) => storage(app).isSyncEnabled,
+    input,
+    vaultPath
+  });
+  try {
+    const folders = await evalInObsidian({
+      async callback({ app, lib: { waitUntil }, readStorage: storage }) {
+        const pluginId = 'obsidian-custom-attachment-location';
+        const timeoutInMilliseconds = 8000;
+        const component = storage(app);
+        await component.setSyncEnabled(true);
+        const file = await app.vault.createBinary('storage-disable.pdf', new TextEncoder().encode('disable').buffer);
+        component.set(file.path, 'arrival-disable.pdf');
+        await component.flush();
+        const storeFolders = await component.getExistingStoreFolders();
+        if (storeFolders.length === 0) {
+          throw new Error('Enabling synchronization must leave a store folder in the vault');
+        }
+        app.setting.open();
+        app.setting.openTabById(pluginId);
+        const tab = app.setting.pluginTabs.find((entry) => entry.id === pluginId);
+        const page = [...(tab?.containerEl.querySelectorAll<HTMLElement>('.setting-item') ?? [])].find((entry) => entry.querySelector('.setting-item-name')?.textContent === 'Original name storage');
+        if (!page) {
+          throw new Error('Storage page missing');
+        }
+        page.click();
+        await waitUntil({ message: 'The storage page must show its disable action', predicate: () => [...document.querySelectorAll('button')].some((entry) => entry.textContent === 'Disable sync on this device'), timeoutInMilliseconds });
+        const button = [...document.querySelectorAll('button')].find((entry) => entry.textContent === 'Disable sync on this device');
+        if (!button) {
+          throw new Error('Disable action missing');
+        }
+        button.click();
+        await waitUntil({ message: 'Disabling must turn synchronization off on this device', predicate: () => !component.isSyncEnabled, timeoutInMilliseconds });
+        await component.flush();
+        app.setting.close();
+        await app.plugins.disablePlugin(pluginId);
+        await app.plugins.enablePlugin(pluginId);
+        await waitUntil({ message: 'Original-name commands must return after reload', predicate: () => Object.hasOwn(app.commands.commands, `${pluginId}:show-original-attachment-names`), timeoutInMilliseconds });
+        return storeFolders;
+      },
+      input,
+      vaultPath
+    });
+    const found = await pollInObsidian({
+      input: { folders },
+      async poll({ app, folders: storeFolders }) {
+        const explorer = app.workspace.getLeavesOfType('file-explorer')[0]?.view;
+        const fileItems = explorer ? Reflect.get(explorer, 'fileItems') as Record<string, unknown> | undefined : undefined;
+        const result: StoreFolderPresence[] = [];
+        for (const path of storeFolders) {
+          result.push({
+            explorer: fileItems ? Object.hasOwn(fileItems, path) : null,
+            onDisk: await app.vault.adapter.exists(path),
+            path,
+            vault: app.vault.getFolderByPath(path) !== null
+          });
+        }
+        return result;
+      },
+      timeoutInMilliseconds: 15_000,
+      timeoutMessage: 'Every store folder must remain on disk after disabling synchronization',
+      until: (entries) => entries.every((entry) => entry.onDisk),
+      vaultPath
+    });
+    /*
+     * Obsidian never indexes a hidden folder, so only a visible one is expected in the vault and the explorer.
+     * The Android project runs this file too, and its layout may have no file explorer leaf to ask.
+     */
+    expect(found).toEqual(folders.map((path, index) => {
+      const isVisible = path.split('/').every((segment) => !segment.startsWith('.'));
+      return { explorer: found[index]?.explorer === null ? null : isVisible, onDisk: true, path, vault: isVisible };
+    }));
+  } finally {
+    await evalInObsidian({
+      async callback({ app, readStorage: storage, wasEnabled: priorEnabled }) {
+        app.setting.close();
+        await storage(app).setSyncEnabled(priorEnabled);
+        const file = app.vault.getFileByPath('storage-disable.pdf');
+        if (file) {
+          await app.fileManager.trashFile(file);
+        }
+      },
+      input: { ...input, wasEnabled },
+      vaultPath
+    });
   }
 }, 180_000);
 it('keeps visible JSON transport history out of per-note and orphan attachment deletion', async () => {
