@@ -51,6 +51,11 @@ it('explains that a device without Obsidian Sync needs no synchronization, and r
         await clickElement({ element: page });
         await waitUntil({ message: 'The storage page must show its setup actions', predicate: () => [...document.querySelectorAll('button')].some((entry) => entry.textContent === 'Set up Obsidian Sync'), timeoutInMilliseconds });
         const advice = document.querySelector('.original-name-storage-advice')?.textContent ?? '';
+        // 17.2.0 put the four actions beside the description, which left it one word wide (#99). A sub-page renders
+        // outside the tab's container, so this also proves the plugin's scoped styles reach it.
+        const controls = document.querySelector<HTMLElement>('.original-name-storage-controls');
+        const info = controls?.querySelector<HTMLElement>('.setting-item-info');
+        const descriptionWidthRatio = controls && info ? info.getBoundingClientRect().width / controls.getBoundingClientRect().width : 0;
         const button = [...document.querySelectorAll('button')].find((entry) => entry.textContent === 'Set up Obsidian Sync');
         if (!button) {
           throw new Error('Obsidian Sync setup action missing');
@@ -63,7 +68,7 @@ it('explains that a device without Obsidian Sync needs no synchronization, and r
           timeoutInMilliseconds
         });
         const hasChecklist = [...document.querySelectorAll('.modal-title')].some((entry) => entry.textContent === 'Enable original name synchronization?');
-        return { advice, hasChecklist, premise };
+        return { advice, descriptionWidthRatio, hasChecklist, premise };
       } finally {
         for (const modal of document.querySelectorAll('.modal')) {
           modal.querySelector<HTMLButtonElement>('button.mod-cta, button.cancel-button')?.click();
@@ -77,4 +82,6 @@ it('explains that a device without Obsidian Sync needs no synchronization, and r
   expect(result.premise).toEqual({ isJsonCarriedByDefault: false, isNoteCarriedByDefault: true, isSyncEnabled: true, remoteVaultId: null });
   expect(result.advice).toContain('Obsidian Sync is not connected to a remote vault on this device, so original names stay here and no folder is created');
   expect(result.hasChecklist).toBe(false);
+  // The description takes the whole row, with the actions below it.
+  expect(result.descriptionWidthRatio).toBeGreaterThan(0.8);
 }, 60_000);
