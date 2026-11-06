@@ -47,6 +47,7 @@ export const defaultTranslations = {
     moveAttachmentToProperFolder: 'Move attachment to proper folder',
     pruneOriginalAttachmentNames: 'Prune original attachment names',
     rememberCurrentNameAsOriginal: 'Remember current name as original',
+    renameAttachmentsCurrentNote: 'Rename attachments in current note',
     showOriginalAttachmentNames: 'Show original attachment names'
   },
   coreFilesSettingTab: {
@@ -94,7 +95,8 @@ export const defaultTranslations = {
     goToAttachmentFolder: 'Go to attachment folder',
     goToOwningNote: 'Go to owning note',
     rememberCurrentNameAsOriginal: 'Remember current name as original',
-    rememberCurrentNamesAsOriginals: 'Remember current names as originals'
+    rememberCurrentNamesAsOriginals: 'Remember current names as originals',
+    renameAttachmentsInFile: 'Rename attachments in file'
   },
   moveAttachmentToProperFolder: {
     progressBar: {
@@ -532,6 +534,15 @@ export const defaultTranslations = {
       },
       name: 'Location for new attachments'
     },
+    manuallyRenamedAttachmentFileName: {
+      description: {
+        part1: 'The name pattern the',
+        part2: 'command gives each attachment of the note, in the folder it already sits in. See available',
+        part3: 'tokens',
+        part4: 'Leave empty to use the generated attachment file name.'
+      },
+      name: 'Manually renamed attachment file name'
+    },
     markdownUrlFormat: {
       description: {
         part1: 'Format for the URL that will be inserted into Markdown when an attachment is added. It is applied at that moment only: a link Obsidian rewrites later, when a note or an attachment is renamed or moved, gets the default format.',
@@ -751,6 +762,14 @@ export const defaultTranslations = {
         part4: 'documentation',
         part5: 'for migration details.'
       }
+    }
+  },
+  renameAttachments: {
+    done: 'Renamed {{renamedCount}} attachment(s) of \'{{noteFilePath}}\'.',
+    doneWithSkipped: 'Renamed {{renamedCount}} attachment(s) of \'{{noteFilePath}}\'. Left {{skippedCount}} alone: shared with other notes, inside an attachment unit folder, a sidecar, or ignored. The console names each one.',
+    progressBar: {
+      message: 'Renaming attachment {{iterationString}} - \'{{attachmentFilePath}}\'.',
+      title: 'Renaming attachments...'
     }
   },
   settingsMigrationModal: {

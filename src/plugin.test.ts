@@ -74,6 +74,7 @@ import { RememberCurrentNameAsOriginalCommandHandler } from './original-attachme
 import { ShowOriginalAttachmentNamesCommandHandler } from './original-attachment-names/show-original-attachment-names-command-handler.ts';
 import { PLUGIN_API_CONTRACT } from './plugin-api/plugin-api.ts';
 import { createReleaseNotesComponent } from './release-notes-component.ts';
+import { RenameAttachmentsInFileCommandHandler } from './rename-attachments/rename-attachments-in-file-command-handler.ts';
 import { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
 import { PluginSettingsTab } from './settings/plugin-settings-tab.ts';
 import { TokenValidator } from './tokens/token-validator.ts';
@@ -202,6 +203,10 @@ vi.mock('./navigation/go-to-owning-note-command-handler.ts', () => ({
 
 vi.mock('./move-attachment-to-proper-folder/move-attachment-to-proper-folder-command-handler.ts', () => ({
   MoveAttachmentToProperFolderCommandHandler: vi.fn()
+}));
+
+vi.mock('./rename-attachments/rename-attachments-in-file-command-handler.ts', () => ({
+  RenameAttachmentsInFileCommandHandler: vi.fn()
 }));
 
 vi.mock('./attachment-location/custom-attachment-location-component.ts', () => ({
@@ -434,6 +439,7 @@ describe('Plugin', () => {
       expect.any(CollectAttachmentsEntireVaultCommandHandler),
       expect.any(DeleteUnusedAttachmentsEntireVaultCommandHandler),
       expect.any(MoveAttachmentToProperFolderCommandHandler),
+      expect.any(RenameAttachmentsInFileCommandHandler),
       expect.any(GoToAttachmentFolderCommandHandler),
       expect.any(GoToOwningNoteCommandHandler),
       expect.any(ShowOriginalAttachmentNamesCommandHandler),
@@ -717,6 +723,7 @@ describe('Plugin', () => {
     expect(CollectAttachmentsInCurrentFolderCommandHandler).toHaveBeenCalledOnce();
     expect(CollectAttachmentsEntireVaultCommandHandler).toHaveBeenCalledOnce();
     expect(MoveAttachmentToProperFolderCommandHandler).toHaveBeenCalledOnce();
+    expect(RenameAttachmentsInFileCommandHandler).toHaveBeenCalledOnce();
   });
 
   // Notebook Navigator draws its own file tree, so it never raises Obsidian's `file-menu` / `files-menu` events.

@@ -163,6 +163,13 @@ interface AttachmentPathManagerGetProperAttachmentPathParams {
   readonly sequenceNumber: number;
 }
 
+interface AttachmentPathManagerGetRenamedAttachmentPathParams {
+  readonly attachmentFile: TFile;
+  readonly cursorLine: number;
+  readonly noteFilePath: string;
+  readonly sequenceNumber: number;
+}
+
 interface AttachmentPathManagerPrepareInsertedLinkTextParams {
   readonly attachmentFileBaseName: string;
   readonly attachmentFileStats: FileStats | undefined;
@@ -481,6 +488,14 @@ export class AttachmentPathManager {
         baseTemplate = this.pluginSettingsComponent.settings.collectedAttachmentFileName || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
+      /*
+       * The one existing-attachment context whose empty template falls back to the GENERATED name: renaming is the
+       * whole point of the command that uses it, so keeping the name would leave the command doing nothing until it is configured.
+       */
+      case ActionContext.RenameAttachments: {
+        baseTemplate = this.pluginSettingsComponent.settings.manuallyRenamedAttachmentFileName || this.pluginSettingsComponent.settings.generatedAttachmentFileName;
+        break;
+      }
       case ActionContext.RenameNote: {
         baseTemplate = this.pluginSettingsComponent.settings.renamedAttachmentFileName || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
@@ -647,6 +662,54 @@ export class AttachmentPathManager {
     }
 
     return newAttachmentPath;
+  }
+
+  /**
+   * Where `Rename attachments in current note` puts an attachment: its own folder, under the name the rename template
+   * gives it for this note.
+   *
+   * The folder never changes, which is what tells this command apart from collecting. A name already taken by another
+   * file gets the duplicate-name suffix, and an attachment already parked under that suffix beside its taken name stays
+   * put, so a second run over an unchanged note renames nothing.
+   *
+   * @param params - The attachment, its note, and its place in the note.
+   * @returns The new path, or `null` when the attachment already has its name.
+   */
+  public async getRenamedAttachmentPath(params: AttachmentPathManagerGetRenamedAttachmentPathParams): Promise<null | string> {
+    const attachmentFile = params.attachmentFile;
+    const newAttachmentFileBaseName = await this.getGeneratedAttachmentFileBaseName(
+      new Substitutions({
+        actionContext: ActionContext.RenameAttachments,
+        app: this.app,
+        attachmentFileStats: attachmentFile.stat,
+        cursorLine: params.cursorLine,
+        noteFilePath: params.noteFilePath,
+        ...this.getOriginalAttachmentFileNameParams(attachmentFile, ActionContext.RenameAttachments),
+        attachmentFileName: attachmentFile.name,
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        readAttachmentFileContent: (): Promise<ArrayBuffer> => this.app.vault.readBinary(attachmentFile),
+        sequenceNumber: params.sequenceNumber,
+        tokenValidator: this.tokenValidator
+      })
+    );
+
+    // A template may hold a `/`, which names a subfolder in the generated-name template; here only the name is used.
+    const newAttachmentFileName = makeFileName({
+      fileBaseName: basename(newAttachmentFileBaseName),
+      fileExtension: attachmentFile.extension
+    });
+    const folderPath = dirname(attachmentFile.path);
+    const properPath = join(folderPath, newAttachmentFileName);
+    if (properPath === attachmentFile.path || this.isParkedBesideProperPath(attachmentFile, properPath)) {
+      return null;
+    }
+
+    // A change of case alone is a rename of this very file, so the name is not taken.
+    if (properPath.toLowerCase() === attachmentFile.path.toLowerCase()) {
+      return properPath;
+    }
+
+    return this.app.vault.getAvailablePath(join(folderPath, basename(newAttachmentFileName, `.${attachmentFile.extension}`)), attachmentFile.extension);
   }
 
   /**

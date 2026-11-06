@@ -84,6 +84,7 @@ import {
   PLUGIN_API_VERSION
 } from './plugin-api/plugin-api.ts';
 import { createReleaseNotesComponent } from './release-notes-component.ts';
+import { RenameAttachmentsInFileCommandHandler } from './rename-attachments/rename-attachments-in-file-command-handler.ts';
 import { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
 import { PluginSettingsTab } from './settings/plugin-settings-tab.ts';
 import { NoteOwnerResolver } from './shared-attachments/note-owner-resolver.ts';
@@ -455,6 +456,15 @@ export class Plugin extends PluginBase {
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent,
         resourceLockComponent: this.resourceLockComponent
+      }),
+      new RenameAttachmentsInFileCommandHandler({
+        abortSignalComponent: this.abortSignalComponent,
+        app: this.app,
+        attachmentPathManager,
+        bulkOperationCommitComponent,
+        handedOverSettingsComponent,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        pluginSettingsComponent
       }),
       new GoToAttachmentFolderCommandHandler({
         app: this.app,

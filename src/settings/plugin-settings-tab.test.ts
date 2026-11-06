@@ -89,8 +89,8 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
 // Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
-// 41 = 40 setting rows + the overlap banner row that rides at the top.
-const EXPECTED_ROW_COUNT = 44;
+// 45 = 44 setting rows + the overlap banner row that rides at the top.
+const EXPECTED_ROW_COUNT = 45;
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
@@ -613,6 +613,7 @@ describe('PluginSettingsTab', () => {
     expect(names).toContain('Screenshot file paths');
     expect(names).toContain('Rename attachments created by other plugins');
     expect(names).toContain('Renamed attachment file name');
+    expect(names).toContain('Manually renamed attachment file name');
     expect(names).toContain('Move attachment to proper folder used by multiple notes mode');
     expect(names).toContain('Special characters');
     expect(names).toContain('Special characters replacement');
@@ -664,6 +665,13 @@ describe('PluginSettingsTab', () => {
   it('should keep every declared row reachable after the split into sub-pages', async () => {
     const { tab } = await createTab();
     expect(flattenRows(tab.getSettingDefinitions())).toHaveLength(EXPECTED_ROW_COUNT);
+  });
+
+  it('saves the manual rename template from its field', async () => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    findComponent(textLikeComponents, 'Manually renamed attachment file name').setValue('{{noteFileName}}-{{sequenceNumber}}');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.manuallyRenamedAttachmentFileName).toBe('{{noteFileName}}-{{sequenceNumber}}');
   });
 
   it('saves the inserted-link-text token template from its Advanced field', async () => {

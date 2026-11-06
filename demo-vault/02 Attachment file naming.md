@@ -82,7 +82,16 @@ These patterns apply to attachments saved through Obsidian itself — a paste, a
 
 The drawing keeps showing the image under its new name, whether `Excalidraw`'s **Compress `Excalidraw` JSON** setting is on or off. `Excalidraw` records each image as an ordinary `[[link]]` line under `## Embedded Files`, outside the compressed data, so Obsidian updates that line like any other link.
 
-Related settings you can explore: `renamedAttachmentFileName`, `shouldRenameAttachmentFiles`, `attachmentRenameMode`, `renameAttachmentsCreatedByOtherPluginsMode`, `otherPluginIdsForAttachmentRename`, `duplicateNameSeparator`, and `collectedAttachmentFileName`. Every key is described in [06 Settings](<./06 Settings.md>). The tokens themselves live in [03 Tokens and patterns](<./03 Tokens and patterns.md>).
+Related settings you can explore: `renamedAttachmentFileName`, `manuallyRenamedAttachmentFileName`, `shouldRenameAttachmentFiles`, `attachmentRenameMode`, `renameAttachmentsCreatedByOtherPluginsMode`, `otherPluginIdsForAttachmentRename`, `duplicateNameSeparator`, and `collectedAttachmentFileName`. Every key is described in [06 Settings](<./06 Settings.md>). The tokens themselves live in [03 Tokens and patterns](<./03 Tokens and patterns.md>).
+
+## Rename a note's attachments where they are
+
+An attachment that kept the name it was pasted or dropped with can be renamed later. Open the note and run **`Custom Attachment Location`: Rename attachments in current note**, or pick **Rename attachments in file** from the note's file menu. Each attachment the note links gets the name **Manually renamed attachment file name** (`manuallyRenamedAttachmentFileName`) makes for it, and the note's links follow.
+
+- **Nothing moves to another folder.** Only the names change, which is what tells this command apart from **Collect attachments**.
+- **Left empty, the pattern is Generated attachment file name**, so a run gives old attachments the names new ones get. A pattern holding `{{random}}` gives every attachment a fresh unique name on each run.
+- **Some attachments keep their names**, and the closing notice counts them: one another note links too, one inside an attachment unit folder, a sidecar companion (it follows its base), and a path `Advanced Rename and Delete Handler` ignores. The console names each one.
+- **A Markdown note only.** A canvas is left out, because its text-card embeds would keep the old names.
 
 ## Sidecar files
 
