@@ -706,8 +706,9 @@ export const defaultTranslations = {
       name: 'Warn when an original attachment name is unknown'
     },
     sidecarExtensions: {
-      description: 'Companion file extensions, one per line (with or without a leading dot). For example, document.html.p7s follows document.html, and video.srt follows a unique video.mkv. Missing or ambiguous bases keep their sidecar names. Clear the list to disable pairing.',
-      name: 'Sidecar extensions'
+      description: 'Companion file extensions, one per line (with or without a leading dot). For example, document.html.p7s follows document.html, and video.srt follows a unique video.mkv. Missing or ambiguous bases keep their sidecar names. Clear the list to disable pairing, and use the reset button to restore the default extensions.',
+      name: 'Sidecar extensions',
+      resetToDefault: 'Restore the default extensions'
     },
     specialCharacters: {
       description: {

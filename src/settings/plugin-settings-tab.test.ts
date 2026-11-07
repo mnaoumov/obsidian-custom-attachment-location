@@ -10,6 +10,7 @@ import type { PrismModule } from '@obsidian-typings/obsidian-public-latest/imple
 import type {
   ButtonComponent,
   DropdownComponent,
+  ExtraButtonComponent,
   PluginManifest,
   SettingDefinition,
   SettingDefinitionGroup,
@@ -36,6 +37,7 @@ import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   App,
   ButtonComponent as ButtonComponentClass,
+  ExtraButtonComponent as ExtraButtonComponentClass,
   Platform
 } from 'obsidian-test-mocks/obsidian';
 import {
@@ -51,7 +53,6 @@ import {
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
 import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { Plugin } from '../plugin.ts';
-import type { PluginSettings } from './plugin-settings.ts';
 
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { TokenValidator } from '../tokens/token-validator.ts';
@@ -61,6 +62,7 @@ import {
   AttachmentRenameMode,
   ConvertImagesToJpegMode,
   OrphanAttachmentScanMode,
+  PluginSettings,
   RenameAttachmentsCreatedByOtherPluginsMode,
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
@@ -99,7 +101,13 @@ const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 const renderConflictWarningBannerMock = vi.fn<(containerEl: HTMLElement) => void>();
 const hasActiveWarningConflictsMock = vi.fn<() => boolean>();
 
+interface CapturedExtraButton {
+  readonly button: ExtraButtonComponentClass;
+  readonly name: string;
+}
+
 interface CapturedMultipleValueComponent {
+  readonly getValue: () => readonly string[];
   readonly name: string;
   readonly setValue: (value: readonly string[]) => unknown;
 }
@@ -117,6 +125,7 @@ interface CapturedValueComponent {
 
 interface CreatedTab {
   readonly buttons: ButtonComponentClass[];
+  readonly extraButtons: CapturedExtraButton[];
   readonly multipleDropdownComponents: CapturedMultipleValueComponent[];
   readonly multipleTextComponents: CapturedMultipleValueComponent[];
   readonly names: string[];
@@ -147,6 +156,7 @@ class MockDataHandler implements DataHandler {
 }
 
 const originalAddButton = SettingEx.prototype.addButton;
+const originalAddExtraButton = SettingEx.prototype.addExtraButton;
 const originalAddToggle = SettingEx.prototype.addToggle;
 const originalAddText = SettingEx.prototype.addText;
 const originalAddCodeHighlighter = SettingEx.prototype.addCodeHighlighter;
@@ -237,6 +247,7 @@ async function createTab(configure?: (settings: PluginSettings) => void, storage
   });
 
   const buttons: ButtonComponentClass[] = [];
+  const extraButtons: CapturedExtraButton[] = [];
   const toggles: CapturedToggle[] = [];
   const names: string[] = [];
   const textLikeComponents: CapturedValueComponent[] = [];
@@ -306,6 +317,7 @@ async function createTab(configure?: (settings: PluginSettings) => void, storage
     const name = this.nameEl.textContent;
     return originalAddMultipleText.call(this, (component: MultipleTextComponent) => {
       multipleTextComponents.push({
+        getValue: () => component.getValue(),
         name,
         setValue: (value) => {
           typeInto(component.setValue(value).inputEl);
@@ -320,6 +332,7 @@ async function createTab(configure?: (settings: PluginSettings) => void, storage
     const name = this.nameEl.textContent;
     return originalAddMultipleDropdown.call(this, (component: MultipleDropdownComponent) => {
       multipleDropdownComponents.push({
+        getValue: () => component.getValue(),
         name,
         setValue: (value) => {
           pickIn(component.setValue(value).selectEl);
@@ -333,6 +346,15 @@ async function createTab(configure?: (settings: PluginSettings) => void, storage
   addButtonSpy.mockImplementation(function capturingAddButton(this: SettingEx, callback): SettingEx {
     return originalAddButton.call(this, (button: ButtonComponent) => {
       buttons.push(ButtonComponentClass.fromOriginalType2__(button));
+      callback(button);
+    });
+  });
+
+  const addExtraButtonSpy = vi.spyOn(SettingEx.prototype, 'addExtraButton');
+  addExtraButtonSpy.mockImplementation(function capturingAddExtraButton(this: SettingEx, callback): SettingEx {
+    const name = this.nameEl.textContent;
+    return originalAddExtraButton.call(this, (button: ExtraButtonComponent) => {
+      extraButtons.push({ button: ExtraButtonComponentClass.fromOriginalType2__(button), name });
       callback(button);
     });
   });
@@ -371,6 +393,7 @@ async function createTab(configure?: (settings: PluginSettings) => void, storage
 
   renderRows(tab);
   addButtonSpy.mockRestore();
+  addExtraButtonSpy.mockRestore();
   addToggleSpy.mockRestore();
   addTextSpy.mockRestore();
   addCodeHighlighterSpy.mockRestore();
@@ -381,6 +404,7 @@ async function createTab(configure?: (settings: PluginSettings) => void, storage
   setNameSpy.mockRestore();
   return {
     buttons,
+    extraButtons,
     multipleDropdownComponents,
     multipleTextComponents,
     names,
@@ -1208,6 +1232,34 @@ describe('PluginSettingsTab', () => {
     component.setValue(['af']);
     await waitForAllAsyncOperations();
     expect(pluginSettingsComponent.settings.excludeExtensionsFromMultipleNotesCheck).toStrictEqual(['af']);
+  });
+
+  it('should keep an emptied sidecar extension list empty, so clearing it really disables pairing', async () => {
+    const { multipleTextComponents, pluginSettingsComponent } = await createTab();
+    const component = findMultipleValueComponent(multipleTextComponents, 'Sidecar extensions');
+    expect(component.getValue()).toStrictEqual(new PluginSettings().sidecarExtensions);
+    component.setValue([]);
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.sidecarExtensions).toStrictEqual([]);
+  });
+
+  it('should show the default sidecar extensions in the box rather than as a placeholder', async () => {
+    const { multipleTextComponents } = await createTab();
+    const component = findMultipleValueComponent(multipleTextComponents, 'Sidecar extensions');
+    component.setValue([...new PluginSettings().sidecarExtensions]);
+    await waitForAllAsyncOperations();
+    expect(component.getValue()).toStrictEqual(new PluginSettings().sidecarExtensions);
+  });
+
+  it('should restore the default sidecar extensions from the reset button', async () => {
+    const { extraButtons, pluginSettingsComponent } = await createTab((settings) => {
+      settings.sidecarExtensions = [];
+    });
+    const captured = extraButtons.find((entry) => entry.name === 'Sidecar extensions');
+    expect(captured).toBeDefined();
+    captured?.button.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings.sidecarExtensions).toStrictEqual(new PluginSettings().sidecarExtensions);
   });
 
   it('should re-register custom tokens when the custom tokens code changes', async () => {
