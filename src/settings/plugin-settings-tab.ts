@@ -28,7 +28,6 @@ import {
 
 import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
-import type { PluginSettings } from './plugin-settings.ts';
 
 import {
   getObsidianSyncStatus,
@@ -49,6 +48,7 @@ import {
   DefaultImageSizeDimension,
   MoveAttachmentToProperFolderUsedByMultipleNotesMode,
   OrphanAttachmentScanMode,
+  PluginSettings,
   RenameAttachmentsCreatedByOtherPluginsMode,
   SAMPLE_CUSTOM_TOKENS
 } from './plugin-settings.ts';
@@ -538,7 +538,26 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         name: t(($) => $.pluginSettingsTab.sidecarExtensions.name),
         render: (setting) => {
           setting.addMultipleText((multipleText) => {
-            this.bind({ propertyName: 'sidecarExtensions', valueComponent: multipleText });
+            this.bind({
+              // TODO: Drop this converter once obsidian-lib's MultipleTextComponent reads an empty textarea as `[]`; today it reads `['']`, so blank lines are dropped here and a cleared box stores `[]`.
+              componentToPluginSettingsValueConverter: (uiValue: readonly string[]): string[] => uiValue.filter((extension) => extension.trim() !== ''),
+              pluginSettingsToComponentValueConverter: (pluginSettingsValue: readonly string[]): readonly string[] => pluginSettingsValue,
+              propertyName: 'sidecarExtensions',
+              // An empty list is a real value, "pair nothing", so clearing must not snap back to the defaults, and the box must show the list as it is.
+              shouldResetSettingWhenComponentIsEmpty: false,
+              shouldShowPlaceholderForDefaultValues: false,
+              valueComponent: multipleText
+            });
+          });
+          setting.addExtraButton((button) => {
+            button.setIcon('rotate-ccw');
+            button.setTooltip(t(($) => $.pluginSettingsTab.sidecarExtensions.resetToDefault));
+            button.onClick(convertAsyncToSync(async () => {
+              await this.pluginSettingsComponent.editAndSave((settings) => {
+                settings.sidecarExtensions = new PluginSettings().sidecarExtensions;
+              });
+              this.refresh();
+            }));
           });
         }
       }),
