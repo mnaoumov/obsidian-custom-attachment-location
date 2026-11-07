@@ -8,9 +8,11 @@ import {
 } from 'vitest';
 
 import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settings-component-finder.ts';
+import { waitForPluginSettingsLoaded } from '../../scripts/helpers/plugin-settings-loaded-wait.ts';
 
 describe('sidecar attachment groups', () => {
   it('imports one random base name, carries its signature on rename, and preserves an orphan', async () => {
+    await waitForPluginSettingsLoaded();
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { waitUntil }, obsidianModule: { MarkdownView, Platform } }) {
         interface Settings {

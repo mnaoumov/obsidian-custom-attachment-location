@@ -7,6 +7,7 @@ import {
 } from 'vitest';
 
 import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settings-component-finder.ts';
+import { waitForPluginSettingsLoaded } from '../../scripts/helpers/plugin-settings-loaded-wait.ts';
 
 interface CopyOriginalAttachmentMetadataResult {
   readonly fileMenuClipboard: null | string;
@@ -21,6 +22,7 @@ interface CopyOriginalAttachmentMetadataResult {
 
 describe('Copy original attachment file name', () => {
   it('copies the imported name to the system clipboard from file and link menus, offers no source path, and disables a missing name', async () => {
+    await waitForPluginSettingsLoaded();
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { clickElement, pressKey, waitUntil }, obsidianModule: { MarkdownView, Menu, Platform } }) {
         interface Settings {

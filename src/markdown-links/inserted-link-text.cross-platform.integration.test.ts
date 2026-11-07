@@ -7,9 +7,11 @@ import {
 } from 'vitest';
 
 import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settings-component-finder.ts';
+import { waitForPluginSettingsLoaded } from '../../scripts/helpers/plugin-settings-loaded-wait.ts';
 
 describe('inserted attachment link text', () => {
   it.each([false, true])('keeps arrival names in real Obsidian links, including after rename (Markdown: %s)', async (shouldUseMarkdownLinks) => {
+    await waitForPluginSettingsLoaded();
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { waitUntil }, obsidianModule: { Platform }, shouldUseMarkdownLinks: useMarkdownLinks }) {
         interface Settings {
