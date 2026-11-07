@@ -8,6 +8,8 @@ import {
   FileSystemAdapter
 } from 'obsidian';
 
+import { NewAttachmentOperation } from './new-attachment-operation.ts';
+
 interface ArrayBufferMapConstructorParams {
   readonly app: App;
 }
@@ -15,6 +17,7 @@ interface ArrayBufferMapConstructorParams {
 export class ArrayBufferMap {
   private readonly app: App;
   private readonly fileStatsMap = new WeakMap<ArrayBuffer, FileStats>();
+  private readonly newAttachmentOperations = new WeakMap<ArrayBuffer, NewAttachmentOperation>();
   private readonly pastedImageArrayBuffers = new WeakSet<ArrayBuffer>();
 
   public constructor(params: ArrayBufferMapConstructorParams) {
@@ -23,6 +26,16 @@ export class ArrayBufferMap {
 
   public getFileStats(arrayBuffer: ArrayBuffer): FileStats | undefined {
     return this.fileStatsMap.get(arrayBuffer);
+  }
+
+  /**
+   * How the attachment with the given content arrived.
+   *
+   * @param arrayBuffer - The attachment content.
+   * @returns The recorded operation, or {@link NewAttachmentOperation.Other} when no paste or drop recorded one.
+   */
+  public getNewAttachmentOperation(arrayBuffer: ArrayBuffer): NewAttachmentOperation {
+    return this.newAttachmentOperations.get(arrayBuffer) ?? NewAttachmentOperation.Other;
   }
 
   /**
@@ -52,6 +65,16 @@ export class ArrayBufferMap {
 
   public setFileStats(arrayBuffer: ArrayBuffer, fileStats: FileStats): void {
     this.fileStatsMap.set(arrayBuffer, fileStats);
+  }
+
+  /**
+   * Records how the attachment with the given content arrived.
+   *
+   * @param arrayBuffer - The attachment content.
+   * @param operation - The operation.
+   */
+  public setNewAttachmentOperation(arrayBuffer: ArrayBuffer, operation: NewAttachmentOperation): void {
+    this.newAttachmentOperations.set(arrayBuffer, operation);
   }
 
   public async trySetByPath(arrayBuffer: ArrayBuffer, filePath: string): Promise<boolean> {

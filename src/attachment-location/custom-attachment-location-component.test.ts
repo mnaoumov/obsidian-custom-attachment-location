@@ -600,6 +600,7 @@ describe('CustomAttachmentLocationComponent', () => {
       const component = createComponent(strictProxy<ArrayBufferMap>({
         getFileStats: () => undefined,
         markAsPastedImage: markAsPastedImageMock,
+        setNewAttachmentOperation: vi.fn(),
         trySetByPath: () => Promise.resolve(false)
       }));
       const handler = await loadAndGetActiveLeafChangeHandler(component);

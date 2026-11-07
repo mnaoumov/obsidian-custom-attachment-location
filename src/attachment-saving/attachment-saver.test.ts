@@ -33,6 +33,7 @@ import type { ImageManager } from './image-manager.ts';
 
 import { AttachmentRenameMode } from '../settings/plugin-settings.ts';
 import { AttachmentSaver } from './attachment-saver.ts';
+import { NewAttachmentOperation } from './new-attachment-operation.ts';
 
 interface TestContext {
   readonly convertToJpeg: ReturnType<typeof vi.fn<ImageManager['convertToJpeg']>>;
@@ -42,6 +43,7 @@ interface TestContext {
   readonly getFileStats: ReturnType<typeof vi.fn<ArrayBufferMap['getFileStats']>>;
   readonly getGeneratedAttachmentFileBaseName: ReturnType<typeof vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>>;
   readonly getImageSize: ReturnType<typeof vi.fn<ImageManager['getImageSize']>>;
+  readonly getNewAttachmentOperation: ReturnType<typeof vi.fn<ArrayBufferMap['getNewAttachmentOperation']>>;
   readonly imageSizeMapSet: ReturnType<typeof vi.fn<ImageSizeMap['set']>>;
   readonly isPastedImageBuffer: ReturnType<typeof vi.fn<ArrayBufferMap['isPastedImage']>>;
   readonly isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
@@ -73,7 +75,8 @@ function createSaver(): TestContext {
 
   const getFileStats = vi.fn<ArrayBufferMap['getFileStats']>().mockReturnValue(undefined);
   const isPastedImageBuffer = vi.fn<ArrayBufferMap['isPastedImage']>().mockReturnValue(false);
-  const arrayBufferMap = strictProxy<ArrayBufferMap>({ getFileStats, isPastedImage: isPastedImageBuffer });
+  const getNewAttachmentOperation = vi.fn<ArrayBufferMap['getNewAttachmentOperation']>().mockReturnValue(NewAttachmentOperation.Other);
+  const arrayBufferMap = strictProxy<ArrayBufferMap>({ getFileStats, getNewAttachmentOperation, isPastedImage: isPastedImageBuffer });
 
   const getAvailablePathForAttachments = vi.fn<AttachmentPathManager['getAvailablePathForAttachments']>().mockResolvedValue('assets/saved.png');
   const getGeneratedAttachmentFileBaseName = vi.fn<AttachmentPathManager['getGeneratedAttachmentFileBaseName']>().mockResolvedValue('generated');
@@ -122,6 +125,7 @@ function createSaver(): TestContext {
     getFileStats,
     getGeneratedAttachmentFileBaseName,
     getImageSize,
+    getNewAttachmentOperation,
     imageSizeMapSet,
     isPastedImageBuffer,
     isPathIgnored,
@@ -252,6 +256,35 @@ describe('AttachmentSaver', () => {
       });
       expect(context.getGeneratedAttachmentFileBaseName).toHaveBeenCalled();
       expect(context.convertToJpeg).toHaveBeenCalledWith(expect.objectContaining({ isPastedImage: true }));
+    });
+
+    it('should hand a pasted image its operation, for both the name and the folder', async () => {
+      context.settings.attachmentRenameMode = AttachmentRenameMode.OnlyPastedImages;
+      context.isPastedImageBuffer.mockReturnValue(true);
+      await context.saver.saveAttachment({
+        attachmentFileBaseName: 'image',
+        attachmentFileContent: new ArrayBuffer(0),
+        attachmentFileExtension: 'png'
+      });
+      expect(context.getGeneratedAttachmentFileBaseName.mock.calls[0]?.[0].newAttachmentOperation).toBe(NewAttachmentOperation.PastedImage);
+      expect(context.getAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({
+        newAttachmentOperation: NewAttachmentOperation.PastedImage
+      }));
+      expect(context.getNewAttachmentOperation).not.toHaveBeenCalled();
+    });
+
+    it('should hand a dropped file the operation recorded for its content', async () => {
+      context.settings.attachmentRenameMode = AttachmentRenameMode.All;
+      context.getNewAttachmentOperation.mockReturnValue(NewAttachmentOperation.DroppedFile);
+      await context.saver.saveAttachment({
+        attachmentFileBaseName: 'doc',
+        attachmentFileContent: new ArrayBuffer(0),
+        attachmentFileExtension: 'pdf'
+      });
+      expect(context.getGeneratedAttachmentFileBaseName.mock.calls[0]?.[0].newAttachmentOperation).toBe(NewAttachmentOperation.DroppedFile);
+      expect(context.getAvailablePathForAttachments).toHaveBeenCalledWith(expect.objectContaining({
+        newAttachmentOperation: NewAttachmentOperation.DroppedFile
+      }));
     });
 
     it('should not treat an invalid pasted-image timestamp as a pasted image', async () => {

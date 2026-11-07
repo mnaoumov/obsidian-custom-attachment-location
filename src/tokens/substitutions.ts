@@ -11,6 +11,7 @@ import {
 // eslint-disable-next-line import-x/no-namespace -- Need to pass entire obsidian module.
 import * as obsidian from 'obsidian';
 
+import type { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { TokenBase } from './base/token-base.ts';
 import type { TokenEvaluatorContext } from './token-evaluator-context.ts';
@@ -70,6 +71,12 @@ interface SubstitutionsConstructorParams {
   readonly cursorLine?: number | undefined;
   readonly generatedAttachmentFileName?: string;
   readonly generatedAttachmentFilePath?: string;
+
+  /**
+   * How a NEW attachment arrived, which picks its operation's folder and file name templates. Leave it out for an
+   * attachment that already exists: those actions are told apart by {@link actionContext}.
+   */
+  readonly newAttachmentOperation?: NewAttachmentOperation | undefined;
   readonly noteFilePath: string;
   readonly oldNoteFilePath?: string | undefined;
 
@@ -97,6 +104,11 @@ export class Substitutions {
   }
 
   public readonly actionContext: ActionContext;
+
+  /**
+   * How a new attachment arrived, or `undefined` when the action is not about a new attachment.
+   */
+  public readonly newAttachmentOperation: NewAttachmentOperation | undefined;
 
   public readonly noteFolderPath: string;
   private readonly app: App;
@@ -126,6 +138,7 @@ export class Substitutions {
   public constructor(params: SubstitutionsConstructorParams) {
     this.app = params.app;
     this.actionContext = params.actionContext;
+    this.newAttachmentOperation = params.newAttachmentOperation;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
 
     this.noteFilePath = params.noteFilePath;

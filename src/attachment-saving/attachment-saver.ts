@@ -28,6 +28,7 @@ import {
   actionContextToAttachmentPathContext
 } from '../tokens/token-evaluator-context.ts';
 import { TokenValidator } from '../tokens/token-validator.ts';
+import { NewAttachmentOperation } from './new-attachment-operation.ts';
 
 interface AttachmentSaverConstructorParams {
   readonly app: App;
@@ -51,6 +52,7 @@ interface AttachmentSaverSaveAttachmentCoreParams {
   readonly attachmentFileContent: ArrayBuffer;
   readonly attachmentFileExtension: string;
   readonly destinationPath?: string;
+  readonly newAttachmentOperation?: NewAttachmentOperation;
   readonly noteFile: null | TFile;
   readonly originalAttachmentFileName: string;
   readonly shouldReplaceSpecialCharactersInKeptFileName?: boolean;
@@ -104,6 +106,7 @@ export class AttachmentSaver {
       attachmentFileExtension: params.attachmentFileExtension,
       attachmentFileStats,
       context: actionContextToAttachmentPathContext(ActionContext.SaveAttachment),
+      newAttachmentOperation: params.newAttachmentOperation,
       notePathOrFile: params.noteFile,
       oldAttachmentPathOrFile: makeFileName({
         fileBaseName: params.attachmentFileBaseName,
@@ -178,6 +181,9 @@ export class AttachmentSaver {
       }
     }
 
+    // Read before the JPEG conversion, which replaces the content the operation was recorded against.
+    const newAttachmentOperation = isPastedImage ? NewAttachmentOperation.PastedImage : this.arrayBufferMap.getNewAttachmentOperation(attachmentFileContent);
+
     const convertImageToJpegResult = params.shouldPreserveContent ? { attachmentFileContent, attachmentFileExtension } : await this.imageManager.convertToJpeg({
       attachmentFileContent,
       attachmentFileExtension,
@@ -216,6 +222,7 @@ export class AttachmentSaver {
             fileExtension: attachmentFileExtension
           }),
           attachmentFileStats: this.arrayBufferMap.getFileStats(attachmentFileContent),
+          newAttachmentOperation,
           noteFilePath: activeNoteFile.path,
           originalAttachmentFileName,
           pluginSettingsComponent: this.pluginSettingsComponent,
@@ -229,6 +236,7 @@ export class AttachmentSaver {
       attachmentFileBaseName,
       attachmentFileContent,
       attachmentFileExtension,
+      newAttachmentOperation,
       noteFile: activeNoteFile,
       originalAttachmentFileName,
       shouldReplaceSpecialCharactersInKeptFileName: !shouldRename

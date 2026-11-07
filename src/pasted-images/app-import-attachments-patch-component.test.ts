@@ -73,17 +73,17 @@ describe('AppImportAttachmentsPatchComponent', () => {
 
     await importAttachments([attachment]);
 
-    expect(recordMock).toHaveBeenCalledWith([attachment], InsertGesture.Paste);
+    expect(recordMock).toHaveBeenCalledWith([attachment], InsertGesture.Paste, true);
     expect(importAttachmentsMock).toHaveBeenCalledWith([attachment], null);
   });
 
-  it('should leave a drop alone', async () => {
+  it('should record a drop as a drop that can never count as a pasted image', async () => {
     createComponent().load();
     gestureHolder.gesture = InsertGesture.Drop;
 
     await importAttachments([attachment]);
 
-    expect(recordMock).not.toHaveBeenCalled();
+    expect(recordMock).toHaveBeenCalledWith([attachment], InsertGesture.Drop, false);
     expect(importAttachmentsMock).toHaveBeenCalledTimes(1);
   });
 

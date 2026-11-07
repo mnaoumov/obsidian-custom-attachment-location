@@ -49,6 +49,7 @@ import {
 import { normalizePath } from 'obsidian';
 
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
+import type { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { OriginalAttachmentFileNameParams } from '../tokens/substitutions.ts';
@@ -115,6 +116,7 @@ interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
   readonly attachmentFileContent?: ArrayBuffer | undefined;
   readonly attachmentFileName: string;
   readonly attachmentFileStats?: FileStats | undefined;
+  readonly newAttachmentOperation?: NewAttachmentOperation | undefined;
   readonly notePath: string;
   readonly oldNoteFilePath?: string | undefined;
   readonly originalAttachmentFileNameParams?: OriginalAttachmentFileNameParams | undefined;
@@ -126,6 +128,12 @@ interface AttachmentPathManagerGetAvailablePathForAttachmentsParams {
   readonly attachmentFileExtension: string;
   readonly attachmentFileStats?: FileStats | undefined;
   readonly context: AttachmentPathContext;
+
+  /**
+   * How a NEW attachment arrived, which picks its operation's folder and file name templates. Left out by every
+   * caller that does not know, which then gets the defaults.
+   */
+  readonly newAttachmentOperation?: NewAttachmentOperation | undefined;
   readonly notePathOrFile: null | PathOrFile;
   readonly oldAttachmentPathOrFile: PathOrFile;
   readonly oldNotePathOrFile?: PathOrFile | undefined;
@@ -264,6 +272,7 @@ export class AttachmentPathManager {
         app: this.app,
         attachmentFileContent: params.attachmentFileContent,
         attachmentFileStats: params.attachmentFileStats,
+        newAttachmentOperation: params.newAttachmentOperation,
         noteFilePath: params.notePath,
         oldNoteFilePath: params.oldNoteFilePath,
         ...params.originalAttachmentFileNameParams,
@@ -337,6 +346,7 @@ export class AttachmentPathManager {
         actionContext: attachmentPathContextToActionContext(params.context),
         attachmentFileName,
         attachmentFileStats,
+        newAttachmentOperation: params.newAttachmentOperation,
         notePath: noteFilePath,
         oldNoteFilePath,
         originalAttachmentFileNameParams,
@@ -353,6 +363,7 @@ export class AttachmentPathManager {
             app: this.app,
             attachmentFileStats,
             cursorLine,
+            newAttachmentOperation: params.newAttachmentOperation,
             noteFilePath,
             oldNoteFilePath,
             ...originalAttachmentFileNameParams,
@@ -500,8 +511,14 @@ export class AttachmentPathManager {
         baseTemplate = this.pluginSettingsComponent.settings.renamedAttachmentFileName || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
+      /*
+       * A new attachment: its operation's template when it has one (a pasted screenshot, a pasted or dropped file, or
+       * an insert with neither), otherwise the generated-name template every new attachment shares.
+       */
       default: {
-        baseTemplate = this.pluginSettingsComponent.settings.generatedAttachmentFileName;
+        const settings = this.pluginSettingsComponent.settings;
+        baseTemplate = (substitutions.newAttachmentOperation === undefined ? '' : settings.getNewAttachmentFileName(substitutions.newAttachmentOperation))
+          || settings.generatedAttachmentFileName;
         break;
       }
     }
@@ -823,6 +840,12 @@ export class AttachmentPathManager {
     const settings = this.pluginSettingsComponent.settings;
     if (substitutions.actionContext === ActionContext.CollectAttachments && settings.collectedAttachmentFolderPath) {
       return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: settings.collectedAttachmentFolderPath });
+    }
+
+    // A new attachment's operation folder, in the same way: empty means wherever the default puts it.
+    const newAttachmentFolderPath = substitutions.newAttachmentOperation === undefined ? '' : settings.getNewAttachmentFolderPath(substitutions.newAttachmentOperation);
+    if (newAttachmentFolderPath) {
+      return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: newAttachmentFolderPath });
     }
 
     return settings.shouldFollowObsidianAttachmentLocation ? this.getObsidianAttachmentFolderPath(substitutions.noteFolderPath) : await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: settings.attachmentFolderPath });

@@ -18,8 +18,9 @@ interface AppImportAttachmentsPatchComponentConstructorParams {
  *
  * A canvas paste does not go through `ClipboardManager.insertFiles`: it calls `App.importAttachments`, which then
  * saves each file through `App.saveAttachment`. So does a drop onto a canvas, the file explorer or a base, and so
- * does the mobile share sheet. Only the paste is recorded here; a drop keeps its name, and the share sheet has
- * its own handling in `ShareReceiverImportFilesPatchComponent`.
+ * does the mobile share sheet. A paste and a drop are both recorded here, so each gets its own new-attachment
+ * operation; a drop is never a pasted image, so it keeps its name under `Only pasted images`. The share sheet runs
+ * with no gesture and has its own handling in `ShareReceiverImportFilesPatchComponent`.
  */
 export class AppImportAttachmentsPatchComponent extends MonkeyAroundComponent {
   private readonly app: App;
@@ -42,8 +43,9 @@ export class AppImportAttachmentsPatchComponent extends MonkeyAroundComponent {
         originalArguments: [attachmentsToImport]
       }) => {
         // Read the gesture before the first `await`: the tracker forgets it as soon as the DOM event has been dispatched.
-        if (this.insertGestureTrackerComponent.gesture === InsertGesture.Paste) {
-          await this.pastedImageMarker.record(attachmentsToImport, InsertGesture.Paste);
+        const gesture = this.insertGestureTrackerComponent.gesture;
+        if (gesture !== null) {
+          await this.pastedImageMarker.record(attachmentsToImport, gesture, gesture === InsertGesture.Paste);
         }
         return fallback();
       }

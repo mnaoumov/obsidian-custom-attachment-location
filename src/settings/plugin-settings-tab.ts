@@ -89,6 +89,13 @@ interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstr
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
+interface PluginSettingsTabGetNewAttachmentOperationTemplateItemParams {
+  readonly description: string;
+  readonly hint: string;
+  readonly name: string;
+  readonly propertyName: ConditionalKeys<PluginSettings, string>;
+}
+
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   private readonly getOriginalAttachmentNamesComponent: ((this: void) => OriginalAttachmentNamesComponent) | null;
   private readonly getPluginGateComponent: (this: void) => PluginGateComponent;
@@ -146,6 +153,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         desc: t(($) => $.pluginSettingsTab.pages.moveRenames.description),
         items: this.getMoveRenamesItems(),
         name: t(($) => $.pluginSettingsTab.groups.moveRenames),
+        type: 'page'
+      },
+      {
+        desc: t(($) => $.pluginSettingsTab.pages.newAttachmentOperations.description),
+        items: this.getNewAttachmentOperationsItems(),
+        name: t(($) => $.pluginSettingsTab.groups.newAttachmentOperations),
         type: 'page'
       },
       {
@@ -1056,6 +1069,87 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       })
     ];
+  }
+
+  /**
+   * One folder row and one file name row per new-attachment operation, each empty meaning the default.
+   *
+   * @returns The rows, operation by operation.
+   */
+  private getNewAttachmentOperationsItems(): SettingDefinitionRender[] {
+    const operations = [
+      {
+        description: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedImage.description),
+        fileName: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedImage.fileName),
+        fileNamePropertyName: 'pastedImageAttachmentFileName',
+        folderPath: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedImage.folderPath),
+        folderPathPropertyName: 'pastedImageAttachmentFolderPath'
+      },
+      {
+        description: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedFile.description),
+        fileName: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedFile.fileName),
+        fileNamePropertyName: 'pastedFileAttachmentFileName',
+        folderPath: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedFile.folderPath),
+        folderPathPropertyName: 'pastedFileAttachmentFolderPath'
+      },
+      {
+        description: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.droppedFile.description),
+        fileName: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.droppedFile.fileName),
+        fileNamePropertyName: 'droppedFileAttachmentFileName',
+        folderPath: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.droppedFile.folderPath),
+        folderPathPropertyName: 'droppedFileAttachmentFolderPath'
+      },
+      {
+        description: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.other.description),
+        fileName: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.other.fileName),
+        fileNamePropertyName: 'otherNewAttachmentFileName',
+        folderPath: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.other.folderPath),
+        folderPathPropertyName: 'otherNewAttachmentFolderPath'
+      }
+    ] as const;
+
+    return operations.flatMap((operation) => [
+      this.getNewAttachmentOperationTemplateItem({
+        description: operation.description,
+        hint: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.folderPathDescription),
+        name: operation.folderPath,
+        propertyName: operation.folderPathPropertyName
+      }),
+      this.getNewAttachmentOperationTemplateItem({
+        description: operation.description,
+        hint: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.fileNameDescription),
+        name: operation.fileName,
+        propertyName: operation.fileNamePropertyName
+      })
+    ]);
+  }
+
+  private getNewAttachmentOperationTemplateItem(params: PluginSettingsTabGetNewAttachmentOperationTemplateItemParams): SettingDefinitionRender {
+    return this.settingEx({
+      desc: createFragment((f) => {
+        f.appendText(params.description);
+        f.createEl('br');
+        f.createEl('a', {
+          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+          text: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.tokens)
+        });
+        f.appendText('.');
+        f.createEl('br');
+        f.appendText(params.hint);
+      }),
+      name: params.name,
+      render: (setting) => {
+        setting.addCodeHighlighter((codeHighlighter) => {
+          codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+          codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+          this.bind({
+            propertyName: params.propertyName,
+            valueComponent: codeHighlighter,
+            ...bindOptionsWithTrim
+          });
+        });
+      }
+    });
   }
 
   private getPathItems(): SettingDefinitionRender[] {

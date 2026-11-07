@@ -29,6 +29,7 @@ const SEARCH_SETTLE_TIMEOUT_IN_MILLISECONDS = 1200;
 const EXPECTED_PAGE_NAMES = [
   'Original name storage',
   'Move/renames',
+  'New attachments by operation',
   'Special characters',
   'Collected attachments',
   'Images',

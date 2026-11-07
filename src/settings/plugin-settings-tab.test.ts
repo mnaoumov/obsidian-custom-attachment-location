@@ -90,9 +90,9 @@ vi.mock('@obsidian-typings/obsidian-public-latest/implementations', async (impor
 // Under coverage instrumentation that work exceeds the default 5-second test timeout.
 const DEBOUNCE_REVALIDATION_TEST_TIMEOUT_IN_MILLISECONDS = 30_000;
 
-// Every declared row across the inline Core group and the eight sub-pages, guarding against a whole section being dropped when rows are moved between pages.
-// 45 = 44 setting rows + the overlap banner row that rides at the top.
-const EXPECTED_ROW_COUNT = 45;
+// Every declared row across the inline Core group and the nine sub-pages, guarding against a whole section being dropped when rows are moved between pages.
+// 53 = 52 setting rows + the overlap banner row that rides at the top.
+const EXPECTED_ROW_COUNT = 53;
 
 const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
@@ -669,6 +669,7 @@ describe('PluginSettingsTab', () => {
     expect(pages.map((page) => castTo<SettingDefinitionPage>(page).name)).toEqual([
       'Original name storage',
       'Move/renames',
+      'New attachments by operation',
       'Special characters',
       'Collected attachments',
       'Images',
@@ -696,6 +697,24 @@ describe('PluginSettingsTab', () => {
     findComponent(textLikeComponents, 'Manually renamed attachment file name').setValue('{{noteFileName}}-{{sequenceNumber}}');
     await waitForAllAsyncOperations();
     expect(pluginSettingsComponent.settings.manuallyRenamedAttachmentFileName).toBe('{{noteFileName}}-{{sequenceNumber}}');
+  });
+
+  it.each(
+    [
+      ['Pasted screenshot: folder path', 'pastedImageAttachmentFolderPath'],
+      ['Pasted screenshot: file name', 'pastedImageAttachmentFileName'],
+      ['Pasted file: folder path', 'pastedFileAttachmentFolderPath'],
+      ['Pasted file: file name', 'pastedFileAttachmentFileName'],
+      ['Dropped file: folder path', 'droppedFileAttachmentFolderPath'],
+      ['Dropped file: file name', 'droppedFileAttachmentFileName'],
+      ['Other new attachment: folder path', 'otherNewAttachmentFolderPath'],
+      ['Other new attachment: file name', 'otherNewAttachmentFileName']
+    ] as const
+  )('saves the new-attachment operation template %s', async (name, propertyName) => {
+    const { pluginSettingsComponent, textLikeComponents } = await createTab();
+    findComponent(textLikeComponents, name).setValue('{{noteFileName}}');
+    await waitForAllAsyncOperations();
+    expect(pluginSettingsComponent.settings[propertyName]).toBe('{{noteFileName}}');
   });
 
   it('saves the inserted-link-text token template from its Advanced field', async () => {

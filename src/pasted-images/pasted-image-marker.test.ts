@@ -12,18 +12,21 @@ import {
 
 import type { ArrayBufferMap } from '../attachment-saving/array-buffer-map.ts';
 
+import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import { InsertGesture } from './insert-gesture-tracker-component.ts';
 import { PastedImageMarker } from './pasted-image-marker.ts';
 
 describe('PastedImageMarker', () => {
   let fileStatsMap: Map<ArrayBuffer, FileStats>;
   let markAsPastedImageMock: ReturnType<typeof vi.fn<ArrayBufferMap['markAsPastedImage']>>;
+  let operations: Map<ArrayBuffer, NewAttachmentOperation>;
   let trySetByPathMock: ReturnType<typeof vi.fn<ArrayBufferMap['trySetByPath']>>;
   let marker: PastedImageMarker;
   let shouldKeepNamesOfPastedNonScreenshotFiles: boolean;
 
   beforeEach(() => {
     fileStatsMap = new Map();
+    operations = new Map();
     shouldKeepNamesOfPastedNonScreenshotFiles = true;
     markAsPastedImageMock = vi.fn<ArrayBufferMap['markAsPastedImage']>();
     trySetByPathMock = vi.fn<ArrayBufferMap['trySetByPath']>((arrayBuffer, filePath) => {
@@ -36,6 +39,9 @@ describe('PastedImageMarker', () => {
       arrayBufferMap: strictProxy<ArrayBufferMap>({
         getFileStats: (arrayBuffer: ArrayBuffer) => fileStatsMap.get(arrayBuffer),
         markAsPastedImage: markAsPastedImageMock,
+        setNewAttachmentOperation: (arrayBuffer: ArrayBuffer, operation: NewAttachmentOperation): void => {
+          operations.set(arrayBuffer, operation);
+        },
         trySetByPath: trySetByPathMock
       }),
       getScreenshotFilePaths: (): readonly string[] => ['/PixPin_/'],
@@ -71,6 +77,10 @@ describe('PastedImageMarker', () => {
     expect(markedBuffers).toHaveLength(2);
     expect(markedBuffers[0]).toBe(blob);
     expect(markedBuffers[1]).toBe(screenshot);
+    expect(operations.get(blob)).toBe(NewAttachmentOperation.PastedImage);
+    expect(operations.get(screenshot)).toBe(NewAttachmentOperation.PastedImage);
+    expect(operations.get(realFile)).toBe(NewAttachmentOperation.PastedFile);
+    expect(operations.get(pdf)).toBe(NewAttachmentOperation.PastedFile);
   });
 
   it('should mark a pasted real file too while the names of non-screenshot files are not kept', async () => {
@@ -80,9 +90,24 @@ describe('PastedImageMarker', () => {
     expect(markAsPastedImageMock.mock.calls.map((call) => call[0])).toEqual([realFile]);
   });
 
-  it('should mark nothing that was dropped with a path', async () => {
-    await marker.record([createAttachment('C:/Temp/PixPin_old.png', new ArrayBuffer(2))], InsertGesture.Drop);
+  it('should mark nothing that was dropped with a path, and record it as a dropped file', async () => {
+    const dropped = new ArrayBuffer(2);
+    await marker.record([createAttachment('C:/Temp/PixPin_old.png', dropped)], InsertGesture.Drop);
     expect(markAsPastedImageMock).not.toHaveBeenCalled();
+    expect(operations.get(dropped)).toBe(NewAttachmentOperation.DroppedFile);
+  });
+
+  it('should not classify anything as a pasted image when told it cannot be one', async () => {
+    const blob = new ArrayBuffer(1);
+    await marker.record([createAttachment(undefined, blob)], InsertGesture.Drop, false);
+    expect(markAsPastedImageMock).not.toHaveBeenCalled();
+    expect(operations.get(blob)).toBe(NewAttachmentOperation.DroppedFile);
+  });
+
+  it('should record no operation for an attachment inserted outside any gesture', async () => {
+    const file = new ArrayBuffer(3);
+    await marker.record([createAttachment('C:/Pictures/old.pdf', file, 'pdf')], null);
+    expect(operations.has(file)).toBe(false);
   });
 
   it('should mark the clipboard-image fallback item, which carries no file path', async () => {

@@ -50,6 +50,7 @@ import type { PluginSettingsComponent } from '../settings/plugin-settings-compon
 import type { PluginSettings } from '../settings/plugin-settings.ts';
 import type { TokenValidator } from '../tokens/token-validator.ts';
 
+import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import { selfWriteRegistry } from '../externally-created-attachments/self-write-registry.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { promptWithPreview } from '../tokens/prompt/prompt-with-preview-modal.ts';
@@ -179,8 +180,12 @@ function createManager(): TestContext {
     collectedAttachmentFolderPath: '',
     duplicateNameSeparator: ' ',
     generatedAttachmentFileName: 'generated',
+    getNewAttachmentFileName: (operation: NewAttachmentOperation): string => operation === NewAttachmentOperation.PastedImage ? settings.pastedImageAttachmentFileName : '',
+    getNewAttachmentFolderPath: (operation: NewAttachmentOperation): string => operation === NewAttachmentOperation.PastedImage ? settings.pastedImageAttachmentFolderPath : '',
     insertedLinkText: '',
     manuallyRenamedAttachmentFileName: '',
+    pastedImageAttachmentFileName: '',
+    pastedImageAttachmentFolderPath: '',
     renamedAttachmentFileName: '',
     shouldFollowObsidianAttachmentLocation: false,
     shouldRenameCollectedAttachments: false,
@@ -263,10 +268,11 @@ function createManager(): TestContext {
   };
 }
 
-function createSubstitutions(actionContext: ActionContext): Substitutions {
+function createSubstitutions(actionContext: ActionContext, newAttachmentOperation?: NewAttachmentOperation): Substitutions {
   return new Substitutions({
     actionContext,
     app: strictProxy<App>({ workspace: strictProxy<App['workspace']>({ activeEditor: null }) }),
+    newAttachmentOperation,
     noteFilePath: 'notes/note.md',
     originalAttachmentFileName: 'img.png',
     pluginSettingsComponent: context.pluginSettingsComponent,
@@ -540,6 +546,43 @@ describe('AttachmentPathManager', () => {
       });
     });
 
+    it('should put a new attachment in its operation folder when that operation has one', async () => {
+      context.settings.attachmentFolderPath = '_Attachments';
+      context.settings.pastedImageAttachmentFolderPath = './screenshots';
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
+        actionContext: ActionContext.SaveAttachment,
+        attachmentFileName: 'img.png',
+        newAttachmentOperation: NewAttachmentOperation.PastedImage,
+        notePath: 'notes/note.md'
+      });
+      expect(result).toBe('notes/screenshots');
+    });
+
+    it('should put a new attachment in the default folder when its operation has no folder', async () => {
+      context.settings.attachmentFolderPath = '_Attachments';
+      context.settings.pastedImageAttachmentFolderPath = './screenshots';
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
+        actionContext: ActionContext.SaveAttachment,
+        attachmentFileName: 'doc.pdf',
+        newAttachmentOperation: NewAttachmentOperation.DroppedFile,
+        notePath: 'notes/note.md'
+      });
+      expect(result).toBe('_Attachments');
+    });
+
+    it('should let an operation folder win over following Obsidian\'s attachment location', async () => {
+      context.settings.shouldFollowObsidianAttachmentLocation = true;
+      context.settings.pastedImageAttachmentFolderPath = 'shots';
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
+        actionContext: ActionContext.SaveAttachment,
+        attachmentFileName: 'img.png',
+        newAttachmentOperation: NewAttachmentOperation.PastedImage,
+        notePath: 'notes/note.md'
+      });
+      expect(result).toBe('shots');
+      expect(context.getConfig).not.toHaveBeenCalled();
+    });
+
     it('should leave every other action context on the new attachment folder path', async () => {
       context.settings.attachmentFolderPath = '_Attachments';
       context.settings.collectedAttachmentFolderPath = './exported';
@@ -565,6 +608,19 @@ describe('AttachmentPathManager', () => {
       context.settings.renamedAttachmentFileName = 'renamed';
       const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.RenameNote));
       expect(result).toBe('renamed');
+    });
+
+    it('should use a new attachment\'s operation file name template when it has one', async () => {
+      context.settings.pastedImageAttachmentFileName = 'screenshot';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment, NewAttachmentOperation.PastedImage));
+      expect(result).toBe('screenshot');
+    });
+
+    it('should fall back to the generated template when the operation has no file name template', async () => {
+      context.settings.pastedImageAttachmentFileName = 'screenshot';
+      context.settings.generatedAttachmentFileName = 'generated';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.SaveAttachment, NewAttachmentOperation.PastedFile));
+      expect(result).toBe('generated');
     });
 
     it('should fall back to the generated attachment file name template by default', async () => {
@@ -1199,6 +1255,27 @@ describe('AttachmentPathManager', () => {
       expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'other.md' })).toBeUndefined();
       expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBe('original report (renamed.pdf)');
       expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+    });
+
+    it('should name and place a new attachment by its operation\'s templates', async () => {
+      const noteFile = createTFile({ path: 'notes/note.md' });
+      mockGetFileOrNull.mockReturnValue(noteFile);
+      isNoteMock.mockReturnValue(true);
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.pastedImageAttachmentFileName = 'shot';
+      context.settings.pastedImageAttachmentFolderPath = './screenshots';
+      const result = await context.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'img',
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        newAttachmentOperation: NewAttachmentOperation.PastedImage,
+        notePathOrFile: 'notes/note.md',
+        oldAttachmentPathOrFile: 'img.png',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+      expect(result).toBe('notes/screenshots/shot.png');
     });
 
     it('should seed default content and stats for a dummy attachment base name', async () => {
