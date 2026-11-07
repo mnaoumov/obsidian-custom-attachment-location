@@ -9,9 +9,11 @@ import {
 import type { OriginalAttachmentNamesComponent } from './original-attachment-names-component.ts';
 
 import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settings-component-finder.ts';
+import { waitForPluginSettingsLoaded } from '../../scripts/helpers/plugin-settings-loaded-wait.ts';
 
 describe('Shared original attachment names', () => {
   it('keeps an imported arrival name after a vault rename and plugin reload, using synchronized JSON records', async () => {
+    await waitForPluginSettingsLoaded();
     const result = await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettings, lib: { pressKey, waitUntil }, renameMode }) {
         type Settings = Record<'attachmentFolderPath' | 'attachmentRenameMode' | 'generatedAttachmentFileName', string>;
