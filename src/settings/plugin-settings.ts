@@ -4,6 +4,7 @@ import { escapeRegExp } from '@mnaoumov/typescript-lib/reg-exp';
 
 import type { MigratableSettings } from '../advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
 
+import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import { DEFAULT_PLUGIN_DATA_FOLDER } from '../original-attachment-names/plugin-data-folder.ts';
 
 export const SAMPLE_CUSTOM_TOKENS = String.raw`registerCustomToken('foo', (ctx) => {
@@ -116,6 +117,18 @@ export class PluginSettings {
   public defaultImageSize = '';
   public defaultImageSizeDimension: DefaultImageSizeDimension = DefaultImageSizeDimension.Width;
   public downloadNetworkImages = false;
+
+  /**
+   * The file name template for a file dropped into a note, a canvas, the file explorer or a base. Empty means
+   * {@link generatedAttachmentFileName}. See {@link getNewAttachmentFileName}.
+   */
+  public droppedFileAttachmentFileName = '';
+
+  /**
+   * The folder template for a dropped file. Empty means the default folder. See {@link getNewAttachmentFolderPath}.
+   */
+  public droppedFileAttachmentFolderPath = '';
+
   public duplicateNameSeparator = ' ';
 
   /**
@@ -160,6 +173,18 @@ export class PluginSettings {
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public networkImageDownloadTimeoutInSeconds = 30;
   public orphanAttachmentScanMode: OrphanAttachmentScanMode = OrphanAttachmentScanMode.None;
+
+  /**
+   * The file name template for a new attachment saved with no paste or drop: another plugin, or a core feature such
+   * as the audio recorder. Empty means {@link generatedAttachmentFileName}.
+   */
+  public otherNewAttachmentFileName = '';
+
+  /**
+   * The folder template for a new attachment saved with no paste or drop. Empty means the default folder.
+   */
+  public otherNewAttachmentFolderPath = '';
+
   /**
    * The plugin ids the two list modes of {@link renameAttachmentsCreatedByOtherPluginsMode} are scoped to.
    *
@@ -168,6 +193,27 @@ export class PluginSettings {
    * multi-select, whose value is a `readonly string[]`, with no converter pair in between.
    */
   public otherPluginIdsForAttachmentRename: readonly string[] = [];
+
+  /**
+   * The file name template for a pasted file that is not a screenshot. Empty means {@link generatedAttachmentFileName}.
+   */
+  public pastedFileAttachmentFileName = '';
+
+  /**
+   * The folder template for a pasted file that is not a screenshot. Empty means the default folder.
+   */
+  public pastedFileAttachmentFolderPath = '';
+
+  /**
+   * The file name template for a pasted screenshot. Empty means {@link generatedAttachmentFileName}.
+   */
+  public pastedImageAttachmentFileName = '';
+
+  /**
+   * The folder template for a pasted screenshot. Empty means the default folder.
+   */
+  public pastedImageAttachmentFolderPath = '';
+
   /**
   Static vault-relative transport parent; applied only through the explicit relocation action.
   */
@@ -369,6 +415,59 @@ export class PluginSettings {
   public getNetworkImageDownloadTimeoutInMilliseconds(): number {
     const MILLISECONDS_IN_SECOND = 1000;
     return this.networkImageDownloadTimeoutInSeconds * MILLISECONDS_IN_SECOND;
+  }
+
+  /**
+   * The file name template of one new-attachment operation, before the fallback to the default.
+   *
+   * Only the TEMPLATE is per operation. Whether a new attachment is renamed at all is still
+   * {@link attachmentRenameMode}'s decision, so a dropped file keeps its name under `Only pasted images` whatever
+   * {@link droppedFileAttachmentFileName} says.
+   *
+   * @param operation - How the attachment arrived.
+   * @returns The operation's template, or an empty string when it has none.
+   */
+  public getNewAttachmentFileName(operation: NewAttachmentOperation): string {
+    switch (operation) {
+      case NewAttachmentOperation.DroppedFile: {
+        return this.droppedFileAttachmentFileName;
+      }
+      case NewAttachmentOperation.PastedFile: {
+        return this.pastedFileAttachmentFileName;
+      }
+      case NewAttachmentOperation.PastedImage: {
+        return this.pastedImageAttachmentFileName;
+      }
+      default: {
+        return this.otherNewAttachmentFileName;
+      }
+    }
+  }
+
+  /**
+   * The folder template of one new-attachment operation, before the fallback to the default folder.
+   *
+   * A non-empty template wins over {@link shouldFollowObsidianAttachmentLocation}, as
+   * {@link collectedAttachmentFolderPath} does for the collecting commands.
+   *
+   * @param operation - How the attachment arrived.
+   * @returns The operation's template, or an empty string when it has none.
+   */
+  public getNewAttachmentFolderPath(operation: NewAttachmentOperation): string {
+    switch (operation) {
+      case NewAttachmentOperation.DroppedFile: {
+        return this.droppedFileAttachmentFolderPath;
+      }
+      case NewAttachmentOperation.PastedFile: {
+        return this.pastedFileAttachmentFolderPath;
+      }
+      case NewAttachmentOperation.PastedImage: {
+        return this.pastedImageAttachmentFolderPath;
+      }
+      default: {
+        return this.otherNewAttachmentFolderPath;
+      }
+    }
   }
 
   public getTimeoutInMilliseconds(): number {

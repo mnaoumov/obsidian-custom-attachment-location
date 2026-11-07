@@ -19,6 +19,7 @@ import {
 } from 'vitest';
 
 import { ArrayBufferMap } from './array-buffer-map.ts';
+import { NewAttachmentOperation } from './new-attachment-operation.ts';
 
 type CapacitorFs = CapacitorAdapterType['fs'];
 type FsPromises = FileSystemAdapterType['fsPromises'];
@@ -44,6 +45,19 @@ function createFileSystemAdapter(fsPromises: FsPromises): FileSystemAdapterType 
 }
 
 describe('ArrayBufferMap', () => {
+  describe('getNewAttachmentOperation/setNewAttachmentOperation', () => {
+    it('should answer Other for content no paste or drop recorded', () => {
+      const map = new ArrayBufferMap({ app: strictProxy<App>({}) });
+      expect(map.getNewAttachmentOperation(new ArrayBuffer(0))).toBe(NewAttachmentOperation.Other);
+    });
+
+    it('should answer the operation recorded for the content', () => {
+      const map = new ArrayBufferMap({ app: strictProxy<App>({}) });
+      const arrayBuffer = new ArrayBuffer(8);
+      map.setNewAttachmentOperation(arrayBuffer, NewAttachmentOperation.DroppedFile);
+      expect(map.getNewAttachmentOperation(arrayBuffer)).toBe(NewAttachmentOperation.DroppedFile);
+    });
+  });
   describe('getFileStats/setFileStats', () => {
     it('should return undefined for an unknown array buffer', () => {
       const map = new ArrayBufferMap({ app: strictProxy<App>({}) });

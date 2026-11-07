@@ -9,6 +9,21 @@ Open **Settings -> Community plugins -> `Custom Attachment Location`** to config
 - `attachmentFolderPath`
   - the folder each new attachment is saved into (a pattern), while `shouldFollowObsidianAttachmentLocation` is off. Start it with `./` for a path relative to the note; otherwise it is relative to the vault root. Defaults to `./assets/{{noteFileName}}`, the location every release before 13.0.0 used out of the box.
 
+## New attachments by operation
+
+A folder and a file name of their own for each way a new attachment arrives. Every one is empty by default, and empty means the default above (`attachmentFolderPath`, or Obsidian's location while `shouldFollowObsidianAttachmentLocation` is on) and `generatedAttachmentFileName` below, so nothing changes until you fill one in. They sit on their own settings page, **New attachments by operation**.
+
+- `pastedImageAttachmentFolderPath`, `pastedImageAttachmentFileName`
+  - a pasted screenshot: image data on the clipboard, or an image file that counts as pasted (see `shouldKeepNamesOfPastedNonScreenshotFiles` below).
+- `pastedFileAttachmentFolderPath`, `pastedFileAttachmentFileName`
+  - a pasted file that is not a screenshot, such as one copied in a file manager.
+- `droppedFileAttachmentFolderPath`, `droppedFileAttachmentFileName`
+  - a file dropped into a note, a canvas, the file explorer or a base.
+- `otherNewAttachmentFolderPath`, `otherNewAttachmentFileName`
+  - an attachment saved with no paste or drop: another plugin that saves through Obsidian, or a core feature such as the audio recorder.
+
+A folder template here wins over `shouldFollowObsidianAttachmentLocation`, as `collectedAttachmentFolderPath` does for collecting. A file name template only says *how* to name the attachment: *whether* it is renamed at all is still `attachmentRenameMode`'s decision. So under the default `Only pasted images` a dropped file keeps its name whatever `droppedFileAttachmentFileName` says; under `All`, set `droppedFileAttachmentFileName` to `{{originalAttachmentFileName}}` to keep the names of dropped files while everything else is renamed.
+
 ## Attachment file naming
 
 - `generatedAttachmentFileName`

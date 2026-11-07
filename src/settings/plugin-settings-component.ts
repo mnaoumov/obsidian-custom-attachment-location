@@ -51,11 +51,30 @@ const TOKENIZED_SETTINGS_KEYS = [
   'attachmentFolderPath',
   'collectedAttachmentFileName',
   'collectedAttachmentFolderPath',
+  'droppedFileAttachmentFileName',
+  'droppedFileAttachmentFolderPath',
   'generatedAttachmentFileName',
   'insertedLinkText',
   'manuallyRenamedAttachmentFileName',
   'markdownUrlFormat',
+  'otherNewAttachmentFileName',
+  'otherNewAttachmentFolderPath',
+  'pastedFileAttachmentFileName',
+  'pastedFileAttachmentFolderPath',
+  'pastedImageAttachmentFileName',
+  'pastedImageAttachmentFolderPath',
   'renamedAttachmentFileName'
+] as const satisfies readonly (keyof PluginSettings)[];
+
+const NEW_ATTACHMENT_OPERATION_TEMPLATE_KEYS = [
+  'droppedFileAttachmentFileName',
+  'droppedFileAttachmentFolderPath',
+  'otherNewAttachmentFileName',
+  'otherNewAttachmentFolderPath',
+  'pastedFileAttachmentFileName',
+  'pastedFileAttachmentFolderPath',
+  'pastedImageAttachmentFileName',
+  'pastedImageAttachmentFolderPath'
 ] as const satisfies readonly (keyof PluginSettings)[];
 
 interface AddDateTimeFormatParams {
@@ -527,7 +546,14 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       await this.validator.validatePath({
         areTokensAllowed: true,
         path: value
-      }));
+      })); // The per-operation templates of a new attachment. Empty is legal in each and means the default.
+    for (const key of NEW_ATTACHMENT_OPERATION_TEMPLATE_KEYS) {
+      this.registerValidator(key, async (value) =>
+        await this.validator.validatePath({
+          areTokensAllowed: true,
+          path: value
+        }));
+    }
 
     this.registerValidator('specialCharactersReplacement', (value): MaybeReturn<string> => {
       if (getOsUnsafePathCharsRegExp().test(value)) {

@@ -1,8 +1,9 @@
 import type { ImportedAttachment } from '@obsidian-typings/obsidian-public-latest';
 
 import type { ArrayBufferMap } from '../attachment-saving/array-buffer-map.ts';
-import type { InsertGesture } from './insert-gesture-tracker-component.ts';
 
+import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
+import { InsertGesture } from './insert-gesture-tracker-component.ts';
 import { isPastedImage } from './pasted-image-classifier.ts';
 
 interface PastedImageMarkerConstructorParams {
@@ -12,7 +13,8 @@ interface PastedImageMarkerConstructorParams {
 }
 
 /**
- * Records, for the attachments Obsidian is about to save, the file stats and whether each one is a pasted image.
+ * Records, for the attachments Obsidian is about to save, the file stats, whether each one is a pasted image, and
+ * which new-attachment operation brought it in (a pasted screenshot, a pasted file or a dropped file).
  *
  * Both are keyed by the attachment's `ArrayBuffer`, which is the one value that reaches `AttachmentSaver` unchanged,
  * so `Only pasted images` does not depend on Obsidian's `Pasted image <timestamp>` naming (issue #31).
@@ -34,8 +36,10 @@ export class PastedImageMarker {
    * @param importedAttachments - The attachments, as Obsidian collected them from the clipboard or the drop.
    * @param gesture - The gesture that brought them in. The caller reads it before its first `await`, because the
    * tracker clears it once the DOM event has been dispatched.
+   * @param canBePastedImage - Whether an attachment may count as a pasted image at all. `App.importAttachments` passes
+   * `false` for a drop, which it never classified, so a canvas or file-explorer drop keeps its name as it always did.
    */
-  public async record(importedAttachments: readonly ImportedAttachment[], gesture: InsertGesture | null): Promise<void> {
+  public async record(importedAttachments: readonly ImportedAttachment[], gesture: InsertGesture | null, canBePastedImage = true): Promise<void> {
     for (const importedAttachment of importedAttachments) {
       const arrayBuffer = await importedAttachment.data;
       if (!arrayBuffer) {
@@ -46,7 +50,7 @@ export class PastedImageMarker {
       const filePath = importedAttachment.filepath ?? '';
       await this.arrayBufferMap.trySetByPath(arrayBuffer, filePath);
       if (
-        isPastedImage({
+        canBePastedImage && isPastedImage({
           extension: importedAttachment.extension,
           filePath,
           fileStats: this.arrayBufferMap.getFileStats(arrayBuffer),
@@ -57,6 +61,12 @@ export class PastedImageMarker {
         })
       ) {
         this.arrayBufferMap.markAsPastedImage(arrayBuffer);
+        this.arrayBufferMap.setNewAttachmentOperation(arrayBuffer, NewAttachmentOperation.PastedImage);
+      } else if (gesture !== null) {
+        this.arrayBufferMap.setNewAttachmentOperation(
+          arrayBuffer,
+          gesture === InsertGesture.Drop ? NewAttachmentOperation.DroppedFile : NewAttachmentOperation.PastedFile
+        );
       }
     }
   }

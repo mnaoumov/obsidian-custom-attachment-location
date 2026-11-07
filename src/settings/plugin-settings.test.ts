@@ -5,6 +5,7 @@ import {
   it
 } from 'vitest';
 
+import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import {
   AttachmentRenameMode,
   CollectAttachmentUsedByMultipleNotesMode,
@@ -223,6 +224,37 @@ describe('PluginSettings', () => {
       const regExp = settings.specialCharactersRegExp;
       expect(regExp.flags).toBe('gu');
       expect('xaby'.replace(regExp, '-')).toBe('x-y');
+    });
+  });
+
+  describe('per-operation new-attachment templates', () => {
+    it('should default every operation template to empty', () => {
+      const settings = new PluginSettings();
+      for (const operation of [NewAttachmentOperation.DroppedFile, NewAttachmentOperation.Other, NewAttachmentOperation.PastedFile, NewAttachmentOperation.PastedImage]) {
+        expect(settings.getNewAttachmentFileName(operation)).toBe('');
+        expect(settings.getNewAttachmentFolderPath(operation)).toBe('');
+      }
+    });
+
+    it('should answer each operation with its own templates', () => {
+      const settings = new PluginSettings();
+      settings.droppedFileAttachmentFileName = 'drop-name';
+      settings.droppedFileAttachmentFolderPath = 'drop-folder';
+      settings.otherNewAttachmentFileName = 'other-name';
+      settings.otherNewAttachmentFolderPath = 'other-folder';
+      settings.pastedFileAttachmentFileName = 'file-name';
+      settings.pastedFileAttachmentFolderPath = 'file-folder';
+      settings.pastedImageAttachmentFileName = 'image-name';
+      settings.pastedImageAttachmentFolderPath = 'image-folder';
+
+      expect(settings.getNewAttachmentFileName(NewAttachmentOperation.DroppedFile)).toBe('drop-name');
+      expect(settings.getNewAttachmentFolderPath(NewAttachmentOperation.DroppedFile)).toBe('drop-folder');
+      expect(settings.getNewAttachmentFileName(NewAttachmentOperation.Other)).toBe('other-name');
+      expect(settings.getNewAttachmentFolderPath(NewAttachmentOperation.Other)).toBe('other-folder');
+      expect(settings.getNewAttachmentFileName(NewAttachmentOperation.PastedFile)).toBe('file-name');
+      expect(settings.getNewAttachmentFolderPath(NewAttachmentOperation.PastedFile)).toBe('file-folder');
+      expect(settings.getNewAttachmentFileName(NewAttachmentOperation.PastedImage)).toBe('image-name');
+      expect(settings.getNewAttachmentFolderPath(NewAttachmentOperation.PastedImage)).toBe('image-folder');
     });
   });
 
