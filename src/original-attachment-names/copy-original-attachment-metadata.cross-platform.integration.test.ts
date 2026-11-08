@@ -58,6 +58,11 @@ interface CopyTestState {
   Each imported attachment; the setup phase pushes the one it imports.
   */
   readonly importedFiles: TFile[];
+  /**
+  Whether the system clipboard round-trips a probe text. A session with no clipboard of its own (a scheduled or
+  background launch on Windows) reads back an empty string after a successful write, which says nothing about the plugin.
+  */
+  readonly isClipboardReadable: boolean;
   readonly leaf: WorkspaceLeaf;
   readonly missing: TFile;
   readonly note: TFile;
@@ -201,14 +206,22 @@ describe('Copy original attachment file name', () => {
         }
         const clipboard = navigator.clipboard;
         const stamp = Date.now().toString();
+        // Android's clipboard read bridge can reject even though writing is supported; this emulator is owned by the test.
+        const previousClipboard = Platform.isDesktopApp ? await clipboard.readText() : null;
+        let isClipboardReadable = false;
+        if (Platform.isDesktopApp) {
+          const probe = `copy-original-probe-${stamp}`;
+          await clipboard.writeText(probe);
+          isClipboardReadable = await clipboard.readText() === probe;
+        }
         const state: CopyTestState = {
           copiedValues: [],
           importedFiles: [],
+          isClipboardReadable,
           leaf: app.workspace.getLeaf(false),
           missing: await app.vault.createBinary(`copy-missing-${stamp}.pdf`, new ArrayBuffer(1)),
           note: await app.vault.create(`copy-original-${stamp}.md`, ''),
-          // Android's clipboard read bridge can reject even though writing is supported; this emulator is owned by the test.
-          previousClipboard: Platform.isDesktopApp ? await clipboard.readText() : null,
+          previousClipboard,
           priorSettings: { ...settingsComponent.settings },
           settingsComponent,
           startedWrites: [],
@@ -283,7 +296,7 @@ describe('Copy original attachment file name', () => {
             state,
             waitUntil
           });
-          const clipboard = Platform.isDesktopApp ? await navigator.clipboard.readText() : null;
+          const clipboard = Platform.isDesktopApp && state.isClipboardReadable ? await navigator.clipboard.readText() : null;
           hideMenus();
           return { clipboard, copied };
         }
@@ -359,7 +372,7 @@ describe('Copy original attachment file name', () => {
             state,
             waitUntil
           });
-          const clipboard = Platform.isDesktopApp ? await navigator.clipboard.readText() : null;
+          const clipboard = Platform.isDesktopApp && state.isClipboardReadable ? await navigator.clipboard.readText() : null;
           await dismissMenu();
           return { clipboard, copied, hasPathAction };
         }
@@ -374,15 +387,19 @@ describe('Copy original attachment file name', () => {
           menu.showAtPosition({ x: 100, y: 100 });
           const isNameActionDisabled = findAction().classList.contains('is-disabled');
           menu.hide();
-          return { isDesktopApp: Platform.isDesktopApp, isNameActionDisabled };
+          return { isClipboardReadable: state.isClipboardReadable, isDesktopApp: Platform.isDesktopApp, isNameActionDisabled };
         }
       );
 
       expect(fileMenu.copied).toBe('arrival.pdf');
       expect(linkMenu.copied).toBe('arrival.pdf');
       expect(linkMenu.hasPathAction).toBe(false);
+      const isReadBackChecked = missingMenu.isDesktopApp && missingMenu.isClipboardReadable;
+      if (missingMenu.isDesktopApp && !isReadBackChecked) {
+        console.warn('The system clipboard did not round-trip a probe text, so the clipboard read-back was skipped; the observed writes remain the evidence.');
+      }
       expect([fileMenu.clipboard, linkMenu.clipboard]).toStrictEqual(
-        missingMenu.isDesktopApp ? ['arrival.pdf', 'arrival.pdf'] : [null, null]
+        isReadBackChecked ? ['arrival.pdf', 'arrival.pdf'] : [null, null]
       );
       expect(importedName).toMatch(/^renamed-\d+\.pdf$/);
       expect(missingMenu.isNameActionDisabled).toBe(true);
