@@ -126,7 +126,12 @@ describe('Copy original attachment file name', () => {
             if (!(view instanceof MarkdownView)) {
               throw new TypeError('The note did not open in a markdown view.');
             }
-            await waitUntil({ predicate: () => view.contentEl.querySelector('a.internal-link') !== null, timeoutInMilliseconds: 4000 });
+            // A one-core Android guest under host load can take more than 4 s to render Reading view.
+            await waitUntil({
+              message: 'The attachment link did not render in Reading view',
+              predicate: () => view.contentEl.querySelector('a.internal-link') !== null,
+              timeoutInMilliseconds: 10_000
+            });
             const rendered = view.contentEl.querySelector<HTMLElement>('a.internal-link');
             if (!rendered) {
               throw new Error('The attachment link did not render.');
