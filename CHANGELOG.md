@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 17.3.0
+
+- test(original-attachment-names): skip the clipboard read-back on a dead system clipboard
+- test(original-attachment-names): run the copy-original-name test in phases on Android
+- test(original-attachment-names): give Reading view 10 s to render the link on Android
+- feat(attachments): per-operation folder and file name templates for new attachments
+- fix(deps): load at Obsidian startup again, on @mnaoumov/obsidian-lib 10.11.0
+- docs(original-names): apply a folder move once, and keep the original anchor
+- test(integration): wait for the settings component before the Android suites read it
+- fix(settings): let a cleared sidecar extension list disable pairing
+- fix: re #102
+- test: re #99
+- fix: re #99
+- feat(rename-attachments): rename a note's attachments in place with a template of their own
+- build(deps-dev): merge taking `obsidian-dev-toolkit` 8.2.1 with tool names marked as code
+- feat: re #99
+
 ## 17.2.0
 
 - test(original-attachment-names): raise the Android link menu without a long press
