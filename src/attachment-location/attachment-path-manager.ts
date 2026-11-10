@@ -56,6 +56,7 @@ import type { OriginalAttachmentFileNameParams } from '../tokens/substitutions.t
 
 import { isImageExtension } from '../attachment-saving/image-mime-types.ts';
 import { selfWriteRegistry } from '../externally-created-attachments/self-write-registry.ts';
+import { AttachmentOperation } from '../settings/attachment-operation.ts';
 import {
   formatString,
   stringFormatSchema
@@ -496,7 +497,7 @@ export class AttachmentPathManager {
        * token). Both of these settings ship empty, so the fallback fired by default.
        */
       case ActionContext.CollectAttachments: {
-        baseTemplate = this.pluginSettingsComponent.settings.collectedAttachmentFileName || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
+        baseTemplate = this.pluginSettingsComponent.settings.getOperationFileName(AttachmentOperation.Collect) || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
       /*
@@ -504,11 +505,11 @@ export class AttachmentPathManager {
        * whole point of the command that uses it, so keeping the name would leave the command doing nothing until it is configured.
        */
       case ActionContext.RenameAttachments: {
-        baseTemplate = this.pluginSettingsComponent.settings.manuallyRenamedAttachmentFileName || this.pluginSettingsComponent.settings.generatedAttachmentFileName;
+        baseTemplate = this.pluginSettingsComponent.settings.getOperationFileName(AttachmentOperation.RenameCommand) || this.pluginSettingsComponent.settings.generatedAttachmentFileName;
         break;
       }
       case ActionContext.RenameNote: {
-        baseTemplate = this.pluginSettingsComponent.settings.renamedAttachmentFileName || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
+        baseTemplate = this.pluginSettingsComponent.settings.getOperationFileName(AttachmentOperation.NoteRename) || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
       /*
@@ -838,8 +839,9 @@ export class AttachmentPathManager {
      * NAME in `getGeneratedAttachmentFileBaseName`, so a user who never opens this setting sees no change.
      */
     const settings = this.pluginSettingsComponent.settings;
-    if (substitutions.actionContext === ActionContext.CollectAttachments && settings.collectedAttachmentFolderPath) {
-      return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: settings.collectedAttachmentFolderPath });
+    const collectedAttachmentFolderPath = settings.getOperationFolderPath(AttachmentOperation.Collect);
+    if (substitutions.actionContext === ActionContext.CollectAttachments && collectedAttachmentFolderPath) {
+      return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: collectedAttachmentFolderPath });
     }
 
     // A new attachment's operation folder, in the same way: empty means wherever the default puts it.

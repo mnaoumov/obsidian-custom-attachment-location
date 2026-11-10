@@ -9,20 +9,21 @@ Open **Settings -> Community plugins -> `Custom Attachment Location`** to config
 - `attachmentFolderPath`
   - the folder each new attachment is saved into (a pattern), while `shouldFollowObsidianAttachmentLocation` is off. Start it with `./` for a path relative to the note; otherwise it is relative to the vault root. Defaults to `./assets/{{noteFileName}}`, the location every release before 13.0.0 used out of the box.
 
-## New attachments by operation
+## Templates by operation
 
-A folder and a file name of their own for each way a new attachment arrives. Every one is empty by default, and empty means the default above (`attachmentFolderPath`, or Obsidian's location while `shouldFollowObsidianAttachmentLocation` is on) and `generatedAttachmentFileName` below, so nothing changes until you fill one in. They sit on their own settings page, **New attachments by operation**.
+Every operation that names or places an attachment has a folder and a file name template of its own, named `<operation>AttachmentFolderPath` and `<operation>AttachmentFileName`. Every one is empty by default, and empty means the default, so nothing changes until you fill one in. The defaults are the **Core** rows: `attachmentFolderPath` (or Obsidian's location while `shouldFollowObsidianAttachmentLocation` is on) and `generatedAttachmentFileName`. They sit on the settings page **Templates by operation**, which has one page per operation. Each page's entry reads `Default` until something on it departs from the default, and `Custom` after that.
 
-- `pastedImageAttachmentFolderPath`, `pastedImageAttachmentFileName`
-  - a pasted screenshot: image data on the clipboard, or an image file that counts as pasted (see `shouldKeepNamesOfPastedNonScreenshotFiles` below).
-- `pastedFileAttachmentFolderPath`, `pastedFileAttachmentFileName`
-  - a pasted file that is not a screenshot, such as one copied in a file manager.
-- `droppedFileAttachmentFolderPath`, `droppedFileAttachmentFileName`
-  - a file dropped into a note, a canvas, the file explorer or a base.
-- `otherNewAttachmentFolderPath`, `otherNewAttachmentFileName`
-  - an attachment saved with no paste or drop: another plugin that saves through Obsidian, or a core feature such as the audio recorder.
+| Operation page | Keys | What an empty template means |
+| --- | --- | --- |
+| Pasted screenshot | `pastedImageAttachmentFolderPath`, `pastedImageAttachmentFileName` | The default folder and the generated name. A pasted screenshot is image data on the clipboard, or an image file that counts as pasted (see `shouldKeepNamesOfPastedNonScreenshotFiles` below). |
+| Pasted file | `pastedFileAttachmentFolderPath`, `pastedFileAttachmentFileName` | The same, for a pasted file that is not a screenshot, such as one copied in a file manager. |
+| Dropped file | `droppedFileAttachmentFolderPath`, `droppedFileAttachmentFileName` | The same, for a file dropped into a note, a canvas, the file explorer or a base. |
+| Other new attachment | `otherNewAttachmentFolderPath`, `otherNewAttachmentFileName` | The same, for an attachment saved with no paste or drop: another plugin that saves through Obsidian, or a core feature such as the audio recorder. |
+| Collect attachments | `shouldRenameCollectedAttachments`, `collectedAttachmentFileName`, `collectedAttachmentFolderPath` | The folder: `attachmentFolderPath`, exactly as collecting has always used it. The name: `{{originalAttachmentFileName}}`, the name the attachment arrived with, and only while `shouldRenameCollectedAttachments` is on. |
+| Note renamed or moved | `renamedAttachmentFileName` | `{{originalAttachmentFileName}}`. There is no folder template: where an attachment goes when its note moves is `Advanced Rename and Delete Handler`'s decision. |
+| Rename attachments command | `manuallyRenamedAttachmentFileName` | `generatedAttachmentFileName`, so the command renames without any setup. There is no folder template, because the command never moves a file. |
 
-A folder template here wins over `shouldFollowObsidianAttachmentLocation`, as `collectedAttachmentFolderPath` does for collecting. A file name template only says *how* to name the attachment: *whether* it is renamed at all is still `attachmentRenameMode`'s decision. So under the default `Only pasted images` a dropped file keeps its name whatever `droppedFileAttachmentFileName` says; under `All`, set `droppedFileAttachmentFileName` to `{{originalAttachmentFileName}}` to keep the names of dropped files while everything else is renamed.
+A folder template on a new-attachment page wins over `shouldFollowObsidianAttachmentLocation`, as `collectedAttachmentFolderPath` does for collecting. A file name template only says *how* to name an attachment. *Whether* it is renamed is still a switch: `attachmentRenameMode` for new attachments, and `shouldRenameCollectedAttachments` for collecting. So under the default `Only pasted images` a dropped file keeps its name, whatever `droppedFileAttachmentFileName` says. Under `All`, set `droppedFileAttachmentFileName` to `{{originalAttachmentFileName}}` to keep the names of dropped files while everything else is renamed.
 
 ## Attachment file naming
 

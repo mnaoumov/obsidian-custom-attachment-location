@@ -381,6 +381,49 @@ export const defaultTranslations = {
     }
   },
   pluginSettingsTab: {
+    attachmentOperationTemplates: {
+      collect: {
+        description: 'The Collect attachments commands, which move each attachment to where its note says it belongs.',
+        name: 'Collect attachments'
+      },
+      customized: 'Custom',
+      default: 'Default',
+      droppedFile: {
+        description: 'A file dropped into a note, a canvas, the file explorer or a base.',
+        fileName: 'Dropped file: file name',
+        folderPath: 'Dropped file: folder path',
+        name: 'Dropped file'
+      },
+      fileNameDescription: 'Leave empty to use the generated attachment file name. Whether the attachment is renamed at all is still decided by the rename attachments mode.',
+      folderPathDescription: 'Leave empty to use the location for new attachments. A template here wins over following Obsidian\'s attachment location.',
+      noteRename: {
+        description: 'The note an attachment belongs to was renamed or moved.',
+        name: 'Note renamed or moved'
+      },
+      other: {
+        description: 'An attachment saved with no paste or drop: another plugin, or a core feature such as the audio recorder.',
+        fileName: 'Other new attachment: file name',
+        folderPath: 'Other new attachment: folder path',
+        name: 'Other new attachment'
+      },
+      pastedFile: {
+        description: 'A pasted file that is not a screenshot, such as one copied in a file manager.',
+        fileName: 'Pasted file: file name',
+        folderPath: 'Pasted file: folder path',
+        name: 'Pasted file'
+      },
+      pastedImage: {
+        description: 'A pasted screenshot: image data on the clipboard, or an image file that counts as pasted.',
+        fileName: 'Pasted screenshot: file name',
+        folderPath: 'Pasted screenshot: folder path',
+        name: 'Pasted screenshot'
+      },
+      renameCommand: {
+        description: 'The Rename attachments in current note command, which renames attachments where they are.',
+        name: 'Rename attachments command'
+      },
+      tokens: 'See available tokens'
+    },
     attachmentRenameMode: {
       description: {
         part1: 'When attaching files:'
@@ -507,12 +550,12 @@ export const defaultTranslations = {
     },
     groups: {
       advanced: 'Advanced',
+      attachmentOperations: 'Templates by operation',
       collectedAttachments: 'Collected attachments',
       core: 'Core',
       customTokens: 'Custom tokens',
       images: 'Images',
       moveRenames: 'Move/renames',
-      newAttachmentOperations: 'New attachments by operation',
       path: 'Path',
       specialCharacters: 'Special characters'
     },
@@ -564,31 +607,6 @@ export const defaultTranslations = {
       description: 'The timeout in seconds for downloading each network image.',
       name: 'Network image download timeout in seconds'
     },
-    newAttachmentOperationTemplates: {
-      droppedFile: {
-        description: 'A file dropped into a note, a canvas, the file explorer or a base.',
-        fileName: 'Dropped file: file name',
-        folderPath: 'Dropped file: folder path'
-      },
-      fileNameDescription: 'Leave empty to use the generated attachment file name. Whether the attachment is renamed at all is still decided by the rename attachments mode.',
-      folderPathDescription: 'Leave empty to use the location for new attachments. A template here wins over following Obsidian\'s attachment location.',
-      other: {
-        description: 'An attachment saved with no paste or drop: another plugin, or a core feature such as the audio recorder.',
-        fileName: 'Other new attachment: file name',
-        folderPath: 'Other new attachment: folder path'
-      },
-      pastedFile: {
-        description: 'A pasted file that is not a screenshot, such as one copied in a file manager.',
-        fileName: 'Pasted file: file name',
-        folderPath: 'Pasted file: folder path'
-      },
-      pastedImage: {
-        description: 'A pasted screenshot: image data on the clipboard, or an image file that counts as pasted.',
-        fileName: 'Pasted screenshot: file name',
-        folderPath: 'Pasted screenshot: folder path'
-      },
-      tokens: 'See available tokens'
-    },
     notePriorities: {
       name: 'Note priorities'
     },
@@ -622,6 +640,9 @@ export const defaultTranslations = {
       advanced: {
         description: 'Link format, display text, and the operation timeout.'
       },
+      attachmentOperations: {
+        description: 'A folder and a file name of their own for each operation: pasting, dropping, collecting, a note rename and the Rename command. An empty template means the default from Core.'
+      },
       collectedAttachments: {
         description: 'How attachments are gathered into a note\'s folder, including network images and shared attachments.'
       },
@@ -633,9 +654,6 @@ export const defaultTranslations = {
       },
       moveRenames: {
         description: 'How attachments follow their note when it is renamed or moved.'
-      },
-      newAttachmentOperations: {
-        description: 'A folder and a file name of their own for pasted screenshots, pasted files, dropped files and other new attachments.'
       },
       path: {
         description: 'Which notes and folders the plugin acts on, and which extensions count as attachments.'

@@ -5,6 +5,8 @@ import {
   it
 } from 'vitest';
 
+import { findPluginSettingsComponent } from '../../scripts/helpers/plugin-settings-component-finder.ts';
+
 /*
  * End-to-end coverage for issue #68: the settings tab used to be one long scroll of nine groups.
  * `Core` now stays inline on the parent tab and the other eight groups are `SettingDefinitionPage`
@@ -29,7 +31,7 @@ const SEARCH_SETTLE_TIMEOUT_IN_MILLISECONDS = 1200;
 const EXPECTED_PAGE_NAMES = [
   'Original name storage',
   'Move/renames',
-  'New attachments by operation',
+  'Templates by operation',
   'Special characters',
   'Collected attachments',
   'Images',
@@ -45,13 +47,33 @@ const EXPECTED_IMAGES_PAGE_ROW_NAMES = [
   'Should preserve image metadata'
 ];
 
+const EXPECTED_OPERATION_PAGE_NAMES = [
+  'Pasted screenshot',
+  'Pasted file',
+  'Dropped file',
+  'Other new attachment',
+  'Collect attachments',
+  'Note renamed or moved',
+  'Rename attachments command'
+];
+
+const EXPECTED_COLLECT_PAGE_ROW_NAMES = [
+  'Should rename collected attachments',
+  'Collected attachment file name',
+  'Collected attachment folder path'
+];
+
 interface NavigableEntry {
   readonly description: string;
   readonly name: string;
 }
 
 interface ProbeResult {
+  readonly collectPageNames: readonly string[];
+  readonly collectPageStackDepth: number;
   readonly navigableEntries: readonly NavigableEntry[];
+  readonly operationEntryTexts: readonly string[];
+  readonly operationEntryTextsAfterEdit: readonly string[];
   readonly pageStackDepthAfterBack: number;
   readonly pageStackDepthOnSubPage: number;
   readonly parentTabNames: readonly string[];
@@ -64,7 +86,7 @@ interface ProbeResult {
 describe('Settings sub-pages (issue #68)', () => {
   it('navigates into a sub-page, back out again, and keeps sub-page rows searchable', async () => {
     const result = await evalInObsidian({
-      async callback({ app, pluginId, searchSettleTimeoutInMilliseconds, settleTimeoutInMilliseconds }): Promise<ProbeResult> {
+      async callback({ app, findSettingsComponent, pluginId, searchSettleTimeoutInMilliseconds, settleTimeoutInMilliseconds }): Promise<ProbeResult> {
         const setting = app.setting;
 
         function text(el: Element | null): string {
@@ -108,6 +130,47 @@ describe('Settings sub-pages (issue #68)', () => {
         const parentTabNamesAfterBack = tabRowNames();
         const pageStackDepthAfterBack = setting.pageStack.length;
 
+        // One level further down: each operation is a page nested in `Templates by operation`, whose entry shows
+        // whether the operation departs from the default.
+        navigableEntryEls().find((entry) => rowName(entry) === 'Templates by operation')?.click();
+        await sleep(settleTimeoutInMilliseconds);
+        const operationEntryTexts = navigableEntryEls().map((entry) => text(entry));
+
+        navigableEntryEls().find((entry) => rowName(entry) === 'Collect attachments')?.click();
+        await sleep(settleTimeoutInMilliseconds);
+        const collectPageNames = tabRowNames();
+        const collectPageStackDepth = setting.pageStack.length;
+
+        // An edit made on the operation's page shows on its entry once the user goes back.
+        interface CollectTemplateSettings {
+          // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors.
+          collectedAttachmentFileName: string;
+        }
+
+        function isCollectTemplateSettings(value: unknown): value is CollectTemplateSettings {
+          const record = value as null | Record<string, unknown>;
+          return typeof value === 'object' && record !== null && typeof record['collectedAttachmentFileName'] === 'string';
+        }
+
+        const settingsComponent = findSettingsComponent(app.plugins.getPlugin(pluginId), isCollectTemplateSettings);
+        if (!settingsComponent) {
+          throw new Error('The plugin settings component was not found.');
+        }
+
+        const previousFileName = settingsComponent.settings.collectedAttachmentFileName;
+        await settingsComponent.editAndSave((settings) => {
+          settings.collectedAttachmentFileName = '{{noteFileName}}';
+        });
+        setting.backButtonEl.click();
+        await sleep(settleTimeoutInMilliseconds);
+        const operationEntryTextsAfterEdit = navigableEntryEls().map((entry) => text(entry));
+        await settingsComponent.editAndSave((settings) => {
+          settings.collectedAttachmentFileName = previousFileName;
+        });
+
+        setting.backButtonEl.click();
+        await sleep(settleTimeoutInMilliseconds);
+
         // `JPEG Quality` lives on the `Images` sub-page, so a search that finds it proves Obsidian
         // indexes nested definitions rather than only the parent tab's own rows.
         setting.searchComponent.setValue('JPEG Quality');
@@ -127,7 +190,11 @@ describe('Settings sub-pages (issue #68)', () => {
         await sleep(settleTimeoutInMilliseconds);
 
         return {
+          collectPageNames,
+          collectPageStackDepth,
           navigableEntries,
+          operationEntryTexts,
+          operationEntryTextsAfterEdit,
           pageStackDepthAfterBack,
           pageStackDepthOnSubPage,
           parentTabNames,
@@ -138,6 +205,7 @@ describe('Settings sub-pages (issue #68)', () => {
         };
       },
       input: {
+        findSettingsComponent: findPluginSettingsComponent,
         pluginId: PLUGIN_ID,
         searchSettleTimeoutInMilliseconds: SEARCH_SETTLE_TIMEOUT_IN_MILLISECONDS,
         settleTimeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
@@ -164,6 +232,15 @@ describe('Settings sub-pages (issue #68)', () => {
 
     expect(result.pageStackDepthAfterBack).toBe(0);
     expect(result.parentTabNamesAfterBack).toEqual(result.parentTabNames);
+
+    expect(result.operationEntryTexts.map((entryText) => EXPECTED_OPERATION_PAGE_NAMES.find((name) => entryText.startsWith(name)))).toEqual(EXPECTED_OPERATION_PAGE_NAMES);
+    for (const entryText of result.operationEntryTexts) {
+      expect(entryText).toContain('Default');
+    }
+    expect(result.collectPageStackDepth).toBe(2);
+    expect(result.collectPageNames).toEqual(EXPECTED_COLLECT_PAGE_ROW_NAMES);
+    const collectEntryAfterEdit = result.operationEntryTextsAfterEdit.find((entryText) => entryText.startsWith('Collect attachments'));
+    expect(collectEntryAfterEdit).toContain('Custom');
 
     expect(result.searchResultText).toContain('JPEG Quality');
     expect(result.searchResultText).toContain('Images');

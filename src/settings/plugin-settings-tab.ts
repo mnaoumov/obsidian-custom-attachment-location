@@ -5,6 +5,7 @@ import type {
 } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
 import type {
   SettingDefinitionItem,
+  SettingDefinitionPage,
   SettingDefinitionRender,
   TextComponent
 } from 'obsidian';
@@ -24,6 +25,7 @@ import {
   convertAsyncToSync,
   invokeAsyncSafely
 } from '@mnaoumov/typescript-lib/async';
+import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import {
   debounce,
   normalizePath,
@@ -45,6 +47,10 @@ import {
 } from '../original-attachment-names/original-name-sync-advice.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
 import { TOKENIZED_STRING_LANGUAGE } from '../tokens/tokenized-string-language.ts';
+import {
+  ATTACHMENT_OPERATION_TEMPLATE_KEYS,
+  AttachmentOperation
+} from './attachment-operation.ts';
 import {
   AttachmentRenameMode,
   CollectAttachmentUsedByMultipleNotesMode,
@@ -93,11 +99,29 @@ interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstr
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
 
+interface PluginSettingsTabGetAttachmentOperationPageParams {
+  readonly description: string;
+  /**
+   * State beyond the operation's templates that also departs from the default.
+   */
+  readonly isCustomized?: () => boolean;
+  readonly items: SettingDefinitionItem[];
+  readonly name: string;
+  readonly operation: AttachmentOperation;
+}
+
 interface PluginSettingsTabGetNewAttachmentOperationTemplateItemParams {
   readonly description: string;
   readonly hint: string;
   readonly name: string;
   readonly propertyName: ConditionalKeys<PluginSettings, string>;
+}
+
+interface PluginSettingsTabGetNewAttachmentOperationTemplateItemsParams {
+  readonly description: string;
+  readonly fileName: string;
+  readonly folderPath: string;
+  readonly operation: AttachmentOperation;
 }
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
@@ -162,9 +186,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         type: 'page'
       },
       {
-        desc: t(($) => $.pluginSettingsTab.pages.newAttachmentOperations.description),
-        items: this.getNewAttachmentOperationsItems(),
-        name: t(($) => $.pluginSettingsTab.groups.newAttachmentOperations),
+        desc: t(($) => $.pluginSettingsTab.pages.attachmentOperations.description),
+        items: this.getAttachmentOperationPages(),
+        name: t(($) => $.pluginSettingsTab.groups.attachmentOperations),
         type: 'page'
       },
       {
@@ -291,6 +315,240 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
     ];
   }
 
+  private getAttachmentOperationPage(params: PluginSettingsTabGetAttachmentOperationPageParams): SettingDefinitionPage {
+    return {
+      desc: params.description,
+      // Read on every render of the parent page, so returning from the operation's page shows the value just edited.
+      displayValue: (): string => {
+        const settings = this.pluginSettingsComponent.settings;
+        const isCustomized = settings.getOperationFileName(params.operation) !== ''
+          || settings.getOperationFolderPath(params.operation) !== ''
+          || params.isCustomized?.() === true;
+        return isCustomized
+          ? t(($) => $.pluginSettingsTab.attachmentOperationTemplates.customized)
+          : t(($) => $.pluginSettingsTab.attachmentOperationTemplates.default);
+      },
+      items: params.items,
+      name: params.name,
+      type: 'page'
+    };
+  }
+
+  /**
+   * One nested page per operation. Each holds that operation's template rows, and its entry says whether any of them
+   * departs from the default. Obsidian's declarative settings have no collapsible group, so a page is the native way to
+   * fold an operation away until it is wanted.
+   *
+   * @returns The pages, in the order {@link ATTACHMENT_OPERATION_TEMPLATE_KEYS} lists the operations.
+   */
+  private getAttachmentOperationPages(): SettingDefinitionPage[] {
+    return [
+      this.getAttachmentOperationPage({
+        description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.description),
+        items: this.getNewAttachmentOperationTemplateItems({
+          description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.description),
+          fileName: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.fileName),
+          folderPath: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.folderPath),
+          operation: AttachmentOperation.PastedImage
+        }),
+        name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.name),
+        operation: AttachmentOperation.PastedImage
+      }),
+      this.getAttachmentOperationPage({
+        description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.description),
+        items: this.getNewAttachmentOperationTemplateItems({
+          description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.description),
+          fileName: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.fileName),
+          folderPath: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.folderPath),
+          operation: AttachmentOperation.PastedFile
+        }),
+        name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.name),
+        operation: AttachmentOperation.PastedFile
+      }),
+      this.getAttachmentOperationPage({
+        description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.description),
+        items: this.getNewAttachmentOperationTemplateItems({
+          description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.description),
+          fileName: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.fileName),
+          folderPath: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.folderPath),
+          operation: AttachmentOperation.DroppedFile
+        }),
+        name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.name),
+        operation: AttachmentOperation.DroppedFile
+      }),
+      this.getAttachmentOperationPage({
+        description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.description),
+        items: this.getNewAttachmentOperationTemplateItems({
+          description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.description),
+          fileName: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.fileName),
+          folderPath: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.folderPath),
+          operation: AttachmentOperation.OtherNewAttachment
+        }),
+        name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.name),
+        operation: AttachmentOperation.OtherNewAttachment
+      }),
+      this.getAttachmentOperationPage({
+        description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.collect.description),
+        // The switch is part of the operation's state: on, collecting renames, which is a departure from the default.
+        isCustomized: () => this.pluginSettingsComponent.settings.shouldRenameCollectedAttachments,
+        items: [
+          this.settingEx({
+            desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part1));
+              f.appendText(' ');
+              appendCodeBlock(f, t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part2));
+              f.appendText(' ');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part3));
+              f.appendText(' ');
+              appendCodeBlock(f, t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name));
+              f.appendText(' ');
+              f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part4));
+            }),
+            name: t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.name),
+            render: (setting) => {
+              setting.addToggle((toggle) => {
+                this.bind({
+                  propertyName: 'shouldRenameCollectedAttachments',
+                  valueComponent: toggle
+                });
+              });
+            }
+          }),
+          this.settingEx({
+            desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part1));
+              f.appendText(' ');
+              f.createEl('a', {
+                href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+                text: t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part2)
+              });
+              f.appendText('.');
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part3));
+            }),
+            name: t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name),
+            render: (setting) => {
+              setting.addCodeHighlighter((codeHighlighter) => {
+                codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+                codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+                this.bind({
+                  propertyName: 'collectedAttachmentFileName',
+                  valueComponent: codeHighlighter,
+                  ...bindOptionsWithTrim
+                });
+              });
+            }
+          }),
+          this.settingEx({
+            desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part1));
+              f.appendText(' ');
+              appendCodeBlock(f, t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part2));
+              f.appendText(' ');
+              f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part3));
+              f.appendText(' ');
+              appendCodeBlock(f, './');
+              f.appendText(' ');
+              f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part4));
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part5));
+              f.appendText(' ');
+              f.createEl('a', {
+                href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+                text: t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part6)
+              });
+              f.appendText('.');
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part7));
+            }),
+            name: t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.name),
+            render: (setting) => {
+              setting.addCodeHighlighter((codeHighlighter) => {
+                codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+                codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+                this.bind({
+                  propertyName: 'collectedAttachmentFolderPath',
+                  valueComponent: codeHighlighter,
+                  ...bindOptionsWithTrim
+                });
+              });
+            }
+          })
+        ],
+        name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.collect.name),
+        operation: AttachmentOperation.Collect
+      }),
+      this.getAttachmentOperationPage({
+        description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.noteRename.description),
+        items: [
+          this.settingEx({
+            desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part1));
+              f.appendText(' ');
+              f.createEl('a', {
+                href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+                text: t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part2)
+              });
+              f.appendText('.');
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part3));
+            }),
+            name: t(($) => $.pluginSettingsTab.renamedAttachmentFileName.name),
+            render: (setting) => {
+              setting.addCodeHighlighter((codeHighlighter) => {
+                codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+                codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+                this.bind({
+                  propertyName: 'renamedAttachmentFileName',
+                  valueComponent: codeHighlighter,
+                  ...bindOptionsWithTrim
+                });
+              });
+            }
+          })
+        ],
+        name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.noteRename.name),
+        operation: AttachmentOperation.NoteRename
+      }),
+      this.getAttachmentOperationPage({
+        description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.renameCommand.description),
+        items: [
+          this.settingEx({
+            desc: createFragment((f) => {
+              f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part1));
+              f.appendText(' ');
+              appendCodeBlock(f, t(($) => $.commands.renameAttachmentsCurrentNote));
+              f.appendText(' ');
+              f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part2));
+              f.appendText(' ');
+              f.createEl('a', {
+                href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+                text: t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part3)
+              });
+              f.appendText('.');
+              f.createEl('br');
+              f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part4));
+            }),
+            name: t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.name),
+            render: (setting) => {
+              setting.addCodeHighlighter((codeHighlighter) => {
+                codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
+                codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
+                this.bind({
+                  propertyName: 'manuallyRenamedAttachmentFileName',
+                  valueComponent: codeHighlighter,
+                  ...bindOptionsWithTrim
+                });
+              });
+            }
+          })
+        ],
+        name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.renameCommand.name),
+        operation: AttachmentOperation.RenameCommand
+      })
+    ];
+  }
+
   private getCollectedAttachmentsItems(): SettingDefinitionRender[] {
     return [
       this.settingEx({
@@ -322,88 +580,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           });
         },
         visible: () => this.pluginSettingsComponent.settings.downloadNetworkImages
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part1));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part2));
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part3));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name));
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.description.part4));
-        }),
-        name: t(($) => $.pluginSettingsTab.shouldRenameCollectedAttachments.name),
-        render: (setting) => {
-          setting.addToggle((toggle) => {
-            this.bind({
-              propertyName: 'shouldRenameCollectedAttachments',
-              valueComponent: toggle
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part1));
-          f.appendText(' ');
-          f.createEl('a', {
-            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-            text: t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part2)
-          });
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part3));
-        }),
-        name: t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name),
-        render: (setting) => {
-          setting.addCodeHighlighter((codeHighlighter) => {
-            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind({
-              propertyName: 'collectedAttachmentFileName',
-              valueComponent: codeHighlighter,
-              ...bindOptionsWithTrim
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part1));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part2));
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part3));
-          f.appendText(' ');
-          appendCodeBlock(f, './');
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part4));
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part5));
-          f.appendText(' ');
-          f.createEl('a', {
-            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-            text: t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part6)
-          });
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part7));
-        }),
-        name: t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.name),
-        render: (setting) => {
-          setting.addCodeHighlighter((codeHighlighter) => {
-            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind({
-              propertyName: 'collectedAttachmentFolderPath',
-              valueComponent: codeHighlighter,
-              ...bindOptionsWithTrim
-            });
-          });
-        }
       }),
       this.settingEx({
         desc: createFragment((f) => {
@@ -987,60 +1163,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part1));
-          f.appendText(' ');
-          f.createEl('a', {
-            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-            text: t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part2)
-          });
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part3));
-        }),
-        name: t(($) => $.pluginSettingsTab.renamedAttachmentFileName.name),
-        render: (setting) => {
-          setting.addCodeHighlighter((codeHighlighter) => {
-            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind({
-              propertyName: 'renamedAttachmentFileName',
-              valueComponent: codeHighlighter,
-              ...bindOptionsWithTrim
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
-          f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part1));
-          f.appendText(' ');
-          appendCodeBlock(f, t(($) => $.commands.renameAttachmentsCurrentNote));
-          f.appendText(' ');
-          f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part2));
-          f.appendText(' ');
-          f.createEl('a', {
-            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-            text: t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part3)
-          });
-          f.appendText('.');
-          f.createEl('br');
-          f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part4));
-        }),
-        name: t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.name),
-        render: (setting) => {
-          setting.addCodeHighlighter((codeHighlighter) => {
-            codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
-            codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
-            this.bind({
-              propertyName: 'manuallyRenamedAttachmentFileName',
-              valueComponent: codeHighlighter,
-              ...bindOptionsWithTrim
-            });
-          });
-        }
-      }),
-      this.settingEx({
-        desc: createFragment((f) => {
           f.appendText(t(($) => $.pluginSettingsTab.moveAttachmentToProperFolderUsedByMultipleNotesMode.description.part1));
           f.createEl('br');
           appendCodeBlock(f, t(($) => $.pluginSettings.moveAttachmentToProperFolderUsedByMultipleNotesMode.skip.displayText));
@@ -1080,59 +1202,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
     ];
   }
 
-  /**
-   * One folder row and one file name row per new-attachment operation, each empty meaning the default.
-   *
-   * @returns The rows, operation by operation.
-   */
-  private getNewAttachmentOperationsItems(): SettingDefinitionRender[] {
-    const operations = [
-      {
-        description: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedImage.description),
-        fileName: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedImage.fileName),
-        fileNamePropertyName: 'pastedImageAttachmentFileName',
-        folderPath: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedImage.folderPath),
-        folderPathPropertyName: 'pastedImageAttachmentFolderPath'
-      },
-      {
-        description: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedFile.description),
-        fileName: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedFile.fileName),
-        fileNamePropertyName: 'pastedFileAttachmentFileName',
-        folderPath: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.pastedFile.folderPath),
-        folderPathPropertyName: 'pastedFileAttachmentFolderPath'
-      },
-      {
-        description: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.droppedFile.description),
-        fileName: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.droppedFile.fileName),
-        fileNamePropertyName: 'droppedFileAttachmentFileName',
-        folderPath: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.droppedFile.folderPath),
-        folderPathPropertyName: 'droppedFileAttachmentFolderPath'
-      },
-      {
-        description: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.other.description),
-        fileName: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.other.fileName),
-        fileNamePropertyName: 'otherNewAttachmentFileName',
-        folderPath: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.other.folderPath),
-        folderPathPropertyName: 'otherNewAttachmentFolderPath'
-      }
-    ] as const;
-
-    return operations.flatMap((operation) => [
-      this.getNewAttachmentOperationTemplateItem({
-        description: operation.description,
-        hint: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.folderPathDescription),
-        name: operation.folderPath,
-        propertyName: operation.folderPathPropertyName
-      }),
-      this.getNewAttachmentOperationTemplateItem({
-        description: operation.description,
-        hint: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.fileNameDescription),
-        name: operation.fileName,
-        propertyName: operation.fileNamePropertyName
-      })
-    ]);
-  }
-
   private getNewAttachmentOperationTemplateItem(params: PluginSettingsTabGetNewAttachmentOperationTemplateItemParams): SettingDefinitionRender {
     return this.settingEx({
       desc: createFragment((f) => {
@@ -1140,7 +1209,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.createEl('br');
         f.createEl('a', {
           href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
-          text: t(($) => $.pluginSettingsTab.newAttachmentOperationTemplates.tokens)
+          text: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.tokens)
         });
         f.appendText('.');
         f.createEl('br');
@@ -1159,6 +1228,30 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         });
       }
     });
+  }
+
+  /**
+   * The folder row and the file name row of one new-attachment operation, each empty meaning the default.
+   *
+   * @param params - The operation and its labels.
+   * @returns The two rows.
+   */
+  private getNewAttachmentOperationTemplateItems(params: PluginSettingsTabGetNewAttachmentOperationTemplateItemsParams): SettingDefinitionRender[] {
+    const keys = ATTACHMENT_OPERATION_TEMPLATE_KEYS[params.operation];
+    return [
+      this.getNewAttachmentOperationTemplateItem({
+        description: params.description,
+        hint: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.folderPathDescription),
+        name: params.folderPath,
+        propertyName: ensureNonNullable(keys.folderPath)
+      }),
+      this.getNewAttachmentOperationTemplateItem({
+        description: params.description,
+        hint: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.fileNameDescription),
+        name: params.fileName,
+        propertyName: keys.fileName
+      })
+    ];
   }
 
   private getPathItems(): SettingDefinitionRender[] {
