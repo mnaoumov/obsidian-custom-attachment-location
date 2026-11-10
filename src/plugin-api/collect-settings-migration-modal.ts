@@ -11,6 +11,7 @@
 import type { PromiseResolve } from '@mnaoumov/typescript-lib/async';
 import type { App } from 'obsidian';
 
+import { createFragmentWithCodeBlocks } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import {
   ModalBase,
@@ -141,9 +142,9 @@ class CollectSettingsMigrationModal extends ModalBase<null | SettingsMigrationRo
   private renderRow(row: SettingsMigrationRow): void {
     const setting = new Setting(this.contentEl);
     setting.setName(row.descriptor.getName());
-    setting.setDesc(t(($) => $.settingsMigrationModal.currentValue, {
+    setting.setDesc(createFragmentWithCodeBlocks(t(($) => $.settingsMigrationModal.currentValue, {
       value: formatMigratableSettingValue(row.descriptor.kind, row.currentValue)
-    }));
+    })));
 
     const resetToCurrentValue = this.renderValueControl(setting, row);
 

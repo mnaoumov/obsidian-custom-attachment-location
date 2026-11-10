@@ -10,7 +10,11 @@ import type {
 } from 'obsidian';
 import type { ConditionalKeys } from 'type-fest';
 
-import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
+import {
+  appendCodeBlock,
+  asCodeBlock,
+  createFragmentWithCodeBlocks
+} from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
 import { confirm } from '@mnaoumov/obsidian-lib/modals/confirm';
@@ -144,7 +148,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         items: this.getCoreItems()
       }),
       {
-        desc: t(($) => $.originalAttachmentNames.storage.description),
+        desc: createFragmentWithCodeBlocks(t(($) => $.originalAttachmentNames.storage.description, {
+          originalAttachmentFileName: asTokenCodeBlock('originalAttachmentFileName')
+        })),
         items: this.getStorageItems(),
         name: t(($) => $.originalAttachmentNames.storage.title),
         type: 'page'
@@ -203,7 +209,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   private getAdvancedItems(): SettingDefinitionRender[] {
     return [
       this.settingEx({
-        desc: t(($) => $.pluginSettingsTab.insertedLinkText.description),
+        desc: createFragmentWithCodeBlocks(t(($) => $.pluginSettingsTab.insertedLinkText.description, {
+          attachmentFileName: asTokenCodeBlock('attachmentFileName'),
+          originalAttachmentFileName: asTokenCodeBlock('originalAttachmentFileName')
+        })),
         name: t(($) => $.pluginSettingsTab.insertedLinkText.name),
         render: (setting) => {
           setting.addCodeHighlighter((codeHighlighter) => {
@@ -1453,9 +1462,15 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               fragment.createEl('p', { text: status });
               const adviceText = getAdviceText(advice);
               if (adviceText) {
-                fragment.createEl('p', { cls: 'original-name-storage-advice', text: adviceText });
+                fragment.createEl('p', { cls: 'original-name-storage-advice' }, (p) => {
+                  p.append(createFragmentWithCodeBlocks(adviceText));
+                });
               }
-              fragment.createEl('p', { text: t(($) => $.originalAttachmentNames.storage.roots, { roots: storage.transportRoots.join(', ') }) });
+              fragment.createEl('p', { cls: 'original-name-storage-roots' }, (p) => {
+                p.append(createFragmentWithCodeBlocks(t(($) => $.originalAttachmentNames.storage.roots, {
+                  roots: storage.transportRoots.map((root) => asCodeBlock(root)).join(', ')
+                })));
+              });
               fragment.createEl('a', { href: 'https://help.obsidian.md/sync/settings', text: t(($) => $.originalAttachmentNames.storage.obsidianSync) });
             }));
           };
@@ -1563,6 +1578,20 @@ function appendPathEntrySyntax(f: DocumentFragment): void {
   f.appendText(t(($) => $.pluginSettingsTab.pathEntrySyntax.escape));
 }
 
+/**
+ * Marks a token, written with its braces, for {@link createFragmentWithCodeBlocks}.
+ *
+ * A message names a token by putting it in braces, which i18next would read as its own interpolation. Passing the
+ * token back as the value of that interpolation keeps the message one translatable unit and renders the token as
+ * code wherever a translation puts it.
+ *
+ * @param tokenName - The token's name, without braces.
+ * @returns The token in braces, marked as a code block.
+ */
+function asTokenCodeBlock(tokenName: string): string {
+  return asCodeBlock(`{{${tokenName}}}`);
+}
+
 function generateJpegQualityOptions(): Record<string, string> {
   const MAX_QUALITY = 20;
   const ans: Record<string, string> = {};
@@ -1578,16 +1607,16 @@ function generateJpegQualityOptions(): Record<string, string> {
  * The text shown for an advice kind.
  *
  * @param advice - The advice.
- * @returns The text, or
-ull when there is nothing to say.
+ * @returns The text, with its token marked by {@link asCodeBlock}, or `null` when there is nothing to say.
  */
 function getAdviceText(advice: OriginalNameSyncAdvice): null | string {
+  const originalAttachmentFileName = asTokenCodeBlock('originalAttachmentFileName');
   const texts: Record<OriginalNameSyncAdvice, () => null | string> = {
     [OriginalNameSyncAdvice.EnabledWithoutObsidianSync]: () => t(($) => $.originalAttachmentNames.storage.advice.enabledWithoutObsidianSync),
     [OriginalNameSyncAdvice.None]: () => null,
-    [OriginalNameSyncAdvice.NotNeeded]: () => t(($) => $.originalAttachmentNames.storage.advice.notNeeded),
-    [OriginalNameSyncAdvice.ObsidianSyncNotConnected]: () => t(($) => $.originalAttachmentNames.storage.advice.obsidianSyncNotConnected),
-    [OriginalNameSyncAdvice.Recommended]: () => t(($) => $.originalAttachmentNames.storage.advice.recommended)
+    [OriginalNameSyncAdvice.NotNeeded]: () => t(($) => $.originalAttachmentNames.storage.advice.notNeeded, { originalAttachmentFileName }),
+    [OriginalNameSyncAdvice.ObsidianSyncNotConnected]: () => t(($) => $.originalAttachmentNames.storage.advice.obsidianSyncNotConnected, { originalAttachmentFileName }),
+    [OriginalNameSyncAdvice.Recommended]: () => t(($) => $.originalAttachmentNames.storage.advice.recommended, { originalAttachmentFileName })
   };
   return texts[advice]();
 }

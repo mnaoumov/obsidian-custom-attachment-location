@@ -10,6 +10,7 @@
 
 import type { ReadonlyPluginSettings } from '@mnaoumov/obsidian-lib/components/plugin-settings-component';
 
+import { asCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { isDeepEqual } from '@mnaoumov/typescript-lib/object-utils';
 import { assertNever } from '@mnaoumov/typescript-lib/type-guards';
@@ -244,7 +245,8 @@ export function buildSettingsMigrationRows(params: BuildSettingsMigrationRowsPar
  *
  * @param kind - How the setting is edited, which says how to read the value.
  * @param value - The value to render.
- * @returns The text to show.
+ * @returns The text to show, with a mode name and each list entry marked by {@link asCodeBlock}, as the
+ * settings tab renders them.
  */
 export function formatMigratableSettingValue(kind: MigratableSettingKind, value: MigratableSettingValue): string {
   if (typeof value === 'boolean') {
@@ -252,12 +254,14 @@ export function formatMigratableSettingValue(kind: MigratableSettingKind, value:
   }
 
   if (typeof value === 'string') {
-    return kind === MigratableSettingKind.MoveMode
-      ? getMoveModeLabel(ensureMoveMode('moveAttachmentToProperFolderUsedByMultipleNotesMode', value))
-      : getCollectModeLabel(ensureCollectMode('collectAttachmentUsedByMultipleNotesMode', value));
+    return asCodeBlock(
+      kind === MigratableSettingKind.MoveMode
+        ? getMoveModeLabel(ensureMoveMode('moveAttachmentToProperFolderUsedByMultipleNotesMode', value))
+        : getCollectModeLabel(ensureCollectMode('collectAttachmentUsedByMultipleNotesMode', value))
+    );
   }
 
-  return value.length === 0 ? t(($) => $.settingsMigrationModal.emptyList) : value.join(', ');
+  return value.length === 0 ? t(($) => $.settingsMigrationModal.emptyList) : value.map((entry) => asCodeBlock(entry)).join(', ');
 }
 
 /**

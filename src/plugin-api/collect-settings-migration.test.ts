@@ -1,3 +1,4 @@
+import { asCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import {
@@ -175,12 +176,12 @@ describe('formatMigratableSettingValue', () => {
   });
 
   it('should name each mode the way its dropdown names it', () => {
-    expect(formatMigratableSettingValue(MigratableSettingKind.CollectMode, 'Prompt')).toBe('Prompt');
-    expect(formatMigratableSettingValue(MigratableSettingKind.MoveMode, 'CopyAll')).toBe('Copy all');
+    expect(formatMigratableSettingValue(MigratableSettingKind.CollectMode, 'Prompt')).toBe(asCodeBlock('Prompt'));
+    expect(formatMigratableSettingValue(MigratableSettingKind.MoveMode, 'CopyAll')).toBe(asCodeBlock('Copy all'));
   });
 
   it('should state a list, and say so when it is empty', () => {
-    expect(formatMigratableSettingValue(MigratableSettingKind.StringList, ['Pages', 'Drawings'])).toBe('Pages, Drawings');
+    expect(formatMigratableSettingValue(MigratableSettingKind.StringList, ['Pages', 'Drawings'])).toBe(`${asCodeBlock('Pages')}, ${asCodeBlock('Drawings')}`);
     expect(formatMigratableSettingValue(MigratableSettingKind.StringList, [])).toBe('(empty)');
   });
 });
