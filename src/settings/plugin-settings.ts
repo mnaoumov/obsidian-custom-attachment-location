@@ -3,9 +3,14 @@ import { INFINITE_TIMEOUT } from '@mnaoumov/typescript-lib/abort-controller';
 import { escapeRegExp } from '@mnaoumov/typescript-lib/reg-exp';
 
 import type { MigratableSettings } from '../advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
+import type { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 
-import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import { DEFAULT_PLUGIN_DATA_FOLDER } from '../original-attachment-names/plugin-data-folder.ts';
+import {
+  ATTACHMENT_OPERATION_TEMPLATE_KEYS,
+  AttachmentOperation,
+  getAttachmentOperation
+} from './attachment-operation.ts';
 
 export const SAMPLE_CUSTOM_TOKENS = String.raw`registerCustomToken('foo', (ctx) => {
   const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
@@ -428,20 +433,7 @@ export class PluginSettings {
    * @returns The operation's template, or an empty string when it has none.
    */
   public getNewAttachmentFileName(operation: NewAttachmentOperation): string {
-    switch (operation) {
-      case NewAttachmentOperation.DroppedFile: {
-        return this.droppedFileAttachmentFileName;
-      }
-      case NewAttachmentOperation.PastedFile: {
-        return this.pastedFileAttachmentFileName;
-      }
-      case NewAttachmentOperation.PastedImage: {
-        return this.pastedImageAttachmentFileName;
-      }
-      default: {
-        return this.otherNewAttachmentFileName;
-      }
-    }
+    return this.getOperationFileName(getAttachmentOperation(operation));
   }
 
   /**
@@ -454,20 +446,28 @@ export class PluginSettings {
    * @returns The operation's template, or an empty string when it has none.
    */
   public getNewAttachmentFolderPath(operation: NewAttachmentOperation): string {
-    switch (operation) {
-      case NewAttachmentOperation.DroppedFile: {
-        return this.droppedFileAttachmentFolderPath;
-      }
-      case NewAttachmentOperation.PastedFile: {
-        return this.pastedFileAttachmentFolderPath;
-      }
-      case NewAttachmentOperation.PastedImage: {
-        return this.pastedImageAttachmentFolderPath;
-      }
-      default: {
-        return this.otherNewAttachmentFolderPath;
-      }
-    }
+    return this.getOperationFolderPath(getAttachmentOperation(operation));
+  }
+
+  /**
+   * The file name template of one operation, before the fallback to whatever its empty value means.
+   *
+   * @param operation - The operation.
+   * @returns The template, or an empty string when the operation has none.
+   */
+  public getOperationFileName(operation: AttachmentOperation): string {
+    return this[ATTACHMENT_OPERATION_TEMPLATE_KEYS[operation].fileName];
+  }
+
+  /**
+   * The folder template of one operation, before the fallback to the default folder.
+   *
+   * @param operation - The operation.
+   * @returns The template, or an empty string when the operation has none or never moves a file.
+   */
+  public getOperationFolderPath(operation: AttachmentOperation): string {
+    const key = ATTACHMENT_OPERATION_TEMPLATE_KEYS[operation].folderPath;
+    return key === null ? '' : this[key];
   }
 
   public getTimeoutInMilliseconds(): number {

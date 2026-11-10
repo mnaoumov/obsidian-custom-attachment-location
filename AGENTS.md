@@ -109,7 +109,15 @@ An editor paste and an editor drop both end in `ClipboardManager.insertFiles`, a
 
 - **Each operation has a folder and a file name template, empty meaning the default** (`PluginSettings.getNewAttachmentFolderPath` / `getNewAttachmentFileName`). A non-empty folder wins over `shouldFollowObsidianAttachmentLocation`, as `collectedAttachmentFolderPath` does. The name template only says HOW: `attachmentRenameMode` still decides WHETHER, so a drop keeps its name under `Only pasted images`.
 - **`App.importAttachments` records a drop too, but never as a pasted image** (`record(..., gesture, false)`), so a canvas or file-explorer drop of image data keeps its name as it always did. It now also reads the dropped file's stats, which `createBinary` keeps.
-- **Only the saver passes an operation.** The share sheet, the published API, collect and every existing-attachment action leave it `undefined`, so they get the defaults. Folding `attachmentRenameMode` and the existing collect/rename keys into one per-operation shape is a separate change, because it migrates persisted keys the `Consistent Attachments and Links` hand-over contract names.
+- **Only the saver passes an operation.** The share sheet, the published API, collect and every existing-attachment action leave it `undefined`, so they get the defaults.
+
+## Every operation's templates are one table, `ATTACHMENT_OPERATION_TEMPLATE_KEYS`
+
+`src/settings/attachment-operation.ts` lists the seven operations: the four new-attachment ones, collect, a note rename and the Rename command. It maps each to its persisted keys, which already follow one pattern, `<operation>AttachmentFolderPath` / `<operation>AttachmentFileName`. The note rename and the Rename command have no folder key. Read templates through `PluginSettings.getOperationFileName` / `getOperationFolderPath`, never through the keys one by one. The path manager and the settings tab both do, so a new operation is one table row plus its settings.
+
+- **The keys were never migrated, on purpose.** They already shared one shape, and the settings library binds and validates flat keys only. The `Consistent Attachments and Links` hand-over contract names no template key.
+- **The switches stay switches.** `attachmentRenameMode` and `shouldRenameCollectedAttachments` decide WHETHER, and the templates decide HOW. They cannot fold into template values. `shouldRenameCollectedAttachments` also governs `Move attachment to proper folder` and the published `getProperAttachmentPath`, which rename by the generated-name template. `Only pasted images` depends on the gesture classification.
+- **The settings UI is one nested page per operation** under `Templates by operation`, built by `getAttachmentOperationPages`. Each entry's `displayValue` reads `Default` or `Custom`, and Obsidian re-evaluates it when the user goes back, so no `update()` call is needed. The declarative API has no collapsible group, so the nested page is the collapse. The defaults stay in `Core` on the main tab.
 
 ## `{{originalAttachmentFileName}}` reads a STORE, not the file
 

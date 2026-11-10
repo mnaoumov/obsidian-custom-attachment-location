@@ -31,6 +31,7 @@ import {
   castTo,
   normalizeOptionalProperties
 } from '@mnaoumov/typescript-lib/object-utils';
+import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import { ValueWrapper } from '@mnaoumov/typescript-lib/value-wrapper';
 import { waitForAllAsyncOperations } from '@mnaoumov/typescript-test-toolkit/async-operation-tracking';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
@@ -669,7 +670,7 @@ describe('PluginSettingsTab', () => {
     expect(pages.map((page) => castTo<SettingDefinitionPage>(page).name)).toEqual([
       'Original name storage',
       'Move/renames',
-      'New attachments by operation',
+      'Templates by operation',
       'Special characters',
       'Collected attachments',
       'Images',
@@ -687,6 +688,78 @@ describe('PluginSettingsTab', () => {
       expect(descText).toBeTypeOf('string');
       expect(descText).not.toBe('');
     }
+  });
+
+  describe('Templates by operation', () => {
+    function getOperationPages(tab: PluginSettingsTab): SettingDefinitionPage[] {
+      const page = tab.getSettingDefinitions()
+        .map((item) => castTo<SettingDefinitionPage>(item))
+        .find((item) => item.name === 'Templates by operation');
+      return castTo<SettingDefinitionPage[]>(page?.items ?? []);
+    }
+
+    function getDisplayValue(page: SettingDefinitionPage): string {
+      return typeof page.displayValue === 'function' ? page.displayValue() : page.displayValue ?? '';
+    }
+
+    function getRowNames(page: SettingDefinitionPage): string[] {
+      return flattenRows(castTo<SettingDefinitionItem[]>(page.items ?? [])).map((row) => 'name' in row ? row.name : '');
+    }
+
+    it('should give every operation a page of its own, holding exactly its template rows', async () => {
+      const { tab } = await createTab();
+      const pages = getOperationPages(tab);
+      expect(pages.map((page) => [page.type, page.name])).toEqual([
+        ['page', 'Pasted screenshot'],
+        ['page', 'Pasted file'],
+        ['page', 'Dropped file'],
+        ['page', 'Other new attachment'],
+        ['page', 'Collect attachments'],
+        ['page', 'Note renamed or moved'],
+        ['page', 'Rename attachments command']
+      ]);
+      expect(pages.map((page) => getRowNames(page))).toEqual([
+        ['Pasted screenshot: folder path', 'Pasted screenshot: file name'],
+        ['Pasted file: folder path', 'Pasted file: file name'],
+        ['Dropped file: folder path', 'Dropped file: file name'],
+        ['Other new attachment: folder path', 'Other new attachment: file name'],
+        ['Should rename collected attachments', 'Collected attachment file name', 'Collected attachment folder path'],
+        ['Renamed attachment file name'],
+        ['Manually renamed attachment file name']
+      ]);
+    });
+
+    it('should read Default on every operation of a fresh install', async () => {
+      const { tab } = await createTab();
+      expect(getOperationPages(tab).map((page) => getDisplayValue(page))).toEqual(Array.from({ length: 7 }, () => 'Default'));
+    });
+
+    it('should read Custom on an operation whose folder, file name or rename switch departs from the default', async () => {
+      const { tab } = await createTab((settings) => {
+        settings.droppedFileAttachmentFolderPath = 'drops';
+        settings.renamedAttachmentFileName = '{{noteFileName}}';
+        settings.shouldRenameCollectedAttachments = true;
+      });
+      expect(getOperationPages(tab).map((page) => [page.name, getDisplayValue(page)])).toEqual([
+        ['Pasted screenshot', 'Default'],
+        ['Pasted file', 'Default'],
+        ['Dropped file', 'Custom'],
+        ['Other new attachment', 'Default'],
+        ['Collect attachments', 'Custom'],
+        ['Note renamed or moved', 'Custom'],
+        ['Rename attachments command', 'Default']
+      ]);
+    });
+
+    it('should no longer list the operation rows on the pages they used to live on', async () => {
+      const { tab } = await createTab();
+      const topLevelPages = tab.getSettingDefinitions().map((item) => castTo<SettingDefinitionPage>(item));
+      const collectedPage = ensureNonNullable(topLevelPages.find((page) => page.name === 'Collected attachments'));
+      const moveRenamesPage = ensureNonNullable(topLevelPages.find((page) => page.name === 'Move/renames'));
+      expect(getRowNames(collectedPage)).not.toContain('Collected attachment file name');
+      expect(getRowNames(moveRenamesPage)).not.toContain('Renamed attachment file name');
+      expect(getRowNames(moveRenamesPage)).not.toContain('Manually renamed attachment file name');
+    });
   });
 
   it('should keep every declared row reachable after the split into sub-pages', async () => {

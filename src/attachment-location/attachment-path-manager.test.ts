@@ -47,12 +47,12 @@ import type { HandedOverSettings } from '../advanced-rename-and-delete-handler/a
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
 import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
-import type { PluginSettings } from '../settings/plugin-settings.ts';
 import type { TokenValidator } from '../tokens/token-validator.ts';
 
 import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import { selfWriteRegistry } from '../externally-created-attachments/self-write-registry.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
+import { PluginSettings } from '../settings/plugin-settings.ts';
 import { promptWithPreview } from '../tokens/prompt/prompt-with-preview-modal.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
 import { ActionContext } from '../tokens/token-evaluator-context.ts';
@@ -174,14 +174,13 @@ function createManager(): TestContext {
     isPathIgnored,
     settings: castTo<HandedOverSettings>(handedOverSettings)
   });
-  const settings = castTo<PluginSettings>({
+  // A real settings object, so the operation table that maps each operation to its keys is the one under test.
+  const settings = Object.assign(new PluginSettings(), {
     attachmentFolderPath: 'assets',
     collectedAttachmentFileName: '',
     collectedAttachmentFolderPath: '',
     duplicateNameSeparator: ' ',
     generatedAttachmentFileName: 'generated',
-    getNewAttachmentFileName: (operation: NewAttachmentOperation): string => operation === NewAttachmentOperation.PastedImage ? settings.pastedImageAttachmentFileName : '',
-    getNewAttachmentFolderPath: (operation: NewAttachmentOperation): string => operation === NewAttachmentOperation.PastedImage ? settings.pastedImageAttachmentFolderPath : '',
     insertedLinkText: '',
     manuallyRenamedAttachmentFileName: '',
     pastedImageAttachmentFileName: '',
