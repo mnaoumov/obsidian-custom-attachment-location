@@ -394,3 +394,93 @@ it('keeps visible JSON transport history out of per-note and orphan attachment d
     });
   }
 }, 180_000);
+
+it('never recreates the history folder at its old place after the folder is moved, and resumes once it is back', async () => {
+  const vaultPath = getTemporaryVault().path;
+  const input = { readStorage };
+  const movedParent = 'storage-moved';
+  const wasEnabled = await evalInObsidian({
+    callback: ({ app, readStorage: storage }) => storage(app).isSyncEnabled,
+    input,
+    vaultPath
+  });
+  let anchor = '';
+  try {
+    anchor = await evalInObsidian({
+      async callback({ app, readStorage: storage }) {
+        const component = storage(app);
+        await component.setSyncEnabled(true);
+        await component.flush();
+        const [first] = await component.getExistingStoreFolders();
+        if (first === undefined) {
+          throw new Error('Enabling synchronization must leave a store folder in the vault');
+        }
+        return first;
+      },
+      input,
+      vaultPath
+    });
+    const afterMove = await evalInObsidian({
+      async callback({ anchor: anchorFolder, app, movedParent: parent, readStorage: storage }) {
+        const component = storage(app);
+        const folder = app.vault.getFolderByPath(anchorFolder);
+        if (!folder) {
+          throw new Error('The anchor folder is not in the vault');
+        }
+        await app.vault.createFolder(parent);
+        // Setup recorded its switch to JSON under the anchor, naming its folder, so this version pauses rather than following.
+        await app.vault.rename(folder, `${parent}/${anchorFolder}`);
+        const file = await app.vault.createBinary('storage-moved.pdf', new TextEncoder().encode('moved').buffer);
+        component.set(file.path, 'arrival-moved.pdf');
+        await component.flush();
+        return {
+          isAtMovedPlace: await app.vault.adapter.exists(`${parent}/${anchorFolder}`),
+          isRecreated: await app.vault.adapter.exists(anchorFolder),
+          name: component.get(file.path)
+        };
+      },
+      input: { ...input, anchor, movedParent },
+      vaultPath
+    });
+    expect(afterMove).toEqual({ isAtMovedPlace: true, isRecreated: false, name: 'arrival-moved.pdf' });
+    const afterReturn = await evalInObsidian({
+      async callback({ anchor: anchorFolder, app, movedParent: parent, readStorage: storage }) {
+        const component = storage(app);
+        const folder = app.vault.getFolderByPath(`${parent}/${anchorFolder}`);
+        if (!folder) {
+          throw new Error('The moved anchor folder is not in the vault');
+        }
+        await app.vault.rename(folder, anchorFolder);
+        await component.flush();
+        return {
+          isBack: await app.vault.adapter.exists(anchorFolder),
+          isSyncEnabled: component.isSyncEnabled,
+          stores: await component.getExistingStoreFolders()
+        };
+      },
+      input: { ...input, anchor, movedParent },
+      vaultPath
+    });
+    expect(afterReturn.isBack).toBe(true);
+    expect(afterReturn.isSyncEnabled).toBe(true);
+    expect(afterReturn.stores[0]).toBe(anchor);
+  } finally {
+    await evalInObsidian({
+      async callback({ anchor: anchorFolder, app, movedParent: parent, readStorage: storage, wasEnabled: priorEnabled }) {
+        const moved = anchorFolder ? app.vault.getFolderByPath(`${parent}/${anchorFolder}`) : null;
+        if (moved) {
+          await app.vault.rename(moved, anchorFolder);
+        }
+        await storage(app).setSyncEnabled(priorEnabled);
+        for (const path of ['storage-moved.pdf', parent]) {
+          const file = app.vault.getAbstractFileByPath(path);
+          if (file) {
+            await app.fileManager.trashFile(file);
+          }
+        }
+      },
+      input: { ...input, anchor, movedParent, wasEnabled },
+      vaultPath
+    });
+  }
+}, 180_000);

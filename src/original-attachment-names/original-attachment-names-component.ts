@@ -26,6 +26,7 @@ import type {
 
 import { PluginNoticeMode } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import { DataStoreLocations } from '@mnaoumov/obsidian-lib/data-stores/data-store-locations';
+import { DataStoreTransport } from '@mnaoumov/obsidian-lib/data-stores/data-store-transport';
 import { LocalDataStore } from '@mnaoumov/obsidian-lib/data-stores/local-data-store';
 import { SharedDataStore } from '@mnaoumov/obsidian-lib/data-stores/shared-data-store';
 import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
@@ -132,6 +133,11 @@ interface ExpectedArrival {
   readonly fileName: string;
 }
 
+interface FoundAnchor {
+  readonly canOpen: boolean;
+  readonly folder: string;
+}
+
 interface OriginalAttachmentNamesComponentConstructorParams {
   readonly app: App;
   readonly consoleDebugComponent: ConsoleDebugComponent;
@@ -150,6 +156,18 @@ interface OriginalAttachmentNamesComponentSetSyncEnabledOptions {
    * @default `false`
    */
   readonly shouldUseObsidianSync?: boolean;
+}
+
+/**
+ * One side of a relocation record that `DataStoreLocations` writes under the anchor's `locations-v1` folder.
+ */
+interface RelocationLocation {
+  readonly folder: string;
+}
+
+interface RelocationRecord {
+  readonly from: RelocationLocation;
+  readonly to: RelocationLocation;
 }
 
 interface StoredOriginalAttachmentNames {
@@ -193,6 +211,11 @@ export class OriginalAttachmentNamesComponent extends Component {
 
   private anchorFolder = DEFAULT_PLUGIN_DATA_FOLDER;
   private readonly app: App;
+  /**
+   * Where the anchor's history was moved to, when this version cannot follow it there. Transport is paused meanwhile,
+   * because writing at the old anchor would start a second, split history.
+   */
+  private blockedMovedAnchorFolder: string | undefined;
   private readonly consoleDebugComponent: ConsoleDebugComponent;
   private readonly expectedArrivals = new Map<string, ExpectedArrival>();
 
@@ -391,6 +414,7 @@ export class OriginalAttachmentNamesComponent extends Component {
       }
       this.anchorFolder = await this.resolveAnchorFolder();
       this.shared = await this.openShared();
+      this.showMovedAnchorBlockedNotice();
       await this.deleteRetiredSourcePaths(this.shared);
       this.history.merge(this.shared.entries());
       await this.migrateLegacy();
@@ -567,6 +591,12 @@ export class OriginalAttachmentNamesComponent extends Component {
           // before an initially disabled store publishes anything, so fresh setup creates no Markdown.
           // Existing enabled devices keep Markdown until the user approves this explicit transition.
           const anchorFolder = await this.resolveAnchorFolder();
+          if (this.blockedMovedAnchorFolder !== undefined) {
+            throw new Error(t(($) => $.originalAttachmentNames.storage.movedHistoryCannotBeFollowed, {
+              folder: this.blockedMovedAnchorFolder,
+              previousFolder: anchorFolder
+            }));
+          }
           if (anchorFolder !== this.anchorFolder) {
             // The vault delivered an earlier version's history after this device opened; join it instead.
             this.anchorFolder = anchorFolder;
@@ -627,10 +657,56 @@ export class OriginalAttachmentNamesComponent extends Component {
     }
   }
 
+  /**
+   * Finds this store's anchor in a vault folder other than the given one.
+   *
+   * Every folder holding the store is a candidate. A relocation destination holds it too, so the destinations named
+   * by the candidates' relocation records are set aside, and exactly one candidate must remain. That one can be
+   * opened when it has no relocation record, or when its records start at it. A chain that starts at another folder
+   * means the anchor itself was moved after a relocation, and the library refuses to open such a chain.
+   *
+   * @param excludedFolder - The anchor folder whose history is gone.
+   * @returns The anchor found and whether it can be opened, or `undefined` when there is none or more than one.
+   */
+  private async findAnchorElsewhere(excludedFolder: string): Promise<FoundAnchor | undefined> {
+    const suffix = `/${PLUGIN_ID}/${STORE_ID}`;
+    const candidates = this.app.vault.getAllFolders()
+      .map((folder) => folder.path)
+      .filter((path) => path.endsWith(suffix))
+      .map((path) => path.slice(0, -suffix.length))
+      .filter((folder) => folder !== excludedFolder);
+    const recordsByFolder = new Map<string, (null | RelocationRecord)[]>();
+    for (const folder of candidates) {
+      recordsByFolder.set(folder, await this.readRelocationRecords(folder));
+    }
+    const destinations = new Set(
+      [...recordsByFolder.values()].flat()
+        .filter((record): record is RelocationRecord => record !== null && record.to.folder !== record.from.folder)
+        .map((record) => record.to.folder)
+    );
+    const anchors = candidates.filter((folder) => !destinations.has(folder));
+    if (anchors.length !== 1) {
+      if (anchors.length > 1) {
+        this.consoleDebugComponent.consoleDebug(`Original name history was found in several folders, so none is followed: ${anchors.join(', ')}.`);
+      }
+      return undefined;
+    }
+    const folder = ensureNonNullable(anchors[0]);
+    const records = ensureNonNullable(recordsByFolder.get(folder));
+    // An incomplete record is refused by the library until it arrives in full, so it cannot be opened yet either.
+    return {
+      canOpen: records.length === 0 || (!records.includes(null) && records.some((record) => ensureNonNullable(record).from.folder === folder)),
+      folder
+    };
+  }
+
   private async flushImpl(): Promise<void> {
-    const shared = this.shared;
+    let shared = this.shared;
     if (!shared) {
       return;
+    }
+    if (this.syncEnabled) {
+      shared = await this.followMovedAnchor(shared);
     }
     const batch = [...this.pending];
     if (batch.length > 0) {
@@ -649,6 +725,32 @@ export class OriginalAttachmentNamesComponent extends Component {
 
     await shared.compact();
     this.publishedSinceCompaction = 0;
+  }
+
+  /**
+   * Re-resolves the anchor before transport writes, so a move of its folder made while the plugin runs, here or on
+   * another device, is followed instead of recreating the old folder.
+   *
+   * @param shared - The store opened at the current anchor.
+   * @returns The store to use from now on.
+   */
+  private async followMovedAnchor(shared: SharedDataStore): Promise<SharedDataStore> {
+    const previousBlock = this.blockedMovedAnchorFolder;
+    const anchorFolder = await this.resolveAnchorFolder();
+    if (anchorFolder !== this.anchorFolder) {
+      this.anchorFolder = anchorFolder;
+      this.requestedTransportRoots.add(getOriginalNameTransportRoot(anchorFolder));
+      await ensureNonNullable(this.local).set(REQUESTED_ROOTS_KEY, [...this.requestedTransportRoots]);
+      const reopened = await this.openShared();
+      this.shared = reopened;
+      this.notifyStorageChanged();
+      return reopened;
+    }
+    if (previousBlock !== this.blockedMovedAnchorFolder) {
+      await shared.setSyncEnabled(this.blockedMovedAnchorFolder === undefined);
+      this.showMovedAnchorBlockedNotice();
+    }
+    return shared;
   }
 
   private handleCreate(file: TAbstractFile): void {
@@ -683,9 +785,13 @@ export class OriginalAttachmentNamesComponent extends Component {
       // A manual folder move is not a store relocation, but its descendants are still metadata during
       // this event batch. A later delete must not publish a spurious attachment observation for it.
       for (const root of [...this.transportRoots, ...this.renamedTransportRoots]) {
-        if (root === oldPath || root.startsWith(`${oldPath}/`)) {
-          this.renamedTransportRoots.add(`${file.path}${root.slice(oldPath.length)}`);
+        if (!(root === oldPath || root.startsWith(`${oldPath}/`))) {
+          continue;
         }
+
+        this.renamedTransportRoots.add(`${file.path}${root.slice(oldPath.length)}`);
+        // The next flush follows a moved anchor; make it soon, before anything is written at the old path.
+        this.saveDebounced();
       }
     }
     if (this.isTransportPath(file.path) || this.isTransportPath(oldPath)) {
@@ -750,12 +856,31 @@ export class OriginalAttachmentNamesComponent extends Component {
       adapter: this.app.vault.adapter,
       folder: this.anchorFolder,
       format: 'markdown',
-      isSyncEnabled: this.syncEnabled,
+      isSyncEnabled: this.syncEnabled && this.blockedMovedAnchorFolder === undefined,
       kind: 'last-write-wins',
       local: ensureNonNullable(this.local),
       pluginId: PLUGIN_ID,
       storeId: STORE_ID
     });
+  }
+
+  /**
+   * Reads the relocation records stored under a folder's history.
+   *
+   * @param folder - The folder holding the history.
+   * @returns The records, with `null` for each one that has not fully arrived or is not a record.
+   */
+  private async readRelocationRecords(folder: string): Promise<(null | RelocationRecord)[]> {
+    const transport = new DataStoreTransport({ adapter: this.app.vault.adapter, folder, pluginId: PLUGIN_ID, storeId: STORE_ID });
+    const records: (null | RelocationRecord)[] = [];
+    for (const path of await transport.list()) {
+      if (!path.startsWith(`${transport.root}/locations-v1/`) || !path.endsWith('.json')) {
+        continue;
+      }
+      const value = await transport.read(path);
+      records.push(isRelocationRecord(value) ? value : null);
+    }
+    return records;
   }
 
   private record(operation: Except<OriginalAttachmentNameOperation, 'time'>): void {
@@ -785,18 +910,57 @@ export class OriginalAttachmentNamesComponent extends Component {
    */
   private async resolveAnchorFolder(): Promise<string> {
     const local = ensureNonNullable(this.local);
+    const adapter = this.app.vault.adapter;
     const stored = await local.get(ANCHOR_FOLDER_KEY);
     if (stored !== undefined && typeof stored !== 'string') {
       throw new Error('Invalid original-name anchor folder.');
     }
+    this.blockedMovedAnchorFolder = undefined;
     if (stored !== undefined && stored !== PENDING_ANCHOR_FOLDER) {
-      return stored;
+      if (await adapter.exists(getOriginalNameTransportRoot(stored))) {
+        return stored;
+      }
+      /*
+       * The anchor's history is gone from where this device left it. When it is in exactly one other folder, the
+       * user moved it (or a folder above it), here or on another device, so follow it. Writing at the old anchor
+       * would recreate it and split the history in two.
+       */
+      const moved = await this.findAnchorElsewhere(stored);
+      if (moved === undefined) {
+        return stored;
+      }
+      if (!moved.canOpen) {
+        this.blockedMovedAnchorFolder = moved.folder;
+        return stored;
+      }
+      this.consoleDebugComponent.consoleDebug(`Original name history moved from '${stored}' to '${moved.folder}'. Following it.`);
+      await local.set(ANCHOR_FOLDER_KEY, moved.folder);
+      return moved.folder;
     }
-    if (await this.app.vault.adapter.exists(`${LEGACY_PLUGIN_DATA_FOLDER}/${PLUGIN_ID}/${STORE_ID}`)) {
+    if (await adapter.exists(getOriginalNameTransportRoot(LEGACY_PLUGIN_DATA_FOLDER))) {
       await local.set(ANCHOR_FOLDER_KEY, LEGACY_PLUGIN_DATA_FOLDER);
       return LEGACY_PLUGIN_DATA_FOLDER;
     }
+    if (await adapter.exists(getOriginalNameTransportRoot(DEFAULT_PLUGIN_DATA_FOLDER))) {
+      return DEFAULT_PLUGIN_DATA_FOLDER;
+    }
+    // A new device joins history that another device moved out of the default folders.
+    const discovered = await this.findAnchorElsewhere(DEFAULT_PLUGIN_DATA_FOLDER);
+    if (discovered?.canOpen) {
+      await local.set(ANCHOR_FOLDER_KEY, discovered.folder);
+      return discovered.folder;
+    }
     return DEFAULT_PLUGIN_DATA_FOLDER;
+  }
+
+  private showMovedAnchorBlockedNotice(): void {
+    if (this.blockedMovedAnchorFolder === undefined) {
+      return;
+    }
+    this.pluginNoticeComponent.showNotice(
+      t(($) => $.originalAttachmentNames.storage.movedHistoryCannotBeFollowed, { folder: this.blockedMovedAnchorFolder, previousFolder: this.anchorFolder }),
+      { mode: PluginNoticeMode.Separate }
+    );
   }
 
   private showWarning(): void {
@@ -837,6 +1001,15 @@ export class OriginalAttachmentNamesComponent extends Component {
  */
 export function getOriginalNameTransportRoot(folder: string): string {
   return `${folder}/${PLUGIN_ID}/${STORE_ID}`;
+}
+
+function isRelocationLocation(value: unknown): value is RelocationLocation {
+  return typeof value === 'object' && value !== null && 'folder' in value && typeof value.folder === 'string';
+}
+
+function isRelocationRecord(value: unknown): value is RelocationRecord {
+  return typeof value === 'object' && value !== null && 'from' in value && isRelocationLocation(value.from) && 'to' in value
+    && isRelocationLocation(value.to);
 }
 
 function isStoredOriginalAttachmentNames(value: unknown): value is StoredOriginalAttachmentNames {
