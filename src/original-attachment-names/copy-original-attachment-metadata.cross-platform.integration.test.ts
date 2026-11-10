@@ -320,19 +320,14 @@ describe('Copy original attachment file name', () => {
       const linkMenu = await runPhase(
         'attachment link menu',
         async ({
-          app,
           clickActionUntilCopied: clickUntilCopied,
           context,
           findCopyOriginalNameAction: findAction,
           getCopyTestState: getState,
           lib: { clickElement, pressKey, waitUntil },
-          obsidianModule: { Menu, Platform }
+          obsidianModule: { Platform }
         }) => {
           const state = getState(context);
-          const file = state.importedFiles[0];
-          if (!file) {
-            throw new Error('The setup phase imported nothing.');
-          }
           const link = state.leaf.view.containerEl.querySelector<HTMLElement>('a.internal-link');
           if (!link) {
             throw new Error('The attachment link is no longer rendered.');
@@ -350,20 +345,8 @@ describe('Copy original attachment file name', () => {
             isRetryAllowed: !Platform.isDesktopApp,
             menuName: 'link menu',
             openMenu: async () => {
-              if (Platform.isDesktopApp) {
-                await clickElement({ button: 'right', element: link });
-              } else {
-                /*
-                 * On a one-core Android guest the WebView's gesture recognizer takes the trusted long press for a tap,
-                 * which follows the link instead of opening its menu. The gesture is the harness's and Android's; what
-                 * this test owns is the menu the plugin contributes, so raise the `file-menu` event Obsidian raises for
-                 * a link's menu, the way the file menu phase does. Desktop keeps the trusted right click.
-                 */
-                const rect = link.getBoundingClientRect();
-                const menu = new Menu().setUseNativeMenu(false);
-                app.workspace.trigger('file-menu', menu, file, 'link-context-menu', state.leaf);
-                menu.showAtPosition({ x: rect.left, y: rect.bottom });
-              }
+              // On Android this is a trusted long press, which the harness presses again when the WebView misreads it as a tap.
+              await clickElement({ button: 'right', element: link });
               await waitUntil({ message: 'The link menu did not open', predicate: () => document.querySelector('.menu') !== null, timeoutInMilliseconds: 3000 });
               await sleep(200);
               // The import carried a source path; no action may expose it.
