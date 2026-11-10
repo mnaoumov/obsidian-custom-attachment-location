@@ -8,6 +8,7 @@ import {
   ButtonComponent,
   DropdownComponent,
   ExtraButtonComponent,
+  Setting,
   TextAreaComponent,
   ToggleComponent
 } from 'obsidian';
@@ -148,6 +149,29 @@ describe('showCollectSettingsMigrationModal', () => {
     pressButton('OK');
 
     expect(await rowsPromise).toEqual([BOOLEAN_ROW]);
+  });
+
+  it('should render a mode name and each list entry of the current value as code', async () => {
+    const descriptions: (DocumentFragment | string)[] = [];
+    vi.spyOn(Setting.prototype, 'setDesc').mockImplementation(function setDescMock(this: Setting, desc: DocumentFragment | string): Setting {
+      descriptions.push(desc);
+      return this;
+    });
+    const rowsPromise = showCollectSettingsMigrationModal({
+      app,
+      rows: [BOOLEAN_ROW, COLLECT_MODE_ROW, { ...STRING_LIST_ROW, currentValue: ['Pages', 'Drawings'] }],
+      sourcePluginName: SOURCE_PLUGIN_NAME
+    });
+
+    const codes = descriptions.map((desc) => {
+      const container = createDiv();
+      container.append(desc);
+      return [...container.querySelectorAll('code')].map((code) => code.textContent);
+    });
+    expect(codes).toEqual([[], ['Skip'], ['Pages', 'Drawings']]);
+
+    pressButton('Cancel');
+    await rowsPromise;
   });
 
   it('should write nothing when the user cancels', async () => {

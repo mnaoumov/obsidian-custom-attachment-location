@@ -682,8 +682,10 @@ describe('PluginSettingsTab', () => {
       const settingPage = castTo<SettingDefinitionPage>(page);
       expect(settingPage.type).toBe('page');
       // A page entry with no description reads as a bare label on the parent tab, which is the scrolling problem again.
-      expect(settingPage.desc).toBeTypeOf('string');
-      expect(settingPage.desc).not.toBe('');
+      const desc = settingPage.desc;
+      const descText = typeof desc === 'string' ? desc : desc?.textContent;
+      expect(descText).toBeTypeOf('string');
+      expect(descText).not.toBe('');
     }
   });
 
@@ -722,6 +724,42 @@ describe('PluginSettingsTab', () => {
     findComponent(textLikeComponents, 'Inserted link text').setValue('{{originalAttachmentFileName}}');
     await waitForAllAsyncOperations();
     expect(pluginSettingsComponent.settings.insertedLinkText).toBe('{{originalAttachmentFileName}}');
+  });
+
+  it('renders both tokens in the Inserted link text description as code', async () => {
+    const { tab } = await createTab();
+    const row = flattenRows(tab.getSettingDefinitions()).find((candidate) => candidate.name === 'Inserted link text');
+    const desc = row?.desc;
+    expect(desc).toBeInstanceOf(DocumentFragment);
+    const container = createDiv();
+    container.append(castTo<DocumentFragment>(desc));
+    expect([...container.querySelectorAll('code')].map((code) => code.textContent)).toEqual([
+      '{{attachmentFileName}}',
+      '{{originalAttachmentFileName}}'
+    ]);
+    expect(container.textContent).toContain('Use {{attachmentFileName}} to show the attachment name');
+  });
+
+  it('renders the original-name token in the storage page description and advice as code, and each history root', async () => {
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({
+      isObsidianSyncProvider: false,
+      isSyncEnabled: false,
+      transportRoots: ['Plugin data/a', 'Plugin data/b']
+    });
+    const { tab } = await createTab(undefined, storage);
+    const storagePage = castTo<SettingDefinitionPage>(
+      tab.getSettingDefinitions().find(
+        (definition) => castTo<SettingDefinitionPage>(definition).name === 'Original name storage'
+      )
+    );
+    const pageDesc = createDiv();
+    pageDesc.append(castTo<DocumentFragment>(storagePage.desc));
+    expect([...pageDesc.querySelectorAll('code')].map((code) => code.textContent)).toEqual(['{{originalAttachmentFileName}}']);
+
+    const advice = tab.containerEl.querySelector('.original-name-storage-advice');
+    expect([...advice?.querySelectorAll('code') ?? []].map((code) => code.textContent)).toEqual(['{{originalAttachmentFileName}}']);
+    const roots = tab.containerEl.querySelector('.original-name-storage-roots');
+    expect([...roots?.querySelectorAll('code') ?? []].map((code) => code.textContent)).toEqual(['Plugin data/a', 'Plugin data/b']);
   });
 
   it.each(['Set up Obsidian Sync', 'Set up external sync'])('asks for device setup before enabling transport: %s', async (label) => {
