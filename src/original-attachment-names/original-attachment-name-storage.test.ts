@@ -1,5 +1,6 @@
 import type { ConsoleDebugComponent } from '@mnaoumov/obsidian-lib/components/console-debug-component';
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+import type { Mock } from 'vitest';
 
 import { LocalDataStore } from '@mnaoumov/obsidian-lib/data-stores/local-data-store';
 import { SharedDataStore } from '@mnaoumov/obsidian-lib/data-stores/shared-data-store';
@@ -33,15 +34,19 @@ const ROOT = `${ANCHOR}/obsidian-custom-attachment-location/original-attachment-
 const LEGACY_ROOT = `${LEGACY_PLUGIN_DATA_FOLDER}/obsidian-custom-attachment-location/original-attachment-names-v1`;
 const TARGET = '99-Meta/.names';
 const TARGET_ROOT = `${TARGET}/obsidian-custom-attachment-location/original-attachment-names-v1`;
+const MOVED_LEGACY = `!Meta/${LEGACY_PLUGIN_DATA_FOLDER}`;
+const MOVED_LEGACY_ROOT = `${MOVED_LEGACY}/obsidian-custom-attachment-location/original-attachment-names-v1`;
+let mockApp: App;
 let app: ReturnType<App['asOriginalType__']>;
 let settings: PluginSettings;
 let components: OriginalAttachmentNamesComponent[];
+let showNotice: Mock<PluginNoticeComponent['showNotice']>;
 
 async function createComponent(): Promise<OriginalAttachmentNamesComponent> {
   const component = new OriginalAttachmentNamesComponent({
     app,
     consoleDebugComponent: strictProxy<ConsoleDebugComponent>({ consoleDebug: vi.fn() }),
-    pluginNoticeComponent: strictProxy<PluginNoticeComponent>({ showNotice: vi.fn() }),
+    pluginNoticeComponent: strictProxy<PluginNoticeComponent>({ showNotice }),
     pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ settings }),
     storeFilePath: 'plugin-folder/original-attachment-names.json'
   });
@@ -52,9 +57,11 @@ async function createComponent(): Promise<OriginalAttachmentNamesComponent> {
 }
 
 beforeEach(() => {
-  app = App.createConfigured__().asOriginalType__();
+  mockApp = App.createConfigured__();
+  app = mockApp.asOriginalType__();
   settings = new PluginSettings();
   components = [];
+  showNotice = vi.fn();
 });
 
 afterEach(async () => {
@@ -440,6 +447,113 @@ it('fails closed on a damaged device-local anchor folder', async () => {
   await local.set('original-name-anchor-folder-v1', 1);
   local.close();
   await expect(createComponent()).rejects.toThrow('Invalid original-name anchor folder');
+});
+
+async function moveFolder(from: string, to: string): Promise<void> {
+  // Real Obsidian learns about the store's folders from its file watcher; the mock adapter needs a re-sync.
+  mockApp.vault.reconcile__();
+  const folder = app.vault.getFolderByPath(from);
+  if (!folder) {
+    throw new Error(`Folder missing: ${from}`);
+  }
+  const parent = to.slice(0, to.lastIndexOf('/'));
+  if (parent && !app.vault.getFolderByPath(parent)) {
+    await app.vault.createFolder(parent);
+  }
+  await app.vault.rename(folder, to);
+}
+
+async function publishOwnLegacyHistory(): Promise<void> {
+  // The replica stays in this IndexedDB, so the next component is the device that wrote it, under an earlier version.
+  const local = await LocalDataStore.open({ pluginId: 'obsidian-custom-attachment-location', storeId: 'original-attachment-names-v1', vaultId: app.appId });
+  const shared = await SharedDataStore.open({ adapter: app.vault.adapter, kind: 'last-write-wins', local, pluginId: 'obsidian-custom-attachment-location', storeId: 'original-attachment-names-v1' });
+  await shared.set('legacy-alpha', { fileName: 'arrival.pdf', kind: 'arrival', path: 'assets/alpha.pdf', time: 1 });
+  local.close();
+}
+
+it('follows history whose folder was moved while the plugin was not running', async () => {
+  await publishOwnLegacyHistory();
+  await moveFolder(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  const component = await createComponent();
+  expect(component.isSyncEnabled).toBe(true);
+  expect(component.transportRoots).toContain(MOVED_LEGACY_ROOT);
+  expect(component.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(await app.vault.adapter.exists(LEGACY_PLUGIN_DATA_FOLDER)).toBe(false);
+  expect(await component.getExistingStoreFolders()).toEqual([MOVED_LEGACY]);
+  expect(showNotice).not.toHaveBeenCalled();
+});
+
+it('follows history whose folder is moved while the plugin runs', async () => {
+  await publishOwnLegacyHistory();
+  const component = await createComponent();
+  const callback = vi.fn();
+  component.onStorageChanged(callback);
+  await moveFolder(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(callback).toHaveBeenCalledOnce();
+  expect(await app.vault.adapter.exists(LEGACY_PLUGIN_DATA_FOLDER)).toBe(false);
+  expect(component.transportRoots).toContain(MOVED_LEGACY_ROOT);
+  const reloaded = await createComponent();
+  expect(reloaded.get('assets/bravo.pdf')).toBe('bravo.pdf');
+  expect(reloaded.transportRoots).toContain(MOVED_LEGACY_ROOT);
+});
+
+it('lets a new device join history that another device moved out of the default folders', async () => {
+  await publishLegacyHistory();
+  await moveFolder(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  const component = await createComponent();
+  await component.setSyncEnabled(true);
+  expect(component.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  expect(await app.vault.adapter.exists(ROOT)).toBe(false);
+  expect(await component.getExistingStoreFolders()).toEqual([MOVED_LEGACY]);
+});
+
+it('follows no folder when the history is found in more than one', async () => {
+  await publishOwnLegacyHistory();
+  await moveFolder(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  await app.vault.createFolder(`Copy/${MOVED_LEGACY_ROOT}`);
+  const component = await createComponent();
+  expect(component.transportRoots).toContain(LEGACY_ROOT);
+  expect(component.transportRoots).not.toContain(MOVED_LEGACY_ROOT);
+});
+
+it('waits for a relocation record that has not fully arrived before following moved history', async () => {
+  await publishOwnLegacyHistory();
+  await app.vault.adapter.mkdir(`${LEGACY_ROOT}/locations-v1`);
+  await app.vault.adapter.write(`${LEGACY_ROOT}/locations-v1/partial.json`, '{"format":1,"payload":');
+  await moveFolder(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  const component = await createComponent();
+  expect(showNotice).toHaveBeenCalledOnce();
+  expect(component.transportRoots).not.toContain(MOVED_LEGACY_ROOT);
+  await component.flush();
+  expect(await app.vault.adapter.exists(LEGACY_PLUGIN_DATA_FOLDER)).toBe(false);
+});
+
+it('pauses synchronization rather than splitting history it cannot follow, and resumes once it is moved back', async () => {
+  const component = await createComponent();
+  component.set('assets/alpha.pdf', 'arrival.pdf');
+  // Setup records its switch to JSON at the anchor, naming the anchor's folder, which then no longer matches.
+  await component.setSyncEnabled(true);
+  await component.relocate('99-Meta/Names');
+  await moveFolder(ANCHOR, `!Meta/${ANCHOR}`);
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(showNotice).toHaveBeenCalledOnce();
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(component.get('assets/bravo.pdf')).toBe('bravo.pdf');
+  const reloaded = await createComponent();
+  expect(showNotice).toHaveBeenCalledTimes(2);
+  await reloaded.flush();
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  await reloaded.setSyncEnabled(false);
+  await expect(reloaded.setSyncEnabled(true)).rejects.toThrow(`moved from ${ANCHOR} to !Meta/${ANCHOR}`);
+  await moveFolder(`!Meta/${ANCHOR}`, ANCHOR);
+  await component.flush();
+  expect(component.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  expect(showNotice).toHaveBeenCalledTimes(2);
 });
 
 it('tells listeners about storage changes until they stop listening', async () => {

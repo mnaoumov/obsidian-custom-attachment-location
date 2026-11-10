@@ -40,7 +40,14 @@ Each folder that holds history gets a `README.md` saying what it is for. The plu
 
 The plugin also lists each such folder, and the **Plugin data folder** while synchronization is on, in **Settings → Files and links → Excluded files**, so the history stays out of search, the graph and the quick switcher. When the folder changes, the plugin replaces only the entry it added itself. An entry you added yourself is never removed. A hidden folder gets no entry, because Obsidian never indexes it.
 
-Do not delete, move or rename the folder or anything in it. It is history, not a cache, and what is removed cannot be rebuilt.
+Do not delete the folder or anything in it, and do not rename or move anything inside it. It is history, not a cache, and what is removed cannot be rebuilt.
+
+### Moving the whole folder
+
+You can move or rename the folder as a whole, or a folder above it, for example from `Plugin data` to `99-Meta/Plugin data`. Do it in Obsidian's file explorer, or with any tool while Obsidian is closed. Before it next writes history, each device checks that the history is still where it left it. If it is gone, and exactly one other folder of the vault holds this plugin's `obsidian-custom-attachment-location/original-attachment-names-v1` history, the device follows it there instead of recreating the old folder. A device added later finds it the same way. Folders whose name starts with a dot are not searched.
+
+- **Exactly one copy.** If the history is found in more than one folder, for example because the old folder was recreated before the move reached a device, nothing is followed. Delete the copy that holds only a stray `devices` file once you have checked that the other holds the full history.
+- **Stores set up for JSON cannot follow a move yet.** Setting up synchronization in this version, and **Apply folder**, record a switch in `locations-v1`, and those records name the folder they were written in. This version cannot follow a moved folder that holds such records. Instead of starting a second, split history at the old place, the device pauses synchronization, keeps recording names locally, and says so. Move the folder back to resume. For such a history, use **Apply folder** to change where new history is written; it keeps the original folder as the anchor. A history kept in legacy Markdown, as earlier versions wrote it, has no such records and follows a move.
 
 ## Change the folder
 
@@ -52,7 +59,7 @@ Choose **Apply folder** on one device only. It records the move in the original 
 
 History locations are retained, including the original `obsidian-custom-attachment-location/original-attachment-names-v1` discovery anchor under the folder this device first synchronized in, and its `locations-v1` records. Keep ALL listed roots synchronized permanently. Relocation changes where new records are written; it does not promise to remove the original top-level folder. Never delete the original folder after a move, even once every device has switched: it is the anchor every device, including one added later, opens first to find where the history went. Disabling synchronization stops transport I/O but does not remove files. There is no automatic old-root cleanup or arbitrary relocation back to a previously used root.
 
-Update the plugin on every participating device before relocating. Offline devices can deliver late records to retained roots, which upgraded devices continue merging. Older clients do not understand the relocation protocol; retire or upgrade them rather than deleting their history. New documents use JSON to stay outside ordinary Markdown note indexing. Legacy Markdown is read and retained during migration, and can remain indexed until you exclude it from search. Do not rename or move transport files manually.
+Update the plugin on every participating device before relocating. Offline devices can deliver late records to retained roots, which upgraded devices continue merging. Older clients do not understand the relocation protocol; retire or upgrade them rather than deleting their history. New documents use JSON to stay outside ordinary Markdown note indexing. Legacy Markdown is read and retained during migration, and can remain indexed until you exclude it from search. Do not rename or move individual transport files manually; moving the whole folder is covered in [Moving the whole folder](#moving-the-whole-folder).
 
 ## Recovery
 
