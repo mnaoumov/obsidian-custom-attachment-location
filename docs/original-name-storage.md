@@ -40,7 +40,7 @@ Each folder that holds history gets a `README.md` saying what it is for. The plu
 
 The plugin also lists each such folder, and the **Plugin data folder** while synchronization is on, in **Settings → Files and links → Excluded files**, so the history stays out of search, the graph and the quick switcher. When the folder changes, the plugin replaces only the entry it added itself. An entry you added yourself is never removed. A hidden folder gets no entry, because Obsidian never indexes it.
 
-Do not delete the folder or anything in it, and do not rename or move anything inside it. It is history, not a cache, and what is removed cannot be rebuilt.
+Do not delete the folder or anything in it while any device synchronizes, and do not rename or move anything inside it. It is history, not a cache, and what is removed cannot be rebuilt. To get rid of it for good, see [Stop synchronizing and remove the folders](#stop-synchronizing-and-remove-the-folders).
 
 ### Moving the whole folder
 
@@ -55,11 +55,28 @@ You can move or rename the folder as a whole, or a folder above it, for example 
 
 Save the destination, complete synchronization setup on this device, then choose **Apply folder**. Merely receiving a settings file never relocates the writer.
 
+**Apply folder copies; it does not move.** The original folder stays in the vault for good, next to the new one, because every device opens it first to find where the history went. So applying a folder to get `Plugin data` out of sight leaves two folders, not one. To keep the vault tidy, move the whole folder instead while that still works ([Moving the whole folder](#moving-the-whole-folder)), or keep the history out of search with **Excluded files**, which the plugin already does. To be rid of every folder, see [Stop synchronizing and remove the folders](#stop-synchronizing-and-remove-the-folders).
+
 Choose **Apply folder** on one device only. It records the move in the original folder's `locations-v1` records. Every device that has synchronization set up re-reads those records each time it merges history, and it switches to the new folder by itself once its sync tool delivers the record. Applying the same path again on another device is harmless but unnecessary. A different path applied on a device that has not yet received the first move conflicts with that move and fails closed. The plugin copies and verifies only its own `obsidian-custom-attachment-location/original-attachment-names-v1` subtree through the shared library. Sibling plugins' data is untouched. A conflicting occupied file refuses the transition; byte-identical retries are safe. If interrupted, restore file delivery and apply the same destination again. Do not overwrite conflicting histories to force it through. Attempted destinations remain excluded from attachment lifecycle events even after a disabled restart.
 
-History locations are retained, including the original `obsidian-custom-attachment-location/original-attachment-names-v1` discovery anchor under the folder this device first synchronized in, and its `locations-v1` records. Keep ALL listed roots synchronized permanently. Relocation changes where new records are written; it does not promise to remove the original top-level folder. Never delete the original folder after a move, even once every device has switched: it is the anchor every device, including one added later, opens first to find where the history went. Disabling synchronization stops transport I/O but does not remove files. There is no automatic old-root cleanup or arbitrary relocation back to a previously used root.
+History locations are retained, including the original `obsidian-custom-attachment-location/original-attachment-names-v1` discovery anchor under the folder this device first synchronized in, and its `locations-v1` records. Keep ALL listed roots synchronized permanently. Relocation changes where new records are written; it does not promise to remove the original top-level folder. Never delete the original folder after a move while any device still synchronizes, even once every device has switched: it is the anchor every device, including one added later, opens first to find where the history went. Disabling synchronization stops transport I/O but does not remove files. There is no automatic old-root cleanup or arbitrary relocation back to a previously used root.
 
 Update the plugin on every participating device before relocating. Offline devices can deliver late records to retained roots, which upgraded devices continue merging. Older clients do not understand the relocation protocol; retire or upgrade them rather than deleting their history. New documents use JSON to stay outside ordinary Markdown note indexing. Legacy Markdown is read and retained during migration, and can remain indexed until you exclude it from search. Do not rename or move individual transport files manually; moving the whole folder is covered in [Moving the whole folder](#moving-the-whole-folder).
+
+## Stop synchronizing and remove the folders
+
+The history folders exist only for synchronization. To remove them for good:
+
+1. On **every** device that uses the vault, open **Original name storage** and choose **Disable sync on this device**. A device that still synchronizes recreates the folder the next time it writes history, so do this everywhere first, including devices that are offline today.
+2. Let your sync tool settle, then delete every folder listed under **History locations**: the original folder and every folder **Apply folder** moved the history to. Delete them on one device; the sync tool carries the deletion to the others.
+
+What stays and what is lost:
+
+- Each device keeps every original name it already knows, in its own local history, and keeps recording new ones. On a single device nothing changes.
+- Devices stop sharing names. A template that reads `{{originalAttachmentFileName}}` then gives an attachment's original name only on the device that saw it arrive. Another device uses the name it knows, or falls back to the current name with a warning, so the same collect or rename can produce different names on different devices.
+- A device added to the vault later starts with no history from the others.
+
+The next time Obsidian starts, the plugin removes the **Excluded files** entries it added for the folders that are gone. You can set synchronization up again at any time; it starts a new shared history from what each device has kept locally.
 
 ## Recovery
 

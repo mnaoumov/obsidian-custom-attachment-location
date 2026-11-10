@@ -192,7 +192,7 @@ export const defaultTranslations = {
       externalChecklist: 'Confirm that your external sync tool includes JSON files and ALL history locations shown below, on every participating device. Update the plugin and repeat setup on each device before relocating. Keep the original discovery anchor synchronized permanently. Hidden folders require explicit support from your sync tool. The first device can enroll without a peer.',
       externalSync: 'Set up external sync',
       folder: 'Plugin data folder',
-      folderDescription: 'Static vault-relative folder, without tokens. Save a destination, then apply it below. Synced settings never move the active store automatically.',
+      folderDescription: 'Static vault-relative folder, without tokens. Save a destination, then apply it below. Synced settings never move the active store automatically. Apply folder copies the history there and keeps the original folder for good, because every device opens it first to find the history, so you end up with both folders.',
       hidden: 'Allow hidden plugin data folders',
       hiddenDescription: 'For externally managed sync only. Obsidian Sync excludes arbitrary hidden folders, including custom files inside the vault configuration folder.',
       hiddenFolderPermission: 'Enable Allow hidden plugin data folders before using a hidden segment.',
