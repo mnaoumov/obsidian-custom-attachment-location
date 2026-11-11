@@ -345,10 +345,43 @@ describe('Copy original attachment file name', () => {
             isRetryAllowed: !Platform.isDesktopApp,
             menuName: 'link menu',
             openMenu: async () => {
-              // On Android this is a trusted long press, which the harness presses again when the WebView misreads it as a tap.
-              await clickElement({ button: 'right', element: link });
-              // A one-core Android guest under host load can take more than 3 s to open the menu after a long press.
-              await waitUntil({ message: 'The link menu did not open', predicate: () => document.querySelector('.menu') !== null, timeoutInMilliseconds: 10_000 });
+              /*
+               * On Android this is a trusted long press, which the harness presses again when the WebView misreads it as a
+               * tap, and which it fails when no `contextmenu` follows at all. Under host load a `contextmenu` can still
+               * arrive and open no menu, so the press is repeated here, and each attempt records where its `contextmenu`
+               * landed so a final failure says whether it reached the link.
+               */
+              const maxPresses = Platform.isDesktopApp ? 1 : 3;
+              const outcomes: string[] = [];
+              for (let press = 1; press <= maxPresses; press++) {
+                const targets: string[] = [];
+                function recordContextMenu($event: MouseEvent): void {
+                  const target = $event.target;
+                  const where = target instanceof Element
+                    ? `${[target.tagName.toLowerCase(), ...target.classList].join('.')}${link.contains(target) ? ' (the link)' : ''}`
+                    : target?.constructor.name ?? 'no target';
+                  targets.push(`${where} at (${String($event.clientX)}, ${String($event.clientY)})${$event.defaultPrevented ? ', default prevented' : ''}`);
+                }
+                window.addEventListener('contextmenu', recordContextMenu);
+                try {
+                  await clickElement({ button: 'right', element: link });
+                  // A one-core Android guest under host load can take more than 3 s to open the menu after a long press.
+                  await waitUntil({ message: 'The link menu did not open', predicate: () => document.querySelector('.menu') !== null, timeoutInMilliseconds: 10_000 });
+                  break;
+                } catch (error) {
+                  const rect = link.getBoundingClientRect();
+                  outcomes.push(
+                    `press ${String(press)}: ${String(error)}; contextmenu ${targets.length === 0 ? 'not seen in bubbling' : `on ${targets.join(', ')}`}; link at (${String(Math.round(rect.left))}, ${String(Math.round(rect.top))}) ${String(Math.round(rect.width))}x${String(Math.round(rect.height))}`
+                  );
+                  if (press === maxPresses) {
+                    throw new Error(`The link menu did not open after ${String(maxPresses)} long press(es): ${outcomes.join(' | ')}`, { cause: error });
+                  }
+                  console.warn(`The link long press opened no menu (press ${String(press)} of ${String(maxPresses)}); pressing again.`, outcomes.at(-1));
+                  await sleep(500);
+                } finally {
+                  window.removeEventListener('contextmenu', recordContextMenu);
+                }
+              }
               await sleep(200);
               // The import carried a source path; no action may expose it.
               hasPathAction ||= [...document.querySelectorAll('.menu-item-title')].some((title) => title.textContent === 'Copy original path');
