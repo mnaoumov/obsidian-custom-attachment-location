@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 17.4.1
+
+- chore(deps): take `obsidian-integration-testing` 17.10.0
+- test(original-attachment-names): tap the copy action in the newest menu
+- test(original-attachment-names): keep the link narrowing inside the contextmenu recorder
+- test(original-attachment-names): press the Android link again when its long press opens no menu
+- test(original-attachment-names): give the Android link menu 10 s to open under host load
+- fix: re #105
+
 ## 17.4.0
 
 - docs(original-attachment-names): say a folder move keeps the original, and how to remove it
