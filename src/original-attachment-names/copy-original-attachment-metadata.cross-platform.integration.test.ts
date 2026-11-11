@@ -347,7 +347,8 @@ describe('Copy original attachment file name', () => {
             openMenu: async () => {
               // On Android this is a trusted long press, which the harness presses again when the WebView misreads it as a tap.
               await clickElement({ button: 'right', element: link });
-              await waitUntil({ message: 'The link menu did not open', predicate: () => document.querySelector('.menu') !== null, timeoutInMilliseconds: 3000 });
+              // A one-core Android guest under host load can take more than 3 s to open the menu after a long press.
+              await waitUntil({ message: 'The link menu did not open', predicate: () => document.querySelector('.menu') !== null, timeoutInMilliseconds: 10_000 });
               await sleep(200);
               // The import carried a source path; no action may expose it.
               hasPathAction ||= [...document.querySelectorAll('.menu-item-title')].some((title) => title.textContent === 'Copy original path');
