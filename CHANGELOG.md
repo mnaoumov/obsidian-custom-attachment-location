@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 17.4.0
+
+- docs(original-attachment-names): say a folder move keeps the original, and how to remove it
+- feat(settings): templates by operation, one page per operation
+- fix(settings): render tokens in setting descriptions as code
+- fix(original-attachment-names): follow a moved history folder instead of recreating it
+- test(original-attachment-names): drop the synthetic link menu on Android now that the long press retries
+- docs(changelog): regroup the published release notes for readers
+
 ## 17.3.0
 
 This release has 3 new features, 4 fixes and 1 documentation change. 6 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
