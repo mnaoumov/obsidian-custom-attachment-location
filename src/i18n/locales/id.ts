@@ -104,7 +104,7 @@ export const id = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Token kustom dikomentari karena harus diperbarui ke format baru yang diperkenalkan di versi plugin 9.0.0.\n// Lihat dokumentasi (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) untuk informasi lebih lanjut.',
+      codeComment: '// Token kustom dikomentari karena harus diperbarui ke format baru yang diperkenalkan di versi plugin 9.0.0.\n// Lihat dokumentasi (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) untuk informasi lebih lanjut.',
       deprecated: {
         part1: 'Di versi plugin 9.0.0, format registrasi token kustom berubah. Silakan perbarui token Anda sesuai. Lihat',
         part2: 'dokumentasi',

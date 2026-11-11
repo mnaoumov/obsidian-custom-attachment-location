@@ -104,7 +104,7 @@ export const nl = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Aangepaste tokens zijn uitgecommentarieerd omdat ze moeten worden bijgewerkt naar het nieuwe formaat geïntroduceerd in plugin versie 9.0.0.\n// Raadpleeg de documentatie (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) voor meer informatie.',
+      codeComment: '// Aangepaste tokens zijn uitgecommentarieerd omdat ze moeten worden bijgewerkt naar het nieuwe formaat geïntroduceerd in plugin versie 9.0.0.\n// Raadpleeg de documentatie (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) voor meer informatie.',
       deprecated: {
         part1: 'In plugin versie 9.0.0 is het formaat van aangepaste token registratie veranderd. Werk je tokens dienovereenkomstig bij. Raadpleeg de',
         part2: 'documentatie',

@@ -36,6 +36,10 @@ import type { OriginalAttachmentNamesComponent } from '../original-attachment-na
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import {
+  CUSTOM_TOKENS_DOCUMENTATION_URL,
+  TOKEN_REFERENCE_DOCUMENTATION_URL
+} from '../documentation-links.ts';
+import {
   getObsidianSyncStatus,
   ObsidianSyncState
 } from '../original-attachment-names/obsidian-sync-status.ts';
@@ -257,7 +261,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.appendText(t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part2));
           f.appendText(' ');
           f.createEl('a', {
-            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+            href: TOKEN_REFERENCE_DOCUMENTATION_URL,
             text: t(($) => $.pluginSettingsTab.markdownUrlFormat.description.part3)
           });
           f.appendText('.');
@@ -419,7 +423,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part1));
               f.appendText(' ');
               f.createEl('a', {
-                href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+                href: TOKEN_REFERENCE_DOCUMENTATION_URL,
                 text: t(($) => $.pluginSettingsTab.collectedAttachmentFileName.description.part2)
               });
               f.appendText('.');
@@ -454,7 +458,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               f.appendText(t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part5));
               f.appendText(' ');
               f.createEl('a', {
-                href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+                href: TOKEN_REFERENCE_DOCUMENTATION_URL,
                 text: t(($) => $.pluginSettingsTab.collectedAttachmentFolderPath.description.part6)
               });
               f.appendText('.');
@@ -486,7 +490,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               f.appendText(t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part1));
               f.appendText(' ');
               f.createEl('a', {
-                href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+                href: TOKEN_REFERENCE_DOCUMENTATION_URL,
                 text: t(($) => $.pluginSettingsTab.renamedAttachmentFileName.description.part2)
               });
               f.appendText('.');
@@ -522,7 +526,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               f.appendText(t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part2));
               f.appendText(' ');
               f.createEl('a', {
-                href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+                href: TOKEN_REFERENCE_DOCUMENTATION_URL,
                 text: t(($) => $.pluginSettingsTab.manuallyRenamedAttachmentFileName.description.part3)
               });
               f.appendText('.');
@@ -680,7 +684,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.appendText(t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part3));
           f.appendText(' ');
           f.createEl('a', {
-            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+            href: TOKEN_REFERENCE_DOCUMENTATION_URL,
             text: t(($) => $.pluginSettingsTab.locationForNewAttachments.description.part4)
           });
           f.createEl('br');
@@ -713,7 +717,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.appendText(t(($) => $.pluginSettingsTab.generatedAttachmentFileName.description.part1));
           f.appendText(' ');
           f.createEl('a', {
-            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+            href: TOKEN_REFERENCE_DOCUMENTATION_URL,
             text: t(($) => $.pluginSettingsTab.generatedAttachmentFileName.description.part2)
           });
           f.appendText('.');
@@ -791,7 +795,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           f.appendText(t(($) => $.pluginSettingsTab.customTokens.description.part2));
           f.appendText(' ');
           f.createEl('a', {
-            href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens',
+            href: CUSTOM_TOKENS_DOCUMENTATION_URL,
             text: t(($) => $.pluginSettingsTab.customTokens.description.part3)
           });
           f.appendText(' ');
@@ -1208,7 +1212,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.appendText(params.description);
         f.createEl('br');
         f.createEl('a', {
-          href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+          href: TOKEN_REFERENCE_DOCUMENTATION_URL,
           text: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.tokens)
         });
         f.appendText('.');
