@@ -355,10 +355,12 @@ describe('Copy original attachment file name', () => {
               const outcomes: string[] = [];
               for (let press = 1; press <= maxPresses; press++) {
                 const targets: string[] = [];
+                // A nested function does not keep the narrowing of `link`, so it reads this narrowed copy.
+                const linkElement: HTMLElement = link;
                 function recordContextMenu($event: MouseEvent): void {
                   const target = $event.target;
                   const where = target instanceof Element
-                    ? `${[target.tagName.toLowerCase(), ...target.classList].join('.')}${link.contains(target) ? ' (the link)' : ''}`
+                    ? `${[target.tagName.toLowerCase(), ...target.classList].join('.')}${linkElement.contains(target) ? ' (the link)' : ''}`
                     : target?.constructor.name ?? 'no target';
                   targets.push(`${where} at (${String($event.clientX)}, ${String($event.clientY)})${$event.defaultPrevented ? ', default prevented' : ''}`);
                 }
