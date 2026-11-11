@@ -145,7 +145,12 @@ async function clickActionUntilCopied(params: ClickActionUntilCopiedParams): Pro
  */
 function findCopyOriginalNameAction(): HTMLElement {
   const title = 'Copy original file name';
-  const item = [...document.querySelectorAll<HTMLElement>('.menu-item')].find((candidate) => candidate.querySelector('.menu-item-title')?.textContent === title);
+  /*
+   * A long press that opened its menu late can leave a second menu under the newest one, which covers its items. Only the
+   * newest menu, the last in the DOM, is on top, so a tap on another menu's item would land on the newest one.
+   */
+  const menu = [...document.querySelectorAll<HTMLElement>('.menu')].at(-1);
+  const item = [...(menu?.querySelectorAll<HTMLElement>('.menu-item') ?? [])].find((candidate) => candidate.querySelector('.menu-item-title')?.textContent === title);
   if (!item) {
     throw new Error(`Missing menu action: ${title}`);
   }
@@ -380,6 +385,8 @@ describe('Copy original attachment file name', () => {
                   }
                   console.warn(`The link long press opened no menu (press ${String(press)} of ${String(maxPresses)}); pressing again.`, outcomes.at(-1));
                   await sleep(500);
+                  // A menu this press opened after the wait gave up would sit under the next press's menu.
+                  await dismissMenu();
                 } finally {
                   window.removeEventListener('contextmenu', recordContextMenu);
                 }
