@@ -104,7 +104,7 @@ export const lv = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Pielāgotie tokeni tika komentēti, jo tie ir jāatjaunina uz jauno formātu, kas ieviests spraudņa versijā 9.0.0.\n// Sīkāku informāciju skatiet dokumentācijā (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens).',
+      codeComment: '// Pielāgotie tokeni tika komentēti, jo tie ir jāatjaunina uz jauno formātu, kas ieviests spraudņa versijā 9.0.0.\n// Sīkāku informāciju skatiet dokumentācijā (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md).',
       deprecated: {
         part1: 'Spraudņa versijā 9.0.0 pielāgoto tokenu reģistrācijas formāts mainījās. Lūdzu, atjauniniet savus tokenus attiecīgi. Sīkāku informāciju skatiet',
         part2: 'dokumentācijā',

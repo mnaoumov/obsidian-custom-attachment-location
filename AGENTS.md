@@ -26,7 +26,7 @@ The Android arm of `inserted-link-text.cross-platform.integration.test.ts` impor
 
 ## The README's `Tokens` headings are link targets, and the API detail lives in `docs/plugin-api.md`
 
-`## Tokens`, `### Custom tokens` and `### Markdown URL format` hold only a pointer into the demo vault, but they stay: the settings tab, the release notes and every locale's custom-token comment link `?tab=readme-ov-file#tokens`, `#custom-tokens` and `#markdown-url-format`, including from versions already installed. The README is a landing page, so the full plugin-API guide is `docs/plugin-api.md`, and `## For plugin developers` only links it.
+`## Tokens`, `### Custom tokens` and `### Markdown URL format` hold only a pointer into the demo vault, but they stay: versions up to 17.4.0 link `?tab=readme-ov-file#tokens`, `#custom-tokens` and `#markdown-url-format` from the settings tab, the release notes and every locale's custom-token comment, and they stay installed. Current code links the demo-vault pages directly, through `src/documentation-links.ts` (issue #105); a new documentation link goes there too, never to a README stub. The README is a landing page, so the full plugin-API guide is `docs/plugin-api.md`, and `## For plugin developers` only links it.
 
 ## Advanced Rename and Delete Handler is a declared dependency, so every test vault carries it
 

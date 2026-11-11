@@ -104,7 +104,7 @@ export const it = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// I token personalizzati sono stati commentati poiché devono essere aggiornati al nuovo formato introdotto nella versione 9.0.0 del plugin.\n// Consulta la documentazione (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) per maggiori informazioni.',
+      codeComment: '// I token personalizzati sono stati commentati poiché devono essere aggiornati al nuovo formato introdotto nella versione 9.0.0 del plugin.\n// Consulta la documentazione (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) per maggiori informazioni.',
       deprecated: {
         part1: 'Nella versione 9.0.0 del plugin, il formato di registrazione dei token personalizzati è cambiato. Aggiorna i tuoi token di conseguenza. Consulta la',
         part2: 'documentazione',

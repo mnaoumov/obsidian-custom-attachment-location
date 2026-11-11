@@ -10,6 +10,12 @@ import { compare } from 'semver';
 
 import type { PluginSettingsComponent } from './settings/plugin-settings-component.ts';
 
+import {
+  CUSTOM_TOKENS_DOCUMENTATION_URL,
+  MARKDOWN_URL_FORMAT_DOCUMENTATION_URL,
+  TOKEN_REFERENCE_DOCUMENTATION_URL
+} from './documentation-links.ts';
+
 interface CreateReleaseNotesComponentParams {
   readonly app: App;
   readonly pluginDirectory: string;
@@ -80,7 +86,7 @@ function buildReleaseNotes(): ReleaseNotes {
     '9.0.0': createFragment((f) => {
       f.appendText(t(($) => $.pluginSettingsManager.customToken.deprecated.part1));
       f.createEl('a', {
-        href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens',
+        href: CUSTOM_TOKENS_DOCUMENTATION_URL,
         text: t(($) => $.pluginSettingsManager.customToken.deprecated.part2)
       });
       f.appendText(' ');
@@ -97,7 +103,7 @@ function buildReleaseNotes(): ReleaseNotes {
       f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part3));
       f.appendText(' ');
       f.createEl('a', {
-        href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+        href: TOKEN_REFERENCE_DOCUMENTATION_URL,
         text: t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part4)
       });
       f.appendText(' ');
@@ -108,7 +114,7 @@ function buildReleaseNotes(): ReleaseNotes {
       appendCodeBlock(f, t(($) => $.pluginSettingsTab.markdownUrlFormat.name));
       f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part2));
       f.createEl('a', {
-        href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#markdown-url-format',
+        href: MARKDOWN_URL_FORMAT_DOCUMENTATION_URL,
         text: t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part3)
       });
       f.appendText(' ');
@@ -125,7 +131,7 @@ function buildReleaseNotes(): ReleaseNotes {
       f.appendText(t(($) => $.releaseNotes.versions['10.0.0'].part1));
       f.appendText(' ');
       f.createEl('a', {
-        href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#tokens',
+        href: TOKEN_REFERENCE_DOCUMENTATION_URL,
         text: t(($) => $.releaseNotes.versions['10.0.0'].part2)
       });
       f.appendText(' ');
@@ -143,7 +149,7 @@ function buildReleaseNotes(): ReleaseNotes {
       f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part3));
       f.appendText(' ');
       f.createEl('a', {
-        href: 'https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens',
+        href: CUSTOM_TOKENS_DOCUMENTATION_URL,
         text: t(($) => $.releaseNotes.versions['11.0.0'].part4)
       });
       f.appendText(' ');

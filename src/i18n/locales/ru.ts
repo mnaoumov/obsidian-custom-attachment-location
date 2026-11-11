@@ -104,7 +104,7 @@ export const ru = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Пользовательские токены были закомментированы, так как их нужно обновить до нового формата, введённого в версии 9.0.0 плагина.\n// Обратитесь к документации (https://github.com/mnaoumov/obsidian-custom-attachment-location?tab=readme-ov-file#custom-tokens) для получения дополнительной информации.',
+      codeComment: '// Пользовательские токены были закомментированы, так как их нужно обновить до нового формата, введённого в версии 9.0.0 плагина.\n// Обратитесь к документации (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) для получения дополнительной информации.',
       deprecated: {
         part1: 'В версии 9.0.0 плагина формат регистрации пользовательских токенов изменился. Обновите ваши токены соответствующим образом. См.',
         part2: 'документацию',
