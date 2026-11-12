@@ -118,6 +118,13 @@ describe('An image pasted into an Excalidraw drawing (issue #65)', () => {
       async callback({ app, excalidrawPluginId, findPluginSettingsComponent: findSettingsComponent, pngDataUrl }): Promise<ProbeResult> {
         // Module-scope constants are not captured by the serialized closure, so they live here.
         const WAIT_TIMEOUT_IN_MILLISECONDS = 15_000;
+        /*
+         * `Excalidraw` writes a pasted image from its own save pipeline, which on a loaded machine (5 bulk items on 2
+         * logical processors) once took longer than 15 s. The save is sent again every few seconds while it waits,
+         * because a forced save that ran before the image was ready writes nothing and nothing else would retry it.
+         */
+        const IMAGE_WRITE_TIMEOUT_IN_MILLISECONDS = 45_000;
+        const IMAGE_WRITE_RESAVE_INTERVAL_IN_MILLISECONDS = 5000;
         const POLL_INTERVAL_IN_MILLISECONDS = 200;
         const SETTLE_DELAY_IN_MILLISECONDS = 2000;
 
@@ -149,11 +156,12 @@ describe('An image pasted into an Excalidraw drawing (issue #65)', () => {
          * Waits until `isDone` holds, and says which wait ran out rather than letting a later assertion report a
          * missing file as if the plugin had moved it somewhere else.
          */
-        async function waitFor(description: string, isDone: () => Promise<boolean>): Promise<void> {
-          const deadline = Date.now() + WAIT_TIMEOUT_IN_MILLISECONDS;
+        async function waitFor(description: string, isDone: () => Promise<boolean>, timeoutInMilliseconds = WAIT_TIMEOUT_IN_MILLISECONDS): Promise<void> {
+          const start = Date.now();
+          const deadline = start + timeoutInMilliseconds;
           while (!await isDone()) {
             if (Date.now() >= deadline) {
-              throw new Error(`timed out waiting for ${description}`);
+              throw new Error(`timed out waiting for ${description} (${String(Date.now() - start)} ms)`);
             }
             await sleep(POLL_INTERVAL_IN_MILLISECONDS);
           }
@@ -177,7 +185,17 @@ describe('An image pasted into an Excalidraw drawing (issue #65)', () => {
           // `Excalidraw` writes a pasted image into the vault on SAVE, which is where the foreign write happens.
           await view.save(false, true);
 
-          await waitFor('the pasted image to be written', () => Promise.resolve(getNewPngPaths().length === 1));
+          let lastSaveAt = Date.now();
+          await waitFor('the pasted image to be written', async () => {
+            if (getNewPngPaths().length === 1) {
+              return true;
+            }
+            if (Date.now() - lastSaveAt >= IMAGE_WRITE_RESAVE_INTERVAL_IN_MILLISECONDS) {
+              lastSaveAt = Date.now();
+              await view.save(false, true);
+            }
+            return false;
+          }, IMAGE_WRITE_TIMEOUT_IN_MILLISECONDS);
           if (isRenameExpected) {
             await waitFor('the pasted image to be renamed', () => Promise.resolve(getNewPngPaths().some((path) => !path.includes('Pasted Image'))));
             const [renamedPath = ''] = getNewPngPaths();
