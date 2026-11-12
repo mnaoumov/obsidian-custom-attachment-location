@@ -511,6 +511,78 @@ it('lets a new device join history that another device moved out of the default 
   expect(await component.getExistingStoreFolders()).toEqual([MOVED_LEGACY]);
 });
 
+async function moveFolderOutsideIndex(from: string, to: string): Promise<void> {
+  // An exclusion plugin such as `Advanced Exclude` hides the destination from the vault index; only the disk has it.
+  const parent = to.slice(0, to.lastIndexOf('/'));
+  if (parent && !await app.vault.adapter.exists(parent)) {
+    await app.vault.adapter.mkdir(parent);
+  }
+  await app.vault.adapter.rename(from, to);
+  expect(app.vault.getFolderByPath(`${to}/obsidian-custom-attachment-location/original-attachment-names-v1`)).toBeNull();
+}
+
+it('follows history moved while the plugin was not running into a folder the vault index hides', async () => {
+  await publishOwnLegacyHistory();
+  await moveFolderOutsideIndex(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  const component = await createComponent();
+  expect(component.transportRoots).toContain(MOVED_LEGACY_ROOT);
+  expect(component.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(await app.vault.adapter.exists(LEGACY_PLUGIN_DATA_FOLDER)).toBe(false);
+  expect(showNotice).not.toHaveBeenCalled();
+});
+
+it('follows history moved while the plugin runs into a folder the vault index hides', async () => {
+  await publishOwnLegacyHistory();
+  const component = await createComponent();
+  await moveFolderOutsideIndex(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(await app.vault.adapter.exists(LEGACY_PLUGIN_DATA_FOLDER)).toBe(false);
+  expect(component.transportRoots).toContain(MOVED_LEGACY_ROOT);
+  const reloaded = await createComponent();
+  expect(reloaded.get('assets/bravo.pdf')).toBe('bravo.pdf');
+});
+
+it('lets a new device join, when it enables synchronization, history moved into a folder the vault index hides', async () => {
+  await publishLegacyHistory();
+  await moveFolderOutsideIndex(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  const getAllFolders = vi.spyOn(app.vault, 'getAllFolders');
+  const component = await createComponent();
+  // Loading reads only the index, so an undecided device does not walk the vault at every start.
+  expect(component.transportRoots).not.toContain(MOVED_LEGACY_ROOT);
+  expect(getAllFolders).toHaveBeenCalled();
+  await component.setSyncEnabled(true);
+  expect(component.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  expect(await app.vault.adapter.exists(ROOT)).toBe(false);
+  expect(component.transportRoots).toContain(MOVED_LEGACY_ROOT);
+});
+
+it('skips dot folders and node_modules when looking for moved history on disk', async () => {
+  await publishOwnLegacyHistory();
+  await moveFolderOutsideIndex(LEGACY_PLUGIN_DATA_FOLDER, `.trash/${LEGACY_PLUGIN_DATA_FOLDER}`);
+  await app.vault.adapter.mkdir(`node_modules/x/${LEGACY_ROOT}`);
+  const component = await createComponent();
+  expect(component.transportRoots).toContain(LEGACY_ROOT);
+  expect(component.transportRoots).not.toContain(`.trash/${LEGACY_ROOT}`);
+});
+
+it('walks past a folder that disappears while it looks for moved history on disk', async () => {
+  await publishOwnLegacyHistory();
+  await moveFolderOutsideIndex(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);
+  await app.vault.adapter.mkdir('Vanishing');
+  const list = app.vault.adapter.list.bind(app.vault.adapter);
+  vi.spyOn(app.vault.adapter, 'list').mockImplementation(async (path) => {
+    if (path === 'Vanishing') {
+      throw new Error('ENOENT');
+    }
+    return await list(path);
+  });
+  const component = await createComponent();
+  expect(component.transportRoots).toContain(MOVED_LEGACY_ROOT);
+});
+
 it('follows no folder when the history is found in more than one', async () => {
   await publishOwnLegacyHistory();
   await moveFolder(LEGACY_PLUGIN_DATA_FOLDER, MOVED_LEGACY);

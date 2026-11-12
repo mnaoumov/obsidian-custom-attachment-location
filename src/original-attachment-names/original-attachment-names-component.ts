@@ -17,6 +17,7 @@ import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/pl
 import type {
   App,
   Debouncer,
+  ListedFiles,
   TAbstractFile
 } from 'obsidian';
 import type {
@@ -412,7 +413,7 @@ export class OriginalAttachmentNamesComponent extends Component {
         // Every earlier version wrote its history under the legacy folder, so its replica keeps that anchor.
         await this.local.set(ANCHOR_FOLDER_KEY, hasLocalHistory ? LEGACY_PLUGIN_DATA_FOLDER : PENDING_ANCHOR_FOLDER);
       }
-      this.anchorFolder = await this.resolveAnchorFolder();
+      this.anchorFolder = await this.resolveAnchorFolder(false);
       this.shared = await this.openShared();
       this.showMovedAnchorBlockedNotice();
       await this.deleteRetiredSourcePaths(this.shared);
@@ -590,7 +591,7 @@ export class OriginalAttachmentNamesComponent extends Component {
           // Keep the legacy anchor identity on every device. The public coordinator announces JSON
           // before an initially disabled store publishes anything, so fresh setup creates no Markdown.
           // Existing enabled devices keep Markdown until the user approves this explicit transition.
-          const anchorFolder = await this.resolveAnchorFolder();
+          const anchorFolder = await this.resolveAnchorFolder(true);
           if (this.blockedMovedAnchorFolder !== undefined) {
             throw new Error(t(($) => $.originalAttachmentNames.storage.movedHistoryCannotBeFollowed, {
               folder: this.blockedMovedAnchorFolder,
@@ -666,13 +667,16 @@ export class OriginalAttachmentNamesComponent extends Component {
    * means the anchor itself was moved after a relocation, and the library refuses to open such a chain.
    *
    * @param excludedFolder - The anchor folder whose history is gone.
+   * @param shouldScanFileSystem - Whether to look through the file system rather than the vault index, which misses
+   *   folders that an exclusion plugin hides, the usual home of plugin data.
    * @returns The anchor found and whether it can be opened, or `undefined` when there is none or more than one.
    */
-  private async findAnchorElsewhere(excludedFolder: string): Promise<FoundAnchor | undefined> {
+  private async findAnchorElsewhere(excludedFolder: string, shouldScanFileSystem: boolean): Promise<FoundAnchor | undefined> {
     const suffix = `/${PLUGIN_ID}/${STORE_ID}`;
-    const candidates = this.app.vault.getAllFolders()
-      .map((folder) => folder.path)
-      .filter((path) => path.endsWith(suffix))
+    const storeFolders = shouldScanFileSystem
+      ? await this.listStoreFoldersOnDisk(suffix)
+      : this.app.vault.getAllFolders().map((folder) => folder.path).filter((path) => path.endsWith(suffix));
+    const candidates = storeFolders
       .map((path) => path.slice(0, -suffix.length))
       .filter((folder) => folder !== excludedFolder);
     const recordsByFolder = new Map<string, (null | RelocationRecord)[]>();
@@ -692,12 +696,7 @@ export class OriginalAttachmentNamesComponent extends Component {
       return undefined;
     }
     const folder = ensureNonNullable(anchors[0]);
-    const records = ensureNonNullable(recordsByFolder.get(folder));
-    // An incomplete record is refused by the library until it arrives in full, so it cannot be opened yet either.
-    return {
-      canOpen: records.length === 0 || (!records.includes(null) && records.some((record) => ensureNonNullable(record).from.folder === folder)),
-      folder
-    };
+    return { canOpen: canOpenAnchor(folder, ensureNonNullable(recordsByFolder.get(folder))), folder };
   }
 
   private async flushImpl(): Promise<void> {
@@ -736,7 +735,7 @@ export class OriginalAttachmentNamesComponent extends Component {
    */
   private async followMovedAnchor(shared: SharedDataStore): Promise<SharedDataStore> {
     const previousBlock = this.blockedMovedAnchorFolder;
-    const anchorFolder = await this.resolveAnchorFolder();
+    const anchorFolder = await this.resolveAnchorFolder(false);
     if (anchorFolder !== this.anchorFolder) {
       this.anchorFolder = anchorFolder;
       this.requestedTransportRoots.add(getOriginalNameTransportRoot(anchorFolder));
@@ -806,6 +805,45 @@ export class OriginalAttachmentNamesComponent extends Component {
     }
     this.record({ isFolder: file instanceof TFolder, kind: 'rename', path: oldPath, target: file.path });
     this.saveDebounced();
+  }
+
+  /**
+   * Lists the vault's store folders straight from the file system.
+   *
+   * The vault index holds only what Obsidian indexes, and an exclusion plugin can hide a folder from it entirely, so
+   * a history moved into such a folder would never be found there. Dot folders (the configuration folder, `.git`,
+   * `.trash`) and `node_modules` are skipped, as Obsidian's own index skips them, and so is each store's own content.
+   *
+   * @param suffix - The path suffix every store folder ends with.
+   * @returns The store folders' paths.
+   */
+  private async listStoreFoldersOnDisk(suffix: string): Promise<string[]> {
+    const adapter = this.app.vault.adapter;
+    const storeFolders: string[] = [];
+    const pending = [''];
+    for (let folder = pending.pop(); folder !== undefined; folder = pending.pop()) {
+      let listed: ListedFiles;
+      try {
+        listed = await adapter.list(folder);
+      } catch {
+        // A folder removed mid-walk holds nothing to find.
+        continue;
+      }
+      for (const child of listed.folders) {
+        // Adapters differ on whether a root listing is prefixed with a slash.
+        const path = child.replace(/^\/+/, '');
+        const name = path.slice(path.lastIndexOf('/') + 1);
+        if (name.startsWith('.') || name === 'node_modules' || path === this.app.vault.configDir) {
+          continue;
+        }
+        if (path.endsWith(suffix)) {
+          storeFolders.push(path);
+          continue;
+        }
+        pending.push(path);
+      }
+    }
+    return storeFolders.sort((a, b) => a.localeCompare(b));
   }
 
   private async migrateLegacy(): Promise<void> {
@@ -906,15 +944,19 @@ export class OriginalAttachmentNamesComponent extends Component {
    * store. A device that is still undecided joins an earlier version's history as soon as the vault holds it, and
    * otherwise uses the new default folder. It is fixed when synchronization is first enabled.
    *
+   * @param shouldScanFileSystemForNewDevice - Whether an undecided device looks for moved history through the file
+   *   system, which finds folders the vault index hides but costs a walk of the whole vault. Loading uses the index;
+   *   enabling synchronization, which fixes the anchor for good, scans.
    * @returns The anchor folder.
    */
-  private async resolveAnchorFolder(): Promise<string> {
+  private async resolveAnchorFolder(shouldScanFileSystemForNewDevice: boolean): Promise<string> {
     const local = ensureNonNullable(this.local);
     const adapter = this.app.vault.adapter;
     const stored = await local.get(ANCHOR_FOLDER_KEY);
     if (stored !== undefined && typeof stored !== 'string') {
       throw new Error('Invalid original-name anchor folder.');
     }
+    const previousBlock = this.blockedMovedAnchorFolder;
     this.blockedMovedAnchorFolder = undefined;
     if (stored !== undefined && stored !== PENDING_ANCHOR_FOLDER) {
       if (await adapter.exists(getOriginalNameTransportRoot(stored))) {
@@ -923,9 +965,14 @@ export class OriginalAttachmentNamesComponent extends Component {
       /*
        * The anchor's history is gone from where this device left it. When it is in exactly one other folder, the
        * user moved it (or a folder above it), here or on another device, so follow it. Writing at the old anchor
-       * would recreate it and split the history in two.
+       * would recreate it and split the history in two. The file system is scanned, because plugin data is usually
+       * moved into a folder that an exclusion plugin hides from the vault index. While the history found last time
+       * is still where it was, only its records are read again, so a paused device does not walk the vault on every
+       * flush.
        */
-      const moved = await this.findAnchorElsewhere(stored);
+      const moved = previousBlock !== undefined && await adapter.exists(getOriginalNameTransportRoot(previousBlock))
+        ? { canOpen: canOpenAnchor(previousBlock, await this.readRelocationRecords(previousBlock)), folder: previousBlock }
+        : await this.findAnchorElsewhere(stored, true);
       if (moved === undefined) {
         return stored;
       }
@@ -945,7 +992,7 @@ export class OriginalAttachmentNamesComponent extends Component {
       return DEFAULT_PLUGIN_DATA_FOLDER;
     }
     // A new device joins history that another device moved out of the default folders.
-    const discovered = await this.findAnchorElsewhere(DEFAULT_PLUGIN_DATA_FOLDER);
+    const discovered = await this.findAnchorElsewhere(DEFAULT_PLUGIN_DATA_FOLDER, shouldScanFileSystemForNewDevice);
     if (discovered?.canOpen) {
       await local.set(ANCHOR_FOLDER_KEY, discovered.folder);
       return discovered.folder;
@@ -1001,6 +1048,20 @@ export class OriginalAttachmentNamesComponent extends Component {
  */
 export function getOriginalNameTransportRoot(folder: string): string {
   return `${folder}/${PLUGIN_ID}/${STORE_ID}`;
+}
+
+/**
+ * Tells whether the library can open history found at a folder other than this device's anchor.
+ *
+ * It can when the history has no relocation record, or when its records start at that folder. An incomplete record is
+ * refused by the library until it arrives in full, so it cannot be opened yet either.
+ *
+ * @param folder - The folder holding the history.
+ * @param records - Its relocation records, `null` for each one that has not fully arrived.
+ * @returns Whether it can be opened.
+ */
+function canOpenAnchor(folder: string, records: readonly (null | RelocationRecord)[]): boolean {
+  return records.length === 0 || (!records.includes(null) && records.some((record) => ensureNonNullable(record).from.folder === folder));
 }
 
 function isRelocationLocation(value: unknown): value is RelocationLocation {
