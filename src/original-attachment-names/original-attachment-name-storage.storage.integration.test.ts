@@ -430,14 +430,25 @@ it('never recreates the history folder at its old place after the folder is move
         await app.vault.createFolder(parent);
         // Setup recorded its switch to JSON under the anchor, naming its folder, so this version pauses rather than following.
         await app.vault.rename(folder, `${parent}/${anchorFolder}`);
-        const file = await app.vault.createBinary('storage-moved.pdf', new TextEncoder().encode('moved').buffer);
-        component.set(file.path, 'arrival-moved.pdf');
-        await component.flush();
-        return {
-          isAtMovedPlace: await app.vault.adapter.exists(`${parent}/${anchorFolder}`),
-          isRecreated: await app.vault.adapter.exists(anchorFolder),
-          name: component.get(file.path)
-        };
+        /*
+         * Plugin data usually lives in a folder an exclusion plugin such as `Advanced Exclude` hides from the vault
+         * index. Hide the moved folder the same way: only a search of the disk finds it, and without it the old
+         * folder would be recreated.
+         */
+        const getAllFolders = app.vault.getAllFolders.bind(app.vault);
+        app.vault.getAllFolders = (shouldIncludeRoot?: boolean): ReturnType<typeof getAllFolders> => getAllFolders(shouldIncludeRoot).filter((child) => !child.path.startsWith(`${parent}/`));
+        try {
+          const file = await app.vault.createBinary('storage-moved.pdf', new TextEncoder().encode('moved').buffer);
+          component.set(file.path, 'arrival-moved.pdf');
+          await component.flush();
+          return {
+            isAtMovedPlace: await app.vault.adapter.exists(`${parent}/${anchorFolder}`),
+            isRecreated: await app.vault.adapter.exists(anchorFolder),
+            name: component.get(file.path)
+          };
+        } finally {
+          Reflect.deleteProperty(app.vault, 'getAllFolders');
+        }
       },
       input: { ...input, anchor, movedParent },
       vaultPath
