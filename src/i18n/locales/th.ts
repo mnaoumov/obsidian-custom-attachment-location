@@ -104,7 +104,7 @@ export const th = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// โทเคนที่กำหนดเองถูกคอมเมนต์ไว้ เนื่องจากต้องอัปเดตเป็นรูปแบบใหม่ที่ถูกเพิ่มในปลั๊กอินเวอร์ชัน 9.0.0\n// ดูรายละเอียดในเอกสารประกอบ (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md)',
+      codeComment: '// โทเคนที่กำหนดเองถูกคอมเมนต์ไว้ เนื่องจากต้องอัปเดตเป็นรูปแบบใหม่ที่ถูกเพิ่มในปลั๊กอินเวอร์ชัน 9.0.0\n// ดูรายละเอียดในเอกสารประกอบ ({{customTokensDocumentationUrl}})',
       deprecated: {
         part1: 'ในปลั๊กอินเวอร์ชัน 9.0.0 รูปแบบการลงทะเบียนโทเคนที่กำหนดเองได้เปลี่ยนไป กรุณาอัปเดตโทเคนของคุณ ดูเพิ่มเติมที่',
         part2: 'เอกสาร',

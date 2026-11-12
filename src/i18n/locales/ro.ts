@@ -104,7 +104,7 @@ export const ro = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Tokenurile personalizate au fost comentate deoarece trebuie actualizate la noul format introdus în versiunea 9.0.0 a pluginului.\n// Consultă documentația (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) pentru mai multe informații.',
+      codeComment: '// Tokenurile personalizate au fost comentate deoarece trebuie actualizate la noul format introdus în versiunea 9.0.0 a pluginului.\n// Consultă documentația ({{customTokensDocumentationUrl}}) pentru mai multe informații.',
       deprecated: {
         part1: 'În versiunea 9.0.0 a pluginului, formatul de înregistrare a tokenurilor personalizate s-a schimbat. Actualizează tokenurile corespunzător. Consultă',
         part2: 'documentația',

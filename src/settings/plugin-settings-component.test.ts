@@ -21,6 +21,7 @@ import {
 
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
 
+import { CUSTOM_TOKENS_DOCUMENTATION_URL } from '../documentation-links.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
 import { TokenValidator } from '../tokens/token-validator.ts';
@@ -656,6 +657,7 @@ describe('PluginSettingsComponent', () => {
         version: '8.0.0'
       });
       expect(component.settings.customTokensStr).toContain('// registerCustomToken();');
+      expect(component.settings.customTokensStr).toContain(CUSTOM_TOKENS_DOCUMENTATION_URL);
     });
 
     it('should reset markdownUrlFormat for deprecated values before 9.2.0', async () => {

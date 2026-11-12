@@ -104,7 +104,7 @@ export const fa = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// نشان‌های سفارشی کامنت شده زیرا باید به فرمت جدید معرفی شده در نسخه 9.0.0 پلاگین به‌روزرسانی شوند.\n// برای اطلاعات بیشتر به مستندات (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) مراجعه کنید.',
+      codeComment: '// نشان‌های سفارشی کامنت شده زیرا باید به فرمت جدید معرفی شده در نسخه 9.0.0 پلاگین به‌روزرسانی شوند.\n// برای اطلاعات بیشتر به مستندات ({{customTokensDocumentationUrl}}) مراجعه کنید.',
       deprecated: {
         part1: 'در نسخه 9.0.0 پلاگین، فرمت ثبت نشان‌های سفارشی تغییر کرده است. لطفاً نشان‌های خود را به تناسب به‌روزرسانی کنید. به',
         part2: 'مستندات',

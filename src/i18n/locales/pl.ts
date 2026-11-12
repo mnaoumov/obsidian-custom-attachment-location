@@ -104,7 +104,7 @@ export const pl = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Niestandardowe tokeny zostały zakomentowane, ponieważ muszą zostać zaktualizowane do nowego formatu wprowadzonego w wersji wtyczki 9.0.0.\n// Zapoznaj się z dokumentacją (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md), aby uzyskać więcej informacji.',
+      codeComment: '// Niestandardowe tokeny zostały zakomentowane, ponieważ muszą zostać zaktualizowane do nowego formatu wprowadzonego w wersji wtyczki 9.0.0.\n// Zapoznaj się z dokumentacją ({{customTokensDocumentationUrl}}), aby uzyskać więcej informacji.',
       deprecated: {
         part1: 'W wersji wtyczki 9.0.0 zmienił się format rejestracji niestandardowych tokenów. Proszę zaktualizować swoje tokeny odpowiednio. Zapoznaj się z',
         part2: 'dokumentacją',

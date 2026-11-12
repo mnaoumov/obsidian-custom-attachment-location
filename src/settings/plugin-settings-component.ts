@@ -26,6 +26,7 @@ import { compare } from 'semver';
 import type { MigratableSettings } from '../advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
 
+import { CUSTOM_TOKENS_DOCUMENTATION_URL } from '../documentation-links.ts';
 import { validatePluginDataFolder } from '../original-attachment-names/plugin-data-folder.ts';
 import { CustomToken } from '../tokens/custom/custom-token.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
@@ -232,7 +233,7 @@ class LegacySettingsConverter {
   private convertCustomTokensString(): void {
     if (this.legacySettings.customTokensStr && this.legacySettings.version && compare(this.legacySettings.version, '9.0.0') < 0) {
       // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key; renaming it would silently drop the user's custom tokens.
-      this.legacySettings.customTokensStr = `${t(($) => $.pluginSettingsManager.customToken.codeComment)}
+      this.legacySettings.customTokensStr = `${t(($) => $.pluginSettingsManager.customToken.codeComment, { customTokensDocumentationUrl: CUSTOM_TOKENS_DOCUMENTATION_URL })}
 
 ${commentOut(this.legacySettings.customTokensStr)}
 `;

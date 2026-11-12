@@ -104,7 +104,7 @@ export const de = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Benutzerdefinierte Tokens wurden auskommentiert, da sie auf das neue Format aktualisiert werden müssen, das in Plugin-Version 9.0.0 eingeführt wurde.\n// Siehe Dokumentation (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) für weitere Informationen.',
+      codeComment: '// Benutzerdefinierte Tokens wurden auskommentiert, da sie auf das neue Format aktualisiert werden müssen, das in Plugin-Version 9.0.0 eingeführt wurde.\n// Siehe Dokumentation ({{customTokensDocumentationUrl}}) für weitere Informationen.',
       deprecated: {
         part1: 'In Plugin-Version 9.0.0 hat sich das Format der benutzerdefinierten Token-Registrierung geändert. Bitte aktualisieren Sie Ihre Tokens entsprechend. Siehe',
         part2: 'Dokumentation',

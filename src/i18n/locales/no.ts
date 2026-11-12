@@ -104,7 +104,7 @@ export const no = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Tilpassede tokens ble kommentert ut da de må oppdateres til det nye formatet introdusert i plugin versjon 9.0.0.\n// Se dokumentasjonen (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) for mer informasjon.',
+      codeComment: '// Tilpassede tokens ble kommentert ut da de må oppdateres til det nye formatet introdusert i plugin versjon 9.0.0.\n// Se dokumentasjonen ({{customTokensDocumentationUrl}}) for mer informasjon.',
       deprecated: {
         part1: 'I plugin versjon 9.0.0 endret formatet for tilpasset token-registrering. Vennligst oppdater tokens dine tilsvarende. Se',
         part2: 'dokumentasjonen',
