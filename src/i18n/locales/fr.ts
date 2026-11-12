@@ -104,7 +104,7 @@ export const fr = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Les jetons personnalisés ont été commentés car ils doivent être mis à jour vers le nouveau format introduit dans la version 9.0.0 du plugin.\n// Consultez la documentation (https://github.com/mnaoumov/obsidian-custom-attachment-location/blob/main/demo-vault/04%20Custom%20tokens.md) pour plus d\'informations.',
+      codeComment: '// Les jetons personnalisés ont été commentés car ils doivent être mis à jour vers le nouveau format introduit dans la version 9.0.0 du plugin.\n// Consultez la documentation ({{customTokensDocumentationUrl}}) pour plus d\'informations.',
       deprecated: {
         part1: 'Dans la version 9.0.0 du plugin, le format d\'enregistrement des jetons personnalisés a changé. Veuillez mettre à jour vos jetons en conséquence. Consultez la',
         part2: 'documentation',

@@ -92,6 +92,31 @@ describe('translationsMap', () => {
     expect(translationsMap.en).toBe(en);
   });
 
+  it('should keep URLs out of every locale string, so each URL is defined once in code', () => {
+    const offenders: string[] = [];
+
+    function collect(value: unknown, path: string): void {
+      if (typeof value === 'string') {
+        if (/https?:\/\//i.test(value)) {
+          offenders.push(path);
+        }
+        return;
+      }
+
+      if (typeof value === 'object' && value !== null) {
+        for (const [key, child] of Object.entries(value)) {
+          collect(child, `${path}.${key}`);
+        }
+      }
+    }
+
+    for (const [locale, translations] of Object.entries(translationsMap)) {
+      collect(translations, locale);
+    }
+
+    expect(offenders).toStrictEqual([]);
+  });
+
   it('should expose a translations object for every supported locale', () => {
     for (const value of Object.values(translationsMap)) {
       expect(value).toBeTypeOf('object');
