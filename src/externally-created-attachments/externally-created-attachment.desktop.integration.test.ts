@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
 import {
@@ -53,10 +54,68 @@ interface RunParams {
   readonly shouldRename: boolean;
 }
 
+/**
+ * How long one scenario's closure may run before the suite stops waiting for it and reports its step trail.
+ *
+ * A normal run takes under 20 s, the 15 s wait for a move that never comes included. Once, on a machine running 5 bulk
+ * items on 2 logical processors, a closure stalled past the 120 s test timeout, and vitest's timeout said nothing about
+ * where. So each scenario records its steps in the page, and a stall past this bound fails with the trail instead.
+ */
+const CLOSURE_BOUND_IN_MILLISECONDS = 90_000;
+
+/**
+ * How long the trail read after a stall may take. A renderer that is itself blocked would never answer it.
+ */
+const TRAIL_READ_BOUND_IN_MILLISECONDS = 10_000;
+
+interface TrailWindow extends Window {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Each scenario installs its own trail.
+  __foreignAttachmentStepTrail?: string[];
+}
+
+/**
+ * Resolves to `null` after a delay, for racing a promise against a bound. Runs in Node, not in Obsidian.
+ *
+ * @param delayInMilliseconds - The delay.
+ * @returns A promise resolving to `null` after the delay.
+ */
+async function resolveNullAfter(delayInMilliseconds: number): Promise<null> {
+  return await delay(delayInMilliseconds, null);
+}
+
 describe('Attachments created by other plugins (issue #59)', () => {
   async function run(params: RunParams): Promise<ForeignAttachmentResult> {
+    const vaultPath = getTemporaryVault().path;
+    const scenario = runScenario(params, vaultPath);
+    const result = await Promise.race([scenario, resolveNullAfter(CLOSURE_BOUND_IN_MILLISECONDS)]);
+    if (result !== null) {
+      return result;
+    }
+    // The abandoned closure may still settle; its outcome no longer decides anything.
+    scenario.catch(() => undefined);
+    const trail = await Promise.race([
+      evalInObsidian({
+        callback: () => (window as TrailWindow).__foreignAttachmentStepTrail ?? ['(no trail recorded)'],
+        vaultPath
+      }),
+      resolveNullAfter(TRAIL_READ_BOUND_IN_MILLISECONDS)
+    ]);
+    throw new Error(
+      `The scenario did not finish within ${String(CLOSURE_BOUND_IN_MILLISECONDS)} ms. ${trail === null ? 'The renderer did not answer the trail read either, so its main thread is blocked.' : `Its steps so far: ${trail.join(' | ')}`}`
+    );
+  }
+
+  async function runScenario(params: RunParams, vaultPath: string): Promise<ForeignAttachmentResult> {
     return await evalInObsidian({
       async callback({ app, findPluginSettingsComponent: findSettingsComponent, isLinked, isRelativeLinkScenario, shouldRename: isRenameEnabled }): Promise<ForeignAttachmentResult> {
+        const trailStart = performance.now();
+        const trail: string[] = [];
+        (window as TrailWindow).__foreignAttachmentStepTrail = trail;
+        function step(name: string): void {
+          trail.push(`${String(Math.round(performance.now() - trailStart))} ms: ${name}`);
+        }
+        step('start');
+
         interface ForeignSettings {
           // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
           attachmentFolderPath: string;
@@ -95,6 +154,7 @@ describe('Attachments created by other plugins (issue #59)', () => {
         const originalUseMarkdownLinks = app.vault.getConfig('useMarkdownLinks');
 
         const stamp = `${Date.now().toString()}-${Math.floor(performance.now()).toString()}`;
+        step('apply the scenario settings');
         await settingsComponent.editAndSave((settings) => {
           // The enum's values ARE the display strings; this code runs inside Obsidian and cannot import them.
           settings.renameAttachmentsCreatedByOtherPluginsMode = isRenameEnabled ? 'All' : 'None';
@@ -136,12 +196,16 @@ describe('Attachments created by other plugins (issue #59)', () => {
             properPath = `proper-${stamp}/renamed-${stamp}.png`;
           }
 
+          step('create the note');
           const note = await app.vault.create(notePath, '');
           const leaf = app.workspace.getLeaf(false);
+          step('open the note');
           await leaf.openFile(note);
+          step('reveal the leaf');
           await app.workspace.revealLeaf(leaf);
           await sleep(500);
 
+          step('write the foreign file');
           await app.vault.createFolder(foreignFolder);
           const foreignPath = `${foreignFolder}/mx-img-${stamp}.png`;
           await app.vault.createBinary(foreignPath, new ArrayBuffer(8));
@@ -158,6 +222,7 @@ describe('Attachments created by other plugins (issue #59)', () => {
             view.editor?.replaceSelection(insertedEmbed);
           }
 
+          step('wait for the move');
           const deadline = Date.now() + 15_000;
           while (Date.now() < deadline) {
             if (app.vault.getFileByPath(properPath)) {
@@ -166,13 +231,16 @@ describe('Attachments created by other plugins (issue #59)', () => {
             await sleep(300);
           }
 
+          step('settle');
           // A settled read: when the setting is off, nothing should ever have moved.
           await sleep(1000);
           const finalPaths = app.vault.getFiles()
             .map((file) => file.path)
             .filter((path) => path.includes(stamp) && path.endsWith('.png'));
 
+          step('save the note');
           await view.save?.();
+          step('read the note');
           const noteContent = await app.vault.read(note);
           // What Obsidian itself resolves the one embed in the note to — the only judge of a broken link.
           const linkMatch = /\]\((?<markdownPath>[^)]+)\)|\[\[(?<wikiPath>[^\]|]+)/.exec(noteContent);
@@ -182,9 +250,11 @@ describe('Attachments created by other plugins (issue #59)', () => {
             : app.metadataCache.getFirstLinkpathDest(decodeURI(linkPath), note.path)?.path ?? null;
 
           leaf.detach();
+          step('done');
 
           return { finalPaths, linkTargetPath, noteContent, properPath, settingsFound: true };
         } finally {
+          step('restore the settings');
           await settingsComponent.editAndSave((settings) => {
             settings.attachmentFolderPath = originalSettings.attachmentFolderPath;
             settings.generatedAttachmentFileName = originalSettings.generatedAttachmentFileName;
@@ -200,7 +270,7 @@ describe('Attachments created by other plugins (issue #59)', () => {
         isRelativeLinkScenario: params.isRelativeLinkScenario,
         shouldRename: params.shouldRename
       },
-      vaultPath: getTemporaryVault().path
+      vaultPath
     });
   }
 
