@@ -970,6 +970,27 @@ describe('PluginSettingsTab', () => {
     expect(setSyncEnabled).toHaveBeenCalledWith(false);
   });
 
+  it.each([true, false])('asks before applying a folder that holds other files (confirmed: %s)', async (isConfirmed) => {
+    vi.mocked(confirm).mockResolvedValue(isConfirmed);
+    const relocate = vi.fn(async () => {
+      await noopAsync();
+    });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: true, relocate, transportRoots: [] });
+    const { buttons, tab } = await createTab((settings) => {
+      settings.pluginDataFolder = 'Work notes';
+    }, storage);
+    await tab.app.vault.adapter.mkdir('Work notes');
+    await tab.app.vault.adapter.write('Work notes/Note.md', 'my note');
+    buttons.find((button) => button.buttonEl.textContent === 'Apply folder')?.simulateClick__();
+    await waitForAllAsyncOperations();
+    expect(vi.mocked(confirm).mock.calls[0]?.[0].message).toContain('Work notes already holds other files');
+    if (isConfirmed) {
+      expect(relocate).toHaveBeenCalledWith('Work notes');
+    } else {
+      expect(relocate).not.toHaveBeenCalled();
+    }
+  });
+
   it('shows the relocation error so conflicting history cannot be silently replaced', async () => {
     const storage = strictProxy<OriginalAttachmentNamesComponent>({
       isObsidianSyncProvider: false,

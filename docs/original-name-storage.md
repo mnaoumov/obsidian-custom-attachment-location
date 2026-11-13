@@ -38,7 +38,9 @@ When this device first turns synchronization on, the history goes into `@Plugin 
 
 Each folder that holds history gets a `README.md` saying what it is for. The plugin rewrites that file whenever its text differs, so edits to it do not last.
 
-The plugin also lists each such folder, and the **Plugin data folder** while synchronization is on, in **Settings → Files and links → Excluded files**, so the history stays out of search, the graph and the quick switcher. When the folder changes, the plugin replaces only the entry it added itself. An entry you added yourself is never removed. A hidden folder gets no entry, because Obsidian never indexes it.
+The plugin also lists each such folder, and the **Plugin data folder** while synchronization is on, in **Settings → Files and links → Excluded files**, so the history stays out of search, the graph and the quick switcher.
+
+This applies only to a folder that holds nothing but plugin data: the plugin's `obsidian-custom-attachment-location` subfolder and the plugin's own `README.md`. A folder that also holds your own files, such as notes, other folders or a `README.md` of your own, is never claimed. The plugin then lists only its `obsidian-custom-attachment-location` subfolder in **Excluded files** and puts the `README.md` inside that subfolder. A `README.md` the plugin did not write is never overwritten, and one an earlier version wrote beside your files is removed. **Apply folder** asks before it moves history into a folder that already holds other files. When the folder changes, the plugin replaces only the entry it added itself. An entry you added yourself is never removed. A hidden folder gets no entry, because Obsidian never indexes it.
 
 Do not delete the folder or anything in it while any device synchronizes, and do not rename or move anything inside it. It is history, not a cache, and what is removed cannot be rebuilt. To get rid of it for good, see [Stop synchronizing and remove the folders](#stop-synchronizing-and-remove-the-folders).
 

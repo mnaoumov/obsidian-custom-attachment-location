@@ -3,8 +3,11 @@
  *
  * Keeps the folders that hold the synchronized original-name history out of the user's way, and explains them.
  *
- * Each folder goes into Obsidian's **Excluded files** (`userIgnoreFilters`), so its history files stay out of search,
- * the graph and the quick switcher, and gets a `README.md` that says what it is and that it must not be removed.
+ * A folder the plugin owns as a whole (see `isPluginOwnedDataFolder`) goes into Obsidian's **Excluded files**
+ * (`userIgnoreFilters`), so its history files stay out of search, the graph and the quick switcher, and gets a
+ * `README.md` that says what it is and that it must not be removed. A folder that also holds the user's own files is
+ * never claimed: only the plugin's subfolder in it is excluded and explained, and a `README.md` the plugin did not
+ * write is never written over.
  *
  * The entries this plugin added are remembered per device, so a changed folder replaces only its own entry: an entry
  * the user already had is never recorded as ours, and so never removed.
@@ -20,13 +23,16 @@ import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { OriginalAttachmentNamesComponent } from './original-attachment-names-component.ts';
 
+import {
+  isPluginDataFolderReadme,
+  isPluginOwnedDataFolder,
+  PLUGIN_DATA_FOLDER_README_FILE_NAME,
+  PLUGIN_DATA_FOLDER_README_HEADING,
+  PLUGIN_DATA_SUBFOLDER_NAME
+} from './plugin-data-folder.ts';
+
 const USER_IGNORE_FILTERS_CONFIG_KEY = 'userIgnoreFilters';
 const MANAGED_IGNORE_FILTERS_LOCAL_STORAGE_KEY = 'obsidian-custom-attachment-location:managed-ignore-filters-v1';
-
-/**
- * The name of the explanation file written into each store folder.
- */
-export const PLUGIN_DATA_FOLDER_README_FILE_NAME = 'README.md';
 
 /**
  * Where the README sends a user who wants the whole story.
@@ -36,7 +42,7 @@ export const PLUGIN_DATA_FOLDER_DOCS_URL = 'https://mnaoumov.dev/obsidian/plugin
 /**
  * The text of the explanation file. Public, plain wording: it is read by whoever opens the folder.
  */
-export const PLUGIN_DATA_FOLDER_README = `# Plugin sync data - do not remove
+export const PLUGIN_DATA_FOLDER_README = `${PLUGIN_DATA_FOLDER_README_HEADING}
 
 This folder holds data that Obsidian plugins keep in your vault so that it can sync between your devices.
 
@@ -45,6 +51,23 @@ The \`Custom Attachment Location\` plugin keeps the original names of your attac
 - Do not delete, move or rename this folder or anything in it, and do not edit these files by hand. They are history, not a cache: what is removed cannot be rebuilt.
 - Keep this folder synchronized on every device that uses the vault.
 - The folder is listed in Obsidian's **Settings → Files and links → Excluded files**, so it stays out of search, the graph and the quick switcher.
+
+The plugin writes this file, so any change you make to it is lost.
+
+Learn more: ${PLUGIN_DATA_FOLDER_DOCS_URL}
+`;
+
+/**
+ * The text of the explanation file written into the plugin's own subfolder, when the folder around it holds the
+ * user's own files and so is not the plugin's to explain.
+ */
+export const PLUGIN_DATA_SUBFOLDER_README = `${PLUGIN_DATA_FOLDER_README_HEADING}
+
+The \`Custom Attachment Location\` plugin keeps the original names of your attachments in this folder, so that they can sync between your devices.
+
+- Do not delete, move or rename this folder or anything in it, and do not edit these files by hand. They are history, not a cache: what is removed cannot be rebuilt.
+- Keep this folder synchronized on every device that uses the vault.
+- The folder is listed in Obsidian's **Settings → Files and links → Excluded files**, so it stays out of search, the graph and the quick switcher. The folder around it is not: it holds your own files too.
 
 The plugin writes this file, so any change you make to it is lost.
 
@@ -111,12 +134,38 @@ export class PluginDataFolderExclusionComponent extends LayoutReadyComponent {
       folders.push(settingFolder);
     }
 
+    const adapter = this.app.vault.adapter;
+    const ownedFolders = new Set<string>();
+    for (const folder of folders) {
+      if (await isPluginOwnedDataFolder(adapter, folder)) {
+        ownedFolders.add(folder);
+      }
+    }
+
+    // A folder that also holds the user's own files is never claimed: only the plugin's subfolder in it is.
+    const excludedFolders = folders.map((folder) => ownedFolders.has(folder) ? folder : `${folder}/${PLUGIN_DATA_SUBFOLDER_NAME}`);
     // Obsidian never indexes a hidden folder, so an entry for one would only be noise.
-    const desiredFilters = folders.filter((folder) => folder.split('/').every((segment) => !segment.startsWith('.'))).map((folder) => `${folder}/`);
+    const desiredFilters = excludedFolders.filter((folder) => folder.split('/').every((segment) => !segment.startsWith('.'))).map((folder) => `${folder}/`);
     this.updateFilters(desiredFilters);
 
     for (const folder of existingFolders) {
-      await this.writeReadme(folder);
+      const folderReadmePath = `${folder}/${PLUGIN_DATA_FOLDER_README_FILE_NAME}`;
+      const subfolderReadmePath = `${folder}/${PLUGIN_DATA_SUBFOLDER_NAME}/${PLUGIN_DATA_FOLDER_README_FILE_NAME}`;
+      if (ownedFolders.has(folder)) {
+        await this.removeOwnReadme(subfolderReadmePath);
+        await this.writeReadme(folderReadmePath, PLUGIN_DATA_FOLDER_README);
+      } else {
+        // An earlier version wrote its README here; left behind, it would tell the user to keep their own folder.
+        await this.removeOwnReadme(folderReadmePath);
+        await this.writeReadme(subfolderReadmePath, PLUGIN_DATA_SUBFOLDER_README);
+      }
+    }
+  }
+
+  private async removeOwnReadme(path: string): Promise<void> {
+    const adapter = this.app.vault.adapter;
+    if (await adapter.exists(path) && isPluginDataFolderReadme(await adapter.read(path))) {
+      await adapter.remove(path);
     }
   }
 
@@ -144,12 +193,15 @@ export class PluginDataFolderExclusionComponent extends LayoutReadyComponent {
     this.app.saveLocalStorage(MANAGED_IGNORE_FILTERS_LOCAL_STORAGE_KEY, nextManagedFilters.length > 0 ? nextManagedFilters : null);
   }
 
-  private async writeReadme(folder: string): Promise<void> {
+  private async writeReadme(path: string, text: string): Promise<void> {
     const adapter = this.app.vault.adapter;
-    const path = `${folder}/${PLUGIN_DATA_FOLDER_README_FILE_NAME}`;
-    if (await adapter.exists(path) && await adapter.read(path) === PLUGIN_DATA_FOLDER_README) {
-      return;
+    if (await adapter.exists(path)) {
+      const currentText = await adapter.read(path);
+      // Never write over a README the plugin did not write.
+      if (currentText === text || !isPluginDataFolderReadme(currentText)) {
+        return;
+      }
     }
-    await adapter.write(path, PLUGIN_DATA_FOLDER_README);
+    await adapter.write(path, text);
   }
 }
