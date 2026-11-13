@@ -49,6 +49,10 @@ import {
   getOriginalNameSyncAdvice,
   OriginalNameSyncAdvice
 } from '../original-attachment-names/original-name-sync-advice.ts';
+import {
+  isPluginOwnedDataFolder,
+  PLUGIN_DATA_SUBFOLDER_NAME
+} from '../original-attachment-names/plugin-data-folder.ts';
 import { Substitutions } from '../tokens/substitutions.ts';
 import { TOKENIZED_STRING_LANGUAGE } from '../tokens/tokenized-string-language.ts';
 import {
@@ -1635,7 +1639,18 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           setting.addButton((button) =>
             button.setButtonText(t(($) => $.originalAttachmentNames.storage.apply)).onClick(convertAsyncToSync(() =>
               run(async () => {
-                await component.relocate(this.pluginSettingsComponent.settings.pluginDataFolder);
+                const folder = this.pluginSettingsComponent.settings.pluginDataFolder;
+                if (
+                  !await isPluginOwnedDataFolder(this.app.vault.adapter, folder)
+                  && !await confirm({
+                    app: this.app,
+                    message: t(($) => $.originalAttachmentNames.storage.sharedFolder, { folder, subfolder: PLUGIN_DATA_SUBFOLDER_NAME }),
+                    title: t(($) => $.originalAttachmentNames.storage.sharedFolderTitle)
+                  })
+                ) {
+                  return;
+                }
+                await component.relocate(folder);
               })
             ))
           );

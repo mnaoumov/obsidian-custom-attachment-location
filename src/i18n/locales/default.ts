@@ -206,6 +206,8 @@ export const defaultTranslations = {
       obsidianSyncUnavailable: 'Obsidian Sync is not connected to a remote vault on this device. Connect it in Settings → Sync first, or set up external sync if another tool carries this vault.',
       roots: 'History locations: {{roots}}. Keep all these locations synchronized; old history and the discovery anchor are retained.',
       setupTitle: 'Enable original name synchronization?',
+      sharedFolder: '{{folder}} already holds other files. The history will go into its {{subfolder}} subfolder, and only that subfolder will be added to Excluded files. Nothing else in {{folder}} is excluded, moved or overwritten. Apply this folder?',
+      sharedFolderTitle: 'Use a folder that holds other files?',
       title: 'Original name storage'
     },
     unknownDetails: {

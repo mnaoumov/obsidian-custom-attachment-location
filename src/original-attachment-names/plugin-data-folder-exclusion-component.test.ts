@@ -19,11 +19,14 @@ import type { OriginalAttachmentNamesComponent } from './original-attachment-nam
 import {
   PLUGIN_DATA_FOLDER_DOCS_URL,
   PLUGIN_DATA_FOLDER_README,
+  PLUGIN_DATA_SUBFOLDER_README,
   PluginDataFolderExclusionComponent
 } from './plugin-data-folder-exclusion-component.ts';
 import {
   DEFAULT_PLUGIN_DATA_FOLDER,
-  LEGACY_PLUGIN_DATA_FOLDER
+  LEGACY_PLUGIN_DATA_FOLDER,
+  PLUGIN_DATA_FOLDER_README_HEADING,
+  PLUGIN_DATA_SUBFOLDER_NAME
 } from './plugin-data-folder.ts';
 
 interface LayoutReadyTrigger {
@@ -119,7 +122,7 @@ describe('PluginDataFolderExclusionComponent', () => {
     existingFolders = [DEFAULT_PLUGIN_DATA_FOLDER];
     await app.vault.createFolder(DEFAULT_PLUGIN_DATA_FOLDER);
     const path = `${DEFAULT_PLUGIN_DATA_FOLDER}/README.md`;
-    await app.vault.adapter.write(path, 'edited by hand');
+    await app.vault.adapter.write(path, `${PLUGIN_DATA_FOLDER_README_HEADING}\n\nedited by hand`);
 
     await component.reconcile();
     expect(await app.vault.adapter.read(path)).toBe(PLUGIN_DATA_FOLDER_README);
@@ -127,6 +130,72 @@ describe('PluginDataFolderExclusionComponent', () => {
     const write = vi.spyOn(app.vault.adapter, 'write');
     await component.reconcile();
     expect(write).not.toHaveBeenCalled();
+  });
+
+  it('should claim only its subfolder in a folder that holds the user\'s own files, and leave their README alone', async () => {
+    isSyncEnabled = false;
+    existingFolders = ['Work notes'];
+    await app.vault.adapter.mkdir(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/original-attachment-names-v1`);
+    await app.vault.adapter.write('Work notes/Note.md', 'my note');
+    await app.vault.adapter.write('Work notes/README.md', 'my own readme');
+
+    await component.reconcile();
+
+    expect(getFilters()).toEqual([`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/`]);
+    expect(await app.vault.adapter.read('Work notes/README.md')).toBe('my own readme');
+    expect(await app.vault.adapter.read(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/README.md`)).toBe(PLUGIN_DATA_SUBFOLDER_README);
+  });
+
+  it('should treat a user README alone as the user\'s content, and never write over it', async () => {
+    isSyncEnabled = false;
+    existingFolders = ['Work notes'];
+    await app.vault.adapter.mkdir(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/original-attachment-names-v1`);
+    await app.vault.adapter.write('Work notes/README.md', 'my own readme');
+
+    await component.reconcile();
+
+    expect(getFilters()).toEqual([`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/`]);
+    expect(await app.vault.adapter.read('Work notes/README.md')).toBe('my own readme');
+  });
+
+  it('should remove the README an earlier version wrote into a folder that holds the user\'s own files', async () => {
+    isSyncEnabled = false;
+    existingFolders = ['Work notes'];
+    await app.vault.adapter.mkdir(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/original-attachment-names-v1`);
+    await app.vault.adapter.write('Work notes/Note.md', 'my note');
+    await app.vault.adapter.write('Work notes/README.md', PLUGIN_DATA_FOLDER_README);
+
+    await component.reconcile();
+
+    expect(await app.vault.adapter.exists('Work notes/README.md')).toBe(false);
+    expect(await app.vault.adapter.read('Work notes/Note.md')).toBe('my note');
+  });
+
+  it('should claim the whole folder again once it holds only plugin data, ignoring hidden system files', async () => {
+    isSyncEnabled = false;
+    existingFolders = ['Work notes'];
+    await app.vault.adapter.mkdir(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/original-attachment-names-v1`);
+    await app.vault.adapter.write('Work notes/Note.md', 'my note');
+    await component.reconcile();
+    expect(await app.vault.adapter.exists(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/README.md`)).toBe(true);
+
+    await app.vault.adapter.remove('Work notes/Note.md');
+    await app.vault.adapter.write('Work notes/.DS_Store', '');
+    await component.reconcile();
+
+    expect(getFilters()).toEqual(['Work notes/']);
+    expect(await app.vault.adapter.read('Work notes/README.md')).toBe(PLUGIN_DATA_FOLDER_README);
+    expect(await app.vault.adapter.exists(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/README.md`)).toBe(false);
+  });
+
+  it('should exclude only its subfolder of an existing user folder the setting names while this device synchronizes', async () => {
+    settings.pluginDataFolder = 'Work notes';
+    await app.vault.adapter.mkdir('Work notes/Projects');
+
+    await component.reconcile();
+
+    expect(getFilters()).toEqual([`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/`]);
+    expect(await app.vault.adapter.exists('Work notes/README.md')).toBe(false);
   });
 
   it('should skip hidden folders, which Obsidian never indexes, but still explain them', async () => {
