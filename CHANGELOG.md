@@ -2,21 +2,29 @@
 
 ## 17.4.1
 
-- chore(deps): take `obsidian-integration-testing` 17.10.0
-- test(original-attachment-names): tap the copy action in the newest menu
-- test(original-attachment-names): keep the link narrowing inside the contextmenu recorder
-- test(original-attachment-names): press the Android link again when its long press opens no menu
-- test(original-attachment-names): give the Android link menu 10 s to open under host load
-- fix: re #105
+This release has 1 fix. 5 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
+
+### Fixed
+
+- \[BUG\] Doc: minor: option hyperlinks to available tokens points to main README which points to moved doc (#105)
 
 ## 17.4.0
 
-- docs(original-attachment-names): say a folder move keeps the original, and how to remove it
-- feat(settings): templates by operation, one page per operation
-- fix(settings): render tokens in setting descriptions as code
-- fix(original-attachment-names): follow a moved history folder instead of recreating it
-- test(original-attachment-names): drop the synthetic link menu on Android now that the long press retries
-- docs(changelog): regroup the published release notes for readers
+This release has 1 new feature, 2 fixes and 2 documentation changes. 1 maintenance commit (tests, build, CI, refactoring, dependencies) is not listed.
+
+### New
+
+- **settings:** templates by operation, one page per operation
+
+### Fixed
+
+- **settings:** render tokens in setting descriptions as code
+- **original-attachment-names:** follow a moved history folder instead of recreating it
+
+### Documentation
+
+- **original-attachment-names:** say a folder move keeps the original, and how to remove it
+- **changelog:** regroup the published release notes for readers
 
 ## 17.3.0
 
