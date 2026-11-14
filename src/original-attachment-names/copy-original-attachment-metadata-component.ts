@@ -4,12 +4,10 @@ import type {
   TAbstractFile
 } from 'obsidian';
 
+import { ComponentEx } from '@mnaoumov/obsidian-lib/components/component-ex';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { convertAsyncToSync } from '@mnaoumov/typescript-lib/async';
-import {
-  Component,
-  TFile
-} from 'obsidian';
+import { TFile } from 'obsidian';
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { OriginalAttachmentNamesComponent } from './original-attachment-names-component.ts';
@@ -23,7 +21,7 @@ interface CopyOriginalAttachmentMetadataComponentConstructorParams {
 /**
 Adds the copy-original-file-name action to file menus, including menus opened on resolved attachment links.
 */
-export class CopyOriginalAttachmentMetadataComponent extends Component {
+export class CopyOriginalAttachmentMetadataComponent extends ComponentEx {
   private readonly app: App;
   private readonly originalAttachmentNamesComponent: OriginalAttachmentNamesComponent;
   private readonly pluginSettingsComponent: PluginSettingsComponent;

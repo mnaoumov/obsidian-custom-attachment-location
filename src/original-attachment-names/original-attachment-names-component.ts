@@ -25,6 +25,7 @@ import type {
   JsonValue
 } from 'type-fest';
 
+import { ComponentEx } from '@mnaoumov/obsidian-lib/components/component-ex';
 import { PluginNoticeMode } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import { DataStoreLocations } from '@mnaoumov/obsidian-lib/data-stores/data-store-locations';
 import { DataStoreTransport } from '@mnaoumov/obsidian-lib/data-stores/data-store-transport';
@@ -44,7 +45,6 @@ import {
 } from '@mnaoumov/typescript-lib/type-guards';
 import {
   ButtonComponent,
-  Component,
   debounce,
   TFile,
   TFolder
@@ -179,7 +179,7 @@ interface StoredOriginalAttachmentNames {
 /**
  * Keeps the arrival name of every attachment this plugin has seen arrive, keyed by its current path.
  */
-export class OriginalAttachmentNamesComponent extends Component {
+export class OriginalAttachmentNamesComponent extends ComponentEx {
   /**
    * Whether this device's synchronization was set up for Obsidian Sync, rather than an external sync tool.
    */
