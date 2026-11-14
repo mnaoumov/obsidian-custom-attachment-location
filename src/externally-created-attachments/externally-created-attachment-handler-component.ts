@@ -5,6 +5,7 @@ import type {
   WorkspaceLeaf
 } from 'obsidian';
 
+import { ComponentEx } from '@mnaoumov/obsidian-lib/components/component-ex';
 import { isNote } from '@mnaoumov/obsidian-lib/file-system';
 import {
   splitSubpath,
@@ -29,7 +30,6 @@ import {
 import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   App,
-  Component,
   TFile
 } from 'obsidian';
 
@@ -83,7 +83,7 @@ interface ExternallyCreatedAttachmentHandlerComponentConstructorParams {
  * Off by default: it reacts to writes the plugin did not make, so it must never change behavior on
  * upgrade.
  */
-export class ExternallyCreatedAttachmentHandlerComponent extends Component {
+export class ExternallyCreatedAttachmentHandlerComponent extends ComponentEx {
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly handedOverSettingsComponent: HandedOverSettingsComponent;
