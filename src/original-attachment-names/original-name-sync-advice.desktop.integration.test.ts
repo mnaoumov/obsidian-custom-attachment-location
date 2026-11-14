@@ -23,20 +23,16 @@ it('explains that a device without Obsidian Sync needs no synchronization, and r
     async callback({ app, lib: { clickElement, waitUntil } }) {
       const pluginId = 'obsidian-custom-attachment-location';
       const timeoutInMilliseconds = 10_000;
-      const syncPlugin = app.internalPlugins.getPluginById('sync');
-      const instance: unknown = syncPlugin?.instance;
-      const filter: unknown = instance && Reflect.get(instance, 'filter');
-      const getRemoteVaultId: unknown = instance && Reflect.get(instance, 'getRemoteVaultId');
-      const allowSyncFile: unknown = filter && Reflect.get(filter, 'allowSyncFile');
-      if (typeof getRemoteVaultId !== 'function' || typeof allowSyncFile !== 'function') {
-        throw new TypeError('The core Sync plugin no longer has getRemoteVaultId() and filter.allowSyncFile()');
+      const instance = app.internalPlugins.getPluginById('sync')?.instance;
+      if (!instance) {
+        throw new Error('The core Sync plugin is missing');
       }
       const premise = {
         // A JSON file needs `Sync all other types`, which is off by default.
-        isJsonCarriedByDefault: allowSyncFile.call(filter, '@Plugin sync data (DO NOT REMOVE)/plugin/store/history.json', false) as unknown,
-        isNoteCarriedByDefault: allowSyncFile.call(filter, 'note.md', false) as unknown,
+        isJsonCarriedByDefault: instance.filter.allowSyncFile('@Plugin sync data (DO NOT REMOVE)/plugin/store/history.json', false),
+        isNoteCarriedByDefault: instance.filter.allowSyncFile('note.md', false),
         isSyncEnabled: app.internalPlugins.getEnabledPluginById('sync') !== null,
-        remoteVaultId: getRemoteVaultId.call(instance) as unknown
+        remoteVaultId: instance.getRemoteVaultId()
       };
 
       try {
