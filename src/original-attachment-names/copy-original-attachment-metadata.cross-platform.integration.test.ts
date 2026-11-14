@@ -9,9 +9,11 @@
  *
  * The state the phases share lives in the page, and Android can recreate its WebView between two phases: the harness
  * logs `Eval found ChromeDriver's window closed; re-attaching the WebView`, the page reloads, and the next phase finds
- * no state. So everything cleanup needs (the settings to restore, the clipboard to put back, the stamp in every file
- * name the test creates) is kept on the Node side, and a phase that finds the state gone starts the flow again from
- * setup, once.
+ * no state. So everything cleanup needs (the settings to restore, the stamp in every file name the test creates) is
+ * kept on the Node side, and a phase that finds the state gone starts the flow again from setup, once.
+ *
+ * The copies go to the harness's in-memory clipboard, never the system one. The harness window is hidden and unfocused,
+ * so Chromium can refuse the system clipboard, and that clipboard is shared with whoever else uses the machine.
  */
 
 import type {
@@ -20,6 +22,7 @@ import type {
 } from 'obsidian';
 import type {
   EvalInObsidianParams,
+  InMemoryClipboard,
   Lib
 } from 'obsidian-integration-testing';
 
@@ -54,11 +57,6 @@ const STATE_LOST_MARKER = 'The page lost the test state';
  */
 interface CarriedState {
   /**
-  The system clipboard before the test, to put back; `null` where it is not read (Android).
-  */
-  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Filled by the snapshot phase.
-  previousClipboard: null | string;
-  /**
   The settings the test edits, as they were before it; `null` until the snapshot phase ran.
   */
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Filled by the snapshot phase.
@@ -92,27 +90,17 @@ interface CopyTestContext {
 
 interface CopyTestState {
   /**
-  Each text the clipboard writer finished writing, in order.
+  The in-memory clipboard the setup phase installed; its `writtenTexts` lists every copy, in order.
   */
-  readonly copiedValues: string[];
+  readonly clipboard: InMemoryClipboard;
   /**
   Each imported attachment; the setup phase pushes the one it imports.
   */
   readonly importedFiles: TFile[];
-  /**
-  Whether the system clipboard round-trips a probe text. A session with no clipboard of its own (a scheduled or
-  background launch on Windows) reads back an empty string after a successful write, which says nothing about the plugin.
-  */
-  readonly isClipboardReadable: boolean;
   readonly leaf: WorkspaceLeaf;
   readonly missing: TFile;
   readonly note: TFile;
   readonly settingsComponent: PluginSettingsComponentLike<Settings>;
-  /**
-  Each text the clipboard writer was CALLED with, pushed before the write is awaited.
-  */
-  readonly startedWrites: string[];
-  readonly writeText: Clipboard['writeText'];
 }
 
 interface FlowResult {
@@ -127,13 +115,14 @@ interface LinkMenuCopyResult extends MenuCopyResult {
 }
 
 interface MenuCopyResult {
-  readonly clipboard: null | string;
+  /**
+  What the clipboard holds after the copy, which is what a paste would insert.
+  */
+  readonly clipboard: string;
   readonly copied: string;
 }
 
 interface MissingMenuResult {
-  readonly isClipboardReadable: boolean;
-  readonly isDesktopApp: boolean;
   readonly isNameActionDisabled: boolean;
 }
 
@@ -149,9 +138,9 @@ interface Settings {
 /**
  * Opens a menu, clicks its `Copy original file name` action, and waits for the copy to finish.
  *
- * The click and the write are waited for separately. A click that never reached the action leaves the writer uncalled,
- * and on Android, where a trusted tap on a loaded guest can be lost, the menu is opened again and the click is retried
- * once. A write that started but is slow is only waited for, never retried, so the action runs once per delivered click.
+ * A click that never reached the action writes nothing to the clipboard, and on Android, where a trusted tap on a
+ * loaded guest can be lost, the menu is opened again and the click is retried once. The in-memory clipboard records a
+ * write as soon as it is made, so a write that arrived is never retried and the action runs once per delivered click.
  *
  * Runs in the renderer, handed over through `evalInObsidian`'s `input`, so it reaches nothing outside its own body.
  *
@@ -160,8 +149,7 @@ interface Settings {
  */
 async function clickActionUntilCopied(params: ClickActionUntilCopiedParams): Promise<string> {
   const { clickElement, dismissMenu, findMenuAction, isRetryAllowed, menuName, openMenu, state, waitUntil } = params;
-  const startedBefore = state.startedWrites.length;
-  const copiedBefore = state.copiedValues.length;
+  const copiedBefore = state.clipboard.writtenTexts.length;
   const maxAttempts = isRetryAllowed ? 2 : 1;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     await openMenu();
@@ -172,9 +160,9 @@ async function clickActionUntilCopied(params: ClickActionUntilCopiedParams): Pro
     await clickElement({ element: action });
     try {
       await waitUntil({
-        message: `The ${menuName} did not call the clipboard writer (attempt ${String(attempt)} of ${String(maxAttempts)})`,
-        predicate: () => state.startedWrites.length > startedBefore,
-        timeoutInMilliseconds: 5000
+        message: `The ${menuName} wrote nothing to the clipboard (attempt ${String(attempt)} of ${String(maxAttempts)})`,
+        predicate: () => state.clipboard.writtenTexts.length > copiedBefore,
+        timeoutInMilliseconds: 8000
       });
       break;
     } catch (error) {
@@ -185,12 +173,7 @@ async function clickActionUntilCopied(params: ClickActionUntilCopiedParams): Pro
       await dismissMenu();
     }
   }
-  await waitUntil({
-    message: `The clipboard write from the ${menuName} did not finish`,
-    predicate: () => state.copiedValues.length > copiedBefore,
-    timeoutInMilliseconds: 8000
-  });
-  const copied = state.copiedValues[copiedBefore];
+  const copied = state.clipboard.writtenTexts[copiedBefore];
   if (copied === undefined) {
     throw new Error(`The ${menuName} wrote nothing.`);
   }
@@ -247,11 +230,11 @@ function isSettings(value: unknown): value is Settings {
 }
 
 describe('Copy original attachment file name', () => {
-  it('copies the imported name to the system clipboard from file and link menus, offers no source path, and disables a missing name', async () => {
+  it('copies the imported name to the clipboard from file and link menus, offers no source path, and disables a missing name', async () => {
     await waitForPluginSettingsLoaded();
     const vaultPath = getTemporaryVault().path;
     let contextId = new ContextId<CopyTestContext>();
-    const carried: CarriedState = { previousClipboard: null, priorSettings: null, stamp: '', stamps: [] };
+    const carried: CarriedState = { priorSettings: null, stamp: '', stamps: [] };
     const input = { carried, clickActionUntilCopied, findCopyOriginalNameAction, findPluginSettingsComponent, getCopyTestState, isSettings };
 
     async function runPhase<Result>(
@@ -267,20 +250,14 @@ describe('Copy original attachment file name', () => {
 
     let bodyError: unknown;
     try {
-      const snapshot = await runPhase('snapshot', async ({ app, findPluginSettingsComponent: findSettings, isSettings: isTestSettings, obsidianModule: { Platform } }) => {
+      carried.priorSettings = await runPhase('snapshot', ({ app, findPluginSettingsComponent: findSettings, isSettings: isTestSettings }) => {
         const settingsComponent = findSettings(app.plugins.getPlugin('obsidian-custom-attachment-location'), isTestSettings);
         if (!settingsComponent) {
           throw new Error('The plugin settings were not found.');
         }
         const { attachmentFolderPath, attachmentRenameMode, generatedAttachmentFileName } = settingsComponent.settings;
-        return {
-          // Android's clipboard read bridge can reject even though writing is supported; this emulator is owned by the test.
-          previousClipboard: Platform.isDesktopApp ? await navigator.clipboard.readText() : null,
-          priorSettings: { attachmentFolderPath, attachmentRenameMode, generatedAttachmentFileName }
-        };
+        return { attachmentFolderPath, attachmentRenameMode, generatedAttachmentFileName };
       });
-      carried.previousClipboard = snapshot.previousClipboard;
-      carried.priorSettings = snapshot.priorSettings;
 
       let flow: FlowResult | undefined;
       for (let attempt = 1; flow === undefined; attempt++) {
@@ -302,13 +279,7 @@ describe('Copy original attachment file name', () => {
       expect(fileMenu.copied).toBe('arrival.pdf');
       expect(linkMenu.copied).toBe('arrival.pdf');
       expect(linkMenu.hasPathAction).toBe(false);
-      const isReadBackChecked = missingMenu.isDesktopApp && missingMenu.isClipboardReadable;
-      if (missingMenu.isDesktopApp && !isReadBackChecked) {
-        console.warn('The system clipboard did not round-trip a probe text, so the clipboard read-back was skipped; the observed writes remain the evidence.');
-      }
-      expect([fileMenu.clipboard, linkMenu.clipboard]).toStrictEqual(
-        isReadBackChecked ? ['arrival.pdf', 'arrival.pdf'] : [null, null]
-      );
+      expect([fileMenu.clipboard, linkMenu.clipboard]).toStrictEqual(['arrival.pdf', 'arrival.pdf']);
       expect(importedName).toMatch(/^renamed-\d+\.pdf$/);
       expect(missingMenu.isNameActionDisabled).toBe(true);
     } catch (error) {
@@ -325,43 +296,22 @@ describe('Copy original attachment file name', () => {
     }
 
     async function runFlow(): Promise<FlowResult> {
-      const importedName = await runPhase('setup', async ({ app, carried: { stamp }, context, findPluginSettingsComponent: findSettings, isSettings: isTestSettings, obsidianModule: { Platform } }) => {
+      const importedName = await runPhase('setup', async ({ app, carried: { stamp }, context, findPluginSettingsComponent: findSettings, isSettings: isTestSettings, lib: { useInMemoryClipboard } }) => {
         const settingsComponent = findSettings(app.plugins.getPlugin('obsidian-custom-attachment-location'), isTestSettings);
         if (!settingsComponent) {
           throw new Error('The plugin settings were not found.');
         }
-        const clipboard = navigator.clipboard;
-        let isClipboardReadable = false;
-        if (Platform.isDesktopApp) {
-          const probe = `copy-original-probe-${stamp}`;
-          await clipboard.writeText(probe);
-          isClipboardReadable = await clipboard.readText() === probe;
-        }
+        // The cleanup phase restores it; installing it again on a retried flow restores the previous one first.
+        const clipboard = useInMemoryClipboard();
         const state: CopyTestState = {
-          copiedValues: [],
+          clipboard,
           importedFiles: [],
-          isClipboardReadable,
           leaf: app.workspace.getLeaf(false),
           missing: await app.vault.createBinary(`copy-missing-${stamp}.pdf`, new ArrayBuffer(1)),
           note: await app.vault.create(`copy-original-${stamp}.md`, ''),
-          settingsComponent,
-          startedWrites: [],
-          writeText: clipboard.writeText
+          settingsComponent
         };
         context.state = state;
-        /*
-         * Observe the calls while still invoking the REAL writer, rather than replacing the clipboard. A call is recorded
-         * before its write is awaited and again once it finished, so a click that never reached the action is told apart
-         * from a slow write. On desktop the system clipboard is then read back, so the assertion covers what a user would
-         * paste. Android's read bridge can reject, so there the observed write is the evidence.
-         */
-        Object.assign(clipboard, {
-          async writeText(text: string): Promise<void> {
-            state.startedWrites.push(text);
-            await state.writeText.call(clipboard, text);
-            state.copiedValues.push(text);
-          }
-        });
         await settingsComponent.editAndSave((draft) => {
           draft.attachmentFolderPath = './';
           draft.attachmentRenameMode = 'All';
@@ -417,9 +367,8 @@ describe('Copy original attachment file name', () => {
             state,
             waitUntil
           });
-          const clipboard = Platform.isDesktopApp && state.isClipboardReadable ? await navigator.clipboard.readText() : null;
           hideMenus();
-          return { clipboard, copied };
+          return { clipboard: state.clipboard.text, copied };
         }
       );
 
@@ -514,22 +463,21 @@ describe('Copy original attachment file name', () => {
             state,
             waitUntil
           });
-          const clipboard = Platform.isDesktopApp && state.isClipboardReadable ? await navigator.clipboard.readText() : null;
           await dismissMenu();
-          return { clipboard, copied, hasPathAction };
+          return { clipboard: state.clipboard.text, copied, hasPathAction };
         }
       );
 
       const missingMenu = await runPhase(
         'missing metadata',
-        ({ app, context, findCopyOriginalNameAction: findAction, getCopyTestState: getState, obsidianModule: { Menu, Platform } }) => {
+        ({ app, context, findCopyOriginalNameAction: findAction, getCopyTestState: getState, obsidianModule: { Menu } }) => {
           const state = getState(context);
           const menu = new Menu().setUseNativeMenu(false);
           app.workspace.trigger('file-menu', menu, state.missing, 'file-explorer', state.leaf);
           menu.showAtPosition({ x: 100, y: 100 });
           const isNameActionDisabled = findAction().classList.contains('is-disabled');
           menu.hide();
-          return { isClipboardReadable: state.isClipboardReadable, isDesktopApp: Platform.isDesktopApp, isNameActionDisabled };
+          return { isNameActionDisabled };
         }
       );
 
@@ -537,15 +485,9 @@ describe('Copy original attachment file name', () => {
     }
 
     async function cleanUp(): Promise<void> {
-      await runPhase('cleanup', async ({ app, carried: { previousClipboard, priorSettings, stamps }, context, findPluginSettingsComponent: findSettings, isSettings: isTestSettings, lib: { pressKey } }) => {
-        // The page state is gone after a WebView reload, and with it the wrapped writer, so only the carried state is relied on.
-        const clipboard = navigator.clipboard;
-        if (context.state) {
-          Object.assign(clipboard, { writeText: context.state.writeText });
-        }
-        if (previousClipboard !== null) {
-          await clipboard.writeText(previousClipboard);
-        }
+      await runPhase('cleanup', async ({ app, carried: { priorSettings, stamps }, findPluginSettingsComponent: findSettings, isSettings: isTestSettings, lib: { getInMemoryClipboard, pressKey } }) => {
+        // Looked up rather than read from the page state, which a WebView reload loses while the clipboard may remain.
+        getInMemoryClipboard()?.restore();
         if (priorSettings) {
           const settingsComponent = findSettings(app.plugins.getPlugin('obsidian-custom-attachment-location'), isTestSettings);
           if (!settingsComponent) {
