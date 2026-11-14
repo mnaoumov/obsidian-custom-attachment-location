@@ -58,31 +58,17 @@ export interface ObsidianSyncStatus {
  * @returns The status.
  */
 export function getObsidianSyncStatus(app: App): ObsidianSyncStatus {
-  type AllowSyncFileFunction = (this: unknown, path: string, isFolder: boolean) => unknown;
-  type GetRemoteVaultIdFunction = (this: unknown) => unknown;
-
   const instance = app.internalPlugins.getEnabledPluginById(InternalPluginName.Sync);
   if (!instance) {
     return { doesCarryFile: (): undefined => undefined, state: ObsidianSyncState.Off };
   }
 
-  // TODO: Call instance.getRemoteVaultId() and instance.filter.allowSyncFile() directly once obsidian-typings declares them on SyncPluginInstance.
-  const getRemoteVaultId = Reflect.get(instance, 'getRemoteVaultId') as GetRemoteVaultIdFunction | undefined;
-  const remoteVaultId = typeof getRemoteVaultId === 'function' ? getRemoteVaultId.call(instance) : undefined;
-  if (typeof remoteVaultId !== 'string' || remoteVaultId === '') {
+  if (!instance.getRemoteVaultId()) {
     return { doesCarryFile: (): undefined => undefined, state: ObsidianSyncState.NotConnected };
   }
 
-  const filter: unknown = Reflect.get(instance, 'filter');
-  const allowSyncFile = typeof filter === 'object' && filter !== null ? Reflect.get(filter, 'allowSyncFile') as AllowSyncFileFunction | undefined : undefined;
   return {
-    doesCarryFile: (path: string): boolean | undefined => {
-      if (typeof allowSyncFile !== 'function') {
-        return undefined;
-      }
-      const result = allowSyncFile.call(filter, path, false);
-      return typeof result === 'boolean' ? result : undefined;
-    },
+    doesCarryFile: (path: string): boolean => instance.filter.allowSyncFile(path, false),
     state: ObsidianSyncState.Connected
   };
 }

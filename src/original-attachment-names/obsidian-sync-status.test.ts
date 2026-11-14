@@ -1,3 +1,7 @@
+import type {
+  SyncFilter,
+  SyncPluginInstance
+} from '@obsidian-typings/obsidian-public-latest';
 import type { App } from 'obsidian';
 
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
@@ -39,35 +43,26 @@ describe('getObsidianSyncStatus', () => {
   });
 
   it.each([
-    ['an empty remote vault id', { getRemoteVaultId: (): string => '' }],
-    ['a non-string remote vault id', { getRemoteVaultId: (): number => 1 }],
-    ['no remote vault getter', {}]
-  ])('reports NotConnected for %s', (_label, instance) => {
+    ['no remote vault id', null],
+    ['an empty remote vault id', '']
+  ])('reports NotConnected for %s', (_label, remoteVaultId) => {
+    const instance = strictProxy<SyncPluginInstance>({ getRemoteVaultId: (): null | string => remoteVaultId });
     const status = getObsidianSyncStatus(createApp(instance).app);
     expect(status.state).toBe(ObsidianSyncState.NotConnected);
     expect(status.doesCarryFile('a/b.json')).toBeUndefined();
   });
 
   it.each([true, false])('asks the selective-sync filter whether a file is carried (%s)', (isCarried) => {
-    const filter = {
-      allowSyncFile: vi.fn(function allowsSyncFile(this: unknown, _path: string, _isFolder: boolean): boolean {
+    const filter = strictProxy<SyncFilter>({
+      allowSyncFile: vi.fn(function allowsSyncFile(this: SyncFilter, _path: string, _isFolder: boolean): boolean {
         expect(this).toBe(filter);
         return isCarried;
       })
-    };
-    const status = getObsidianSyncStatus(createApp({ filter, getRemoteVaultId: (): string => 'remote' }).app);
+    });
+    const instance = strictProxy<SyncPluginInstance>({ filter, getRemoteVaultId: (): string => 'remote' });
+    const status = getObsidianSyncStatus(createApp(instance).app);
     expect(status.state).toBe(ObsidianSyncState.Connected);
     expect(status.doesCarryFile('a/b.json')).toBe(isCarried);
     expect(filter.allowSyncFile).toHaveBeenCalledWith('a/b.json', false);
-  });
-
-  it.each([
-    ['no filter', {}],
-    ['a filter without allowSyncFile', { filter: {} }],
-    ['a filter answering a non-boolean', { filter: { allowSyncFile: (): string => 'yes' } }]
-  ])('cannot answer the carry question with %s', (_label, members) => {
-    const status = getObsidianSyncStatus(createApp({ ...members, getRemoteVaultId: (): string => 'remote' }).app);
-    expect(status.state).toBe(ObsidianSyncState.Connected);
-    expect(status.doesCarryFile('a/b.json')).toBeUndefined();
   });
 });
