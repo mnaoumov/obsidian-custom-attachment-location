@@ -98,6 +98,8 @@ describe('OriginalAttachmentNamesComponent', () => {
   afterEach(() => {
     component.unload();
     vi.useRealTimers();
+    // A prototype spy outlives its test otherwise, and the next test reads its calls.
+    vi.restoreAllMocks();
   });
 
   it.each([null, [], 4, { 'assets/a.pdf': '/Downloads/a.pdf' }])('should migrate names and ignore the retired source paths of the legacy JSON: %j', async (originalPaths) => {
@@ -314,6 +316,50 @@ describe('OriginalAttachmentNamesComponent', () => {
       await expect(createComponent()).rejects.toThrow('transport unavailable');
       // The consent fixture closes its connection as well as the component's failed open.
       expect(close).toHaveBeenCalledTimes(2);
+    });
+
+    it('touches no store from a foreground change after a failed load', async () => {
+      vi.spyOn(SharedDataStore, 'open').mockRejectedValueOnce(new Error('transport unavailable'));
+      const failed = new OriginalAttachmentNamesComponent({
+        app: getApp(),
+        consoleDebugComponent: strictProxy<ConsoleDebugComponent>({ consoleDebug }),
+        pluginNoticeComponent: strictProxy<PluginNoticeComponent>({ showNotice }),
+        pluginSettingsComponent: strictProxy<PluginSettingsComponent>({}),
+        storeFilePath: STORE_FILE_PATH
+      });
+      await expect(failed.loadFromDisk()).rejects.toThrow('transport unavailable');
+      // The suite's own component listens for the same document event.
+      component.unload();
+      await component.flush();
+      failed.load();
+      const get = vi.spyOn(LocalDataStore.prototype, 'get');
+      const synchronize = vi.spyOn(SharedDataStore.prototype, 'synchronize');
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+      await failed.flush();
+      expect(get).not.toHaveBeenCalled();
+      expect(synchronize).not.toHaveBeenCalled();
+      failed.unload();
+      await failed.flush();
+      expect(get).not.toHaveBeenCalled();
+    });
+
+    it('touches no store when a record arrives after unload', async () => {
+      component.set('assets/a.pdf', 'a.pdf');
+      component.unload();
+      await component.flush();
+      const get = vi.spyOn(LocalDataStore.prototype, 'get');
+      const publish = vi.spyOn(SharedDataStore.prototype, 'setMany');
+      const synchronize = vi.spyOn(SharedDataStore.prototype, 'synchronize');
+      component.set('assets/late.pdf', 'late.pdf');
+      await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+      await component.flush();
+      expect(get).not.toHaveBeenCalled();
+      expect(publish).not.toHaveBeenCalled();
+      expect(synchronize).not.toHaveBeenCalled();
+      const reloaded = await createComponent();
+      expect(reloaded.get('assets/a.pdf')).toBe('a.pdf');
+      reloaded.unload();
     });
 
     it('serializes concurrent windows using the same device identity without losing either write', async () => {

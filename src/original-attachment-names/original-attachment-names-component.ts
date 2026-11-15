@@ -222,6 +222,10 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
 
   private hasApprovedSyncSetup = false;
   private readonly history = new OriginalAttachmentNameHistory();
+  /**
+   * Set once the local store is closed for good: after a failed load, or after the final flush on unload.
+   */
+  private isClosed = false;
   private local: LocalDataStore | undefined;
   private readonly names = this.history.names;
   private readonly pending = new Map<string, JsonValue>();
@@ -249,6 +253,9 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
     this.storeFilePath = params.storeFilePath;
     this.saveDebounced = debounce(
       () => {
+        if (this.isClosed) {
+          return;
+        }
         invokeAsyncSafely(() => this.flush());
       },
       SAVE_DEBOUNCE_IN_MILLISECONDS,
@@ -420,7 +427,14 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       this.history.merge(this.shared.entries());
       await this.migrateLegacy();
     } catch (error) {
+      /*
+       * The component stays loaded after a failed load, so its interval, `visibilitychange` and vault listeners keep
+       * scheduling flushes. Dropping both stores makes each of those a no-op instead of a call on a closed connection.
+       */
       this.local.close();
+      this.local = undefined;
+      this.shared = undefined;
+      this.isClosed = true;
       throw error;
     }
   }
@@ -471,6 +485,8 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       try {
         await this.flush();
       } finally {
+        // A rename or collect that finishes after unload still calls `set`, which re-arms the debounce.
+        this.isClosed = true;
         this.local?.close();
       }
     });
@@ -701,7 +717,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
 
   private async flushImpl(): Promise<void> {
     let shared = this.shared;
-    if (!shared) {
+    if (!shared || this.isClosed) {
       return;
     }
     if (this.syncEnabled) {
