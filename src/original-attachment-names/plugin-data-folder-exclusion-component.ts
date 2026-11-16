@@ -148,16 +148,24 @@ export class PluginDataFolderExclusionComponent extends LayoutReadyComponent {
     const desiredFilters = excludedFolders.filter((folder) => folder.split('/').every((segment) => !segment.startsWith('.'))).map((folder) => `${folder}/`);
     this.updateFilters(desiredFilters);
 
+    // A device that keeps its history locally writes nothing into the vault, not even a README. Otherwise a README written
+    // while a file sync tool is halfway through deleting the folder brings the folder back, holding only that README
+    // (#99).
+    const shouldWriteReadme = this.originalAttachmentNamesComponent.isSyncEnabled;
     for (const folder of existingFolders) {
       const folderReadmePath = `${folder}/${PLUGIN_DATA_FOLDER_README_FILE_NAME}`;
       const subfolderReadmePath = `${folder}/${PLUGIN_DATA_SUBFOLDER_NAME}/${PLUGIN_DATA_FOLDER_README_FILE_NAME}`;
       if (ownedFolders.has(folder)) {
         await this.removeOwnReadme(subfolderReadmePath);
-        await this.writeReadme(folderReadmePath, PLUGIN_DATA_FOLDER_README);
+        if (shouldWriteReadme) {
+          await this.writeReadme(folderReadmePath, PLUGIN_DATA_FOLDER_README);
+        }
       } else {
         // An earlier version wrote its README here; left behind, it would tell the user to keep their own folder.
         await this.removeOwnReadme(folderReadmePath);
-        await this.writeReadme(subfolderReadmePath, PLUGIN_DATA_SUBFOLDER_README);
+        if (shouldWriteReadme) {
+          await this.writeReadme(subfolderReadmePath, PLUGIN_DATA_SUBFOLDER_README);
+        }
       }
     }
   }

@@ -4,6 +4,7 @@ import type {
   PluginSettingsTabBaseConstructorParams
 } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
 import type {
+  ButtonComponent,
   SettingDefinitionItem,
   SettingDefinitionPage,
   SettingDefinitionRender,
@@ -1550,7 +1551,10 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           // A sub-page renders outside the tab's container, so the plugin's scope class has to be on the row itself.
           addPluginCssClasses(setting.settingEl, 'original-name-storage-controls');
           const storage: OriginalAttachmentNamesComponent = component;
+          // The buttons are actions, not a choice that stays selected: the one that would change nothing is disabled.
+          let disableButton: ButtonComponent | undefined;
           const updateDescription = (): void => {
+            disableButton?.setDisabled(!storage.isSyncEnabled);
             const obsidianSyncStatus = getObsidianSyncStatus(this.app);
             const advice = getOriginalNameSyncAdvice({
               doesTemplateReadOriginalName: doesAnySettingReadOriginalAttachmentFileName(this.pluginSettingsComponent.settings),
@@ -1629,13 +1633,14 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
               })
             ))
           );
-          setting.addButton((button) =>
+          setting.addButton((button) => {
+            disableButton = button;
             button.setButtonText(t(($) => $.originalAttachmentNames.storage.disable)).onClick(convertAsyncToSync(() =>
               run(async () => {
                 await component.setSyncEnabled(false);
               })
-            ))
-          );
+            ));
+          });
           setting.addButton((button) =>
             button.setButtonText(t(($) => $.originalAttachmentNames.storage.apply)).onClick(convertAsyncToSync(() =>
               run(async () => {
