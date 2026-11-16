@@ -3,12 +3,12 @@ import type {
   TFile
 } from 'obsidian';
 
+import { configureCommunityPlugin } from '@mnaoumov/obsidian-lib/community-plugins';
+import { findPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
 import {
   Notice,
   TFolder
 } from 'obsidian';
-import { configureCommunityPlugin } from '@mnaoumov/obsidian-lib/community-plugins';
-import { findPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
 
 // The `obsidian-` prefix is part of the id, not decoration: it is what `manifest.json` and the vault's
 // `community-plugins.json` both say, so it is the folder every settings write has to land in.
@@ -30,7 +30,7 @@ const NAVIGATION_FOLDER_PATH = 'Materials/10 Navigation';
 
 const NOTICE_DURATION_IN_MILLISECONDS = 15_000;
 const WAIT_STEP_IN_MILLISECONDS = 100;
-const WAIT_TIMEOUT_IN_MILLISECONDS = 5_000;
+const WAIT_TIMEOUT_IN_MILLISECONDS = 5000;
 
 const ALPHA_BRAVO_TOKENS = `registerCustomToken('alpha', (ctx) => {
   const formatValue = ctx.format?.formatKey ?? 'defaultFormatValue';
@@ -53,22 +53,6 @@ const IMAGES_ONLY_TOKEN = `registerCustomToken('imagesOnly', async (ctx) => {
   return await ctx.fillTemplate('{{noteFileName}}-{{date:YYYYMMDDHHmmssSSS}}');
 });
 `;
-
-/**
- * The part of this plugin's published API the demos call. The whole of it is declared in `api.d.ts`.
- */
-interface CustomAttachmentLocationDemoApi {
-  collectAttachments(params: { readonly pathsOrFiles: readonly string[] }): Promise<void>;
-  getAvailablePathForAttachments(params: {
-    readonly attachmentFileBaseName: string;
-    readonly attachmentFileExtension: string;
-    readonly context: 'Unknown';
-    readonly notePathOrFile: TFile;
-    readonly oldAttachmentPathOrFile: string;
-    readonly readAttachmentFileContent: () => Promise<ArrayBuffer>;
-    readonly shouldSkipMissingAttachmentFolderCreation: boolean;
-  }): Promise<string>;
-}
 
 /**
  * The collect demos in `05 Collect attachments`, one per `Try it` section.
@@ -105,22 +89,45 @@ interface CollectDemoReport {
   readonly files: string[];
 }
 
+/**
+ * The part of this plugin's published API the demos call. The whole of it is declared in `api.d.ts`.
+ */
+interface CustomAttachmentLocationDemoApi {
+  readonly collectAttachments: (params: DemoCollectAttachmentsParams) => Promise<void>;
+  readonly getAvailablePathForAttachments: (params: DemoGetAvailablePathForAttachmentsParams) => Promise<string>;
+}
+
+interface DemoCollectAttachmentsParams {
+  readonly pathsOrFiles: readonly string[];
+}
+
+interface DemoGetAvailablePathForAttachmentsParams {
+  readonly attachmentFileBaseName: string;
+  readonly attachmentFileExtension: string;
+  readonly context: 'Unknown';
+  readonly notePathOrFile: TFile;
+  readonly oldAttachmentPathOrFile: string;
+  readonly readAttachmentFileContent: () => Promise<ArrayBuffer>;
+  readonly shouldSkipMissingAttachmentFolderCreation: boolean;
+}
+
 interface DemoSettingsPatch {
-  attachmentFolderPath?: string;
-  attachmentRenameMode?: 'All' | 'None' | 'Only pasted images';
-  attachmentUnitFolderPaths?: string[];
-  collectAttachmentUsedByMultipleNotesMode?: 'Cancel' | 'Copy' | 'Move' | 'Prompt' | 'Skip';
-  collectedAttachmentFolderPath?: string;
-  customTokensStr?: string;
-  excludeExtensionsFromMultipleNotesCheck?: string[];
-  generatedAttachmentFileName?: string;
-  sidecarExtensions?: string[];
-  insertedLinkText?: string;
-  shouldDeduplicateIdenticalAttachments?: boolean;
-  shouldFollowObsidianAttachmentLocation?: boolean;
-  shouldRenameAttachmentFiles?: boolean;
-  shouldRenameCollectedAttachments?: boolean;
-  shouldSkipCollectingAttachmentsReferencedByRawPath?: boolean;
+  readonly attachmentFolderPath?: string;
+  readonly attachmentRenameMode?: 'All' | 'None' | 'Only pasted images';
+  readonly attachmentUnitFolderPaths?: string[];
+  readonly collectAttachmentUsedByMultipleNotesMode?: 'Cancel' | 'Copy' | 'Move' | 'Prompt' | 'Skip';
+  readonly collectedAttachmentFolderPath?: string;
+  // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is the plugin's persisted `data.json` settings key, which this patch has to name.
+  readonly customTokensStr?: string;
+  readonly excludeExtensionsFromMultipleNotesCheck?: string[];
+  readonly generatedAttachmentFileName?: string;
+  readonly insertedLinkText?: string;
+  readonly shouldDeduplicateIdenticalAttachments?: boolean;
+  readonly shouldFollowObsidianAttachmentLocation?: boolean;
+  readonly shouldRenameAttachmentFiles?: boolean;
+  readonly shouldRenameCollectedAttachments?: boolean;
+  readonly shouldSkipCollectingAttachmentsReferencedByRawPath?: boolean;
+  readonly sidecarExtensions?: string[];
 }
 
 interface LinkDisplayTextDemoReport {
@@ -135,7 +142,14 @@ interface LinkDisplayTextDemoReport {
   readonly noteLink: string;
 }
 
-interface SaveSampleAttachmentParams {
+interface ResolveAttachmentPathParams {
+  readonly app: App;
+  readonly kind: SaveSampleAttachmentOptions['kind'];
+  readonly notePath: string;
+  readonly shouldCreateFolder: boolean;
+}
+
+interface SaveSampleAttachmentOptions {
   /**
    * What to save: an image, which the default `Only pasted images` mode renames, or a PDF.
    */
@@ -230,71 +244,15 @@ const COLLECT_DEMOS: Readonly<Record<CollectDemoId, CollectDemo>> = {
   },
   unitFolder: {
     files: {
-      'Saved page.md': `![[${COLLECT_MATERIALS_FOLDER_PATH}/Unit folder demo/saved-page/page_files/logo.png]]\n`,
       'saved-page/page_files/logo.png': decodeBase64(BLUE_IMAGE_BASE64),
-      'saved-page/page_files/style.css': 'img { border: 1px solid; }\n'
+      'saved-page/page_files/style.css': 'img { border: 1px solid; }\n',
+      'Saved page.md': `![[${COLLECT_MATERIALS_FOLDER_PATH}/Unit folder demo/saved-page/page_files/logo.png]]\n`
     },
     folderPath: `${COLLECT_MATERIALS_FOLDER_PATH}/Unit folder demo`,
     notePath: 'Saved page.md',
     settings: COLLECT_SETTINGS_BASELINE
   }
 };
-
-/**
- * Reports where an attachment pasted into the ACTIVE note would be saved, right now, with the current
- * settings — folder and generated file name both.
- *
- * Pasting cannot be automated — the image has to come from your clipboard — but the answer the plugin
- * would give can be asked for directly, through the same resolver a paste goes through. So a token pattern
- * can be inspected without finding an image first, and without waiting to see where the file ends up.
- *
- * Manual equivalent: paste an image into the note and look at where it landed in the File Explorer.
- *
- * @returns The path, or `null` when no note is open.
- */
-export async function previewAttachmentPath(app: App): Promise<null | string> {
-  const activeFile = app.workspace.getActiveFile();
-  if (!activeFile) {
-    new Notice('Open a note first — the path depends on which note you are in.');
-    return null;
-  }
-
-  const path = await resolveAttachmentPath({ app, kind: 'image', notePath: activeFile.path, shouldCreateFolder: false });
-  new Notice(`A pasted image would be saved as:\n${path}`, NOTICE_DURATION_IN_MILLISECONDS);
-  return path;
-}
-
-/**
- * Saves a sample file as an attachment of the ACTIVE note, under the folder and the name a paste (for the
- * image) or a drop (for the PDF) would give it with the current settings.
- *
- * Manual equivalent: paste an image, or drag a PDF, into the note.
- *
- * @returns The saved file's path, or `null` when no note is open.
- */
-export async function saveSampleAttachment(app: App, params: SaveSampleAttachmentParams): Promise<null | string> {
-  const activeFile = app.workspace.getActiveFile();
-  if (!activeFile) {
-    new Notice('Open a note first — the attachment belongs to the note you are in.');
-    return null;
-  }
-
-  const path = await resolveAttachmentPath({ app, kind: params.kind, notePath: activeFile.path, shouldCreateFolder: true });
-  await app.vault.createBinary(path, sampleContent(params.kind));
-  new Notice(`Saved a sample ${params.kind === 'image' ? 'image' : 'PDF'} as:\n${path}`, NOTICE_DURATION_IN_MILLISECONDS);
-  return path;
-}
-
-/**
- * Applies a settings patch, live, through the plugin's own settings component.
- *
- * Manual equivalent: edit the same field in **Settings -> Community plugins ->
- * `Custom Attachment Location`**.
- */
-export async function changeSettings(app: App, patch: DemoSettingsPatch): Promise<void> {
-  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: patch });
-  new Notice('Applied. Ask where a paste would go to see the effect.');
-}
 
 /**
  * Sets **Note priorities**, which `Advanced Rename and Delete Handler` owns.
@@ -308,82 +266,14 @@ export async function changeNotePriorities(app: App, notePriorities: string[]): 
 }
 
 /**
- * Restores the two patterns this vault ships with, and puts the plugin back in charge of the folder.
+ * Applies a settings patch, live, through the plugin's own settings component.
  *
- * Manual equivalent: turn **Follow Obsidian attachment location** off, set **Location for new attachments**
- * back to `./assets/{{noteFileName}}` and the generated file name back to its default.
- */
-export async function restoreDefaultPatterns(app: App): Promise<void> {
-  await changeSettings(app, {
-    attachmentFolderPath: './assets/{{noteFileName}}',
-    generatedAttachmentFileName: 'file-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}',
-    shouldFollowObsidianAttachmentLocation: false
-  });
-}
-
-/**
- * Restores every setting the collect demos change, and clears **Note priorities**.
- *
- * Manual equivalent: put each setting named in `05 Collect attachments` back to the value this vault ships
- * with — all of them empty or off, the mode `Skip`, the location `./assets/{{noteFileName}}`.
- */
-export async function restoreCollectSettings(app: App): Promise<void> {
-  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: COLLECT_SETTINGS_BASELINE });
-  await configureCommunityPlugin({ app, pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID, settings: { notePriorities: [] } });
-  new Notice('The collect settings are back to this vault\'s defaults.');
-}
-
-/**
- * Registers the `alpha` and `bravo` example tokens from `04 Custom tokens`, replacing any custom tokens.
- *
- * Manual equivalent: paste the example into **Custom tokens** in **Settings -> Community plugins ->
+ * Manual equivalent: edit the same field in **Settings -> Community plugins ->
  * `Custom Attachment Location`**.
  */
-export async function registerExampleTokens(app: App): Promise<void> {
-  await applyCustomTokens(app, ALPHA_BRAVO_TOKENS);
-  await changeSettings(app, { generatedAttachmentFileName: '{{alpha}}' });
-}
-
-/**
- * Registers the `imagesOnly` token from `04 Custom tokens` and turns on everything its worked example needs.
- *
- * Manual equivalent: paste the token into **Custom tokens**, set **Attachment rename mode** to `All` and
- * **Generated attachment file name** to `{{imagesOnly}}`.
- */
-export async function registerImagesOnlyToken(app: App): Promise<void> {
-  await applyCustomTokens(app, IMAGES_ONLY_TOKEN);
-  await changeSettings(app, { attachmentRenameMode: 'All', generatedAttachmentFileName: '{{imagesOnly}}' });
-}
-
-/**
- * Removes the example tokens and puts the naming settings they changed back.
- *
- * Manual equivalent: empty **Custom tokens**, set **Attachment rename mode** back to `Only pasted images` and
- * the generated file name back to its default.
- */
-export async function removeExampleTokens(app: App): Promise<void> {
-  await changeSettings(app, {
-    attachmentRenameMode: 'Only pasted images',
-    customTokensStr: '',
-    generatedAttachmentFileName: 'file-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}'
-  });
-}
-
-/**
- * Creates a collect demo from scratch: deletes its folder, writes its files, applies the settings it starts
- * from, optionally changed, and opens its first note.
- *
- * Manual equivalent: create the files the note's `Try it` lists and set each setting by hand.
- *
- * @returns What the demo's folder holds.
- */
-export async function setUpCollectDemo(app: App, demoId: CollectDemoId, settings: DemoSettingsPatch = {}): Promise<CollectDemoReport> {
-  const demo = COLLECT_DEMOS[demoId];
-  await recreateFolder(app, demo.folderPath, demo.files);
-  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { ...demo.settings, ...settings } });
-  await configureCommunityPlugin({ app, pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID, settings: { notePriorities: [] } });
-  await openFile(app, `${demo.folderPath}/${demo.notePath}`);
-  return reportFolder(app, demo.folderPath, 'Set up. The demo folder holds');
+export async function changeSettings(app: App, patch: DemoSettingsPatch): Promise<void> {
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: patch });
+  new Notice('Applied. Ask where a paste would go to see the effect.');
 }
 
 /**
@@ -401,20 +291,6 @@ export async function collectInDemo(app: App, demoId: CollectDemoId, notePaths?:
     await api.collectAttachments({ pathsOrFiles: [`${demo.folderPath}/${notePath}`] });
   }
   return reportFolder(app, demo.folderPath, 'Collected. The demo folder now holds');
-}
-
-/**
- * Saves a sample image into the destination demo's note the way a paste would.
- *
- * Manual equivalent: paste an image into `Example Note`.
- *
- * @returns What the demo's folder holds afterwards.
- */
-export async function pasteIntoDestinationDemo(app: App): Promise<CollectDemoReport> {
-  const demo = COLLECT_DEMOS.destination;
-  await openFile(app, `${demo.folderPath}/${demo.notePath}`);
-  await saveSampleAttachment(app, { kind: 'image' });
-  return reportFolder(app, demo.folderPath, 'Pasted. The demo folder now holds');
 }
 
 /**
@@ -437,11 +313,42 @@ export async function collectPrioritiesTie(app: App): Promise<TieDemoReport> {
   await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { collectAttachmentUsedByMultipleNotesMode: 'Prompt' } });
 
   // Not awaited: the collect waits for the dialog, which is yours to answer.
-  void getApi().collectAttachments({ pathsOrFiles: [`${demo.folderPath}/${demo.notePath}`] });
+  getApi().collectAttachments({ pathsOrFiles: [`${demo.folderPath}/${demo.notePath}`] }).catch((error: unknown) => {
+    console.error(error);
+  });
 
-  const list = await waitFor(() => document.querySelector('.custom-attachment-location-multiple-notes-list'));
-  const listedNotes = list ? Array.from(list.querySelectorAll('li'), (li) => li.textContent?.trim() ?? '') : [];
+  const list = await waitFor(() => activeDocument.querySelector('.custom-attachment-location-multiple-notes-list'));
+  const listedNotes = list ? Array.from(list.querySelectorAll('li'), (li) => li.textContent.trim()) : [];
   return { listedNotes };
+}
+
+/**
+ * Opens the navigation demo's note and runs **Go to attachment folder** on it.
+ *
+ * Manual equivalent: open `Navigation demo` and run **`Custom Attachment Location`: Go to attachment folder**.
+ */
+export async function goToNavigationDemoAttachmentFolder(app: App): Promise<void> {
+  await openFile(app, `${NAVIGATION_FOLDER_PATH}/Navigation demo.md`);
+  runCommand(app, 'go-to-attachment-folder');
+}
+
+/**
+ * Opens the navigation demo's image and runs **Go to owning note** on it.
+ *
+ * Manual equivalent: click the image in the File Explorer, then run **`Custom Attachment Location`: Go to
+ * owning note**.
+ *
+ * @returns The note it opened, or `null` when none opened.
+ */
+export async function goToNavigationDemoOwningNote(app: App): Promise<null | string> {
+  const imagePath = `${NAVIGATION_FOLDER_PATH}/assets/Navigation demo/image.png`;
+  await openFile(app, imagePath);
+  runCommand(app, 'go-to-owning-note');
+  const ownerFile = await waitFor(() => {
+    const activeFile = app.workspace.getActiveFile();
+    return activeFile && activeFile.path !== imagePath ? activeFile : null;
+  });
+  return ownerFile?.path ?? null;
 }
 
 /**
@@ -497,6 +404,128 @@ export async function insertOriginalNameLinkDemo(app: App, shouldEnable: boolean
 }
 
 /**
+ * Saves a sample image into the destination demo's note the way a paste would.
+ *
+ * Manual equivalent: paste an image into `Example Note`.
+ *
+ * @returns What the demo's folder holds afterwards.
+ */
+export async function pasteIntoDestinationDemo(app: App): Promise<CollectDemoReport> {
+  const demo = COLLECT_DEMOS.destination;
+  await openFile(app, `${demo.folderPath}/${demo.notePath}`);
+  await saveSampleAttachment(app, { kind: 'image' });
+  return reportFolder(app, demo.folderPath, 'Pasted. The demo folder now holds');
+}
+
+/**
+ * Reports where an attachment pasted into the ACTIVE note would be saved, right now, with the current
+ * settings — folder and generated file name both.
+ *
+ * Pasting cannot be automated — the image has to come from your clipboard — but the answer the plugin
+ * would give can be asked for directly, through the same resolver a paste goes through. So a token pattern
+ * can be inspected without finding an image first, and without waiting to see where the file ends up.
+ *
+ * Manual equivalent: paste an image into the note and look at where it landed in the File Explorer.
+ *
+ * @returns The path, or `null` when no note is open.
+ */
+export async function previewAttachmentPath(app: App): Promise<null | string> {
+  const activeFile = app.workspace.getActiveFile();
+  if (!activeFile) {
+    new Notice('Open a note first — the path depends on which note you are in.');
+    return null;
+  }
+
+  const path = await resolveAttachmentPath({ app, kind: 'image', notePath: activeFile.path, shouldCreateFolder: false });
+  new Notice(`A pasted image would be saved as:\n${path}`, NOTICE_DURATION_IN_MILLISECONDS);
+  return path;
+}
+
+/**
+ * Registers the `alpha` and `bravo` example tokens from `04 Custom tokens`, replacing any custom tokens.
+ *
+ * Manual equivalent: paste the example into **Custom tokens** in **Settings -> Community plugins ->
+ * `Custom Attachment Location`**.
+ */
+export async function registerExampleTokens(app: App): Promise<void> {
+  await applyCustomTokens(app, ALPHA_BRAVO_TOKENS);
+  await changeSettings(app, { generatedAttachmentFileName: '{{alpha}}' });
+}
+
+/**
+ * Registers the `imagesOnly` token from `04 Custom tokens` and turns on everything its worked example needs.
+ *
+ * Manual equivalent: paste the token into **Custom tokens**, set **Attachment rename mode** to `All` and
+ * **Generated attachment file name** to `{{imagesOnly}}`.
+ */
+export async function registerImagesOnlyToken(app: App): Promise<void> {
+  await applyCustomTokens(app, IMAGES_ONLY_TOKEN);
+  await changeSettings(app, { attachmentRenameMode: 'All', generatedAttachmentFileName: '{{imagesOnly}}' });
+}
+
+/**
+ * Removes the example tokens and puts the naming settings they changed back.
+ *
+ * Manual equivalent: empty **Custom tokens**, set **Attachment rename mode** back to `Only pasted images` and
+ * the generated file name back to its default.
+ */
+export async function removeExampleTokens(app: App): Promise<void> {
+  await changeSettings(app, {
+    attachmentRenameMode: 'Only pasted images',
+    // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is the plugin's persisted `data.json` settings key.
+    customTokensStr: '',
+    generatedAttachmentFileName: 'file-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}'
+  });
+}
+
+/**
+ * Restores every setting the collect demos change, and clears **Note priorities**.
+ *
+ * Manual equivalent: put each setting named in `05 Collect attachments` back to the value this vault ships
+ * with — all of them empty or off, the mode `Skip`, the location `./assets/{{noteFileName}}`.
+ */
+export async function restoreCollectSettings(app: App): Promise<void> {
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: COLLECT_SETTINGS_BASELINE });
+  await configureCommunityPlugin({ app, pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID, settings: { notePriorities: [] } });
+  new Notice('The collect settings are back to this vault\'s defaults.');
+}
+
+/**
+ * Restores the two patterns this vault ships with, and puts the plugin back in charge of the folder.
+ *
+ * Manual equivalent: turn **Follow Obsidian attachment location** off, set **Location for new attachments**
+ * back to `./assets/{{noteFileName}}` and the generated file name back to its default.
+ */
+export async function restoreDefaultPatterns(app: App): Promise<void> {
+  await changeSettings(app, {
+    attachmentFolderPath: './assets/{{noteFileName}}',
+    generatedAttachmentFileName: 'file-{{date:{momentJsFormat:\'YYYYMMDDHHmmssSSS\'}}}',
+    shouldFollowObsidianAttachmentLocation: false
+  });
+}
+
+/**
+ * Saves a sample file as an attachment of the ACTIVE note, under the folder and the name a paste (for the
+ * image) or a drop (for the PDF) would give it with the current settings.
+ *
+ * Manual equivalent: paste an image, or drag a PDF, into the note.
+ *
+ * @returns The saved file's path, or `null` when no note is open.
+ */
+export async function saveSampleAttachment(app: App, options: SaveSampleAttachmentOptions): Promise<null | string> {
+  const activeFile = app.workspace.getActiveFile();
+  if (!activeFile) {
+    new Notice('Open a note first — the attachment belongs to the note you are in.');
+    return null;
+  }
+
+  const path = await resolveAttachmentPath({ app, kind: options.kind, notePath: activeFile.path, shouldCreateFolder: true });
+  await app.vault.createBinary(path, sampleContent(options.kind));
+  new Notice(`Saved a sample ${options.kind === 'image' ? 'image' : 'PDF'} as:\n${path}`, NOTICE_DURATION_IN_MILLISECONDS);
+  return path;
+}
+
+/**
  * Imports a document and a companion under one random name, with the companion first.
  *
  * Manual equivalent: drop document.html and document.html.p7s into a note together with attachment renaming on.
@@ -518,13 +547,30 @@ export async function saveSidecarDemo(app: App): Promise<string[]> {
   });
   await openFile(app, notePath);
   const files = await app.importAttachments([
-    { name: 'document.html', extension: 'p7s', data: Promise.resolve(new TextEncoder().encode('Demonstration companion, not a real signature.').buffer) },
-    { name: 'document', extension: 'html', data: Promise.resolve(new TextEncoder().encode('<html>Demonstration document</html>').buffer) }
+    { data: Promise.resolve(new TextEncoder().encode('Demonstration companion, not a real signature.').buffer), extension: 'p7s', name: 'document.html' },
+    { data: Promise.resolve(new TextEncoder().encode('<html>Demonstration document</html>').buffer), extension: 'html', name: 'document' }
   ], null);
   await app.vault.modify(getFile(app, notePath), files.map((file) => app.fileManager.generateMarkdownLink(file, notePath)).join('\n'));
   await openFile(app, notePath);
   new Notice('The HTML and its companion share one random name. Rename the HTML to see the companion follow.', NOTICE_DURATION_IN_MILLISECONDS);
   return files.map((file) => file.path);
+}
+
+/**
+ * Creates a collect demo from scratch: deletes its folder, writes its files, applies the settings it starts
+ * from, optionally changed, and opens its first note.
+ *
+ * Manual equivalent: create the files the note's `Try it` lists and set each setting by hand.
+ *
+ * @returns What the demo's folder holds.
+ */
+export async function setUpCollectDemo(app: App, demoId: CollectDemoId, settings: DemoSettingsPatch = {}): Promise<CollectDemoReport> {
+  const demo = COLLECT_DEMOS[demoId];
+  await recreateFolder(app, demo.folderPath, demo.files);
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { ...demo.settings, ...settings } });
+  await configureCommunityPlugin({ app, pluginId: ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID, settings: { notePriorities: [] } });
+  await openFile(app, `${demo.folderPath}/${demo.notePath}`);
+  return reportFolder(app, demo.folderPath, 'Set up. The demo folder holds');
 }
 
 /**
@@ -547,46 +593,18 @@ export async function setUpNavigationDemo(app: App): Promise<string> {
 }
 
 /**
- * Opens the navigation demo's note and runs **Go to attachment folder** on it.
- *
- * Manual equivalent: open `Navigation demo` and run **`Custom Attachment Location`: Go to attachment folder**.
- */
-export async function goToNavigationDemoAttachmentFolder(app: App): Promise<void> {
-  await openFile(app, `${NAVIGATION_FOLDER_PATH}/Navigation demo.md`);
-  runCommand(app, 'go-to-attachment-folder');
-}
-
-/**
- * Opens the navigation demo's image and runs **Go to owning note** on it.
- *
- * Manual equivalent: click the image in the File Explorer, then run **`Custom Attachment Location`: Go to
- * owning note**.
- *
- * @returns The note it opened, or `null` when none opened.
- */
-export async function goToNavigationDemoOwningNote(app: App): Promise<null | string> {
-  const imagePath = `${NAVIGATION_FOLDER_PATH}/assets/Navigation demo/image.png`;
-  await openFile(app, imagePath);
-  runCommand(app, 'go-to-owning-note');
-  const ownerFile = await waitFor(() => {
-    const activeFile = app.workspace.getActiveFile();
-    return activeFile && activeFile.path !== imagePath ? activeFile : null;
-  });
-  return ownerFile?.path ?? null;
-}
-
-/**
  * Saves custom tokens. Saving them registers them, so a pattern naming one is accepted straight after.
  */
-async function applyCustomTokens(app: App, customTokensStr: string): Promise<void> {
-  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { customTokensStr } });
+async function applyCustomTokens(app: App, customTokensString: string): Promise<void> {
+  // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is the plugin's persisted `data.json` settings key.
+  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: { customTokensStr: customTokensString } });
 }
 
 function decodeBase64(base64: string): ArrayBuffer {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+  for (let index = 0; index < binary.length; index++) {
+    bytes[index] = binary.codePointAt(index) ?? 0;
   }
   return bytes.buffer;
 }
@@ -628,7 +646,7 @@ async function openFile(app: App, path: string): Promise<void> {
 async function recreateFolder(app: App, folderPath: string, files: Readonly<Record<string, ArrayBuffer | string>>): Promise<void> {
   const existingFolder = app.vault.getFolderByPath(folderPath);
   if (existingFolder) {
-    await app.vault.delete(existingFolder, true);
+    await app.fileManager.trashFile(existingFolder);
   }
 
   for (const [relativePath, content] of Object.entries(files)) {
@@ -656,7 +674,7 @@ function reportFolder(app: App, folderPath: string, message: string): CollectDem
   return { files };
 }
 
-async function resolveAttachmentPath(params: { app: App; kind: SaveSampleAttachmentParams['kind']; notePath: string; shouldCreateFolder: boolean }): Promise<string> {
+async function resolveAttachmentPath(params: ResolveAttachmentPathParams): Promise<string> {
   const [attachmentFileBaseName, attachmentFileExtension] = params.kind === 'image' ? ['Pasted image', 'png'] : ['report-2026', 'pdf'];
   return await getApi().getAvailablePathForAttachments({
     attachmentFileBaseName,
@@ -676,7 +694,7 @@ function runCommand(app: App, commandName: string): void {
   }
 }
 
-function sampleContent(kind: SaveSampleAttachmentParams['kind']): ArrayBuffer {
+function sampleContent(kind: SaveSampleAttachmentOptions['kind']): ArrayBuffer {
   return kind === 'image' ? decodeBase64(ORANGE_IMAGE_BASE64) : new TextEncoder().encode(SAMPLE_PDF_TEXT).buffer;
 }
 
