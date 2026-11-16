@@ -168,6 +168,11 @@ export class NetworkImageDownloader {
 
     const urlPath = new URL(link.url).pathname;
     let baseName = link.alt.trim() || basename(urlPath, extname(urlPath)) || 'image';
+    // An alt that is already a file name (`![photo.webp](...)`) would otherwise arrive as `photo.webp.webp`.
+    const extensionSuffix = `.${extension}`;
+    if (baseName.length > extensionSuffix.length && baseName.toLowerCase().endsWith(extensionSuffix)) {
+      baseName = baseName.slice(0, -extensionSuffix.length);
+    }
     baseName = this.sanitizeFileName(baseName);
 
     /*

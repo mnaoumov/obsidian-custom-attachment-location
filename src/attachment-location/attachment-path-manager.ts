@@ -81,7 +81,13 @@ import {
   IMPORT_FILES_PREFIX
 } from './share-receiver-import-files-patch-component.ts';
 
-const ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE = '{{originalAttachmentFileName}}';
+/*
+ * What an empty collect or note-rename template means: the name the attachment has NOW. Not
+ * `{{originalAttachmentFileName}}`, which reads the stored arrival name: a note rename would then move every
+ * attachment back to the name it arrived with (issue #104), and an alias that matched that arrival name would be
+ * refreshed while its neighbors kept theirs.
+ */
+const CURRENT_ATTACHMENT_FILE_NAME_TEMPLATE = '{{attachmentFileName}}';
 const ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN = 'originalAttachmentFileName'.toLowerCase();
 const ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN = 'originalAttachmentFileExtension'.toLowerCase();
 const ATTACHMENT_FILE_NAME_TOKEN = 'attachmentFileName'.toLowerCase();
@@ -497,7 +503,7 @@ export class AttachmentPathManager {
        * token). Both of these settings ship empty, so the fallback fired by default.
        */
       case ActionContext.CollectAttachments: {
-        baseTemplate = this.pluginSettingsComponent.settings.getOperationFileName(AttachmentOperation.Collect) || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
+        baseTemplate = this.pluginSettingsComponent.settings.getOperationFileName(AttachmentOperation.Collect) || CURRENT_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
       /*
@@ -509,7 +515,7 @@ export class AttachmentPathManager {
         break;
       }
       case ActionContext.RenameNote: {
-        baseTemplate = this.pluginSettingsComponent.settings.getOperationFileName(AttachmentOperation.NoteRename) || ORIGINAL_ATTACHMENT_FILE_NAME_TEMPLATE;
+        baseTemplate = this.pluginSettingsComponent.settings.getOperationFileName(AttachmentOperation.NoteRename) || CURRENT_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
       /*

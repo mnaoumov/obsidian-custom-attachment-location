@@ -453,7 +453,7 @@ export const defaultTranslations = {
       description: {
         part1: 'See available',
         part2: 'tokens',
-        part3: 'Leave empty to keep the original attachment file name.'
+        part3: 'Leave empty to keep the current attachment file name.'
       },
       name: 'Collected attachment file name'
     },
@@ -685,7 +685,7 @@ export const defaultTranslations = {
       description: {
         part1: 'See available',
         part2: 'tokens',
-        part3: 'Leave empty to keep the original attachment file name.'
+        part3: 'Leave empty to keep the current attachment file name.'
       },
       name: 'Renamed attachment file name'
     },
