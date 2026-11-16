@@ -104,8 +104,21 @@ describe('PluginDataFolderExclusionComponent', () => {
     expect(app.loadLocalStorage(MANAGED_KEY)).toBeNull();
   });
 
-  it('should exclude every existing store folder and explain it with a README', async () => {
+  it('should exclude an existing store folder on a device that keeps its history locally, and write nothing into it', async () => {
     isSyncEnabled = false;
+    existingFolders = [DEFAULT_PLUGIN_DATA_FOLDER];
+    await app.vault.adapter.mkdir(`${DEFAULT_PLUGIN_DATA_FOLDER}/${PLUGIN_DATA_SUBFOLDER_NAME}/original-attachment-names-v1`);
+    const write = vi.spyOn(app.vault.adapter, 'write');
+
+    await component.reconcile();
+
+    expect(getFilters()).toEqual([`${DEFAULT_PLUGIN_DATA_FOLDER}/`]);
+    expect(write).not.toHaveBeenCalled();
+    expect(await app.vault.adapter.exists(`${DEFAULT_PLUGIN_DATA_FOLDER}/README.md`)).toBe(false);
+  });
+
+  it('should exclude every existing store folder and explain it with a README', async () => {
+    settings.pluginDataFolder = '99-Meta/Names';
     existingFolders = [LEGACY_PLUGIN_DATA_FOLDER, '99-Meta/Names'];
     await app.vault.createFolder(LEGACY_PLUGIN_DATA_FOLDER);
     await app.vault.createFolder('99-Meta/Names');
@@ -133,7 +146,7 @@ describe('PluginDataFolderExclusionComponent', () => {
   });
 
   it('should claim only its subfolder in a folder that holds the user\'s own files, and leave their README alone', async () => {
-    isSyncEnabled = false;
+    settings.pluginDataFolder = 'Work notes';
     existingFolders = ['Work notes'];
     await app.vault.adapter.mkdir(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/original-attachment-names-v1`);
     await app.vault.adapter.write('Work notes/Note.md', 'my note');
@@ -172,7 +185,7 @@ describe('PluginDataFolderExclusionComponent', () => {
   });
 
   it('should claim the whole folder again once it holds only plugin data, ignoring hidden system files', async () => {
-    isSyncEnabled = false;
+    settings.pluginDataFolder = 'Work notes';
     existingFolders = ['Work notes'];
     await app.vault.adapter.mkdir(`Work notes/${PLUGIN_DATA_SUBFOLDER_NAME}/original-attachment-names-v1`);
     await app.vault.adapter.write('Work notes/Note.md', 'my note');

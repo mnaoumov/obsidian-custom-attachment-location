@@ -952,22 +952,36 @@ describe('PluginSettingsTab', () => {
   });
 
   it('applies the saved folder explicitly and can disable this device without deleting history', async () => {
-    const setSyncEnabled = vi.fn(async () => {
+    let isSyncEnabled = true;
+    const setSyncEnabled = vi.fn(async (isEnabled: boolean) => {
       await noopAsync();
+      isSyncEnabled = isEnabled;
     });
     const relocate = vi.fn(async () => {
       await noopAsync();
     });
-    const storage = strictProxy<OriginalAttachmentNamesComponent>({ isObsidianSyncProvider: false, isSyncEnabled: true, relocate, setSyncEnabled, transportRoots: [] });
+    const storage = strictProxy<OriginalAttachmentNamesComponent>({
+      isObsidianSyncProvider: false,
+      get isSyncEnabled(): boolean {
+        return isSyncEnabled;
+      },
+      relocate,
+      setSyncEnabled,
+      transportRoots: []
+    });
     const { buttons } = await createTab((settings) => {
       settings.pluginDataFolder = '99-Meta/Names';
     }, storage);
     buttons.find((button) => button.buttonEl.textContent === 'Apply folder')?.simulateClick__();
     await waitForAllAsyncOperations();
     expect(relocate).toHaveBeenCalledWith('99-Meta/Names');
-    buttons.find((button) => button.buttonEl.textContent === 'Disable sync on this device')?.simulateClick__();
+    const disableButton = buttons.find((button) => button.buttonEl.textContent === 'Disable sync on this device');
+    expect(disableButton?.disabled).toBe(false);
+    disableButton?.simulateClick__();
     await waitForAllAsyncOperations();
     expect(setSyncEnabled).toHaveBeenCalledWith(false);
+    // A device already keeping its history locally has nothing to disable, so the button says so.
+    expect(disableButton?.disabled).toBe(true);
   });
 
   it.each([true, false])('asks before applying a folder that holds other files (confirmed: %s)', async (isConfirmed) => {
