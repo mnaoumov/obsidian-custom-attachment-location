@@ -113,9 +113,10 @@ it('keeps names locally, opts in through settings, relocates to a hidden root an
     });
     phase = 'apply hidden destination';
     const location = await evalInObsidian({
-      async callback({ app, findPluginSettingsComponent: findSettings, isStorageSettings: isSettings, readStorage: storage }) {
+      async callback({ app, findPluginSettingsComponent: findSettings, isStorageSettings: isSettings, lib: { waitUntil }, readStorage: storage }) {
         const pluginId = 'obsidian-custom-attachment-location';
         const destination = '99-Meta/.original-names';
+        const destinationRoot = `${destination}/${pluginId}/original-attachment-names-v1`;
         const settings = findSettings(app.plugins.getPlugin(pluginId), isSettings);
         if (!settings) {
           throw new Error('Storage settings missing');
@@ -129,8 +130,10 @@ it('keeps names locally, opts in through settings, relocates to a hidden root an
           throw new Error('Apply folder action missing');
         }
         apply.click();
+        // The button first checks whether the folder holds the user's own files, so the relocation starts after the click returns.
+        await waitUntil({ message: 'Apply folder must relocate the history to the hidden destination', predicate: async () => storage(app).transportRoots.includes(destinationRoot) && await app.vault.adapter.exists(`${destinationRoot}/devices`), timeoutInMilliseconds: 15_000 });
         await storage(app).flush();
-        const saved = await app.vault.adapter.list(`${destination}/${pluginId}/original-attachment-names-v1/devices`);
+        const saved = await app.vault.adapter.list(`${destinationRoot}/devices`);
         return { devices: saved.folders.length, roots: [...storage(app).transportRoots] };
       },
       input,
@@ -491,6 +494,100 @@ it('never recreates the history folder at its old place after the folder is move
         }
       },
       input: { ...input, anchor, movedParent, wasEnabled },
+      vaultPath
+    });
+  }
+}, 180_000);
+
+// Last in the file: it deletes every history folder, as the documented way to stop synchronizing does.
+it('never recreates a deleted history folder or its README on a device with synchronization off, across a reload', async () => {
+  const vaultPath = getTemporaryVault().path;
+  const input = { readStorage };
+  const wasEnabled = await evalInObsidian({
+    callback: ({ app, readStorage: storage }) => storage(app).isSyncEnabled,
+    input,
+    vaultPath
+  });
+  try {
+    const result = await evalInObsidian({
+      async callback({ app, lib: { waitUntil }, readStorage: storage }) {
+        const pluginId = 'obsidian-custom-attachment-location';
+        const timeoutInMilliseconds = 8000;
+        const component = storage(app);
+        await component.setSyncEnabled(true);
+        const before = await app.vault.createBinary('storage-deleted-before.pdf', new TextEncoder().encode('before').buffer);
+        component.set(before.path, 'arrival-deleted-before.pdf');
+        await component.flush();
+        const storeFolders = await component.getExistingStoreFolders();
+        if (storeFolders.length === 0) {
+          throw new Error('Enabling synchronization must leave a store folder in the vault');
+        }
+        await component.setSyncEnabled(false);
+        // The user, or a sync tool carrying another device's delete, removes every listed folder outside Obsidian.
+        for (const folder of storeFolders) {
+          await app.vault.adapter.rmdir(folder, true);
+        }
+        // Keep working: a new attachment, a flush, and a reload, each of which used to be able to write history.
+        const after = await app.vault.createBinary('storage-deleted-after.pdf', new TextEncoder().encode('after').buffer);
+        component.set(after.path, 'arrival-deleted-after.pdf');
+        await component.flush();
+        await app.plugins.disablePlugin(pluginId);
+        await app.plugins.enablePlugin(pluginId);
+        await waitUntil({ message: 'Original-name commands must return after reload', predicate: () => Object.hasOwn(app.commands.commands, `${pluginId}:show-original-attachment-names`), timeoutInMilliseconds });
+        const reloaded = storage(app);
+        await reloaded.flush();
+        // Await the README and Excluded files reconciliation the reload scheduled, rather than guessing how long it takes.
+        interface ReconcilingChild {
+          readonly _children?: ReconcilingChild[];
+          readonly reconcile?: () => Promise<void>;
+        }
+        function findReconciler(children: readonly ReconcilingChild[]): ReconcilingChild | undefined {
+          for (const child of children) {
+            if (typeof child.reconcile === 'function' && 'originalAttachmentNamesComponent' in child) {
+              return child;
+            }
+            const nested = findReconciler(child._children ?? []);
+            if (nested) {
+              return nested;
+            }
+          }
+          return undefined;
+        }
+        const plugin = app.plugins.getPlugin(pluginId);
+        const pluginChildren = plugin ? Reflect.get(plugin, '_children') as ReconcilingChild[] | undefined : undefined;
+        const reconciler = findReconciler(pluginChildren ?? []);
+        if (!reconciler?.reconcile) {
+          throw new Error('The plugin data folder reconciliation component is missing');
+        }
+        await reconciler.reconcile();
+        const recreated: string[] = [];
+        for (const folder of storeFolders) {
+          if (await app.vault.adapter.exists(folder)) {
+            recreated.push(folder);
+          }
+        }
+        return {
+          isSyncEnabled: reloaded.isSyncEnabled,
+          names: [reloaded.get(before.path), reloaded.get(after.path)],
+          recreated
+        };
+      },
+      input,
+      vaultPath
+    });
+    expect(result).toEqual({ isSyncEnabled: false, names: ['arrival-deleted-before.pdf', 'arrival-deleted-after.pdf'], recreated: [] });
+  } finally {
+    await evalInObsidian({
+      async callback({ app, readStorage: storage, wasEnabled: priorEnabled }) {
+        await storage(app).setSyncEnabled(priorEnabled);
+        for (const path of ['storage-deleted-before.pdf', 'storage-deleted-after.pdf']) {
+          const file = app.vault.getFileByPath(path);
+          if (file) {
+            await app.fileManager.trashFile(file);
+          }
+        }
+      },
+      input: { ...input, wasEnabled },
       vaultPath
     });
   }
