@@ -643,6 +643,26 @@ describe('AttachmentPathManager', () => {
       expect(mockPromptWithPreview).not.toHaveBeenCalled();
     });
 
+    // Issue #104: the arrival name is a stored record that can differ from the name the file has now.
+    it.each([ActionContext.CollectAttachments, ActionContext.RenameNote])(
+      'should keep the current file name, not the arrival name, when the %s template is empty',
+      async (actionContext) => {
+        context.settings.collectedAttachmentFileName = '';
+        context.settings.renamedAttachmentFileName = '';
+        const substitutions = new Substitutions({
+          actionContext,
+          app: strictProxy<App>({ workspace: strictProxy<App['workspace']>({ activeEditor: null }) }),
+          attachmentFileName: 'current.png',
+          noteFilePath: 'notes/note.md',
+          originalAttachmentFileName: 'arrived.png',
+          pluginSettingsComponent: context.pluginSettingsComponent,
+          tokenValidator: context.tokenValidator
+        });
+        const result = await context.manager.getGeneratedAttachmentFileBaseName(substitutions);
+        expect(result).toBe('current');
+      }
+    );
+
     it('should use the manually renamed attachment file name template for RenameAttachments', async () => {
       context.settings.manuallyRenamedAttachmentFileName = 'manual';
       const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.RenameAttachments));

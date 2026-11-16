@@ -255,6 +255,30 @@ describe('NetworkImageDownloader', () => {
       }));
     });
 
+    it('should drop the detected extension from an alt text that is already a file name', async () => {
+      context.cachedRead.mockResolvedValue('![paste-1.WEBP](https://example.com/abc.webp)\n\n![webp](https://example.com/def.webp)');
+      mockRequestUrl.mockResolvedValue(createResponse({
+        arrayBuffer: toArrayBuffer([0x52, 0x49, 0x46, 0x46]),
+        headers: { 'content-type': 'image/webp' }
+      }));
+
+      await context.downloader.downloadNetworkImagesForNote(context.noteFile);
+
+      expect(context.getDownloadedImagePath).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          fileExtension: 'webp',
+          fileName: 'paste-1'
+        })
+      );
+      expect(context.getDownloadedImagePath).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          fileName: 'webp'
+        })
+      );
+    });
+
     it('should fall back to the image base name when neither alt nor URL provide one', async () => {
       context.cachedRead.mockResolvedValue('![](https://example.com/)');
       mockRequestUrl.mockResolvedValue(createResponse({
