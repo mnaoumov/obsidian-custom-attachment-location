@@ -113,9 +113,9 @@ describe('Only pasted images tells a screenshot tool\'s file apart from a real f
           return { error: '', scenarios: [], settingsFound: false };
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module -- Electron renderer require.
         const os = require('node:os') as OsModuleLike;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module -- Electron renderer require.
         const nodePath = require('node:path') as PathModuleLike;
         const adapterUnknown: unknown = app.vault.adapter;
         const fsPromises = (adapterUnknown as AdapterWithFsPromises).fsPromises;
@@ -275,9 +275,9 @@ describe('Only pasted images tells a screenshot tool\'s file apart from a real f
           return { error: '', scenarios: [], settingsFound: false };
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module -- Electron renderer require.
         const os = require('node:os') as OsModuleLike;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module -- Electron renderer require.
         const nodePath = require('node:path') as PathModuleLike;
         const adapterUnknown: unknown = app.vault.adapter;
         const fsPromises = (adapterUnknown as AdapterWithFsPromises).fsPromises;

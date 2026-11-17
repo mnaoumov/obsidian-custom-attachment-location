@@ -50,15 +50,29 @@ export const configs: Linter.Config[] = defineEslintConfigs({
         }
       },
       {
+        files: ['src/**/*.integration.test.ts'],
+        rules: {
+          /**
+           * An integration suite's `evalInObsidian` closures run inside the Obsidian renderer, where
+           * `window` and `document` always exist. The rule reads the file's Node test environment,
+           * which declares neither, so it reports every `window.x?.` and `document.x?.` in those
+           * closures although none of them can throw.
+           */
+          'unicorn/no-optional-chaining-on-undeclared-variable': 'off'
+        }
+      },
+      {
         files: [ObsidianPluginRepoPaths.ManifestJson],
         rules: {
           /**
            * The community directory forbids `obsidian` inside a plugin `id`, and this one carries it.
            * A published `id` is permanent — changing it orphans every existing installation and the
            * listing itself — so this repo can never satisfy the rule. The other three manifest rules
-           * stay on, which is why the checks are separate rules rather than one.
+           * stay on, which is why the checks are separate rules rather than one. `validate-manifest`
+           * keeps every other check: only its id check drops the one word the id carries forever.
            */
-          'obsidian-dev-toolkit/manifest-id': 'off'
+          'obsidian-dev-toolkit/manifest-id': 'off',
+          'obsidianmd/validate-manifest': ['error', { allowedWords: { id: ['obsidian'] }, checkId: true }]
         }
       }
     ]);

@@ -4,6 +4,7 @@ import { DUMMY_PATH } from '@mnaoumov/obsidian-lib/attachment-path';
 import { AllWindowsEventComponent } from '@mnaoumov/obsidian-lib/components/all-windows-event-component';
 import { LayoutReadyComponent } from '@mnaoumov/obsidian-lib/components/layout-ready-component';
 import { convertAsyncToSync } from '@mnaoumov/typescript-lib/async';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
 import { webUtils } from 'electron';
 import {
@@ -279,11 +280,13 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
   }
 
   private handleInputFileChange($event: Event): void {
-    if (!($event.target instanceof HTMLInputElement) || $event.target.type !== 'file') {
+    // A `change` event is no `UIEvent`, so it has no `targetNode`; its target is always the input node that changed.
+    const target = castTo<Node | null>($event.target);
+    if (!target?.instanceOf(HTMLInputElement) || target.type !== 'file') {
       return;
     }
 
-    for (const file of $event.target.files ?? []) {
+    for (const file of target.files ?? []) {
       this.addChild(
         new FileArrayBufferPatchComponent({
           app: this.app,

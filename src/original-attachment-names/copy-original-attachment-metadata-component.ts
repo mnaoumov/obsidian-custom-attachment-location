@@ -47,7 +47,6 @@ export class CopyOriginalAttachmentMetadataComponent extends ComponentEx {
     menu.addItem((item) => {
       item.setTitle(t(($) => $.menuItems.copyOriginalFileName)).setIcon('copy').setSection('action').setDisabled(!value).onClick(convertAsyncToSync(async () => {
         if (value) {
-          // eslint-disable-next-line n/no-unsupported-features/node-builtins -- Obsidian's browser clipboard, not Node's experimental navigator.
           await window.navigator.clipboard.writeText(value);
         }
       }));

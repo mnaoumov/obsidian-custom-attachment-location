@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-class-instance-assignment -- A false positive on every `this` and settings tab
+ * here: `PluginBase` and the settings tab base extend a mixin (`mixinAsyncEvents()(Plugin)`), whose declared base is an
+ * intersection the rule does not walk, so it cannot see that they ARE `Plugin` and `PluginSettingTab` instances. */
 import type {
   PluginConflict,
   PluginDependency,
@@ -523,3 +526,4 @@ export class Plugin extends PluginBase {
     this.addChild(createTokenizedStringLanguageComponent());
   }
 }
+/* eslint-enable @typescript-eslint/no-unsafe-class-instance-assignment -- Ends the mixin false-positive block above. */

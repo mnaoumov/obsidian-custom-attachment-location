@@ -94,9 +94,9 @@ describe('Per-operation templates for new attachments', () => {
           return { error: '', savedPaths: [], settingsFound: false };
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module -- Electron renderer require.
         const os = require('node:os') as OsModuleLike;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module -- Electron renderer require.
         const nodePath = require('node:path') as PathModuleLike;
         const adapterUnknown: unknown = app.vault.adapter;
         const fsPromises = (adapterUnknown as AdapterWithFsPromises).fsPromises;

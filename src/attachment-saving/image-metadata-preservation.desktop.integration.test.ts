@@ -289,9 +289,9 @@ describe('Image metadata is preserved across the JPEG conversion (issue #55)', (
           }
 
           const baseName = `exif-source-${stamp}`;
-          // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+          // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module -- Electron renderer require.
           const os = require('node:os') as OsModuleLike;
-          // eslint-disable-next-line @typescript-eslint/no-require-imports -- Electron renderer require.
+          // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module -- Electron renderer require.
           const nodePath = require('node:path') as PathModuleLike;
           const temporaryFilePath = nodePath.join(os.tmpdir(), `${baseName}.jpg`);
           const adapterUnknown: unknown = app.vault.adapter;
