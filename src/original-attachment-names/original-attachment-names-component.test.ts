@@ -362,6 +362,49 @@ describe('OriginalAttachmentNamesComponent', () => {
       reloaded.unload();
     });
 
+    it('touches no store after the browser closes its local connection while it is loaded', async () => {
+      // A database of its own, so the upgrade below cannot reach the other tests' connections.
+      vi.stubGlobal('indexedDB', new IDBFactory());
+      try {
+        const loaded = await createComponent();
+        loaded.set('assets/a.pdf', 'a.pdf');
+        await loaded.flush();
+        // The suite's own component listens for the same document event.
+        component.unload();
+        await component.flush();
+        const databaseName = `obsidian-lib:${JSON.stringify([getApp().appId, 'obsidian-custom-attachment-location', 'original-attachment-names-v1'])}`;
+        // Another connection asking for a newer schema makes the browser raise `versionchange` on this one.
+        const upgrade = indexedDB.open(databaseName, 2);
+        await new Promise<void>((resolve, reject) => {
+          upgrade.addEventListener('success', () => {
+            upgrade.result.close();
+            resolve();
+          });
+          upgrade.addEventListener('error', () => {
+            reject(upgrade.error ?? new Error('The upgrade failed.'));
+          });
+        });
+        const get = vi.spyOn(LocalDataStore.prototype, 'get');
+        const publish = vi.spyOn(SharedDataStore.prototype, 'setMany');
+        const synchronize = vi.spyOn(SharedDataStore.prototype, 'synchronize');
+        const consoleErrorSpy = vi.spyOn(console, 'error');
+        loaded.set('assets/late.pdf', 'late.pdf');
+        document.dispatchEvent(new Event('visibilitychange'));
+        await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_IN_MILLISECONDS);
+        await expect(loaded.flush()).resolves.toBeUndefined();
+        expect(get).not.toHaveBeenCalled();
+        expect(publish).not.toHaveBeenCalled();
+        expect(synchronize).not.toHaveBeenCalled();
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+        loaded.unload();
+        await loaded.flush();
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+      } finally {
+        // The upgraded database would refuse every later open at version 1.
+        vi.stubGlobal('indexedDB', new IDBFactory());
+      }
+    });
+
     it('serializes concurrent windows using the same device identity without losing either write', async () => {
       const other = await createComponent();
       component.set('assets/first.pdf', 'first.pdf');

@@ -25,6 +25,7 @@ import type {
   JsonValue
 } from 'type-fest';
 
+import { AllWindowsEventComponent } from '@mnaoumov/obsidian-lib/components/all-windows-event-component';
 import { ComponentEx } from '@mnaoumov/obsidian-lib/components/component-ex';
 import { PluginNoticeMode } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import { DataStoreLocations } from '@mnaoumov/obsidian-lib/data-stores/data-store-locations';
@@ -39,6 +40,7 @@ import {
   invokeAsyncSafely
 } from '@mnaoumov/typescript-lib/async';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import {
   ensureNonNullable,
   isStringArray
@@ -253,7 +255,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
     this.storeFilePath = params.storeFilePath;
     this.saveDebounced = debounce(
       () => {
-        if (this.isClosed) {
+        if (this.isStoreClosed()) {
           return;
         }
         invokeAsyncSafely(() => this.flush());
@@ -455,10 +457,14 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
     };
     this.registerEvent(this.app.vault.on('raw', onTransportChange));
     this.registerInterval(window.setInterval(synchronize, SYNCHRONIZE_INTERVAL_IN_MILLISECONDS));
-    this.registerDomEvent(document, 'visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        synchronize();
-      }
+    // Any window of the app coming back into view is the app coming to the foreground.
+    this.addChild(new AllWindowsEventComponent(this.app)).registerAllDocumentsDomEvent({
+      callback: ($event) => {
+        if (castTo<Document>($event.target).visibilityState === 'visible') {
+          synchronize();
+        }
+      },
+      type: 'visibilitychange'
     });
   }
 
@@ -717,7 +723,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
 
   private async flushImpl(): Promise<void> {
     let shared = this.shared;
-    if (!shared || this.isClosed) {
+    if (!shared || this.isStoreClosed()) {
       return;
     }
     if (this.syncEnabled) {
@@ -821,6 +827,16 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
     }
     this.record({ isFolder: file instanceof TFolder, kind: 'rename', path: oldPath, target: file.path });
     this.saveDebounced();
+  }
+
+  /**
+   * Tells whether the local store can no longer be used: this component closed it, or the browser did (a
+   * `versionchange` from another connection, or the forced `close` event), which the component cannot observe itself.
+   *
+   * @returns `true` when a flush must not touch the stores.
+   */
+  private isStoreClosed(): boolean {
+    return this.isClosed || this.local?.isClosed === true;
   }
 
   /**
@@ -947,7 +963,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       ...(observed.length > 0 && (operation.kind === 'remove' || operation.kind === 'rename') && { observed }),
       time: Math.max(Date.now(), this.history.time + 1)
     };
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins -- This is the renderer Web Crypto API.
+
     const key = window.crypto.randomUUID();
     this.history.add(key, timed);
     this.pending.set(key, { ...timed });
