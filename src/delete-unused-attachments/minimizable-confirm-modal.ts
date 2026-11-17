@@ -91,7 +91,7 @@ export async function confirmMinimizable(params: ConfirmMinimizableParams): Prom
     );
 
     minimizableModal.modal.contentEl.addEventListener('click', ($event) => {
-      if ($event.target instanceof Element && $event.target.closest('a')) {
+      if ($event.targetNode?.instanceOf(Element) && $event.targetNode.closest('a')) {
         minimizableModal.minimize();
       }
     });
