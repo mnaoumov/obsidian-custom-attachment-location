@@ -169,6 +169,10 @@ interface RelocationLocation {
 }
 
 interface RelocationRecord {
+  /**
+   * The anchor folder the record was written at. Records written before `obsidian-lib` 11 have none.
+   */
+  readonly anchor?: RelocationLocation;
   readonly from: RelocationLocation;
   readonly to: RelocationLocation;
 }
@@ -668,6 +672,35 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
   }
 
   /**
+   * Tells whether history found at a folder other than this device's anchor can be opened there.
+   *
+   * History with no relocation record always can. A record that has not fully arrived cannot be opened until it does.
+   * Otherwise the library decides: it follows records that name the anchor they were written at, and infers the former
+   * folder of older records only when exactly one folder completes the chain and no longer holds the store. Its own
+   * discovery is asked rather than repeated here, so the two cannot disagree. On success it finishes any copy a
+   * relocation left incomplete, which opening the store there does anyway.
+   *
+   * @param folder - The folder holding the history.
+   * @param records - Its relocation records, `null` for each one that has not fully arrived.
+   * @returns Whether it can be opened.
+   */
+  private async canOpenAnchor(folder: string, records: readonly (null | RelocationRecord)[]): Promise<boolean> {
+    if (records.length === 0) {
+      return true;
+    }
+    if (records.includes(null)) {
+      return false;
+    }
+    try {
+      await new DataStoreLocations({ adapter: this.app.vault.adapter, folder, format: 'markdown', pluginId: PLUGIN_ID, storeId: STORE_ID }).refresh();
+      return true;
+    } catch (error) {
+      this.consoleDebugComponent.consoleDebug(`Original name history at '${folder}' cannot be opened there.`, error);
+      return false;
+    }
+  }
+
+  /**
    * Deletes the source-path observations 17.1.0 recorded, so the paths stop syncing between devices.
    *
    * @param shared - The opened shared store.
@@ -684,9 +717,8 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
    * Finds this store's anchor in a vault folder other than the given one.
    *
    * Every folder holding the store is a candidate. A relocation destination holds it too, so the destinations named
-   * by the candidates' relocation records are set aside, and exactly one candidate must remain. That one can be
-   * opened when it has no relocation record, or when its records start at it. A chain that starts at another folder
-   * means the anchor itself was moved after a relocation, and the library refuses to open such a chain.
+   * by the candidates' relocation records are set aside, and exactly one candidate must remain. Whether that one can
+   * be opened is `canOpenAnchor`'s answer.
    *
    * @param excludedFolder - The anchor folder whose history is gone.
    * @param shouldScanFileSystem - Whether to look through the file system rather than the vault index, which misses
@@ -705,11 +737,24 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
     for (const folder of candidates) {
       recordsByFolder.set(folder, await this.readRelocationRecords(folder));
     }
-    const destinations = new Set(
-      [...recordsByFolder.values()].flat()
-        .filter((record): record is RelocationRecord => record !== null && record.to.folder !== record.from.folder)
-        .map((record) => record.to.folder)
-    );
+    /*
+     * Records name absolute folders, so a destination inside a moved anchor is named at its old place. Map it onto the
+     * candidate holding the records: by the anchor a record names, or, for a record written before records named it,
+     * from the anchor this device knew, which is the folder the history left.
+     */
+    const destinations = new Set<string>();
+    for (const [folder, records] of recordsByFolder) {
+      for (const record of records) {
+        if (record === null) {
+          continue;
+        }
+        const destination = remapToMovedAnchor(record.to.folder, record.anchor?.folder ?? excludedFolder, folder);
+        // A format switch stays in the folder that records it, which is never a destination of its own records.
+        if (destination !== folder) {
+          destinations.add(destination);
+        }
+      }
+    }
     const anchors = candidates.filter((folder) => !destinations.has(folder));
     if (anchors.length !== 1) {
       if (anchors.length > 1) {
@@ -718,7 +763,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       return undefined;
     }
     const folder = ensureNonNullable(anchors[0]);
-    return { canOpen: canOpenAnchor(folder, ensureNonNullable(recordsByFolder.get(folder))), folder };
+    return { canOpen: await this.canOpenAnchor(folder, ensureNonNullable(recordsByFolder.get(folder))), folder };
   }
 
   private async flushImpl(): Promise<void> {
@@ -1003,7 +1048,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
        * flush.
        */
       const moved = previousBlock !== undefined && await adapter.exists(getOriginalNameTransportRoot(previousBlock))
-        ? { canOpen: canOpenAnchor(previousBlock, await this.readRelocationRecords(previousBlock)), folder: previousBlock }
+        ? { canOpen: await this.canOpenAnchor(previousBlock, await this.readRelocationRecords(previousBlock)), folder: previousBlock }
         : await this.findAnchorElsewhere(stored, true);
       if (moved === undefined) {
         return stored;
@@ -1092,17 +1137,13 @@ export function getOriginalNameTransportRoot(folder: string): string {
  * @param records - Its relocation records, `null` for each one that has not fully arrived.
  * @returns Whether it can be opened.
  */
-function canOpenAnchor(folder: string, records: readonly (null | RelocationRecord)[]): boolean {
-  return records.length === 0 || (!records.includes(null) && records.some((record) => ensureNonNullable(record).from.folder === folder));
-}
-
 function isRelocationLocation(value: unknown): value is RelocationLocation {
   return typeof value === 'object' && value !== null && 'folder' in value && typeof value.folder === 'string';
 }
 
 function isRelocationRecord(value: unknown): value is RelocationRecord {
   return typeof value === 'object' && value !== null && 'from' in value && isRelocationLocation(value.from) && 'to' in value
-    && isRelocationLocation(value.to);
+    && isRelocationLocation(value.to) && (!('anchor' in value) || isRelocationLocation(value.anchor));
 }
 
 function isStoredOriginalAttachmentNames(value: unknown): value is StoredOriginalAttachmentNames {
@@ -1112,4 +1153,22 @@ function isStoredOriginalAttachmentNames(value: unknown): value is StoredOrigina
 
   const record = value as Partial<Record<keyof StoredOriginalAttachmentNames, unknown>>;
   return typeof record.version === 'number' && typeof record.names === 'object' && record.names !== null && !Array.isArray(record.names);
+}
+
+/**
+ * Maps a folder a relocation record names onto the folder its anchor now lives at, as `DataStoreLocations` does.
+ *
+ * @param folder - The folder the record names.
+ * @param formerAnchorFolder - The anchor folder the record was written at.
+ * @param anchorFolder - The folder holding the anchor now.
+ * @returns The folder as it is now.
+ */
+function remapToMovedAnchor(folder: string, formerAnchorFolder: string, anchorFolder: string): string {
+  if (folder === formerAnchorFolder) {
+    return anchorFolder;
+  }
+  if (folder.startsWith(`${formerAnchorFolder}/`)) {
+    return `${anchorFolder}${folder.slice(formerAnchorFolder.length)}`;
+  }
+  return folder;
 }

@@ -604,13 +604,79 @@ it('waits for a relocation record that has not fully arrived before following mo
   expect(await app.vault.adapter.exists(LEGACY_PLUGIN_DATA_FOLDER)).toBe(false);
 });
 
-it('pauses synchronization rather than splitting history it cannot follow, and resumes once it is moved back', async () => {
+const MOVED_ANCHOR = `!Meta/${ANCHOR}`;
+const MOVED_ANCHOR_ROOT = `${MOVED_ANCHOR}/obsidian-custom-attachment-location/original-attachment-names-v1`;
+
+interface RelocationRecordDocument {
+  readonly payload: Record<string, unknown>;
+}
+
+async function rewriteMovedRelocationRecords(rewrite: (payload: Record<string, unknown>) => void): Promise<void> {
+  const listing = await app.vault.adapter.list(`${MOVED_ANCHOR_ROOT}/locations-v1`);
+  expect(listing.files.length).toBeGreaterThan(0);
+  for (const path of listing.files) {
+    const document = JSON.parse(await app.vault.adapter.read(path)) as RelocationRecordDocument;
+    rewrite(document.payload);
+    await app.vault.adapter.write(path, JSON.stringify(document));
+  }
+}
+
+async function setUpRelocatedHistory(): Promise<OriginalAttachmentNamesComponent> {
   const component = await createComponent();
   component.set('assets/alpha.pdf', 'arrival.pdf');
-  // Setup records its switch to JSON at the anchor, naming the anchor's folder, which then no longer matches.
+  // Setup records its switch to JSON at the anchor, naming the anchor's folder, which a move then leaves behind.
   await component.setSyncEnabled(true);
   await component.relocate('99-Meta/Names');
-  await moveFolder(ANCHOR, `!Meta/${ANCHOR}`);
+  return component;
+}
+
+it('follows history moved after a relocation, whose records name the anchor they were written at', async () => {
+  const component = await setUpRelocatedHistory();
+  await moveFolder(ANCHOR, MOVED_ANCHOR);
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(showNotice).not.toHaveBeenCalled();
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(component.transportRoots).toContain(MOVED_ANCHOR_ROOT);
+  const reloaded = await createComponent();
+  expect(reloaded.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  expect(reloaded.get('assets/bravo.pdf')).toBe('bravo.pdf');
+  await reloaded.setSyncEnabled(false);
+  await reloaded.setSyncEnabled(true);
+  expect(reloaded.isSyncEnabled).toBe(true);
+  await reloaded.flush();
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  const storeFolders = await reloaded.getExistingStoreFolders();
+  expect(new Set(storeFolders)).toEqual(new Set(['99-Meta/Names', MOVED_ANCHOR]));
+  expect(storeFolders).toHaveLength(2);
+  expect(showNotice).not.toHaveBeenCalled();
+});
+
+it('follows history moved after a relocation whose records predate naming their anchor', async () => {
+  const component = await setUpRelocatedHistory();
+  await moveFolder(ANCHOR, MOVED_ANCHOR);
+  await rewriteMovedRelocationRecords((payload) => {
+    Reflect.deleteProperty(payload, 'anchor');
+  });
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(showNotice).not.toHaveBeenCalled();
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(component.transportRoots).toContain(MOVED_ANCHOR_ROOT);
+  const reloaded = await createComponent();
+  expect(reloaded.get('assets/bravo.pdf')).toBe('bravo.pdf');
+});
+
+it('pauses synchronization rather than splitting moved history no single former folder explains', async () => {
+  const component = await setUpRelocatedHistory();
+  await moveFolder(ANCHOR, MOVED_ANCHOR);
+  // Old records that each start at a different folder: the library cannot tell which one the anchor left.
+  let recordIndex = 0;
+  await rewriteMovedRelocationRecords((payload) => {
+    Reflect.deleteProperty(payload, 'anchor');
+    recordIndex++;
+    payload['from'] = { folder: `Elsewhere ${String(recordIndex)}`, format: 'markdown' };
+  });
   component.set('assets/bravo.pdf', 'bravo.pdf');
   await component.flush();
   expect(showNotice).toHaveBeenCalledOnce();
@@ -621,11 +687,7 @@ it('pauses synchronization rather than splitting history it cannot follow, and r
   await reloaded.flush();
   expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
   await reloaded.setSyncEnabled(false);
-  await expect(reloaded.setSyncEnabled(true)).rejects.toThrow(`moved from ${ANCHOR} to !Meta/${ANCHOR}`);
-  await moveFolder(`!Meta/${ANCHOR}`, ANCHOR);
-  await component.flush();
-  expect(component.get('assets/alpha.pdf')).toBe('arrival.pdf');
-  expect(showNotice).toHaveBeenCalledTimes(2);
+  await expect(reloaded.setSyncEnabled(true)).rejects.toThrow(`moved from ${ANCHOR} to ${MOVED_ANCHOR}`);
 });
 
 it('tells listeners about storage changes until they stop listening', async () => {
