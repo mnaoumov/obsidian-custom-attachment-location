@@ -30,7 +30,7 @@
   "shouldPreserveImageMetadata": false,
   "shouldRenameCollectedAttachments": false,
   "shouldSkipCollectingAttachmentsReferencedByRawPath": false,
-  "specialCharacters": "#^[]|*\\<>:?/",
+  "specialCharacters": "#^[]|*\\<>:?/\"",
   "specialCharactersReplacement": "-",
   "timeoutInSeconds": 5,
   "version": ""

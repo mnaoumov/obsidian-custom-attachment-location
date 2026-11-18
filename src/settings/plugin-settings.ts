@@ -340,7 +340,7 @@ export class PluginSettings {
   File types named after a base attachment. An empty list disables companion handling.
   */
   public sidecarExtensions: string[] = ['p7s', 'sig', 'asc', 'srt', 'vtt'];
-  public specialCharacters = String.raw`#^[]|*\<>:?/`;
+  public specialCharacters = String.raw`#^[]|*\<>:?/"`;
   public specialCharactersReplacement = '-';
   // eslint-disable-next-line no-magic-numbers -- Magic numbers are OK in settings.
   public timeoutInSeconds = 5;

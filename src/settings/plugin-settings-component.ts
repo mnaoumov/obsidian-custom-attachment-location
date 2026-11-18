@@ -396,6 +396,12 @@ ${commentOut(this.legacySettings.customTokensStr)}
     if (this.legacySettings.version && compare(this.legacySettings.version, '9.16.0') < 0 && this.legacySettings.specialCharacters === String.raw`#^[]|*\<>:?`) {
       this.legacySettings.specialCharacters = String.raw`#^[]|*\<>:?/`;
     }
+
+    // Up to 17.4.1 the default left out `"`, which Windows and Android refuse in a file name, so `{{heading}}` on a
+    // quoted heading produced a path the resolver rejected (#106). Only the untouched old default is upgraded.
+    if (this.legacySettings.version && compare(this.legacySettings.version, '17.4.2') < 0 && this.legacySettings.specialCharacters === String.raw`#^[]|*\<>:?/`) {
+      this.legacySettings.specialCharacters = String.raw`#^[]|*\<>:?/"`;
+    }
   }
 
   /**
