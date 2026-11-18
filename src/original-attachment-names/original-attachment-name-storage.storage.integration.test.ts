@@ -398,7 +398,7 @@ it('keeps visible JSON transport history out of per-note and orphan attachment d
   }
 }, 180_000);
 
-it('never recreates the history folder at its old place after the folder is moved, and resumes once it is back', async () => {
+it('follows the history folder after a move, relocation records and all, and follows it back', async () => {
   const vaultPath = getTemporaryVault().path;
   const input = { readStorage };
   const movedParent = 'storage-moved';
@@ -431,7 +431,7 @@ it('never recreates the history folder at its old place after the folder is move
           throw new Error('The anchor folder is not in the vault');
         }
         await app.vault.createFolder(parent);
-        // Setup recorded its switch to JSON under the anchor, naming its folder, so this version pauses rather than following.
+        // Setup recorded its switch to JSON under the anchor, naming its folder; the records are followed to the new place.
         await app.vault.rename(folder, `${parent}/${anchorFolder}`);
         /*
          * Plugin data usually lives in a folder an exclusion plugin such as `Advanced Exclude` hides from the vault
@@ -447,7 +447,9 @@ it('never recreates the history folder at its old place after the folder is move
           return {
             isAtMovedPlace: await app.vault.adapter.exists(`${parent}/${anchorFolder}`),
             isRecreated: await app.vault.adapter.exists(anchorFolder),
-            name: component.get(file.path)
+            isSyncEnabled: component.isSyncEnabled,
+            name: component.get(file.path),
+            stores: await component.getExistingStoreFolders()
           };
         } finally {
           Reflect.deleteProperty(app.vault, 'getAllFolders');
@@ -456,7 +458,9 @@ it('never recreates the history folder at its old place after the folder is move
       input: { ...input, anchor, movedParent },
       vaultPath
     });
-    expect(afterMove).toEqual({ isAtMovedPlace: true, isRecreated: false, name: 'arrival-moved.pdf' });
+    const { stores: storesAfterMove, ...afterMoveState } = afterMove;
+    expect(afterMoveState).toEqual({ isAtMovedPlace: true, isRecreated: false, isSyncEnabled: true, name: 'arrival-moved.pdf' });
+    expect(storesAfterMove).toContain(`${movedParent}/${anchor}`);
     const afterReturn = await evalInObsidian({
       async callback({ anchor: anchorFolder, app, movedParent: parent, readStorage: storage }) {
         const component = storage(app);
@@ -477,7 +481,8 @@ it('never recreates the history folder at its old place after the folder is move
     });
     expect(afterReturn.isBack).toBe(true);
     expect(afterReturn.isSyncEnabled).toBe(true);
-    expect(afterReturn.stores[0]).toBe(anchor);
+    expect(afterReturn.stores).toContain(anchor);
+    expect(afterReturn.stores).not.toContain(`${movedParent}/${anchor}`);
   } finally {
     await evalInObsidian({
       async callback({ anchor: anchorFolder, app, movedParent: parent, readStorage: storage, wasEnabled: priorEnabled }) {
