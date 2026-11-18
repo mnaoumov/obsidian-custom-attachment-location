@@ -29,7 +29,7 @@ describe('PluginSettings', () => {
       expect(settings.duplicateNameSeparator).toBe(' ');
       expect(settings.jpegQuality).toBe(0.8);
       expect(settings.shouldSkipCollectingAttachmentsReferencedByRawPath).toBe(false);
-      expect(settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/`);
+      expect(settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/"`);
       expect(settings.specialCharactersReplacement).toBe('-');
       expect(settings.proposedRenameDeleteSettings).toBeNull();
       expect(settings.timeoutInSeconds).toBe(5);

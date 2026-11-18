@@ -73,7 +73,7 @@ describe('special characters in a kept attachment name', () => {
           await settingsComponent.editAndSave((settings) => {
             settings.attachmentRenameMode = 'Only pasted images';
             settings.attachmentFolderPath = './';
-            settings.specialCharacters = String.raw`#^[]|*\<>:?/`;
+            settings.specialCharacters = String.raw`#^[]|*\<>:?/"`;
             settings.specialCharactersReplacement = '-';
           });
 

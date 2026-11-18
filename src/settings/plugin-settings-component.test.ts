@@ -206,6 +206,11 @@ describe('PluginSettingsComponent', () => {
       });
       expect(component.replaceSpecialCharacters('a?b')).toBe('a-b');
     });
+
+    it('should replace a double quote with the default settings', async () => {
+      const component = await createComponent();
+      expect(component.replaceSpecialCharacters('Text with "quotes"')).toBe('Text with -quotes-');
+    });
   });
 
   describe('path validators', () => {
@@ -673,6 +678,30 @@ describe('PluginSettingsComponent', () => {
       const component = await createComponent({
         specialCharacters: String.raw`#^[]|*\<>:?`,
         version: '9.15.0'
+      });
+      expect(component.settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/"`);
+    });
+
+    it('should add the double quote to the special characters default before 17.4.2', async () => {
+      const component = await createComponent({
+        specialCharacters: String.raw`#^[]|*\<>:?/`,
+        version: '17.4.1'
+      });
+      expect(component.settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/"`);
+    });
+
+    it('should keep a customized special characters value before 17.4.2', async () => {
+      const component = await createComponent({
+        specialCharacters: '#?',
+        version: '17.4.1'
+      });
+      expect(component.settings.specialCharacters).toBe('#?');
+    });
+
+    it('should keep the special characters value saved by 17.4.2 or later', async () => {
+      const component = await createComponent({
+        specialCharacters: String.raw`#^[]|*\<>:?/`,
+        version: '17.4.2'
       });
       expect(component.settings.specialCharacters).toBe(String.raw`#^[]|*\<>:?/`);
     });
