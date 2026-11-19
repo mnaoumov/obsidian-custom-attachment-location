@@ -32,10 +32,16 @@ interface FileManagerGenerateMarkdownLinkPatchComponentConstructorParams {
 }
 
 export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundComponent {
+  /**
+   * Counts the patches this component installed. Only the newest one acts; an older one passes the call through.
+   */
+  private activePatchId = 0;
   private readonly app: App;
   private readonly attachmentPathManager: AttachmentPathManager;
   private readonly fileManager: FileManager;
   private readonly imageSizeMap: ImageSizeMap;
+  // The wrapper the newest patch installed, to tell whether another plugin has patched the method since.
+  private installedMethod: unknown = null;
   private readonly markdownUrlMap: MarkdownUrlMap;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
@@ -49,7 +55,36 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
+  /**
+   * Puts this patch back on top of `generateMarkdownLink` when another plugin has patched it since.
+   *
+   * A patch that never calls through, such as `Better Markdown Links`' one, hides every patch installed before it.
+   * That plugin loads after this one in a typical vault, so its patch landed on top, and the inserted link text, the
+   * pasted image size and the Markdown URL format were all silently skipped. Patches stack in install order, and
+   * nothing announces a later one, so this checks right before Obsidian generates a link for a paste or a drop: a fresh
+   * patch goes on top, and the old one becomes a pass-through, so no call is handled twice.
+   */
+  public ensureOutermost(): void {
+    if (this.installedMethod !== null && Reflect.get(this.fileManager, 'generateMarkdownLink') === this.installedMethod) {
+      return;
+    }
+    this.installPatch();
+  }
+
   public override onload(): void {
+    this.installPatch();
+    // Both fire before Obsidian handles the gesture, so the links it then generates go through the patch on top.
+    this.registerEvent(this.app.workspace.on('editor-paste', () => {
+      this.ensureOutermost();
+    }));
+    this.registerEvent(this.app.workspace.on('editor-drop', () => {
+      this.ensureOutermost();
+    }));
+  }
+
+  private installPatch(): void {
+    this.activePatchId++;
+    const patchId = this.activePatchId;
     this.registerMethodPatch({
       $object: this.fileManager,
       methodName: 'generateMarkdownLink',
@@ -57,6 +92,9 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
         originalArguments: [file, sourcePath, subpath, alias],
         originalMethodBound
       }) => {
+        if (patchId !== this.activePatchId) {
+          return originalMethodBound(file, sourcePath, subpath, alias);
+        }
         const insertedLinkText = this.pluginSettingsComponent.settings.insertedLinkText && !isImageExtension(file.extension) && !this.pluginSettingsComponent.isNoteEx(file)
           ? this.attachmentPathManager.takeInsertedLinkText({ attachmentPath: file.path, notePath: sourcePath })
           : null;
@@ -99,5 +137,6 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
         return hasAngleBrackets(defaultLink) ? defaultLink.replace(/\]\(<.+?>\)/, () => `](<${markdownUrl}>)`) : defaultLink.replace(/\]\(.+?\)/, () => `](${encodeUrl(markdownUrl)})`);
       }
     });
+    this.installedMethod = Reflect.get(this.fileManager, 'generateMarkdownLink');
   }
 }
