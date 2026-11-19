@@ -4,6 +4,7 @@ import type {
 } from '@obsidian-typings/obsidian-public-latest';
 
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
   beforeEach,
@@ -31,11 +32,75 @@ interface GestureHolder {
 
 type InsertFilesFunction = (importedAttachments: ImportedAttachment[]) => Promise<void>;
 
+class FakeDoc {
+  public readonly length: number;
+
+  public constructor(private readonly text: string) {
+    this.length = text.length;
+  }
+
+  public sliceString(from: number, to: number): string {
+    return this.text.slice(from, to);
+  }
+
+  public toString(): string {
+    return this.text;
+  }
+}
+
+class FakeState {
+  public get selection(): unknown {
+    return this.getSelection();
+  }
+
+  public constructor(public readonly doc: FakeDoc, private readonly getSelection: () => unknown) {}
+}
+
+const NOTE_TEXT = '---\ntags: a\n---\nBody line\n';
+const BODY_START = NOTE_TEXT.indexOf('Body');
+
 describe('ClipboardManagerInsertFilesPatchComponent', () => {
   let gestureHolder: GestureHolder;
   let insertFilesMock: ReturnType<typeof vi.fn<InsertFilesFunction>>;
   let clipboardManager: ClipboardManager;
   let recordMock: ReturnType<typeof vi.fn<PastedImageMarker['record']>>;
+  let editorDispatchMock: ReturnType<typeof vi.fn>;
+  let editorSelection: unknown;
+
+  function createSelection(position: number): unknown {
+    return { ranges: [{ from: position, to: position }] };
+  }
+
+  it('puts a drop that Obsidian moved above the frontmatter back where the cursor was, before anything is inserted', async () => {
+    const component = createComponent();
+    component.load();
+    gestureHolder.gesture = InsertGesture.Drop;
+    const selectionBeforeDrop = createSelection(BODY_START + 2);
+    editorSelection = selectionBeforeDrop;
+    insertFilesMock.mockImplementation(() => {
+      expect(editorDispatchMock).toHaveBeenCalledWith({ selection: selectionBeforeDrop });
+      return noopAsync();
+    });
+
+    const promise = strictProxy<ClipboardManagerPrototype>(clipboardManager).insertFiles([createAttachment('a.png')]);
+    // What Obsidian's drop handler does right after insertFiles returns, for a drop on the Properties block.
+    editorSelection = createSelection(0);
+    gestureHolder.gesture = null;
+    await promise;
+
+    expect(insertFilesMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not touch the selection for a paste', async () => {
+    const component = createComponent();
+    component.load();
+    gestureHolder.gesture = InsertGesture.Paste;
+    editorSelection = createSelection(0);
+
+    await strictProxy<ClipboardManagerPrototype>(clipboardManager).insertFiles([createAttachment('a.png')]);
+
+    expect(editorDispatchMock).not.toHaveBeenCalled();
+  });
 
   it('keeps sidecar batch handling around the full editor import after gesture recording', async () => {
     const trace: string[] = [];
@@ -57,7 +122,7 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
     });
     const component = new ClipboardManagerInsertFilesPatchComponent({
       clipboardManager,
-      insertGestureTrackerComponent: strictProxy<InsertGestureTrackerComponent>({ gesture: InsertGesture.Drop }),
+      insertGestureTrackerComponent: strictProxy<InsertGestureTrackerComponent>({ dropClientY: null, gesture: InsertGesture.Drop }),
       pastedImageMarker: strictProxy<PastedImageMarker>({ record: recordMock }),
       sidecarAttachmentsComponent: strictProxy<SidecarAttachmentsComponent>({ runImportBatch })
     });
@@ -72,7 +137,21 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
     const clipboardManagerPrototype: ClipboardManagerPrototype = {
       insertFiles: insertFilesMock
     };
-    clipboardManager = strictProxy<ClipboardManager>(Object.create(clipboardManagerPrototype));
+    const clipboardManagerObject = castTo<Record<string, unknown>>(Object.create(clipboardManagerPrototype));
+    editorDispatchMock = vi.fn();
+    editorSelection = createSelection(BODY_START);
+    clipboardManagerObject['info'] = {
+      editor: {
+        activeCM: {
+          dispatch: editorDispatchMock,
+          documentTop: 0,
+          // Class instances, not plain objects: the strict proxy would answer `toString` itself and cache the
+          // selection it read first.
+          state: new FakeState(new FakeDoc(NOTE_TEXT), () => editorSelection)
+        }
+      }
+    };
+    clipboardManager = strictProxy<ClipboardManager>(clipboardManagerObject);
     recordMock = vi.fn<PastedImageMarker['record']>().mockResolvedValue(undefined);
   });
 
@@ -80,6 +159,7 @@ describe('ClipboardManagerInsertFilesPatchComponent', () => {
     return new ClipboardManagerInsertFilesPatchComponent({
       clipboardManager,
       insertGestureTrackerComponent: strictProxy<InsertGestureTrackerComponent>({
+        dropClientY: null,
         get gesture(): InsertGesture | null {
           return gestureHolder.gesture;
         }
