@@ -115,4 +115,16 @@
   &.default-image-size-dimension-setting-control {
     margin-left: 5px;
   }
+
+  // The original-name box takes the row, with its copy button beside it.
+  &.original-file-name-modal .original-file-name-value {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-2);
+
+    input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  }
 }

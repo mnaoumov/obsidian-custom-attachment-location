@@ -131,9 +131,9 @@ The names stay on this device until you turn synchronization on under **Original
 
 Manual walkthrough: set `collectedAttachmentFileName` to `{{noteFileName}}-{{originalAttachmentFileName}}` and turn on `shouldRenameCollectedAttachments`. Paste an image into a note, run **Collect attachments in current note** twice, and the image keeps the name the first collect gave it. Then run **Show original attachment names** to see the name it arrived with.
 
-Right-click an attachment in the file explorer, or a link to that attachment, for **Copy original file name**. It copies the remembered name exactly and stays visible but disabled when that name is unknown. It never substitutes the attachment's current name. Obsidian's own path-copy actions continue to describe the current file.
+Right-click an attachment in the file explorer, or a link to that attachment, for **Show original file name**. It opens a dialog with the remembered name in a read-only box, and a copy button beside it that copies the name exactly. The action stays visible but disabled when that name is unknown. It never substitutes the attachment's current name. Obsidian's own path-copy actions continue to describe the current file.
 
-Manual copy walkthrough: turn on **All** attachment renaming and choose a generated name different from the incoming name. Drop a PDF from a file manager into a note. Use **Copy original file name** from the attachment's file menu and from its note link, then paste into a plain text editor: the result should be the source file's name. An attachment with no name recorded shows the action disabled.
+Manual walkthrough: turn on **All** attachment renaming and choose a generated name different from the incoming name. Drop a PDF from a file manager into a note. Use **Show original file name** from the attachment's file menu and from its note link: the dialog shows the source file's name. Press its copy button, then paste into a plain text editor: the result is the same name. An attachment with no name recorded shows the action disabled.
 
 ## Safety net for non-standard references
 

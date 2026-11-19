@@ -89,14 +89,14 @@ export const defaultTranslations = {
   menuItems: {
     collectAttachmentsInFile: 'Collect attachments in file',
     collectAttachmentsInFiles: 'Collect attachments in files',
-    copyOriginalFileName: 'Copy original file name',
     deleteUnusedAttachmentsInFile: 'Delete unused attachments in file',
     deleteUnusedAttachmentsInFiles: 'Delete unused attachments in files',
     goToAttachmentFolder: 'Go to attachment folder',
     goToOwningNote: 'Go to owning note',
     rememberCurrentNameAsOriginal: 'Remember current name as original',
     rememberCurrentNamesAsOriginals: 'Remember current names as originals',
-    renameAttachmentsInFile: 'Rename attachments in file'
+    renameAttachmentsInFile: 'Rename attachments in file',
+    showOriginalFileName: 'Show original file name'
   },
   moveAttachmentToProperFolder: {
     progressBar: {
@@ -143,6 +143,14 @@ export const defaultTranslations = {
   },
   originalAttachmentNames: {
     forgotAllNotice: 'Forgot {{count}} original attachment name(s).',
+    originalFileNameModal: {
+      close: 'Close',
+      copiedNotice: 'Copied the original file name: {{name}}',
+      copy: 'Copy the original file name',
+      copyFailed: 'Could not copy the original file name to the clipboard. Select it in the box and copy it by hand.',
+      description: 'The attachment {{path}} arrived with this name:',
+      title: 'Original file name'
+    },
     prunedNotice: 'Removed {{count}} original attachment name(s) whose file no longer exists.',
     pruneModal: {
       forgetAll: 'Forget all',
