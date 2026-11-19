@@ -82,6 +82,7 @@ function createContext(overrides: StrictProxyPartial<TokenEvaluatorContext>): To
     attachmentFileName: 'image',
     fillTemplate: vi.fn((template: string): Promise<string> => Promise.resolve(template)),
     fullTemplate: 'before{{token}}after',
+    // eslint-disable-next-line typescript-dev-toolkit/no-undefined-return-type -- Mirrors TokenEvaluatorContext.getAttachmentFileContent, part of the custom-token API.
     getAttachmentFileContent: vi.fn((): Promise<ArrayBuffer | undefined> => Promise.resolve(undefined)),
     templatePart: TemplatePart.Other,
     tokenEndOffset: 13,
@@ -110,8 +111,8 @@ function getButtonText(button: ButtonComponent): string {
   return ButtonComponentClass.fromOriginalType2__(button).buttonEl.textContent;
 }
 
-function getInputEl(textComponent: TextComponent | undefined): HTMLInputElement | undefined {
-  return textComponent ? TextComponentClass.fromOriginalType4__(textComponent).inputEl : undefined;
+function getInputEl(textComponent: TextComponent | undefined): HTMLInputElement | null {
+  return textComponent ? TextComponentClass.fromOriginalType4__(textComponent).inputEl : null;
 }
 
 function isButtonDisabled(button: ButtonComponent | undefined): boolean {

@@ -98,7 +98,7 @@ export class AttachmentSaver {
   }
 
   private async saveAttachmentCore(params: AttachmentSaverSaveAttachmentCoreParams): Promise<TFile> {
-    const attachmentFileStats = this.arrayBufferMap.getFileStats(params.attachmentFileContent);
+    const attachmentFileStats = this.arrayBufferMap.getFileStats(params.attachmentFileContent) ?? undefined;
 
     const attachmentFileContent = params.attachmentFileContent;
     const attachmentPath = params.destinationPath ?? await this.attachmentPathManager.getAvailablePathForAttachments({

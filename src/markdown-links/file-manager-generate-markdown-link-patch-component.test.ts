@@ -56,7 +56,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     settings = new PluginSettings();
     attachmentPathManager = strictProxy<AttachmentPathManager>({
       getInsertedLinkText: vi.fn().mockReturnValue('original report'),
-      takeInsertedLinkText: vi.fn().mockReturnValue(undefined)
+      takeInsertedLinkText: vi.fn().mockReturnValue(null)
     });
     settings.markdownUrlFormat = '';
 
@@ -140,7 +140,7 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
 
   it('keeps the default when an asynchronous template has no prepared text', () => {
     settings.insertedLinkText = '{{noteFileName}}';
-    vi.mocked(attachmentPathManager.getInsertedLinkText).mockReturnValue(undefined);
+    vi.mocked(attachmentPathManager.getInsertedLinkText).mockReturnValue(null);
     const component = createComponent();
     component.load();
     const pdf = strictProxy<TFile>({ basename: 'renamed', extension: 'pdf', path: 'renamed.pdf' });

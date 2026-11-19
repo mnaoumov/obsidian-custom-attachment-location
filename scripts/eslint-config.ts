@@ -23,7 +23,8 @@ export const configs: Linter.Config[] = defineEslintConfigs({
                 'Show Hidden Files'
               ]
             }
-          ]
+          ],
+          'typescript-dev-toolkit/no-undefined-return-type': 'error'
         }
       },
       {

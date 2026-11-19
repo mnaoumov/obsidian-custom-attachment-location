@@ -231,7 +231,7 @@ function createManager(): TestContext {
   const reportUnknown = vi.fn<OriginalAttachmentNamesComponent['reportUnknown']>();
   const originalAttachmentNamesComponent = strictProxy<OriginalAttachmentNamesComponent>({
     expectArrival,
-    get: (path: string) => originalAttachmentNames.get(path),
+    get: (path: string) => originalAttachmentNames.get(path) ?? null,
     reportUnknown
   });
 
@@ -379,12 +379,12 @@ describe('AttachmentPathManager', () => {
       context.settings.insertedLinkText = 'Read this';
       expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBe('Read this');
       context.settings.insertedLinkText = '';
-      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBeNull();
     });
 
     it('requires asynchronous import preparation for templates using other tokens', () => {
       context.settings.insertedLinkText = '{{noteFileName}}';
-      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.getInsertedLinkText({ attachmentFile: file(), notePath: 'note.md' })).toBeNull();
     });
 
     it('uses a prepared general template before synchronous link generation', async () => {
@@ -407,7 +407,7 @@ describe('AttachmentPathManager', () => {
     it('leaves the link at its default when the evaluated template is empty', async () => {
       context.settings.insertedLinkText = '{{originalAttachmentFileName}}';
       const emptyPath = await prepare({ originalFileName: '' });
-      expect(context.manager.takeInsertedLinkText({ attachmentPath: emptyPath, notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: emptyPath, notePath: 'note.md' })).toBeNull();
     });
 
     it('discards expired preparations and preparations made with a different template', async () => {
@@ -415,14 +415,14 @@ describe('AttachmentPathManager', () => {
       const path = await prepare();
       const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 60_001);
       try {
-        expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+        expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeNull();
       } finally {
         clock.mockRestore();
       }
       await prepare();
       // eslint-disable-next-line require-atomic-updates -- Each test owns this settings fixture.
       context.settings.insertedLinkText = 'different';
-      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeNull();
     });
 
     it('evicts the oldest unused preparation rather than growing for every dry path probe', async () => {
@@ -431,7 +431,7 @@ describe('AttachmentPathManager', () => {
       for (let index = 0; index < count; index++) {
         await prepare({ baseName: `attachment-${index.toString()}` });
       }
-      expect(context.manager.takeInsertedLinkText({ attachmentPath: 'assets/attachment-0.pdf', notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: 'assets/attachment-0.pdf', notePath: 'note.md' })).toBeNull();
       expect(context.manager.takeInsertedLinkText({ attachmentPath: 'assets/attachment-100.pdf', notePath: 'note.md' })).toBe('note');
     });
 
@@ -443,7 +443,7 @@ describe('AttachmentPathManager', () => {
     ])('does not prepare aliases for images, placeholders, missing notes or deletion (%j)', async (options) => {
       context.settings.insertedLinkText = '{{noteFileName}}';
       const path = await prepare(options);
-      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeNull();
     });
   });
 
@@ -1271,9 +1271,9 @@ describe('AttachmentPathManager', () => {
         shouldSkipMissingAttachmentFolderCreation: true
       });
 
-      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'other.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'other.md' })).toBeNull();
       expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBe('original report (renamed.pdf)');
-      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeNull();
     });
 
     it('should name and place a new attachment by its operation\'s templates', async () => {
@@ -2000,7 +2000,7 @@ describe('AttachmentPathManager', () => {
 
       expect(register).not.toHaveBeenCalled();
       expect(context.expectArrival).not.toHaveBeenCalled();
-      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeUndefined();
+      expect(context.manager.takeInsertedLinkText({ attachmentPath: path, notePath: 'note.md' })).toBeNull();
 
       // The same call WITH the duplicate check is a save in the making, so it still claims its path.
       const savedPath = await context.manager.getAvailablePathForAttachments(query);

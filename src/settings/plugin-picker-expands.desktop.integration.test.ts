@@ -37,9 +37,9 @@ describe('Plugins picker (issue #86)', () => {
           return (el?.textContent ?? '').trim();
         }
 
-        function rowByName(name: string): HTMLElement | undefined {
+        function rowByName(name: string): HTMLElement | null {
           return [...setting.modalEl.querySelectorAll<HTMLElement>(':scope .vertical-tab-content .setting-item')]
-            .find((row) => text(row.querySelector(':scope .setting-item-name')) === name);
+            .find((row) => text(row.querySelector(':scope .setting-item-name')) === name) ?? null;
         }
 
         setting.open();

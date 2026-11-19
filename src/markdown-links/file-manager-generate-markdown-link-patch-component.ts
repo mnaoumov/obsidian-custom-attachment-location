@@ -59,7 +59,7 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
       }) => {
         const insertedLinkText = this.pluginSettingsComponent.settings.insertedLinkText && !isImageExtension(file.extension) && !this.pluginSettingsComponent.isNoteEx(file)
           ? this.attachmentPathManager.takeInsertedLinkText({ attachmentPath: file.path, notePath: sourcePath })
-          : undefined;
+          : null;
         if (alias === undefined) {
           const imageSize = this.imageSizeMap.getAndDelete(file.path);
           if (imageSize) {
@@ -67,11 +67,11 @@ export class FileManagerGenerateMarkdownLinkPatchComponent extends MonkeyAroundC
           } else if (this.pluginSettingsComponent.settings.insertedLinkText && !isImageExtension(file.extension) && !this.pluginSettingsComponent.isNoteEx(file)) {
             // Notes are excluded so links between notes keep Obsidian's default behavior. A drawing the user
             // treats as an attachment is not a note here, as it is not one when collected.
-            alias = insertedLinkText ?? this.attachmentPathManager.getInsertedLinkText({ attachmentFile: file, notePath: sourcePath });
+            const linkText = insertedLinkText ?? this.attachmentPathManager.getInsertedLinkText({ attachmentFile: file, notePath: sourcePath });
             // Full width equivalents cannot terminate a wiki alias, become a subpath, or open Markdown/HTML.
-            alias = alias?.replaceAll(/[|[\]#^\\<>\r\n]/g, (character) => {
+            alias = linkText?.replaceAll(/[|[\]#^\\<>\r\n]/g, (character) => {
               return character === '\r' || character === '\n' ? ' ' : String.fromCodePoint(ensureNonNullable(character.codePointAt(0)) + FULL_WIDTH_ASCII_OFFSET);
-            });
+            }) ?? undefined;
           }
         }
         let defaultLink = originalMethodBound(file, sourcePath, subpath, alias);

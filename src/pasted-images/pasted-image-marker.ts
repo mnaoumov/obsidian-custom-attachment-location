@@ -53,7 +53,7 @@ export class PastedImageMarker {
         canBePastedImage && isPastedImage({
           extension: importedAttachment.extension,
           filePath,
-          fileStats: this.arrayBufferMap.getFileStats(arrayBuffer),
+          fileStats: this.arrayBufferMap.getFileStats(arrayBuffer) ?? undefined,
           gesture,
           now: Date.now(),
           screenshotFilePaths: this.getScreenshotFilePaths(),

@@ -21,7 +21,10 @@ import type { SidecarAttachmentsComponent } from '../sidecars/sidecar-attachment
 import type { TokenValidator } from '../tokens/token-validator.ts';
 import type { AttachmentPathManager } from './attachment-path-manager.ts';
 
-import { findSidecarBase } from '../sidecars/sidecar-matcher.ts';
+import {
+  findSidecarBase,
+  isSidecarName
+} from '../sidecars/sidecar-matcher.ts';
 import {
   getShareImportOriginalFileName,
   IMPORT_FILES_PREFIX,
@@ -134,7 +137,7 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
 
     expect(files.map((file) => file.name)).toEqual(['Note.md', 'Upper.MD', `${IMPORT_FILES_PREFIX}generated-name.png`]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(getShareImportOriginalFileName('Note.md')).toBeUndefined();
+    expect(getShareImportOriginalFileName('Note.md')).toBeNull();
     expect(importFilesMock).toHaveBeenCalledWith(files);
   });
 
@@ -149,7 +152,7 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
     }]);
 
     expect(getShareImportOriginalFileName('generated-for-memory.jpg')).toBe('Shared photo.jpg');
-    expect(getShareImportOriginalFileName('never-shared.jpg')).toBeUndefined();
+    expect(getShareImportOriginalFileName('never-shared.jpg')).toBeNull();
   });
 
   it('should keep only the most recent shared names', async () => {
@@ -165,7 +168,7 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
     }));
     await strictProxy<ShareReceiverPrototype>(shareReceiver).importFiles(files);
 
-    expect(getShareImportOriginalFileName('bounded-0.png')).toBeUndefined();
+    expect(getShareImportOriginalFileName('bounded-0.png')).toBeNull();
     expect(getShareImportOriginalFileName('bounded-100.png')).toBe('shared-100.png');
   });
 
@@ -177,6 +180,7 @@ describe('ShareReceiverImportFilesPatchComponent', () => {
       reportUnpairedMock = vi.fn<(path: string) => void>();
       sidecarAttachmentsComponent = strictProxy<SidecarAttachmentsComponent>({
         findBase: (name: string, names: readonly string[]) => findSidecarBase({ extensions: ['p7s', '.ASC', 'srt'], name, names }),
+        isSidecar: (name: string) => isSidecarName({ extensions: ['p7s', '.ASC', 'srt'], name }),
         reportUnpaired: reportUnpairedMock
       });
       pluginSettingsComponent = strictProxy<PluginSettingsComponent>({

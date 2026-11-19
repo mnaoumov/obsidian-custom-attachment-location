@@ -122,7 +122,7 @@ describe('OriginalAttachmentNamesComponent', () => {
     it('should not record a path that was handed out but never created', () => {
       component.expectArrival('assets/probe.png', 'probe.png');
 
-      expect(component.get('assets/probe.png')).toBeUndefined();
+      expect(component.get('assets/probe.png')).toBeNull();
       expect(component.size).toBe(0);
     });
 
@@ -132,13 +132,13 @@ describe('OriginalAttachmentNamesComponent', () => {
 
       await getApp().vault.createBinary('assets/late.png', new ArrayBuffer(1));
 
-      expect(component.get('assets/late.png')).toBeUndefined();
+      expect(component.get('assets/late.png')).toBeNull();
     });
 
     it('should ignore a file nobody expected', async () => {
       await getApp().vault.createBinary('assets/synced.png', new ArrayBuffer(1));
 
-      expect(component.get('assets/synced.png')).toBeUndefined();
+      expect(component.get('assets/synced.png')).toBeNull();
     });
   });
 
@@ -149,7 +149,7 @@ describe('OriginalAttachmentNamesComponent', () => {
 
       await getApp().vault.rename(file, 'assets/renamed.png');
 
-      expect(component.get('assets/img.png')).toBeUndefined();
+      expect(component.get('assets/img.png')).toBeNull();
       expect(component.get('assets/renamed.png')).toBe('img.png');
     });
 
@@ -169,7 +169,7 @@ describe('OriginalAttachmentNamesComponent', () => {
 
       expect(component.get('assets/moved/a.png')).toBe('first.png');
       expect(component.get('assets/moved/b.png')).toBe('second.png');
-      expect(component.get('assets/sub/a.png')).toBeUndefined();
+      expect(component.get('assets/sub/a.png')).toBeNull();
       expect(component.get('assets/subway.png')).toBe('unrelated.png');
     });
 
@@ -188,7 +188,7 @@ describe('OriginalAttachmentNamesComponent', () => {
 
       await getApp().fileManager.trashFile(file);
 
-      expect(component.get('assets/img.png')).toBeUndefined();
+      expect(component.get('assets/img.png')).toBeNull();
       expect(component.size).toBe(0);
     });
 
@@ -204,7 +204,7 @@ describe('OriginalAttachmentNamesComponent', () => {
       }
       await getApp().fileManager.trashFile(folder);
 
-      expect(component.get('assets/sub/a.png')).toBeUndefined();
+      expect(component.get('assets/sub/a.png')).toBeNull();
       expect(component.get('assets/kept.png')).toBe('kept.png');
     });
   });
@@ -429,7 +429,7 @@ describe('OriginalAttachmentNamesComponent', () => {
       other.forget(['assets/a.pdf']);
       await other.flush();
       await component.flush();
-      expect(component.get('assets/a.pdf')).toBeUndefined();
+      expect(component.get('assets/a.pdf')).toBeNull();
       component.set('assets/a.pdf', 'new.pdf');
       await component.flush();
       await other.flush();
@@ -446,7 +446,7 @@ describe('OriginalAttachmentNamesComponent', () => {
       await migrated.flush();
       vi.stubGlobal('indexedDB', new IDBFactory());
       const newDevice = await createComponent();
-      expect(newDevice.get('assets/a.pdf')).toBeUndefined();
+      expect(newDevice.get('assets/a.pdf')).toBeNull();
       expect(await getApp().vault.adapter.read(STORE_FILE_PATH)).toBe(legacy);
       migrated.unload();
       newDevice.unload();
@@ -495,10 +495,10 @@ describe('OriginalAttachmentNamesComponent', () => {
       migrated.forget(['assets/a.png']);
       await migrated.flush();
       const reloaded = await createComponent();
-      expect(reloaded.get('assets/a.png')).toBeUndefined();
+      expect(reloaded.get('assets/a.png')).toBeNull();
       vi.stubGlobal('indexedDB', new IDBFactory());
       const newDevice = await createComponent();
-      expect(newDevice.get('assets/a.png')).toBeUndefined();
+      expect(newDevice.get('assets/a.png')).toBeNull();
       expect(await getApp().vault.adapter.read(STORE_FILE_PATH)).toBe(legacy);
       migrated.unload();
       reloaded.unload();
@@ -614,7 +614,7 @@ describe('OriginalAttachmentNamesComponent', () => {
       vi.advanceTimersByTime(WARNING_DEBOUNCE_IN_MILLISECONDS);
 
       expect(showNotice).not.toHaveBeenCalled();
-      expect(component.get('assets/a.png')).toBeUndefined();
+      expect(component.get('assets/a.png')).toBeNull();
       expect(consoleDebug).toHaveBeenCalledOnce();
     });
 
@@ -637,7 +637,7 @@ describe('OriginalAttachmentNamesComponent', () => {
 
       expect(removed).toStrictEqual([{ isMissing: true, originalFileName: 'gone.png', path: 'assets/gone.png' }]);
       expect(component.get('assets/live.png')).toBe('live.png');
-      expect(component.get('assets/gone.png')).toBeUndefined();
+      expect(component.get('assets/gone.png')).toBeNull();
     });
 
     it('should forget every record', () => {
@@ -654,7 +654,7 @@ describe('OriginalAttachmentNamesComponent', () => {
       component.set('assets/b.png', 'b.png');
 
       expect(component.forget(['assets/a.png', 'assets/unknown.png'])).toBe(1);
-      expect(component.get('assets/a.png')).toBeUndefined();
+      expect(component.get('assets/a.png')).toBeNull();
       expect(component.get('assets/b.png')).toBe('b.png');
     });
 

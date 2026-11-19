@@ -94,8 +94,8 @@ function getContentText(): string {
   return getModal()?.contentEl.textContent ?? '';
 }
 
-function getModal(): Modal | undefined {
-  return castTo<Modal | undefined>(openSpy.mock.contexts.at(-1));
+function getModal(): Modal | null {
+  return castTo<Modal | undefined>(openSpy.mock.contexts.at(-1)) ?? null;
 }
 
 beforeAll(async () => {
@@ -249,7 +249,7 @@ describe('showOriginalAttachmentNamesModal', () => {
     onFilterChange?.('assets');
     clickButton('Forget selected');
 
-    expect(originalAttachmentNamesComponent.get('assets/note-img.png')).toBeUndefined();
+    expect(originalAttachmentNamesComponent.get('assets/note-img.png')).toBeNull();
     expect(originalAttachmentNamesComponent.size).toBe(2);
   });
 
@@ -295,7 +295,7 @@ describe('showOriginalAttachmentNamesModal', () => {
 
     clickRowAction(1, 'Forget');
 
-    expect(originalAttachmentNamesComponent.get('assets/note-img.png')).toBeUndefined();
+    expect(originalAttachmentNamesComponent.get('assets/note-img.png')).toBeNull();
     expect(originalAttachmentNamesComponent.size).toBe(2);
     expect(getContentText()).toContain('2 record(s), 1 of them missing.');
   });

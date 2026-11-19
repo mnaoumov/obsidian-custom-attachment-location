@@ -7,7 +7,8 @@ import {
 
 import {
   findSidecarBase,
-  getSidecarPath
+  getSidecarPath,
+  isSidecarName
 } from './sidecar-matcher.ts';
 
 describe('sidecar pairing', () => {
@@ -26,7 +27,13 @@ describe('sidecar pairing', () => {
   });
   it('leaves missing bases and ordinary attachments unpaired', () => {
     expect(findSidecarBase({ extensions, name: 'missing.p7s', names: [] })).toBeNull();
-    expect(findSidecarBase({ extensions, name: 'video.pdf', names: ['video.mkv'] })).toBeUndefined();
-    expect(findSidecarBase({ extensions: [], name: 'video.srt', names: ['video.mkv'] })).toBeUndefined();
+    expect(findSidecarBase({ extensions, name: 'video.pdf', names: ['video.mkv'] })).toBeNull();
+    expect(findSidecarBase({ extensions: [], name: 'video.srt', names: ['video.mkv'] })).toBeNull();
+  });
+  it('tells a sidecar name from an ordinary one, base or no base', () => {
+    expect(isSidecarName({ extensions, name: 'missing.p7s' })).toBe(true);
+    expect(isSidecarName({ extensions, name: 'document.sig' })).toBe(true);
+    expect(isSidecarName({ extensions, name: 'video.pdf' })).toBe(false);
+    expect(isSidecarName({ extensions: [], name: 'video.srt' })).toBe(false);
   });
 });

@@ -41,9 +41,9 @@ export interface ObsidianSyncStatus {
    * `Sync all other types`) and its excluded folders.
    *
    * @param path - A vault-relative file path.
-   * @returns `true` or `false` when connected, `undefined` when there is nothing to ask.
+   * @returns `true` or `false` when connected, `null` when there is nothing to ask.
    */
-  readonly doesCarryFile: (this: void, path: string) => boolean | undefined;
+  readonly doesCarryFile: (this: void, path: string) => boolean | null;
 
   /**
    * How Obsidian Sync stands.
@@ -60,11 +60,11 @@ export interface ObsidianSyncStatus {
 export function getObsidianSyncStatus(app: App): ObsidianSyncStatus {
   const instance = app.internalPlugins.getEnabledPluginById(InternalPluginName.Sync);
   if (!instance) {
-    return { doesCarryFile: (): undefined => undefined, state: ObsidianSyncState.Off };
+    return { doesCarryFile: (): null => null, state: ObsidianSyncState.Off };
   }
 
   if (!instance.getRemoteVaultId()) {
-    return { doesCarryFile: (): undefined => undefined, state: ObsidianSyncState.NotConnected };
+    return { doesCarryFile: (): null => null, state: ObsidianSyncState.NotConnected };
   }
 
   return {

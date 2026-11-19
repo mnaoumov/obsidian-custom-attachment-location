@@ -31,6 +31,7 @@ describe('Move attachment to proper folder — an attachment used by a single no
     const result = await evalInObsidian({
       async callback({ app, moveCommandId }): Promise<ProbeResult> {
         interface AvailabilityCheckableCommand {
+          // eslint-disable-next-line typescript-dev-toolkit/no-undefined-return-type -- Mirrors Obsidian Command.checkCallback.
           readonly checkCallback?: (isChecking: boolean) => boolean | undefined;
         }
 

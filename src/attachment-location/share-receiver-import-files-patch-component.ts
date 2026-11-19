@@ -33,8 +33,8 @@ interface ShareBatch {
   readonly files: readonly SharedFile[];
   readonly names: readonly string[];
   readonly note: null | TFile;
-  readonly pairings: readonly (null | SidecarBase | undefined)[];
-  readonly rootNames: (string | undefined)[];
+  readonly pairings: readonly (null | SidecarBase)[];
+  readonly rootNames: (null | string)[];
 }
 
 interface ShareReceiverImportFilesPatchComponentConstructorParams {
@@ -90,25 +90,25 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
         const files = sharedFiles.filter((file) => !isSavedAsNote(file));
         const names = files.map((file) => file.name);
         const note = this.app.workspace.getActiveFile();
-        const pairings = names.map((name) => this.sidecarAttachmentsComponent?.findBase(name, names));
-        const rootNames: (string | undefined)[] = [];
+        const sidecarNames = new Set(names.filter((name) => this.sidecarAttachmentsComponent?.isSidecar(name) ?? false));
+        const pairings = names.map((name) => this.sidecarAttachmentsComponent?.findBase(name, names) ?? null);
+        const rootNames: (null | string)[] = [];
 
         // Only a base or an orphan is named on its own; a companion takes its base's generated name.
-        for (const [index, file] of files.entries()) {
-          const pairing = pairings[index];
-          if (pairing === null) {
+        for (const file of files) {
+          if (this.sidecarAttachmentsComponent?.findBase(file.name, names)) {
+            rootNames.push(null);
+          } else if (sidecarNames.has(file.name)) {
             this.sidecarAttachmentsComponent?.reportUnpaired(file.name);
             rootNames.push(file.name);
-          } else if (pairing === undefined) {
-            rootNames.push(await this.generateFileName(file, note));
           } else {
-            rootNames.push(undefined);
+            rootNames.push(await this.generateFileName(file, note));
           }
         }
 
         const batch: ShareBatch = { files, names, note, pairings, rootNames };
 
-        if (batch.pairings.some((pairing) => pairing !== undefined)) {
+        if (sidecarNames.size > 0) {
           await this.reserveGroupNames(batch);
         }
 
@@ -156,7 +156,7 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
     const reservedPaths = new Set<string>();
     const separator = this.pluginSettingsComponent.settings.duplicateNameSeparator;
     for (const [rootIndex, rootName] of batch.rootNames.entries()) {
-      if (rootName === undefined) {
+      if (rootName === null) {
         continue;
       }
       const extension = extname(rootName);
@@ -184,29 +184,29 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
  * The name a shared file arrived with.
  *
  * @param generatedFileName - The name this patch generated for it, extension included.
- * @returns The name it arrived with, or `undefined` when the file did not come through the share sheet.
+ * @returns The name it arrived with, or `null` when the file did not come through the share sheet.
  */
-export function getShareImportOriginalFileName(generatedFileName: string): string | undefined {
-  return shareImportOriginalFileNames.get(generatedFileName);
+export function getShareImportOriginalFileName(generatedFileName: string): null | string {
+  return shareImportOriginalFileNames.get(generatedFileName) ?? null;
 }
 
-function getBaseIndex(batch: ShareBatch, index: number): number | undefined {
+function getBaseIndex(batch: ShareBatch, index: number): null | number {
   const pairing = batch.pairings[index];
   // The matcher pairs only with a name that occurs once in the batch.
-  return pairing ? batch.names.indexOf(pairing.baseName) : undefined;
+  return pairing ? batch.names.indexOf(pairing.baseName) : null;
 }
 
 function getFileName(batch: ShareBatch, index: number): string {
   const baseIndex = getBaseIndex(batch, index);
   // A chained signature such as `document.html.p7s.asc` follows `document.html.p7s`, which follows `document.html`.
-  return baseIndex === undefined
+  return baseIndex === null
     ? ensureNonNullable(batch.rootNames[index])
     : getSidecarPath(getFileName(batch, baseIndex), ensureNonNullable(batch.pairings[index]));
 }
 
 function getRootIndex(batch: ShareBatch, index: number): number {
   const baseIndex = getBaseIndex(batch, index);
-  return baseIndex === undefined ? index : getRootIndex(batch, baseIndex);
+  return baseIndex === null ? index : getRootIndex(batch, baseIndex);
 }
 
 /**

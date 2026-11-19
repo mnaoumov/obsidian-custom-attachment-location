@@ -67,7 +67,7 @@ interface SubstitutionsConstructorParams {
    * The attachment's name as it is right now, extension included. Defaults to {@link originalAttachmentFileName}.
    */
   readonly attachmentFileName?: string | undefined;
-  readonly attachmentFileStats?: FileStats | undefined;
+  readonly attachmentFileStats?: FileStats | null | undefined;
   readonly cursorLine?: number | undefined;
   readonly generatedAttachmentFileName?: string;
   readonly generatedAttachmentFilePath?: string;
@@ -164,7 +164,7 @@ export class Substitutions {
 
     this.attachmentFileContent = params.attachmentFileContent;
     this.readAttachmentFileContent = params.readAttachmentFileContent;
-    this.attachmentFileStats = params.attachmentFileStats;
+    this.attachmentFileStats = params.attachmentFileStats ?? undefined;
 
     this.generatedAttachmentFileName = params.generatedAttachmentFileName ?? '';
     this.generatedAttachmentFilePath = params.generatedAttachmentFilePath ?? '';
@@ -320,6 +320,7 @@ export class Substitutions {
     return out;
   }
 
+  // eslint-disable-next-line typescript-dev-toolkit/no-undefined-return-type -- Feeds TokenEvaluatorContext.getAttachmentFileContent, part of the custom-token API.
   private getAttachmentFileContent(): Promise<ArrayBuffer | undefined> {
     this.attachmentFileContentPromise ??= this.attachmentFileContent === undefined
       ? this.readAttachmentFileContent?.() ?? Promise.resolve(undefined)

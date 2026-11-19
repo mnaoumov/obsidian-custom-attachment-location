@@ -37,7 +37,7 @@ describe('PastedImageMarker', () => {
     });
     marker = new PastedImageMarker({
       arrayBufferMap: strictProxy<ArrayBufferMap>({
-        getFileStats: (arrayBuffer: ArrayBuffer) => fileStatsMap.get(arrayBuffer),
+        getFileStats: (arrayBuffer: ArrayBuffer) => fileStatsMap.get(arrayBuffer) ?? null,
         markAsPastedImage: markAsPastedImageMock,
         setNewAttachmentOperation: (arrayBuffer: ArrayBuffer, operation: NewAttachmentOperation): void => {
           operations.set(arrayBuffer, operation);

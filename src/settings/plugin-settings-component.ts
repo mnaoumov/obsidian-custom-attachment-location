@@ -347,7 +347,8 @@ ${commentOut(this.legacySettings.customTokensStr)}
     copyIfPresent('shouldRenameAttachmentFiles', legacySettings.shouldRenameAttachmentFiles);
     copyIfPresent('shouldRenameAttachmentFolder', legacySettings.shouldRenameAttachmentFolder);
     copyIfPresent('shouldRescueSharedAttachments', legacySettings.shouldRescueSharedAttachments);
-    copyIfPresent('treatAsAttachmentExtensions', addExcalidrawPropertyEntry(legacySettings.treatAsAttachmentExtensions));
+    const treatAsAttachmentExtensions = legacySettings.treatAsAttachmentExtensions;
+    copyIfPresent('treatAsAttachmentExtensions', treatAsAttachmentExtensions && addExcalidrawPropertyEntry(treatAsAttachmentExtensions));
 
     if (Object.keys(proposedSettings).length === 0) {
       return;
@@ -648,11 +649,11 @@ function addDateTimeFormat(params: AddDateTimeFormatParams): string {
  * would lose the new behavior without being told. A list without `.excalidraw.md` is a user who opted out of
  * treating drawings as attachments, and is proposed unchanged.
  *
- * @param extensions - The historic list, or `undefined` when the user never saved one.
+ * @param extensions - The historic list. A user who never saved one has nothing to carry over.
  * @returns The list to propose.
  */
-function addExcalidrawPropertyEntry(extensions: readonly string[] | undefined): readonly string[] | undefined {
-  const shouldAdd = extensions?.includes(EXCALIDRAW_EXTENSION) === true && !extensions.includes(EXCALIDRAW_PROPERTY_ENTRY);
+function addExcalidrawPropertyEntry(extensions: readonly string[]): readonly string[] {
+  const shouldAdd = extensions.includes(EXCALIDRAW_EXTENSION) && !extensions.includes(EXCALIDRAW_PROPERTY_ENTRY);
   return shouldAdd ? [...extensions, EXCALIDRAW_PROPERTY_ENTRY] : extensions;
 }
 

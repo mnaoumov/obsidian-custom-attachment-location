@@ -555,7 +555,7 @@ it('never recreates a deleted history folder or its README on a device with sync
           readonly _children?: ReconcilingChild[];
           readonly reconcile?: () => Promise<void>;
         }
-        function findReconciler(children: readonly ReconcilingChild[]): ReconcilingChild | undefined {
+        function findReconciler(children: readonly ReconcilingChild[]): null | ReconcilingChild {
           for (const child of children) {
             if (typeof child.reconcile === 'function' && 'originalAttachmentNamesComponent' in child) {
               return child;
@@ -565,7 +565,7 @@ it('never recreates a deleted history folder or its README on a device with sync
               return nested;
             }
           }
-          return undefined;
+          return null;
         }
         const plugin = app.plugins.getPlugin(pluginId);
         const pluginChildren = plugin ? Reflect.get(plugin, '_children') as ReconcilingChild[] | undefined : undefined;

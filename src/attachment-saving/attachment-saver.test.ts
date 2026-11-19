@@ -73,7 +73,7 @@ function createSaver(): TestContext {
     workspace: strictProxy<Workspace>({ activeEditor: null, getActiveFile })
   });
 
-  const getFileStats = vi.fn<ArrayBufferMap['getFileStats']>().mockReturnValue(undefined);
+  const getFileStats = vi.fn<ArrayBufferMap['getFileStats']>().mockReturnValue(null);
   const isPastedImageBuffer = vi.fn<ArrayBufferMap['isPastedImage']>().mockReturnValue(false);
   const getNewAttachmentOperation = vi.fn<ArrayBufferMap['getNewAttachmentOperation']>().mockReturnValue(NewAttachmentOperation.Other);
   const arrayBufferMap = strictProxy<ArrayBufferMap>({ getFileStats, getNewAttachmentOperation, isPastedImage: isPastedImageBuffer });
@@ -456,7 +456,7 @@ describe('AttachmentSaver', () => {
     });
 
     it('should omit ctime and mtime from createBinary options when stats are absent', async () => {
-      context.getFileStats.mockReturnValue(undefined);
+      context.getFileStats.mockReturnValue(null);
       const content = new ArrayBuffer(4);
       await context.saver.saveAttachment({
         attachmentFileBaseName: 'img',

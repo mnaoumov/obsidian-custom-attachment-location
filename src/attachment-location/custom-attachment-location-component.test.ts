@@ -114,6 +114,7 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 vi.mock('electron', () => ({
+  // eslint-disable-next-line typescript-dev-toolkit/no-undefined-return-type -- Mirrors Electron's webUtils export, absent on older Electron.
   get webUtils(): Pick<Electron.WebUtils, 'getPathForFile'> | undefined {
     return hoisted.isWebUtilsAvailable
       ? { getPathForFile: (_file: File): string => '/abs/path' }
@@ -598,7 +599,7 @@ describe('CustomAttachmentLocationComponent', () => {
     it('should hand the clipboard manager patch the gesture tracker, and a marker that reads the screenshot paths', async () => {
       const markAsPastedImageMock = vi.fn();
       const component = createComponent(strictProxy<ArrayBufferMap>({
-        getFileStats: () => undefined,
+        getFileStats: () => null,
         markAsPastedImage: markAsPastedImageMock,
         setNewAttachmentOperation: vi.fn(),
         trySetByPath: () => Promise.resolve(false)

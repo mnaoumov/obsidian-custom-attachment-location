@@ -61,7 +61,7 @@ describe('ArrayBufferMap', () => {
   describe('getFileStats/setFileStats', () => {
     it('should return undefined for an unknown array buffer', () => {
       const map = new ArrayBufferMap({ app: strictProxy<App>({}) });
-      expect(map.getFileStats(new ArrayBuffer(0))).toBeUndefined();
+      expect(map.getFileStats(new ArrayBuffer(0))).toBeNull();
     });
 
     it('should store and retrieve file stats for an array buffer', () => {
@@ -101,7 +101,7 @@ describe('ArrayBufferMap', () => {
       const map = new ArrayBufferMap({ app: strictProxy<App>({}) });
       const arrayBuffer = new ArrayBuffer(8);
       expect(await map.trySetByPath(arrayBuffer, '')).toBe(false);
-      expect(map.getFileStats(arrayBuffer)).toBeUndefined();
+      expect(map.getFileStats(arrayBuffer)).toBeNull();
     });
 
     it('should set file stats from the FileSystemAdapter', async () => {
@@ -158,7 +158,7 @@ describe('ArrayBufferMap', () => {
       const arrayBuffer = new ArrayBuffer(8);
 
       expect(await map.trySetByPath(arrayBuffer, 'file.png')).toBe(false);
-      expect(map.getFileStats(arrayBuffer)).toBeUndefined();
+      expect(map.getFileStats(arrayBuffer)).toBeNull();
     });
   });
 });
