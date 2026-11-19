@@ -288,4 +288,65 @@ describe('FileManagerGenerateMarkdownLinkPatchComponent', () => {
     expect(result).toContain('](https://example.com/image.png)');
     expect(result.startsWith('[')).toBe(true);
   });
+
+  describe('a later patch that never calls through', () => {
+    const pdf = strictProxy<TFile>({ basename: 'renamed', extension: 'pdf', name: 'renamed.pdf', path: 'renamed.pdf' });
+
+    // Like `Better Markdown Links`: it builds the link itself from the alias it is handed, and never calls the method below it.
+    function installReplacingPatch(): void {
+      fileManager.generateMarkdownLink = (file: TFile, _sourcePath: string, _subpath?: string, alias?: string): string => `[${alias ?? file.name}](<./${file.path}>)`;
+    }
+
+    it('hides the inserted link text until a paste puts this patch back on top', () => {
+      settings.insertedLinkText = '{{originalAttachmentFileName}}';
+      const component = createComponent();
+      component.load();
+      installReplacingPatch();
+
+      expect(fileManager.generateMarkdownLink(pdf, 'note.md')).toBe('[renamed.pdf](<./renamed.pdf>)');
+
+      app.workspace.trigger('editor-paste');
+
+      expect(fileManager.generateMarkdownLink(pdf, 'note.md')).toBe('[original report](<./renamed.pdf>)');
+      component.unload();
+    });
+
+    it('is put back on top by a drop too', () => {
+      settings.insertedLinkText = '{{originalAttachmentFileName}}';
+      const component = createComponent();
+      component.load();
+      installReplacingPatch();
+
+      app.workspace.trigger('editor-drop');
+
+      expect(fileManager.generateMarkdownLink(pdf, 'note.md')).toBe('[original report](<./renamed.pdf>)');
+      component.unload();
+    });
+
+    it('handles a call once when the patch it re-installed over still calls through', () => {
+      settings.insertedLinkText = '{{originalAttachmentFileName}}';
+      const component = createComponent();
+      component.load();
+      const callingThrough = fileManager.generateMarkdownLink.bind(fileManager);
+      fileManager.generateMarkdownLink = (file: TFile, sourcePath: string, subpath?: string, alias?: string): string => callingThrough(file, sourcePath, subpath, alias);
+
+      component.ensureOutermost();
+      fileManager.generateMarkdownLink(pdf, 'note.md');
+
+      expect(attachmentPathManager.getInsertedLinkText).toHaveBeenCalledTimes(1);
+      expect(generateMarkdownLinkSpy).toHaveBeenCalledWith(pdf, 'note.md', undefined, 'original report');
+      component.unload();
+    });
+
+    it('re-installs nothing while it is still on top', () => {
+      const component = createComponent();
+      component.load();
+      const installed = fileManager.generateMarkdownLink;
+
+      component.ensureOutermost();
+
+      expect(fileManager.generateMarkdownLink).toBe(installed);
+      component.unload();
+    });
+  });
 });
