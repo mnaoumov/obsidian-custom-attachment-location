@@ -2,6 +2,7 @@ import type { ConsoleDebugComponent } from '@mnaoumov/obsidian-lib/components/co
 import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type { Mock } from 'vitest';
 
+import { DataStoreLocations } from '@mnaoumov/obsidian-lib/data-stores/data-store-locations';
 import { LocalDataStore } from '@mnaoumov/obsidian-lib/data-stores/local-data-store';
 import { SharedDataStore } from '@mnaoumov/obsidian-lib/data-stores/shared-data-store';
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
@@ -23,6 +24,10 @@ import type { PluginSettingsComponent } from '../settings/plugin-settings-compon
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { PluginSettings } from '../settings/plugin-settings.ts';
 import { OriginalAttachmentNamesComponent } from './original-attachment-names-component.ts';
+import {
+  PLUGIN_DATA_FOLDER_README,
+  PLUGIN_DATA_SUBFOLDER_README
+} from './plugin-data-folder-exclusion-component.ts';
 import {
   DEFAULT_PLUGIN_DATA_FOLDER,
   LEGACY_PLUGIN_DATA_FOLDER,
@@ -140,22 +145,93 @@ it('requires new-device consent before merging the shared history', async () => 
   expect(second.get('assets/alpha.pdf')).toBe('arrival.pdf');
 });
 
-it('relocates from a fixed anchor, retains history and remembers hidden roots while disabled', async () => {
+it('moves the history into a hidden folder, leaving no folder behind, and keeps it there across reload', async () => {
   settings.shouldAllowHiddenPluginDataFolder = true;
   const component = await createComponent();
   component.set('assets/alpha.pdf', 'arrival.pdf');
   await component.setSyncEnabled(true);
+  await app.vault.adapter.write(`${ANCHOR}/README.md`, PLUGIN_DATA_FOLDER_README);
+  // A file the operating system leaves behind is no reason to keep the former folder.
+  await app.vault.adapter.write(`${ANCHOR}/.DS_Store`, '');
   await component.relocate(TARGET);
   await component.relocate(TARGET);
   expect(component.transportRoots).toContain(TARGET_ROOT);
-  expect(await app.vault.adapter.exists(ROOT)).toBe(true);
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(await component.getExistingStoreFolders()).toEqual([TARGET]);
   await component.setSyncEnabled(false);
   const reloaded = await createComponent();
   expect(reloaded.transportRoots).toContain(TARGET_ROOT);
   expect(reloaded.get('assets/alpha.pdf')).toBe('arrival.pdf');
   expect(reloaded.isSyncEnabled).toBe(false);
   await reloaded.setSyncEnabled(true);
-  expect(reloaded.transportRoots).toEqual(component.transportRoots);
+  expect(await reloaded.getExistingStoreFolders()).toEqual([TARGET]);
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+});
+
+it('keeps a former folder that holds the user\'s own files, removing only the plugin\'s subfolder', async () => {
+  const component = await createComponent();
+  component.set('assets/alpha.pdf', 'arrival.pdf');
+  await app.vault.adapter.mkdir(ANCHOR);
+  await app.vault.adapter.write(`${ANCHOR}/notes.md`, 'mine');
+  await component.setSyncEnabled(true);
+  await app.vault.adapter.write(`${ANCHOR}/obsidian-custom-attachment-location/README.md`, PLUGIN_DATA_SUBFOLDER_README);
+  await component.relocate('99-Meta/Names');
+  expect(await app.vault.adapter.read(`${ANCHOR}/notes.md`)).toBe('mine');
+  expect(await app.vault.adapter.exists(`${ANCHOR}/obsidian-custom-attachment-location`)).toBe(false);
+  expect(await component.getExistingStoreFolders()).toEqual(['99-Meta/Names']);
+});
+
+it('keeps a former folder that the destination sits inside', async () => {
+  const component = await createComponent();
+  component.set('assets/alpha.pdf', 'arrival.pdf');
+  await component.setSyncEnabled(true);
+  await component.relocate(`${ANCHOR}/Inner`);
+  expect(await component.getExistingStoreFolders()).toEqual([`${ANCHOR}/Inner`]);
+  expect(await app.vault.adapter.exists(`${ANCHOR}/obsidian-custom-attachment-location`)).toBe(false);
+  const reloaded = await createComponent();
+  expect(reloaded.get('assets/alpha.pdf')).toBe('arrival.pdf');
+});
+
+it('tolerates a sync tool removing the emptied former folder before the move finishes', async () => {
+  const component = await createComponent();
+  component.set('assets/alpha.pdf', 'arrival.pdf');
+  await component.setSyncEnabled(true);
+  const rename = app.vault.adapter.rename.bind(app.vault.adapter);
+  vi.spyOn(app.vault.adapter, 'rename').mockImplementation(async (from, to) => {
+    await rename(from, to);
+    await app.vault.adapter.rmdir(from.slice(0, from.lastIndexOf('/')), true);
+  });
+  await component.relocate('99-Meta/Names');
+  expect(await component.getExistingStoreFolders()).toEqual(['99-Meta/Names']);
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+});
+
+it('refuses a destination inside the history itself', async () => {
+  const component = await createComponent();
+  await component.setSyncEnabled(true);
+  await expect(component.relocate(`${ROOT}/inner`)).rejects.toThrow('inside the history folder');
+  expect(await component.getExistingStoreFolders()).toEqual([ANCHOR]);
+});
+
+it('lets another device follow the move without recreating the former folder', async () => {
+  const first = await createComponent();
+  first.set('assets/alpha.pdf', 'arrival.pdf');
+  await first.setSyncEnabled(true);
+  vi.stubGlobal('indexedDB', new IDBFactory());
+  const second = await createComponent();
+  await second.setSyncEnabled(true);
+  expect(second.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  await first.relocate('99-Meta/Names');
+  first.set('assets/bravo.pdf', 'bravo.pdf');
+  await first.flush();
+  second.set('assets/charlie.pdf', 'charlie.pdf');
+  await second.flush();
+  expect(second.get('assets/bravo.pdf')).toBe('bravo.pdf');
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(await second.getExistingStoreFolders()).toEqual(['99-Meta/Names']);
+  await first.flush();
+  expect(first.get('assets/charlie.pdf')).toBe('charlie.pdf');
+  expect(showNotice).not.toHaveBeenCalled();
 });
 
 it('refuses relocation before consent and rejects unsafe destinations without moving history', async () => {
@@ -285,7 +361,7 @@ it('keeps queued consent changes in call order, so the last disable wins', async
   expect(reloaded.get('assets/alpha.pdf')).toBe('arrival.pdf');
 });
 
-it('refuses conflicting destination bytes, preserves sibling plugin data, and retries after recovery', async () => {
+it('refuses a destination that holds a separate history, preserves sibling plugin data, and retries after recovery', async () => {
   settings.shouldAllowHiddenPluginDataFolder = true;
   const component = await createComponent();
   await component.setSyncEnabled(true);
@@ -297,24 +373,27 @@ it('refuses conflicting destination bytes, preserves sibling plugin data, and re
   if (!source) {
     throw new Error('Source history not published');
   }
-  const target = `${TARGET_ROOT}${source.slice(ROOT.length)}`;
-  await app.vault.createFolder(target.slice(0, target.lastIndexOf('/')));
-  await app.vault.adapter.write(target, 'conflicting bytes');
+  const sourceText = await app.vault.adapter.read(source);
+  const conflicting = `${TARGET_ROOT}/devices/other/log-1.json`;
+  await app.vault.adapter.mkdir(`${TARGET_ROOT}/devices/other`);
+  await app.vault.adapter.write(conflicting, 'separate history');
   const sibling = `${TARGET}/other-plugin/data.json`;
-  await app.vault.createFolder(`${TARGET}/other-plugin`);
+  await app.vault.adapter.mkdir(`${TARGET}/other-plugin`);
   await app.vault.adapter.write(sibling, 'sibling data');
-  await expect(component.relocate(TARGET)).rejects.toThrow();
-  expect(await app.vault.adapter.read(target)).toBe('conflicting bytes');
+  await expect(component.relocate(TARGET)).rejects.toThrow('separate original name history');
+  expect(await app.vault.adapter.read(conflicting)).toBe('separate history');
+  expect(await app.vault.adapter.read(source)).toBe(sourceText);
   expect(component.get('assets/alpha.pdf')).toBe('arrival.pdf');
   await component.setSyncEnabled(false);
   const reloaded = await createComponent();
   expect(reloaded.transportRoots).toContain(TARGET_ROOT);
   expect(reloaded.isSyncEnabled).toBe(false);
-  await app.vault.adapter.remove(target);
+  await app.vault.adapter.rmdir(TARGET_ROOT, true);
   await component.setSyncEnabled(true);
   await component.relocate(TARGET);
-  expect(await app.vault.adapter.read(target)).toBe(await app.vault.adapter.read(source));
+  expect(await app.vault.adapter.read(`${TARGET_ROOT}${source.slice(ROOT.length)}`)).toBe(sourceText);
   expect(await app.vault.adapter.read(sibling)).toBe('sibling data');
+  expect(await app.vault.adapter.exists(ROOT)).toBe(false);
   expect(component.transportRoots).toContain(TARGET_ROOT);
 });
 
@@ -621,14 +700,89 @@ async function rewriteMovedRelocationRecords(rewrite: (payload: Record<string, u
   }
 }
 
-async function setUpRelocatedHistory(): Promise<OriginalAttachmentNamesComponent> {
+async function setUpRelocatedHistory(destination = '99-Meta/Names'): Promise<OriginalAttachmentNamesComponent> {
   const component = await createComponent();
   component.set('assets/alpha.pdf', 'arrival.pdf');
   // Setup records its switch to JSON at the anchor, naming the anchor's folder, which a move then leaves behind.
   await component.setSyncEnabled(true);
-  await component.relocate('99-Meta/Names');
+  // An earlier version relocated by copying, which left the history in two folders.
+  await new DataStoreLocations({ adapter: app.vault.adapter, folder: ANCHOR, format: 'markdown', pluginId: 'obsidian-custom-attachment-location', storeId: 'original-attachment-names-v1' })
+    .relocate({ folder: destination, format: 'json' });
+  await component.flush();
   return component;
 }
+
+it('gathers copied history into the newest folder when that is the one applied', async () => {
+  const component = await setUpRelocatedHistory();
+  // Indexed folders go to the trash through the vault.
+  mockApp.vault.reconcile__();
+  await component.relocate('99-Meta/Names');
+  expect(await component.getExistingStoreFolders()).toEqual(['99-Meta/Names']);
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(await app.vault.adapter.exists('99-Meta/Names/obsidian-custom-attachment-location/original-attachment-names-v1/locations-v1')).toBe(true);
+  vi.stubGlobal('indexedDB', new IDBFactory());
+  const newDevice = await createComponent();
+  await newDevice.setSyncEnabled(true);
+  expect(newDevice.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  expect(await newDevice.getExistingStoreFolders()).toEqual(['99-Meta/Names']);
+});
+
+it('gathers copied history nested in the original folder, using the vault trash when the system trash refuses', async () => {
+  const component = await setUpRelocatedHistory(`${ANCHOR}/Nested`);
+  Reflect.set(app.vault.adapter, 'isSystemTrashAvailable__', false);
+  await component.relocate('Archive/History');
+  expect(await component.getExistingStoreFolders()).toEqual(['Archive/History']);
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(await app.vault.adapter.exists('.trash')).toBe(true);
+  expect(component.get('assets/alpha.pdf')).toBe('arrival.pdf');
+});
+
+it('follows a moved folder whose copied history sat inside it', async () => {
+  const component = await setUpRelocatedHistory(`${ANCHOR}/Nested`);
+  await moveFolder(ANCHOR, MOVED_ANCHOR);
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(showNotice).not.toHaveBeenCalled();
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(component.transportRoots).toContain(MOVED_ANCHOR_ROOT);
+  expect(await component.getExistingStoreFolders()).toEqual([MOVED_ANCHOR, `${MOVED_ANCHOR}/Nested`]);
+});
+
+it('gathers history that an earlier version copied into two folders into the one applied', async () => {
+  const component = await setUpRelocatedHistory();
+  component.set('assets/bravo.pdf', 'bravo.pdf');
+  await component.flush();
+  expect(await component.getExistingStoreFolders()).toEqual([ANCHOR, '99-Meta/Names']);
+  await component.relocate('Archive/History');
+  expect(await component.getExistingStoreFolders()).toEqual(['Archive/History']);
+  expect(await app.vault.adapter.exists(ANCHOR)).toBe(false);
+  expect(await app.vault.adapter.exists('99-Meta/Names')).toBe(false);
+  component.set('assets/charlie.pdf', 'charlie.pdf');
+  await component.flush();
+  const root = 'Archive/History/obsidian-custom-attachment-location/original-attachment-names-v1';
+  const devices = await app.vault.adapter.list(`${root}/devices`);
+  const documents = await app.vault.adapter.list(String(devices.folders[0]));
+  expect(documents.files.every((path) => path.endsWith('.json'))).toBe(true);
+  vi.stubGlobal('indexedDB', new IDBFactory());
+  const newDevice = await createComponent();
+  await newDevice.setSyncEnabled(true);
+  expect(newDevice.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  expect(newDevice.get('assets/bravo.pdf')).toBe('bravo.pdf');
+  expect(newDevice.get('assets/charlie.pdf')).toBe('charlie.pdf');
+  expect(await newDevice.getExistingStoreFolders()).toEqual(['Archive/History']);
+});
+
+it('moves gathered history back to a folder it used before', async () => {
+  const component = await setUpRelocatedHistory();
+  await component.relocate(ANCHOR);
+  expect(await component.getExistingStoreFolders()).toEqual([ANCHOR]);
+  expect(await app.vault.adapter.exists('99-Meta/Names')).toBe(false);
+  const reloaded = await createComponent();
+  expect(reloaded.get('assets/alpha.pdf')).toBe('arrival.pdf');
+  await reloaded.relocate('99-Meta/Names');
+  expect(await reloaded.getExistingStoreFolders()).toEqual(['99-Meta/Names']);
+  expect(reloaded.get('assets/alpha.pdf')).toBe('arrival.pdf');
+});
 
 it('follows history moved after a relocation, whose records name the anchor they were written at', async () => {
   const component = await setUpRelocatedHistory();
@@ -698,7 +852,7 @@ it('tells listeners about storage changes until they stop listening', async () =
   expect(callback).toHaveBeenCalledOnce();
   await component.relocate('99-Meta/Names');
   expect(callback).toHaveBeenCalledTimes(2);
-  expect(await component.getExistingStoreFolders()).toEqual([ANCHOR, '99-Meta/Names']);
+  expect(await component.getExistingStoreFolders()).toEqual(['99-Meta/Names']);
   stop();
   await component.setSyncEnabled(false);
   expect(callback).toHaveBeenCalledTimes(2);
