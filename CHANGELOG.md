@@ -135,9 +135,19 @@ This release has 1 breaking change, 3 new features, 2 fixes and 8 documentation 
 
 ## 16.0.0
 
-- feat(settings)!: merge taking `obsidian-lib` 5.0.0 path settings with globs and case-insensitive matching (re #98 - Exclude file extensions (e.g. .mdenc) from Collect attachments)
-- docs: mark plugin names as code
-- fix(tokens): merge registering custom tokens whenever the settings are validated
+This release has 1 breaking change, 1 fix and 1 documentation change.
+
+### Breaking
+
+- **settings:** every path list (attachment unit folders, the two exclude lists, the orphan-scan paths) now accepts globs and regular expressions and matches case-insensitively, so a file extension such as `*.mdenc` can be excluded from `Collect attachments` (re #98 - Exclude file extensions (e.g. .mdenc) from Collect attachments)
+
+### Fixed
+
+- **tokens:** custom tokens are registered whenever the settings are validated, not only at startup
+
+### Documentation
+
+- plugin names are marked as code
 
 Migration: every entry in a path list (attachment unit folders, the two exclude lists, the orphan-scan paths) now matches case-insensitively. An unescaped `*`, `?` or `[` makes an entry a glob (`*.pdf`, `Archive/**/*.png`, `*_files/`), so a plain path that holds one of those characters literally must escape it (`Notes \[old\]`). An entry shaped `/pattern/flags` is a regular expression whose flags are honoured; an unknown flag is reported as invalid.
 
@@ -172,15 +182,23 @@ This release has 3 new features. 2 maintenance commits (tests, build, CI, refact
 
 ## 15.0.0
 
-- feat(api)!: merge removing the vault graft; use the API's getAvailablePathForAttachments and isAttachmentUnitFolder
-  - BREAKING: `app.vault.getAvailablePathForAttachments.extended` is removed. Use the plugin API's `getAvailablePathForAttachments` (contract `1.3.0`).
-  - BREAKING: `app.vault.getAvailablePathForAttachments.checkIsAttachmentUnitFolder` is removed. Use the plugin API's `isAttachmentUnitFolder` (contract `1.3.0`).
+This release has 1 breaking change for other plugins, 1 fix and 1 other change. 2 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
+
+### Breaking
+
+- **api:** the members this plugin grafted onto Obsidian's `app.vault.getAvailablePathForAttachments` are removed; other plugins read the same answers through the published plugin API (contract `1.3.0`)
+  - `app.vault.getAvailablePathForAttachments.extended` is removed. Use the plugin API's `getAvailablePathForAttachments`.
+  - `app.vault.getAvailablePathForAttachments.checkIsAttachmentUnitFolder` is removed. Use the plugin API's `isAttachmentUnitFolder`.
   - `obsidian-dev-utils` 107.4.1 and older read these members; `@mnaoumov/obsidian-lib` 2.0.0 and later read the plugin API.
   - `Advanced Rename and Delete Handler` needs 2.2.0 or later to keep an attachment unit folder whole when it rescues attachments out of a deleted folder.
-- test: merge seeding `Advanced Rename and Delete Handler` 2.2.1, which reads the designation through the API
-- build(demo-vault): merge requiring `CodeScript Toolkit` 13.8.0 for the `obsidian-lib` demo script
-- fix(ui): merge marking the plugin names in the dependency reason as code
-- refactor(demo-vault): merge importing the community-plugin helpers from @mnaoumov/obsidian-lib
+
+### Fixed
+
+- **ui:** the plugin names in the dependency reason are marked as code
+
+### Other changes
+
+- **demo-vault:** the demo vault requires `CodeScript Toolkit` 13.8.0 or later for its `obsidian-lib` demo script
 
 ## 14.2.0
 
@@ -235,41 +253,26 @@ This release has 2 fixes, 1 documentation change and 1 other change. 4 maintenan
 
 Upgrading from `${...}`: your saved patterns are rewritten to `{{...}}` automatically the first time 14.0.0 loads. Your custom tokens code is JavaScript you wrote, so it is left as it is: a `ctx.fillTemplate('${noteFileName}')` in it fails with an error naming the `{{noteFileName}}` that replaces it, rather than silently producing a wrong name. The demo vault's `03 Tokens and patterns` note has the full token reference.
 
-- refactor(settings): merge stating that the legacy file-name pattern is never absent
-- docs(settings): merge spelling behavior the US way so the spellcheck gate passes
-- refactor(settings): merge dropping the loadFromFile override the `obsidian-dev-utils` base now covers
-- test(integration): merge naming the empty-folder cleanup race behind Failed to parse path
-- feat(settings): merge recognizing a drawing by its excalidraw-plugin property through the handler (#90)
-- test(screenshots): merge capturing the desktop frames without the editor caret
-- test(screenshots): merge pinning the clock the store captures read
-- refactor(settings): merge dropping the anchored placeholder override
-- docs(agents): merge noting the capture suites as the one writer of the handler record
-- chore(deps): merge the dependency sweep onto `obsidian-integration-testing` 17 and the re-shot store frames
-- refactor(settings): merge dropping the private-field onSavingRecord override on `obsidian-dev-utils` 107
-- refactor(styles): merge dropping the local multiple-dropdown rule on `obsidian-dev-utils` 107 (#86)
-- feat(external-attachments): merge renaming an image pasted into an `Excalidraw` drawing (#65)
-- test(coverage): merge covering the branches the `obsidian-test-mocks` 7 float left uncovered
-- test(delete-unused): merge pinning that the images a drawing shows are backlinks
-- refactor(tokens): merge keeping parseFormatObject file-local
-- test(integration): merge editing settings through editAndSave in every desktop suite
-- fix(tokens): merge registering the stored custom tokens when enabled after layout-ready
-- chore(deps): merge floating `obsidian-test-mocks` to ^7.0.0
-- docs(demo-vault): merge stating what skipping a drawing costs the delete-unused sweep
-- docs(readme): merge linking both cross-plugin API guides
-- fix: merge moving an attachment used by a single note to its proper folder
-- style(comments): merge lowercasing the wrapped-comment continuation lines
-- test(api): merge the per-note suite's editAndSave settings seam
-- refactor(settings): merge showing the overlap banner row through a visible predicate
-- feat!: merge the move to the {{token:format}} syntax
-- build(lint): merge turning on no-soft-break-in-paragraph
-- refactor: merge dropping the local command disposal the base now makes redundant
-- chore(deps): merge raising `obsidian-dev-utils` to 106 and `obsidian-integration-testing` to 16
-- test(demo-vault): merge installing `CodeScript Toolkit` headlessly when it is missing
-- chore: merge adopting the `npm` run gate branch gate
-- fix(settings): merge stopping every settings load from rewriting data.json
-- fix(deps): merge restoring the lockfile's missing resolved and integrity fields
-- fix: merge never sweeping a drawing as a note for unused attachments
-- fix: merge giving a drawing treated as an attachment its base name as link text
+This release has 1 breaking change, 2 new features, 6 fixes and 2 documentation changes. 24 maintenance commits (tests, build, CI, refactoring, dependencies, contributor docs) are not listed.
+
+### New
+
+- **external-attachments:** an image pasted into an `Excalidraw` drawing is renamed by your patterns, so it can raise the `{{prompt}}` box (re #65 - \[FR\] Allow pasted images on excalidraw to spawn the `Prompt` box)
+- **settings:** a note carrying the `excalidraw-plugin` property is recognized as a drawing, through `Advanced Rename and Delete Handler` (re #90 - \[FR\] Treat `excalidraw-plugin` property as an excalidraw file)
+
+### Fixed
+
+- **move:** `Move attachment to proper folder` moves an attachment used by a single note again
+- **delete-unused:** a drawing is never swept as a note when looking for unused attachments
+- **links:** a drawing treated as an attachment gets its base name as link text
+- **tokens:** stored custom tokens are registered when the plugin is enabled after the layout is ready
+- **settings:** loading the settings no longer rewrites `data.json` every time
+- **ui:** the plugin's multiple-choice dropdown expands correctly (#86)
+
+### Documentation
+
+- **demo-vault:** the demo vault states what skipping a drawing costs the delete-unused sweep
+- **readme:** the README links both cross-plugin API guides
 
 ## 13.0.0
 
