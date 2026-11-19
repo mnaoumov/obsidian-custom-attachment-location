@@ -22,6 +22,15 @@ export enum InsertGesture {
  */
 export class InsertGestureTrackerComponent extends AllWindowsEventComponent {
   /**
+   * The vertical screen coordinate of the drop being dispatched, or `null` outside a drop.
+   *
+   * @returns The drop's `clientY`.
+   */
+  public get dropClientY(): null | number {
+    return this._dropClientY;
+  }
+
+  /**
    * The gesture being dispatched, or `null` outside any paste or drop, for example when another plugin calls
    * `insertFiles` itself.
    *
@@ -31,6 +40,7 @@ export class InsertGestureTrackerComponent extends AllWindowsEventComponent {
     return this._gesture;
   }
 
+  private _dropClientY: null | number = null;
   private _gesture: InsertGesture | null = null;
   private gestureCount = 0;
 
@@ -44,23 +54,26 @@ export class InsertGestureTrackerComponent extends AllWindowsEventComponent {
       type: 'paste'
     });
     this.registerAllDocumentsDomEvent({
-      callback: () => {
-        this.record(InsertGesture.Drop);
+      callback: (dragEvent) => {
+        this.record(InsertGesture.Drop, dragEvent.clientY);
       },
       options: { capture: true },
       type: 'drop'
     });
   }
 
-  private record(gesture: InsertGesture): void {
+  private record(gesture: InsertGesture, dropClientY: null | number = null): void {
     this._gesture = gesture;
+    this._dropClientY = dropClientY;
     this.gestureCount++;
     const gestureCount = this.gestureCount;
     window.setTimeout(() => {
       // A later gesture owns the state now, and its own timer clears it.
-      if (gestureCount === this.gestureCount) {
-        this._gesture = null;
+      if (gestureCount !== this.gestureCount) {
+        return;
       }
+      this._gesture = null;
+      this._dropClientY = null;
     }, 0);
   }
 }
