@@ -746,9 +746,6 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         render: (setting) => {
           setting.addMultipleText((multipleText) => {
             this.bind({
-              // TODO: Drop this converter once obsidian-lib's MultipleTextComponent reads an empty textarea as `[]`; today it reads `['']`, so blank lines are dropped here and a cleared box stores `[]`.
-              componentToPluginSettingsValueConverter: (uiValue: readonly string[]): string[] => uiValue.filter((extension) => extension.trim() !== ''),
-              pluginSettingsToComponentValueConverter: (pluginSettingsValue: readonly string[]): readonly string[] => pluginSettingsValue,
               propertyName: 'sidecarExtensions',
               // An empty list is a real value, "pair nothing", so clearing must not snap back to the defaults, and the box must show the list as it is.
               shouldResetSettingWhenComponentIsEmpty: false,
