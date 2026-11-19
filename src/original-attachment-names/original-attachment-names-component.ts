@@ -63,7 +63,10 @@ import {
 } from './original-attachment-name-history.ts';
 import {
   DEFAULT_PLUGIN_DATA_FOLDER,
+  isPluginDataFolderReadme,
   LEGACY_PLUGIN_DATA_FOLDER,
+  PLUGIN_DATA_FOLDER_README_FILE_NAME,
+  PLUGIN_DATA_SUBFOLDER_NAME,
   validatePluginDataFolder
 } from './plugin-data-folder.ts';
 
@@ -84,6 +87,11 @@ const PENDING_ANCHOR_FOLDER = '';
 const SAVE_DEBOUNCE_IN_MILLISECONDS = 1000;
 const WARNING_DEBOUNCE_IN_MILLISECONDS = 1000;
 const COMPACTION_OPERATION_COUNT = 100;
+
+/**
+ * Folders the walk for moved history never enters: large, and never a home for plugin data.
+ */
+const SKIPPED_FOLDER_NAMES_ON_DISK = new Set(['.git', '.trash', 'node_modules']);
 
 /**
  * How long a path handed out for a new attachment waits for the file to be created. The same minute the
@@ -514,8 +522,13 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
   }
 
   /**
-   * Copies and verifies history through the library's anchored relocation protocol.
-   * Settings changes alone never move the writer; every device keeps opening the original anchor.
+   * Moves the history to another folder, so it is kept in that folder alone.
+   *
+   * The store's folder is moved, not copied: every other device finds it at its new place by itself, because the
+   * history is then in exactly one folder (see `resolveAnchorFolder`). A store that an earlier version relocated by
+   * copying is held in several folders; the library's refresh has already copied every older folder's history into the
+   * newest one, so that one is moved and the others are sent to the trash, the discovery anchor last. Settings changes
+   * alone never move the store.
    *
    * @param folder - Vault-relative parent of this plugin's store.
    */
@@ -537,9 +550,10 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       }
       // An interrupted copy may leave metadata in its target before the library activates the writer.
       // Remember exclusions first, including across a disabled restart; this never changes discovery.
-      this.requestedTransportRoots.add(`${folder}/${PLUGIN_ID}/${STORE_ID}`);
+      this.requestedTransportRoots.add(getOriginalNameTransportRoot(folder));
       await ensureNonNullable(this.local).set(REQUESTED_ROOTS_KEY, [...this.requestedTransportRoots]);
-      await this.shared.relocate({ folder, format: 'json' });
+      await this.moveStore(folder);
+      // `moveStore` reopened the store at the destination.
       this.history.merge(this.shared.entries());
     });
     this.persistence = run;
@@ -888,8 +902,9 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
    * Lists the vault's store folders straight from the file system.
    *
    * The vault index holds only what Obsidian indexes, and an exclusion plugin can hide a folder from it entirely, so
-   * a history moved into such a folder would never be found there. Dot folders (the configuration folder, `.git`,
-   * `.trash`) and `node_modules` are skipped, as Obsidian's own index skips them, and so is each store's own content.
+   * a history moved into such a folder would never be found there. Other hidden folders are walked, because **Apply
+   * folder** may move the history into one when hidden folders are allowed. The configuration folder, `.git`, `.trash`
+   * and `node_modules` are skipped, and so is each store's own content.
    *
    * @param suffix - The path suffix every store folder ends with.
    * @returns The store folders' paths.
@@ -910,7 +925,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
         // Adapters differ on whether a root listing is prefixed with a slash.
         const path = child.replace(/^\/+/, '');
         const name = path.slice(path.lastIndexOf('/') + 1);
-        if (name.startsWith('.') || name === 'node_modules' || path === this.app.vault.configDir) {
+        if (SKIPPED_FOLDER_NAMES_ON_DISK.has(name) || path === this.app.vault.configDir) {
           continue;
         }
         if (path.endsWith(suffix)) {
@@ -958,6 +973,80 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
     }
     await this.flush();
     await local.set(MIGRATION_KEY, true);
+  }
+
+  /**
+   * Moves the store's folder to the destination, gathering a store that earlier versions copied into several folders.
+   *
+   * @param folder - Vault-relative parent of the destination store.
+   */
+  private async moveStore(folder: string): Promise<void> {
+    const adapter = this.app.vault.adapter;
+    const local = ensureNonNullable(this.local);
+    // Refreshing copies every older folder's history into the newest one, and refuses a chain that has not fully arrived.
+    const locations = new DataStoreLocations({ adapter, folder: this.anchorFolder, format: 'markdown', pluginId: PLUGIN_ID, storeId: STORE_ID });
+    await locations.refresh();
+    const transports = locations.transports;
+    const active = ensureNonNullable(transports.at(-1));
+    const roots = [...new Set(transports.map((transport) => transport.root))];
+    const destinationRoot = getOriginalNameTransportRoot(folder);
+    if (roots.length === 1 && active.root === destinationRoot) {
+      return;
+    }
+    if (roots.some((root) => destinationRoot.startsWith(`${root}/`) || root.startsWith(`${destinationRoot}/`))) {
+      throw new Error(t(($) => $.originalAttachmentNames.storage.destinationInsideHistory, { folder }));
+    }
+    if (!roots.includes(destinationRoot) && await adapter.exists(destinationRoot)) {
+      throw new Error(t(($) => $.originalAttachmentNames.storage.destinationOccupied, { folder }));
+    }
+
+    const anchorRoot = ensureNonNullable(roots[0]);
+    const retiredRoots = roots.filter((root) => root !== active.root);
+    // The vault reports the move and the trashing later; their events are about store metadata, not attachments.
+    for (const root of roots) {
+      if (root !== destinationRoot) {
+        this.renamedTransportRoots.add(root);
+      }
+    }
+    if (active.root !== destinationRoot) {
+      if (retiredRoots.includes(destinationRoot)) {
+        // A folder used before: its history is already in the newest folder, which takes its place.
+        await this.trashPath(destinationRoot);
+      }
+      const parent = destinationRoot.slice(0, destinationRoot.lastIndexOf('/'));
+      if (!await adapter.exists(parent)) {
+        await adapter.mkdir(parent);
+      }
+      await adapter.rename(active.root, destinationRoot);
+    }
+    if (roots.length > 1 && active.extension === '.json') {
+      /*
+       * A folder a relocation copied into holds no relocation records of its own, so record its switch to JSON there.
+       * Otherwise the store would reopen at it writing Markdown.
+       */
+      await new DataStoreLocations({ adapter, folder, format: 'markdown', pluginId: PLUGIN_ID, storeId: STORE_ID }).relocate({ folder, format: 'json' });
+    }
+    this.anchorFolder = folder;
+    await local.set(ANCHOR_FOLDER_KEY, folder);
+
+    // The anchor goes last: until then, a device that opens it still finds where the history went.
+    const trashOrder = [...retiredRoots.filter((retiredRoot) => retiredRoot !== anchorRoot), ...retiredRoots.filter((retiredRoot) => retiredRoot === anchorRoot)];
+    for (const root of trashOrder) {
+      if (root !== destinationRoot && await adapter.exists(root)) {
+        await this.trashPath(root);
+      }
+    }
+    const suffix = `/${PLUGIN_ID}/${STORE_ID}`;
+    // Deepest first, so a former folder nested in another is gone before its parent is checked for leftovers.
+    for (const root of [...roots].sort((a, b) => b.length - a.length)) {
+      if (root === destinationRoot) {
+        continue;
+      }
+      await this.removeLeftoverFolders(root.slice(0, -suffix.length));
+      this.requestedTransportRoots.delete(root);
+    }
+    await local.set(REQUESTED_ROOTS_KEY, [...this.requestedTransportRoots]);
+    this.shared = await this.openShared();
   }
 
   private notifyStorageChanged(): void {
@@ -1012,6 +1101,34 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
     const key = window.crypto.randomUUID();
     this.history.add(key, timed);
     this.pending.set(key, { ...timed });
+  }
+
+  /**
+   * Removes what a moved store leaves behind in its former folder: the plugin's own subfolder and the folder itself,
+   * each only when nothing is left in it but the plugin's `README.md` and hidden files.
+   *
+   * @param folder - The store's former parent folder.
+   */
+  private async removeLeftoverFolders(folder: string): Promise<void> {
+    const adapter = this.app.vault.adapter;
+    for (const path of [`${folder}/${PLUGIN_DATA_SUBFOLDER_NAME}`, folder]) {
+      if (!await adapter.exists(path)) {
+        continue;
+      }
+      const listed = await adapter.list(path);
+      if (listed.folders.length > 0) {
+        return;
+      }
+      for (const file of listed.files) {
+        if (file.slice(file.lastIndexOf('/') + 1).startsWith('.')) {
+          continue;
+        }
+        if (file !== `${path}/${PLUGIN_DATA_FOLDER_README_FILE_NAME}` || !isPluginDataFolderReadme(await adapter.read(file))) {
+          return;
+        }
+      }
+      await adapter.rmdir(path, true);
+    }
   }
 
   /**
@@ -1114,6 +1231,23 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       }),
       { mode: PluginNoticeMode.Separate }
     );
+  }
+
+  /**
+   * Sends a store folder to the trash the user chose, through the vault when it indexes the folder.
+   *
+   * @param path - Vault-relative path.
+   */
+  private async trashPath(path: string): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (file) {
+      await this.app.fileManager.trashFile(file);
+      return;
+    }
+    const adapter = this.app.vault.adapter;
+    if (!await adapter.trashSystem(path)) {
+      await adapter.trashLocal(path);
+    }
   }
 }
 

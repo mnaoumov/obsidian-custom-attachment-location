@@ -44,7 +44,7 @@ function readStorage(app: App): OriginalAttachmentNamesComponent {
   return getter();
 }
 
-it('keeps names locally, opts in through settings, relocates to a hidden root and preserves history after reload', async () => {
+it('keeps names locally, opts in through settings, moves the history to a hidden root and preserves it after reload', async () => {
   const vaultPath = getTemporaryVault().path;
   const input = { findPluginSettingsComponent, isStorageSettings, readStorage };
   const state = await evalInObsidian({
@@ -134,13 +134,15 @@ it('keeps names locally, opts in through settings, relocates to a hidden root an
         await waitUntil({ message: 'Apply folder must relocate the history to the hidden destination', predicate: async () => storage(app).transportRoots.includes(destinationRoot) && await app.vault.adapter.exists(`${destinationRoot}/devices`), timeoutInMilliseconds: 15_000 });
         await storage(app).flush();
         const saved = await app.vault.adapter.list(`${destinationRoot}/devices`);
-        return { devices: saved.folders.length, roots: [...storage(app).transportRoots] };
+        return { devices: saved.folders.length, folders: await storage(app).getExistingStoreFolders(), roots: [...storage(app).transportRoots] };
       },
       input,
       vaultPath
     });
     expect(location.roots).toContain('99-Meta/.original-names/obsidian-custom-attachment-location/original-attachment-names-v1');
     expect(location.devices).toBeGreaterThan(0);
+    // Apply folder moves the history: the folder it left is gone, so only the destination holds it.
+    expect(location.folders).toEqual(['99-Meta/.original-names']);
     phase = 'rename and reload';
     const nameAfterReload = await evalInObsidian({
       async callback({ app, lib: { waitUntil }, readStorage: storage }) {
@@ -171,6 +173,13 @@ it('keeps names locally, opts in through settings, relocates to a hidden root an
           const setupModal = [...document.querySelectorAll('.modal')].find((entry) => entry.querySelector('.modal-title')?.textContent === 'Enable original name synchronization?');
           setupModal?.querySelector<HTMLButtonElement>('button.cancel-button')?.click();
           app.setting.close();
+          // Apply folder moved the history, so move it back: the later suites in this vault expect the default folder.
+          const defaultFolder = '@Plugin sync data (DO NOT REMOVE)';
+          const component = storage(app);
+          const storeFolders = await component.getExistingStoreFolders();
+          if (component.isSyncEnabled && !storeFolders.includes(defaultFolder)) {
+            await component.relocate(defaultFolder);
+          }
           await storage(app).setSyncEnabled(priorState.wasEnabled);
           const restored = findSettings(app.plugins.getPlugin('obsidian-custom-attachment-location'), isSettings);
           await restored?.editAndSave((draft) => Object.assign(draft, priorState.prior));
