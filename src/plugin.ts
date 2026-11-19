@@ -72,7 +72,7 @@ import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to
 import { GoToAttachmentFolderCommandHandler } from './navigation/go-to-attachment-folder-command-handler.ts';
 import { GoToOwningNoteCommandHandler } from './navigation/go-to-owning-note-command-handler.ts';
 import { NetworkImageDownloader } from './network-images/network-image-downloader.ts';
-import { CopyOriginalAttachmentMetadataComponent } from './original-attachment-names/copy-original-attachment-metadata-component.ts';
+import { OriginalAttachmentNameMenuComponent } from './original-attachment-names/original-attachment-name-menu-component.ts';
 import {
   ORIGINAL_ATTACHMENT_NAMES_FILE_NAME,
   OriginalAttachmentNamesComponent
@@ -258,9 +258,10 @@ export class Plugin extends PluginBase {
       })
     );
     this.addChild(
-      new CopyOriginalAttachmentMetadataComponent({
+      new OriginalAttachmentNameMenuComponent({
         app: this.app,
         originalAttachmentNamesComponent,
+        pluginNoticeComponent: this.pluginNoticeComponent,
         pluginSettingsComponent
       })
     );

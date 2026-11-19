@@ -1,7 +1,8 @@
 /**
  * @file
  *
- * Copies an attachment's original file name from the file menu and from the attachment link's menu.
+ * Shows an attachment's original file name from the file menu and from the attachment link's menu, and copies it with
+ * the dialog's copy button.
  *
  * The test runs as several `evalInObsidian` phases sharing one {@link ContextId}, never as one closure. Every wait inside
  * a closure shares the harness's 30-second per-closure cap, and a one-core Android guest under host load spent most of
@@ -120,6 +121,10 @@ interface MenuCopyResult {
   */
   readonly clipboard: string;
   readonly copied: string;
+  /**
+  What the dialog's read-only box showed.
+  */
+  readonly shown: string;
 }
 
 interface MissingMenuResult {
@@ -136,20 +141,29 @@ interface Settings {
 }
 
 /**
- * Opens a menu, clicks its `Copy original file name` action, and waits for the copy to finish.
+ * What {@link clickActionUntilCopied} saw: the name the dialog showed and the text its copy button wrote.
+ */
+interface ShownAndCopied {
+  readonly copied: string;
+  readonly shown: string;
+}
+
+/**
+ * Opens a menu, clicks its `Show original file name` action, reads the name the dialog shows, presses the dialog's copy
+ * button, waits for the copy to finish, and closes the dialog.
  *
- * A click that never reached the action writes nothing to the clipboard, and on Android, where a trusted tap on a
- * loaded guest can be lost, the menu is opened again and the click is retried once. The in-memory clipboard records a
- * write as soon as it is made, so a write that arrived is never retried and the action runs once per delivered click.
+ * A click that never reached the action opens no dialog, and on Android, where a trusted tap on a loaded guest can be
+ * lost, the menu is opened again and the click is retried once. The copy button's tap is retried the same way, and the
+ * in-memory clipboard records a write as soon as it is made, so a write that arrived is never retried.
  *
  * Runs in the renderer, handed over through `evalInObsidian`'s `input`, so it reaches nothing outside its own body.
  *
  * @param params - The menu to drive and the harness helpers to drive it with.
- * @returns The text the action wrote.
+ * @returns The name the dialog showed and the text its copy button wrote.
  */
-async function clickActionUntilCopied(params: ClickActionUntilCopiedParams): Promise<string> {
+async function clickActionUntilCopied(params: ClickActionUntilCopiedParams): Promise<ShownAndCopied> {
   const { clickElement, dismissMenu, findMenuAction, isRetryAllowed, menuName, openMenu, state, waitUntil } = params;
-  const copiedBefore = state.clipboard.writtenTexts.length;
+  const modalSelector = '.modal-container.original-file-name-modal';
   const maxAttempts = isRetryAllowed ? 2 : 1;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     await openMenu();
@@ -160,8 +174,8 @@ async function clickActionUntilCopied(params: ClickActionUntilCopiedParams): Pro
     await clickElement({ element: action });
     try {
       await waitUntil({
-        message: `The ${menuName} wrote nothing to the clipboard (attempt ${String(attempt)} of ${String(maxAttempts)})`,
-        predicate: () => state.clipboard.writtenTexts.length > copiedBefore,
+        message: `The ${menuName} opened no original-name dialog (attempt ${String(attempt)} of ${String(maxAttempts)})`,
+        predicate: () => document.querySelector(modalSelector) !== null,
         timeoutInMilliseconds: 8000
       });
       break;
@@ -173,22 +187,59 @@ async function clickActionUntilCopied(params: ClickActionUntilCopiedParams): Pro
       await dismissMenu();
     }
   }
+
+  const modal = document.querySelector<HTMLElement>(modalSelector);
+  const input = modal?.querySelector<HTMLInputElement>(':scope .original-file-name-value input');
+  const copyButton = modal?.querySelector<HTMLElement>(':scope .original-file-name-value .clickable-icon');
+  const closeButton = modal?.querySelector<HTMLElement>(':scope .modal-button-container button');
+  if (!modal || !input || !copyButton || !closeButton) {
+    throw new Error(`The ${menuName}'s dialog lacks its box, its copy button or its Close button.`);
+  }
+  if (!input.readOnly) {
+    throw new Error(`The ${menuName}'s dialog box is editable.`);
+  }
+  const shown = input.value;
+
+  const copiedBefore = state.clipboard.writtenTexts.length;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    await clickElement({ element: copyButton });
+    try {
+      await waitUntil({
+        message: `The ${menuName}'s copy button wrote nothing to the clipboard (attempt ${String(attempt)} of ${String(maxAttempts)})`,
+        predicate: () => state.clipboard.writtenTexts.length > copiedBefore,
+        timeoutInMilliseconds: 8000
+      });
+      break;
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+      console.warn(`The ${menuName}'s copy button tap did not land; tapping again.`, error);
+    }
+  }
   const copied = state.clipboard.writtenTexts[copiedBefore];
   if (copied === undefined) {
-    throw new Error(`The ${menuName} wrote nothing.`);
+    throw new Error(`The ${menuName}'s copy button wrote nothing.`);
   }
-  return copied;
+
+  await clickElement({ element: closeButton });
+  await waitUntil({
+    message: `The ${menuName}'s dialog did not close`,
+    predicate: () => document.querySelector(modalSelector) === null,
+    timeoutInMilliseconds: 8000
+  });
+  return { copied, shown };
 }
 
 /**
- * Finds the open menu's `Copy original file name` action.
+ * Finds the open menu's `Show original file name` action.
  *
  * Runs in the renderer, handed over through `evalInObsidian`'s `input`, so it reaches nothing outside its own body.
  *
  * @returns The action's menu item.
  */
 function findCopyOriginalNameAction(): HTMLElement {
-  const title = 'Copy original file name';
+  const title = 'Show original file name';
   /*
    * A long press that opened its menu late can leave a second menu under the newest one, which covers its items. Only the
    * newest menu, the last in the DOM, is on top, so a tap on another menu's item would land on the newest one.
@@ -229,8 +280,8 @@ function isSettings(value: unknown): value is Settings {
   return typeof value === 'object' && value !== null && 'generatedAttachmentFileName' in value;
 }
 
-describe('Copy original attachment file name', () => {
-  it('copies the imported name to the clipboard from file and link menus, offers no source path, and disables a missing name', async () => {
+describe('Show original attachment file name', () => {
+  it('shows the imported name from file and link menus, copies it with the dialog button, offers no source path, and disables a missing name', async () => {
     await waitForPluginSettingsLoaded();
     const vaultPath = getTemporaryVault().path;
     let contextId = new ContextId<CopyTestContext>();
@@ -276,6 +327,7 @@ describe('Copy original attachment file name', () => {
       }
       const { fileMenu, importedName, linkMenu, missingMenu } = flow;
 
+      expect([fileMenu.shown, linkMenu.shown]).toStrictEqual(['arrival.pdf', 'arrival.pdf']);
       expect(fileMenu.copied).toBe('arrival.pdf');
       expect(linkMenu.copied).toBe('arrival.pdf');
       expect(linkMenu.hasPathAction).toBe(false);
@@ -347,7 +399,7 @@ describe('Copy original attachment file name', () => {
               menu.hide();
             }
           }
-          const copied = await clickUntilCopied({
+          const { copied, shown } = await clickUntilCopied({
             clickElement,
             dismissMenu: async () => {
               hideMenus();
@@ -368,7 +420,7 @@ describe('Copy original attachment file name', () => {
             waitUntil
           });
           hideMenus();
-          return { clipboard: state.clipboard.text, copied };
+          return { clipboard: state.clipboard.text, copied, shown };
         }
       );
 
@@ -408,7 +460,7 @@ describe('Copy original attachment file name', () => {
               await pressKey({ key: 'Escape' });
             }
           }
-          const copied = await clickUntilCopied({
+          const { copied, shown } = await clickUntilCopied({
             clickElement,
             dismissMenu,
             findMenuAction: findAction,
@@ -464,7 +516,7 @@ describe('Copy original attachment file name', () => {
             waitUntil
           });
           await dismissMenu();
-          return { clipboard: state.clipboard.text, copied, hasPathAction };
+          return { clipboard: state.clipboard.text, copied, hasPathAction, shown };
         }
       );
 

@@ -1,3 +1,4 @@
+import type { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 import type {
   Menu,
   MenuItem
@@ -20,7 +21,14 @@ import type { PluginSettingsComponent } from '../settings/plugin-settings-compon
 import type { OriginalAttachmentNamesComponent } from './original-attachment-names-component.ts';
 
 import { translationsMap } from '../i18n/locales/translations-map.ts';
-import { CopyOriginalAttachmentMetadataComponent } from './copy-original-attachment-metadata-component.ts';
+import { OriginalAttachmentNameMenuComponent } from './original-attachment-name-menu-component.ts';
+import { showOriginalFileNameModal } from './original-file-name-modal.ts';
+
+vi.mock('./original-file-name-modal.ts', () => ({
+  showOriginalFileNameModal: vi.fn().mockResolvedValue(undefined)
+}));
+
+const showOriginalFileNameModalMock = vi.mocked(showOriginalFileNameModal);
 
 interface CapturedItem {
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- This member is reassigned by settings editors or mutable test fixtures.
@@ -36,18 +44,18 @@ beforeAll(async () => {
 });
 
 afterEach(() => {
-  vi.unstubAllGlobals();
+  showOriginalFileNameModalMock.mockClear();
 });
 
-describe('Original attachment file name copy menu', () => {
-  it.each([undefined, 'arrival.pdf', ''])('should enable and copy the stored original file name: %j', async (name) => {
+describe('Original attachment file name menu', () => {
+  it.each([undefined, 'arrival.pdf', ''])('should enable the action and show the stored original file name: %j', async (name) => {
     const app = App.createConfigured__().asOriginalType__();
     const file = await app.vault.createBinary('renamed.pdf', new ArrayBuffer(1));
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal('navigator', { clipboard: { writeText } });
-    const component = new CopyOriginalAttachmentMetadataComponent({
+    const pluginNoticeComponent = strictProxy<PluginNoticeComponent>({});
+    const component = new OriginalAttachmentNameMenuComponent({
       app,
       originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ get: () => name ?? null }),
+      pluginNoticeComponent,
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ isNoteEx: (candidate) => candidate instanceof TFile && candidate.extension === 'md' })
     });
     const items: CapturedItem[] = [];
@@ -79,13 +87,13 @@ describe('Original attachment file name copy menu', () => {
     try {
       app.workspace.trigger('file-menu', menu, file, 'file-explorer');
       expect(items.map((item) => [item.title, item.isDisabled])).toStrictEqual([
-        ['Copy original file name', !name]
+        ['Show original file name', !name]
       ]);
       for (const item of items) {
         item.click(new MouseEvent('click'));
       }
       await vi.waitFor(() => {
-        expect(writeText.mock.calls).toStrictEqual(name ? [[name]] : []);
+        expect(showOriginalFileNameModalMock.mock.calls).toStrictEqual(name ? [[{ app, attachmentPath: 'renamed.pdf', originalFileName: name, pluginNoticeComponent }]] : []);
       });
       const note = await app.vault.create('note.md', '');
       const folder = await app.vault.createFolder('folder');
