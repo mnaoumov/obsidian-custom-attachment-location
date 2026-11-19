@@ -24,8 +24,8 @@ export class ArrayBufferMap {
     this.app = params.app;
   }
 
-  public getFileStats(arrayBuffer: ArrayBuffer): FileStats | undefined {
-    return this.fileStatsMap.get(arrayBuffer);
+  public getFileStats(arrayBuffer: ArrayBuffer): FileStats | null {
+    return this.fileStatsMap.get(arrayBuffer) ?? null;
   }
 
   /**

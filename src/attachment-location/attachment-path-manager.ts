@@ -561,9 +561,9 @@ export class AttachmentPathManager {
     return path;
   }
 
-  public getInsertedLinkText(params: AttachmentPathManagerGetInsertedLinkTextParams): string | undefined {
+  public getInsertedLinkText(params: AttachmentPathManagerGetInsertedLinkTextParams): null | string {
     const prepared = this.takeInsertedLinkText({ attachmentPath: params.attachmentFile.path, notePath: params.notePath });
-    if (prepared !== undefined) {
+    if (prepared !== null) {
       return prepared;
     }
     // Existing files have no asynchronous import in flight. The current-name tokens read the file and the
@@ -572,7 +572,7 @@ export class AttachmentPathManager {
     const template = this.pluginSettingsComponent.settings.insertedLinkText;
     const tokens = scanTokens(template).map((token) => ({ ...token, token: token.token.toLowerCase() }));
     if (tokens.some((token) => !SYNCHRONOUS_INSERTED_LINK_TEXT_TOKENS.has(token.token))) {
-      return undefined;
+      return null;
     }
     let originalName = params.attachmentFile.name;
     if (tokens.some((token) => token.token === ORIGINAL_ATTACHMENT_FILE_NAME_TOKEN || token.token === ORIGINAL_ATTACHMENT_FILE_EXTENSION_TOKEN)) {
@@ -603,7 +603,7 @@ export class AttachmentPathManager {
       text += template.slice(offset, token.start) + formatString(getValue(token.token), stringFormatSchema.parse(parseTokenFormat(token) ?? {}));
       offset = token.end;
     }
-    return text + template.slice(offset) || undefined;
+    return text + template.slice(offset) || null;
   }
 
   /**
@@ -616,7 +616,7 @@ export class AttachmentPathManager {
    */
   public getOriginalAttachmentFileNameParams(attachmentFile: TFile, actionContext: ActionContext): OriginalAttachmentFileNameParams {
     const originalAttachmentFileName = this.originalAttachmentNamesComponent.get(attachmentFile.path);
-    if (originalAttachmentFileName !== undefined) {
+    if (originalAttachmentFileName !== null) {
       return { originalAttachmentFileName };
     }
 
@@ -757,13 +757,13 @@ export class AttachmentPathManager {
     this.noteReferenceResolutions.clear();
   }
 
-  public takeInsertedLinkText(params: AttachmentPathManagerTakeInsertedLinkTextParams): string | undefined {
+  public takeInsertedLinkText(params: AttachmentPathManagerTakeInsertedLinkTextParams): null | string {
     const entry = this.insertedLinkTexts.get(params.attachmentPath);
     if (!entry || entry.expiresAt < Date.now() || entry.notePath !== params.notePath || entry.template !== this.pluginSettingsComponent.settings.insertedLinkText) {
-      return undefined;
+      return null;
     }
     this.insertedLinkTexts.delete(params.attachmentPath);
-    return entry.text || undefined;
+    return entry.text || null;
   }
 
   private cleanFilePathPart(part: string): string {

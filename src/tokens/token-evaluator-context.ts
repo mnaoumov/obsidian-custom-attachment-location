@@ -184,6 +184,7 @@ export interface TokenEvaluatorContext {
    * @returns A {@link Promise} that resolves to the content of the attachment file, or `undefined`
    * when there is no attachment file to read.
    */
+  // eslint-disable-next-line typescript-dev-toolkit/no-undefined-return-type -- Custom-token scripts read this documented context (demo vault note 04) and may test for undefined.
   readonly getAttachmentFileContent: () => Promise<ArrayBuffer | undefined>;
 
   /**

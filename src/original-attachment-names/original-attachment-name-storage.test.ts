@@ -140,7 +140,7 @@ it('requires new-device consent before merging the shared history', async () => 
   const second = await createComponent();
   expect(second.isSyncEnabled).toBe(false);
   // A folder arriving through sync is not permission to start transport on a new device.
-  expect(second.get('assets/alpha.pdf')).toBeUndefined();
+  expect(second.get('assets/alpha.pdf')).toBeNull();
   await second.setSyncEnabled(true);
   expect(second.get('assets/alpha.pdf')).toBe('arrival.pdf');
 });
@@ -285,7 +285,7 @@ it('refuses operations on a component whose store has not loaded', async () => {
   const file = await app.vault.create('alpha.pdf', 'alpha');
   component.set(file.path, 'arrival.pdf');
   app.vault.trigger('delete', file);
-  expect(component.get(file.path)).toBeUndefined();
+  expect(component.get(file.path)).toBeNull();
 });
 
 it('ignores transport ancestors while renaming and deleting their real attachment siblings', async () => {
@@ -302,7 +302,7 @@ it('ignores transport ancestors while renaming and deleting their real attachmen
   expect(component.get('Moved data/alpha.pdf')).toBe('arrival.pdf');
   await app.vault.rename(folder, ANCHOR);
   await app.fileManager.trashFile(folder);
-  expect(component.get(`${ANCHOR}/alpha.pdf`)).toBeUndefined();
+  expect(component.get(`${ANCHOR}/alpha.pdf`)).toBeNull();
   expect(component.size).toBe(0);
 });
 
@@ -344,7 +344,7 @@ it('handles a folder-only deletion event while keeping metadata paths and unrela
   // Old imported histories can contain metadata paths; transport events must not rewrite those records.
   component.set(`${ROOT}/alpha.json`, 'alpha.json');
   app.vault.trigger('delete', folder);
-  expect(component.get(`${ANCHOR}/alpha.pdf`)).toBeUndefined();
+  expect(component.get(`${ANCHOR}/alpha.pdf`)).toBeNull();
   expect(component.get('elsewhere/bravo.pdf')).toBe('bravo.pdf');
   expect(component.get(`${ROOT}/alpha.json`)).toBe('alpha.json');
 });
@@ -517,7 +517,7 @@ it('keeps the new folder once synchronization started there, whatever arrives la
   await publishLegacyHistory();
   vi.stubGlobal('indexedDB', ownIndexedDatabase);
   const reloaded = await createComponent();
-  expect(reloaded.get('assets/alpha.pdf')).toBeUndefined();
+  expect(reloaded.get('assets/alpha.pdf')).toBeNull();
   expect(reloaded.transportRoots).not.toContain(LEGACY_ROOT);
 });
 

@@ -40,6 +40,7 @@ describe('Rename attachments in current note', () => {
         waitTimeoutInMilliseconds
       }): Promise<ProbeResult> {
         interface AvailabilityCheckableCommand {
+          // eslint-disable-next-line typescript-dev-toolkit/no-undefined-return-type -- Mirrors Obsidian Command.checkCallback.
           readonly checkCallback?: (isChecking: boolean) => boolean | undefined;
         }
 

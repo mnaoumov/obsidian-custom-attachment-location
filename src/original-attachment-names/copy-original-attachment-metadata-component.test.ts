@@ -47,7 +47,7 @@ describe('Original attachment file name copy menu', () => {
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     const component = new CopyOriginalAttachmentMetadataComponent({
       app,
-      originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ get: () => name }),
+      originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({ get: () => name ?? null }),
       pluginSettingsComponent: strictProxy<PluginSettingsComponent>({ isNoteEx: (candidate) => candidate instanceof TFile && candidate.extension === 'md' })
     });
     const items: CapturedItem[] = [];

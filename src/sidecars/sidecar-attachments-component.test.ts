@@ -58,7 +58,7 @@ describe('sidecar attachment operations', () => {
       getAvailablePathForAttachments: vi.fn().mockResolvedValue('assets/independent.pdf'),
       getProperAttachmentPath: vi.fn().mockResolvedValue('assets/independent.pdf'),
       originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({
-        get: (path) => originalNames.get(path)
+        get: (path) => originalNames.get(path) ?? null
       })
     });
     app.importAttachments = async (attachments): Promise<TFile[]> => {

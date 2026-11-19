@@ -359,10 +359,10 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
    * The name an attachment arrived with.
    *
    * @param path - The attachment's path.
-   * @returns The name, extension included, or `undefined` when it is not known.
+   * @returns The name, extension included, or `null` when it is not known.
    */
-  public get(path: string): string | undefined {
-    return this.names.get(path);
+  public get(path: string): null | string {
+    return this.names.get(path) ?? null;
   }
 
   /**
@@ -737,9 +737,9 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
    * @param excludedFolder - The anchor folder whose history is gone.
    * @param shouldScanFileSystem - Whether to look through the file system rather than the vault index, which misses
    *   folders that an exclusion plugin hides, the usual home of plugin data.
-   * @returns The anchor found and whether it can be opened, or `undefined` when there is none or more than one.
+   * @returns The anchor found and whether it can be opened, or `null` when there is none or more than one.
    */
-  private async findAnchorElsewhere(excludedFolder: string, shouldScanFileSystem: boolean): Promise<FoundAnchor | undefined> {
+  private async findAnchorElsewhere(excludedFolder: string, shouldScanFileSystem: boolean): Promise<FoundAnchor | null> {
     const suffix = `/${PLUGIN_ID}/${STORE_ID}`;
     const storeFolders = shouldScanFileSystem
       ? await this.listStoreFoldersOnDisk(suffix)
@@ -774,7 +774,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       if (anchors.length > 1) {
         this.consoleDebugComponent.consoleDebug(`Original name history was found in several folders, so none is followed: ${anchors.join(', ')}.`);
       }
-      return undefined;
+      return null;
     }
     const folder = ensureNonNullable(anchors[0]);
     return { canOpen: await this.canOpenAnchor(folder, ensureNonNullable(recordsByFolder.get(folder))), folder };
@@ -1167,7 +1167,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       const moved = previousBlock !== undefined && await adapter.exists(getOriginalNameTransportRoot(previousBlock))
         ? { canOpen: await this.canOpenAnchor(previousBlock, await this.readRelocationRecords(previousBlock)), folder: previousBlock }
         : await this.findAnchorElsewhere(stored, true);
-      if (moved === undefined) {
+      if (moved === null) {
         return stored;
       }
       if (!moved.canOpen) {

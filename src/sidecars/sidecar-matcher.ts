@@ -9,21 +9,27 @@ export interface SidecarBase {
   readonly suffix: string;
 }
 
-interface FindSidecarBaseParams {
+interface FindSidecarBaseParams extends IsSidecarNameParams {
+  readonly names: readonly string[];
+}
+
+interface IsSidecarNameParams {
   readonly extensions: readonly string[];
   readonly name: string;
-  readonly names: readonly string[];
 }
 
 /**
 Finds an exact appended-name companion, or a unique non-sidecar with the same stem.
+
+@returns The base, or `null` when the name is no sidecar or a sidecar with no unique base; tell those two apart with
+`isSidecarName`.
 */
-export function findSidecarBase(params: FindSidecarBaseParams): null | SidecarBase | undefined {
-  const extension = extname(params.name);
-  const extensions = new Set(params.extensions.map((value) => value.trim().replace(/^\./u, '').toLowerCase()).filter(Boolean));
-  if (!extensions.has(extension.slice(1).toLowerCase())) {
-    return undefined;
+export function findSidecarBase(params: FindSidecarBaseParams): null | SidecarBase {
+  if (!isSidecarName(params)) {
+    return null;
   }
+  const extension = extname(params.name);
+  const extensions = normalizeExtensions(params.extensions);
   const stem = basename(params.name, extension);
   const exact = params.names.filter((name) => name === stem);
   if (exact.length === 1) {
@@ -44,4 +50,15 @@ Derives the companion path from the base's actual destination, including any col
 */
 export function getSidecarPath(basePath: string, pairing: SidecarBase): string {
   return (pairing.shouldReplaceExtension ? basePath.slice(0, basePath.length - extname(basePath).length) : basePath) + pairing.suffix;
+}
+
+/**
+Whether a name has one of the sidecar extensions, whether or not a base for it exists.
+*/
+export function isSidecarName(params: IsSidecarNameParams): boolean {
+  return normalizeExtensions(params.extensions).has(extname(params.name).slice(1).toLowerCase());
+}
+
+function normalizeExtensions(extensions: readonly string[]): Set<string> {
+  return new Set(extensions.map((value) => value.trim().replace(/^\./u, '').toLowerCase()).filter(Boolean));
 }

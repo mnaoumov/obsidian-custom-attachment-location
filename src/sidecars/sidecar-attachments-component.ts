@@ -27,7 +27,8 @@ import {
 } from '../tokens/token-evaluator-context.ts';
 import {
   findSidecarBase,
-  getSidecarPath
+  getSidecarPath,
+  isSidecarName
 } from './sidecar-matcher.ts';
 
 interface CompanionMove {
@@ -81,10 +82,17 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
 
   /**
   Pairs a name with its base among `names`, using the configured sidecar extensions.
-  @returns `undefined` for a non-sidecar, `null` for an orphan or ambiguous sidecar.
+  @returns `null` for a non-sidecar and for an orphan or ambiguous sidecar; `isSidecar` tells them apart.
   */
-  public findBase(name: string, names: readonly string[]): null | SidecarBase | undefined {
+  public findBase(name: string, names: readonly string[]): null | SidecarBase {
     return findSidecarBase({ extensions: this.pluginSettingsComponent.settings.sidecarExtensions, name, names });
+  }
+
+  /**
+  Whether a name has one of the configured sidecar extensions, whether or not its base exists.
+  */
+  public isSidecar(name: string): boolean {
+    return isSidecarName({ extensions: this.pluginSettingsComponent.settings.sidecarExtensions, name });
   }
 
   public override onload(): void {
@@ -100,12 +108,12 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
         const save = async (): Promise<TFile> => {
           const name = makeFileName({ fileBaseName: saveParams.attachmentFileBaseName, fileExtension: saveParams.attachmentFileExtension });
           const siblings = entry?.batch.filter((candidate) => dirname(candidate.attachment.filepath ?? '') === dirname(entry.attachment.filepath ?? '')) ?? [];
-          const pairing = this.findBase(name, siblings.map((candidate) => candidate.name));
-          if (pairing === undefined) {
+          if (!this.isSidecar(name)) {
             const shouldPreserveContent = siblings.some((candidate) => this.findBase(candidate.name, siblings.map((sibling) => sibling.name))?.baseName === name);
             return await originalMethodBound({ ...saveParams, shouldPreserveContent });
           }
-          const existing = pairing === null && siblings.length <= 1 ? await this.findExistingBase(name) : undefined;
+          const pairing = this.findBase(name, siblings.map((candidate) => candidate.name));
+          const existing = pairing === null && siblings.length <= 1 ? await this.findExistingBase(name) : null;
           const resolvedPairing = existing?.pairing ?? pairing;
           let base: TFile | undefined = existing?.base;
           if (pairing) {
@@ -148,7 +156,7 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
           const file = typeof pathParams.oldAttachmentPathOrFile === 'string'
             ? app.vault.getFileByPath(pathParams.oldAttachmentPathOrFile)
             : pathParams.oldAttachmentPathOrFile;
-          if (file && this.findBase(file.name, []) !== undefined) {
+          if (file && this.isSidecar(file.name)) {
             // The dependency may plan linked files in either order. Only the base plans a move; its awaited
             // vault rename carries the companion, so no later plan can give it an independent random name.
             return Promise.resolve(file.path);
@@ -162,7 +170,7 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
       methodName: 'getProperAttachmentPath',
       patchHandler: ({ fallback, originalArguments: [pathParams] }) => {
         const file = pathParams.attachmentFile;
-        if (this.findBase(file.name, []) === undefined) {
+        if (!this.isSidecar(file.name)) {
           return fallback();
         }
         const pairing = this.findBase(file.name, file.parent?.children.filter((child) => child instanceof ObsidianFile).map((child) => child.name) ?? []);
@@ -253,10 +261,10 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
     }
   }
 
-  private async findExistingBase(name: string): Promise<ExistingSidecarBase | undefined> {
+  private async findExistingBase(name: string): Promise<ExistingSidecarBase | null> {
     const note = this.app.workspace.getActiveFile();
     if (!note) {
-      return undefined;
+      return null;
     }
     const candidates: ExistingSidecarBase[] = [];
     for (const base of this.app.vault.getFiles()) {
@@ -279,7 +287,7 @@ export class SidecarAttachmentsComponent extends MonkeyAroundComponent {
     }
     const pairing = this.findBase(name, candidates.map((candidate) => candidate.pairing.baseName));
     if (!pairing) {
-      return undefined;
+      return null;
     }
     const candidate = ensureNonNullable(candidates.find((entry) => entry.pairing.baseName === pairing.baseName));
     return { base: candidate.base, pairing };

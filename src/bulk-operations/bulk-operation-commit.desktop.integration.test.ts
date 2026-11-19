@@ -176,6 +176,7 @@ describe('Commit bulk operations to git', () => {
         waitTimeoutInMilliseconds
       }): Promise<RunResult> {
         interface AvailabilityCheckableCommand {
+          // eslint-disable-next-line typescript-dev-toolkit/no-undefined-return-type -- Mirrors Obsidian Command.checkCallback.
           readonly checkCallback?: (isChecking: boolean) => boolean | undefined;
         }
 

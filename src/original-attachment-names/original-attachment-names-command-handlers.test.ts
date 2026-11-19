@@ -134,7 +134,7 @@ describe('PruneOriginalAttachmentNamesCommandHandler', () => {
 
     expect(runBulkOperationSpy.mock.calls[0]?.[0].summary).toBe('Prune original attachment names');
 
-    expect(originalAttachmentNamesComponent.get('assets/gone.png')).toBeUndefined();
+    expect(originalAttachmentNamesComponent.get('assets/gone.png')).toBeNull();
     expect(originalAttachmentNamesComponent.get('assets/live.png')).toBe('arrived.png');
     expect(showNotice).toHaveBeenCalledExactlyOnceWith('Removed 1 original attachment name(s) whose file no longer exists.');
   });

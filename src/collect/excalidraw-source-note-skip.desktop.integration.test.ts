@@ -59,6 +59,7 @@ describe('A .excalidraw.md is never swept as a note, and is still collected from
         pluginId
       }): Promise<ProbeResult> {
         interface AvailabilityCheckableCommand {
+          // eslint-disable-next-line typescript-dev-toolkit/no-undefined-return-type -- Mirrors Obsidian Command.checkCallback.
           readonly checkCallback?: (isChecking: boolean) => boolean | undefined;
         }
 

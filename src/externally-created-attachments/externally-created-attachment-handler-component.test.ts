@@ -128,7 +128,7 @@ describe('ExternallyCreatedAttachmentHandlerComponent', () => {
       },
       getGeneratedAttachmentFileBaseName: (): Promise<string> => Promise.resolve(overrides?.generatedAttachmentFileBaseName ?? 'renamed'),
       originalAttachmentNamesComponent: strictProxy<OriginalAttachmentNamesComponent>({
-        get: (path: string) => originalAttachmentNames.get(path),
+        get: (path: string) => originalAttachmentNames.get(path) ?? null,
         set: (path: string, fileName: string): void => {
           originalAttachmentNames.set(path, fileName);
         }

@@ -39,7 +39,7 @@ describe('getObsidianSyncStatus', () => {
     const status = getObsidianSyncStatus(app);
     expect(getEnabledPluginById).toHaveBeenCalledWith('sync');
     expect(status.state).toBe(ObsidianSyncState.Off);
-    expect(status.doesCarryFile('a/b.json')).toBeUndefined();
+    expect(status.doesCarryFile('a/b.json')).toBeNull();
   });
 
   it.each([
@@ -49,7 +49,7 @@ describe('getObsidianSyncStatus', () => {
     const instance = strictProxy<SyncPluginInstance>({ getRemoteVaultId: (): null | string => remoteVaultId });
     const status = getObsidianSyncStatus(createApp(instance).app);
     expect(status.state).toBe(ObsidianSyncState.NotConnected);
-    expect(status.doesCarryFile('a/b.json')).toBeUndefined();
+    expect(status.doesCarryFile('a/b.json')).toBeNull();
   });
 
   it.each([true, false])('asks the selective-sync filter whether a file is carried (%s)', (isCarried) => {
