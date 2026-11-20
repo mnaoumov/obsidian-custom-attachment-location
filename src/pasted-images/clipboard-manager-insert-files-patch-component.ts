@@ -17,10 +17,20 @@ interface ClipboardManagerInsertFilesPatchComponentConstructorParams {
   readonly sidecarAttachmentsComponent?: SidecarAttachmentsComponent;
 }
 
+interface PendingEmbeds {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Counts the batches in flight, so it changes as each starts and ends.
+  depth: number;
+  readonly texts: string[];
+}
+
 export class ClipboardManagerInsertFilesPatchComponent extends MonkeyAroundComponent {
   private readonly clipboardManager: ClipboardManager;
   private readonly insertGestureTrackerComponent: InsertGestureTrackerComponent;
   private readonly pastedImageMarker: PastedImageMarker;
+  /**
+   * The embeds of the batch each clipboard manager is inserting, written to its editor once the whole batch is saved.
+   */
+  private readonly pendingEmbedsByClipboardManager = new WeakMap<ClipboardManager, PendingEmbeds>();
   private readonly sidecarAttachmentsComponent: SidecarAttachmentsComponent | undefined;
 
   public constructor(params: ClipboardManagerInsertFilesPatchComponentConstructorParams) {
@@ -32,8 +42,9 @@ export class ClipboardManagerInsertFilesPatchComponent extends MonkeyAroundCompo
   }
 
   public override onload(): void {
+    const prototype = getPrototypeOf(this.clipboardManager);
     this.registerMethodPatch({
-      $object: getPrototypeOf(this.clipboardManager),
+      $object: prototype,
       methodName: 'insertFiles',
       patchHandler: async ({
         fallback,
@@ -53,8 +64,73 @@ export class ClipboardManagerInsertFilesPatchComponent extends MonkeyAroundCompo
         if (dropEditorView && selectionBeforeDrop) {
           keepDropInsertPositionInBody({ dropClientY, selectionBeforeDrop, view: dropEditorView });
         }
-        await (this.sidecarAttachmentsComponent ? this.sidecarAttachmentsComponent.runImportBatch(importedAttachments, fallback) : fallback());
+        await this.runBatch(originalThis, async () => {
+          await (this.sidecarAttachmentsComponent ? this.sidecarAttachmentsComponent.runImportBatch(importedAttachments, fallback) : fallback());
+        });
       }
     });
+
+    this.registerMethodPatch({
+      $object: prototype,
+      methodName: 'insertAttachmentEmbed',
+      patchHandler: ({ fallback, originalThis }) => {
+        const pendingEmbeds = this.pendingEmbedsByClipboardManager.get(originalThis);
+        if (!pendingEmbeds) {
+          return fallback();
+        }
+
+        // Core builds the embed text and hands it straight to `replaceSelection`, synchronously (Obsidian 1.15.1;
+        // the typings say it returns a promise, but nothing in it awaits). Catch that one call, so the text joins the
+        // batch rather than the document; nothing else can run while the swap is in place.
+        const editor = originalThis.info.editor;
+        const hasOwnReplaceSelection = Object.hasOwn(editor, 'replaceSelection');
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- Put back exactly as found.
+        const ownReplaceSelection = editor.replaceSelection;
+        editor.replaceSelection = (replacement: string): void => {
+          pendingEmbeds.texts.push(replacement);
+        };
+        try {
+          return fallback();
+        } finally {
+          if (hasOwnReplaceSelection) {
+            editor.replaceSelection = ownReplaceSelection;
+          } else {
+            Reflect.deleteProperty(editor, 'replaceSelection');
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Runs one `insertFiles` batch, and writes all of its embeds into the editor in one transaction once every file is
+   * saved.
+   *
+   * Core saves the files one after another and writes each embed as soon as its file is saved, so a batch arrived in
+   * the note one link at a time, typing could land between two of them, and undoing it took one step per file. A
+   * second batch started on the same editor before the first finishes joins it, and both are written when the last
+   * one ends.
+   *
+   * @param clipboardManager - The clipboard manager inserting the batch.
+   * @param run - Saves the batch.
+   */
+  private async runBatch(clipboardManager: ClipboardManager, run: () => Promise<void>): Promise<void> {
+    let pendingEmbeds = this.pendingEmbedsByClipboardManager.get(clipboardManager);
+    if (!pendingEmbeds) {
+      pendingEmbeds = { depth: 0, texts: [] };
+      this.pendingEmbedsByClipboardManager.set(clipboardManager, pendingEmbeds);
+    }
+    pendingEmbeds.depth++;
+    try {
+      await run();
+    } finally {
+      pendingEmbeds.depth--;
+      if (pendingEmbeds.depth === 0) {
+        this.pendingEmbedsByClipboardManager.delete(clipboardManager);
+        if (pendingEmbeds.texts.length > 0) {
+          clipboardManager.info.editor.replaceSelection(pendingEmbeds.texts.join(''));
+        }
+      }
+    }
   }
 }

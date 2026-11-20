@@ -6,6 +6,7 @@ import type {
   Reference,
   ReferenceCache,
   TFile,
+  TFolder,
   Vault
 } from 'obsidian';
 
@@ -146,6 +147,7 @@ interface TestContext {
   readonly getAvailablePath: ReturnType<typeof vi.fn<Vault['getAvailablePath']>>;
   readonly getAvailablePathForAttachmentsOriginal: ReturnType<typeof vi.fn<Vault['getAvailablePathForAttachments']>>;
   readonly getConfig: ReturnType<typeof vi.fn<(name: string) => unknown>>;
+  readonly getFolderByPath: ReturnType<typeof vi.fn<Vault['getFolderByPath']>>;
   readonly handedOverSettings: MutableHandedOverSettings;
   readonly isNoteEx: ReturnType<typeof vi.fn<PluginSettingsComponent['isNoteEx']>>;
   readonly isPathIgnored: ReturnType<typeof vi.fn<HandedOverSettingsComponent['isPathIgnored']>>;
@@ -193,6 +195,8 @@ function createManager(): TestContext {
   });
 
   const checkExists = vi.fn<Vault['exists']>().mockResolvedValue(true);
+  // Not indexed by default, so the disk check decides, as it does for a folder the vault has not seen yet.
+  const getFolderByPath = vi.fn<Vault['getFolderByPath']>().mockReturnValue(null);
   const create = vi.fn<Vault['create']>();
   const readBinary = vi.fn<Vault['readBinary']>().mockResolvedValue(new ArrayBuffer(0));
   const getAvailablePath = vi.fn<Vault['getAvailablePath']>().mockImplementation((path, extension) => extension ? `${path}.${extension}` : path);
@@ -204,6 +208,7 @@ function createManager(): TestContext {
     exists: checkExists,
     getAvailablePath,
     getConfig: castTo<Vault['getConfig']>(getConfig),
+    getFolderByPath,
     readBinary
   });
 
@@ -252,6 +257,7 @@ function createManager(): TestContext {
     getAvailablePath,
     getAvailablePathForAttachmentsOriginal,
     getConfig,
+    getFolderByPath,
     handedOverSettings,
     isNoteEx,
     isPathIgnored,
@@ -1647,6 +1653,26 @@ describe('AttachmentPathManager', () => {
         shouldSkipDuplicateCheck: true,
         shouldSkipMissingAttachmentFolderCreation: false
       });
+      expect(mockCreateFolderSafe).not.toHaveBeenCalled();
+    });
+
+    it('should not ask the disk about a folder the vault index already knows', async () => {
+      context.settings.attachmentFolderPath = 'assets';
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockReturnValueOnce(noteFile).mockReturnValue(null);
+      isNoteMock.mockReturnValue(true);
+      context.getFolderByPath.mockImplementation((path) => path === 'assets' ? strictProxy<TFolder>({ path }) : null);
+      await context.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: `${IMPORT_FILES_PREFIX}img`,
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'old.png',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: false
+      });
+      expect(context.exists).not.toHaveBeenCalled();
       expect(mockCreateFolderSafe).not.toHaveBeenCalled();
     });
 

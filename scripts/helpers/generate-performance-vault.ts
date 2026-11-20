@@ -69,11 +69,22 @@ export const FAT_NOTE_LINK_COUNT = 200;
 const FILES_PER_NOTE_INDEX = 4;
 const FAT_NOTE_FILE_COUNT = 1;
 
+const DEFAULT_FILLER_FILE_COUNT = 0;
+const FILLER_FILES_PER_FOLDER = 500;
+
 /**
- * Total number of vault files the generator writes (notes + attachments). Tests wait for
+ * How many empty filler notes are generated, in folders of {@link FILLER_FILES_PER_FOLDER} under `filler/`. They link
+ * nothing and nothing links them; they only give the vault a large real vault's breadth, so a lookup that grows with
+ * the vault shows up. Overridable via the `CAL_PERF_FILLER_FILE_COUNT` environment variable.
+ */
+export const PERFORMANCE_VAULT_FILLER_FILE_COUNT = Number(process.env['CAL_PERF_FILLER_FILE_COUNT']) || DEFAULT_FILLER_FILE_COUNT;
+
+/**
+ * Total number of vault files the generator writes (notes + attachments + filler). Tests wait for
  * Obsidian's index to reach this count before measuring.
  */
-export const PERFORMANCE_VAULT_TOTAL_FILE_COUNT = PERFORMANCE_VAULT_NOTE_COUNT * FILES_PER_NOTE_INDEX + FAT_NOTE_LINK_COUNT + FAT_NOTE_FILE_COUNT;
+export const PERFORMANCE_VAULT_TOTAL_FILE_COUNT = PERFORMANCE_VAULT_NOTE_COUNT * FILES_PER_NOTE_INDEX + FAT_NOTE_LINK_COUNT + FAT_NOTE_FILE_COUNT
+  + PERFORMANCE_VAULT_FILLER_FILE_COUNT;
 
 /**
  * Returns the vault-relative path of the fat-note attachment at the given index.
@@ -107,6 +118,10 @@ export function generatePerformanceVault(): PopulateFilesParams {
     fatNoteContent += embed(fatAttachmentPath(index));
   }
   files[FAT_NOTE_PATH] = fatNoteContent;
+
+  for (let index = 0; index < PERFORMANCE_VAULT_FILLER_FILE_COUNT; index++) {
+    files[`filler/${String(Math.floor(index / FILLER_FILES_PER_FOLDER))}/filler-${String(index)}.md`] = '';
+  }
 
   return files;
 }
