@@ -8,7 +8,7 @@ import {
 } from 'eslint/config';
 
 export const configs: Linter.Config[] = defineEslintConfigs({
-  customConfigs() {
+  customConfigs(context) {
     return defineConfig([
       // A verbatim copy of the provider's hand-written `api.d.ts`, refreshed from its repository rather than edited,
       // so its style is the provider's to keep.
@@ -23,7 +23,17 @@ export const configs: Linter.Config[] = defineEslintConfigs({
                 'Show Hidden Files'
               ]
             }
-          ],
+          ]
+        }
+      },
+      {
+        /**
+         * The toolkit registers the `typescript-dev-toolkit` plugin for the context's TypeScript files alone, so a rule
+         * of that plugin turned on without `files` reaches `package.json`, `LICENSE` and the root `.mjs` configs too,
+         * and ESLint aborts the whole run on the missing plugin.
+         */
+        files: context.allFiles(),
+        rules: {
           'typescript-dev-toolkit/no-undefined-return-type': 'error'
         }
       },
