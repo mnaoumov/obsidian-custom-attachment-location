@@ -8,6 +8,8 @@ import { MonkeyAroundComponent } from '@mnaoumov/obsidian-lib/components/monkey-
 import { createFolderSafe } from '@mnaoumov/obsidian-lib/vault';
 import { parentFolderPath } from '@obsidian-typings/obsidian-public-latest/implementations';
 
+import { doesFolderExist } from './folder-existence.ts';
+
 interface VaultCreateBinaryEnsureFolderPatchComponentConstructorParams {
   readonly app: App;
   readonly vault: Vault;
@@ -41,7 +43,7 @@ export class VaultCreateBinaryEnsureFolderPatchComponent extends MonkeyAroundCom
          */
         return (async (): Promise<TFile> => {
           const folderPath = parentFolderPath(path);
-          if (folderPath !== '/' && !await this.vault.exists(folderPath)) {
+          if (folderPath !== '/' && !await doesFolderExist(this.app, folderPath)) {
             await createFolderSafe(this.app, folderPath);
           }
           return await fallback();

@@ -59,6 +59,23 @@ describe('InsertGestureTrackerComponent', () => {
     target.remove();
   });
 
+  it('should report where a drop landed while it is being dispatched, and nothing outside a drop', () => {
+    const DROP_CLIENT_Y = 42;
+    let dropClientYSeenByTarget: null | number = null;
+    const target = activeDocument.body.createDiv();
+    target.addEventListener('drop', () => {
+      dropClientYSeenByTarget = tracker.dropClientY;
+    });
+
+    // A mouse event carries `clientY` the way the browser's drag event does; jsdom has no `DragEvent`.
+    target.dispatchEvent(new MouseEvent('drop', { bubbles: true, clientY: DROP_CLIENT_Y }));
+
+    expect(dropClientYSeenByTarget).toBe(DROP_CLIENT_Y);
+    target.remove();
+    activeDocument.dispatchEvent(new Event('paste'));
+    expect(tracker.dropClientY).toBeNull();
+  });
+
   it('should keep the later gesture when an earlier gesture\'s timer fires', () => {
     const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
     activeDocument.dispatchEvent(new Event('paste'));

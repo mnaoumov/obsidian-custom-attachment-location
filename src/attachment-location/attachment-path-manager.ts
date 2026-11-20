@@ -75,6 +75,7 @@ import {
   TokenValidationMode,
   TokenValidator
 } from '../tokens/token-validator.ts';
+import { doesFolderExist } from './folder-existence.ts';
 import { findIdenticalAttachmentFile } from './identical-attachment.ts';
 import {
   getShareImportOriginalFileName,
@@ -486,7 +487,7 @@ export class AttachmentPathManager {
     this.originalAttachmentNamesComponent.expectArrival(attachmentPath, attachmentFileName);
 
     const folderPath = parentFolderPath(attachmentPath);
-    if (!await this.app.vault.exists(folderPath)) {
+    if (!await doesFolderExist(this.app, folderPath)) {
       await createFolderSafe(this.app, folderPath);
     }
 
@@ -796,7 +797,7 @@ export class AttachmentPathManager {
   }
 
   private async ensureAttachmentFolder(folderPath: string): Promise<void> {
-    if (await this.app.vault.exists(folderPath)) {
+    if (await doesFolderExist(this.app, folderPath)) {
       return;
     }
 
