@@ -49,6 +49,11 @@ describe('Copy original file name command', () => {
     const result = await evalInObsidian({
       callback: async ({ app, findPluginSettingsComponent: findSettings, isSettings: isTestSettings, lib: { useInMemoryClipboard, waitUntil }, obsidianModule: { MarkdownView } }) => {
         const commandId = 'obsidian-custom-attachment-location:copy-original-file-name';
+        // `executeCommandById` reports only that the command exists, so availability is asked the way the command
+        // palette and the hotkey manager ask it: through the command's own check.
+        function isOffered(): boolean {
+          return app.commands.findCommand(commandId)?.checkCallback?.(true) === true;
+        }
         const settingsComponent = findSettings(app.plugins.getPlugin('obsidian-custom-attachment-location'), isTestSettings);
         if (!settingsComponent) {
           throw new Error('The plugin settings were not found.');
@@ -88,18 +93,20 @@ describe('Copy original file name command', () => {
           await waitUntil({ message: 'The editor did not load the note', predicate: () => view.editor.lineCount() === 2 });
 
           view.editor.setCursor({ ch: 3, line: 0 });
-          const isOfferedOnPlainText = app.commands.executeCommandById(commandId);
+          const isOfferedOnPlainText = isOffered();
 
           view.editor.setCursor({ ch: 0, line: 1 });
           const copiedBefore = clipboard.writtenTexts.length;
-          const isOfferedOnLink = app.commands.executeCommandById(commandId);
+          const isOfferedOnLink = isOffered();
+          app.commands.executeCommandById(commandId);
           await waitUntil({ message: 'The command on the link copied nothing', predicate: () => clipboard.writtenTexts.length > copiedBefore });
           const copiedFromLink = clipboard.writtenTexts.at(-1);
 
           await leaf.openFile(attachment);
           await waitUntil({ message: 'The attachment did not become the active file', predicate: () => app.workspace.getActiveFile() === attachment });
           const copiedBeforeOpen = clipboard.writtenTexts.length;
-          const isOfferedOnOpenAttachment = app.commands.executeCommandById(commandId);
+          const isOfferedOnOpenAttachment = isOffered();
+          app.commands.executeCommandById(commandId);
           await waitUntil({ message: 'The command on the open attachment copied nothing', predicate: () => clipboard.writtenTexts.length > copiedBeforeOpen });
           const copiedFromOpenAttachment = clipboard.writtenTexts.at(-1);
           leaf.detach();
