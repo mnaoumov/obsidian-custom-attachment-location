@@ -566,7 +566,7 @@ export class UnusedAttachmentsRemover {
       cancelButtonText: t(($) => $.obsidianLib.buttons.cancel),
       message: await createFragmentAsync(async (f) => {
         if (attachmentsToDelete.length > 0) {
-          f.appendText(t(($) => $.deleteUnusedAttachments.confirm.part1));
+          f.appendText(t(($) => $.deleteUnusedAttachments.confirm.attachments));
           f.createEl('br');
           /*
            * The COUNT, always, and before the list. Vault-wide this dialog can be asked to name
@@ -585,7 +585,7 @@ export class UnusedAttachmentsRemover {
          * has to say plainly that a whole folder goes, and name it.
          */
         if (unitFoldersToDelete.length > 0) {
-          f.appendText(t(($) => $.deleteUnusedAttachments.confirm.partUnitFolders));
+          f.appendText(t(($) => $.deleteUnusedAttachments.confirm.unitFolders));
           f.createEl('br');
           f.createEl('strong', { text: t(($) => $.deleteUnusedAttachments.confirm.unitFolderCount, { count: unitFoldersToDelete.length }) });
           f.createEl('br');
@@ -593,7 +593,7 @@ export class UnusedAttachmentsRemover {
         }
 
         f.createEl('br');
-        f.appendText(t(($) => $.deleteUnusedAttachments.confirm.part2));
+        f.appendText(t(($) => $.deleteUnusedAttachments.confirm.cannotBeUndone));
       }),
       okButtonText: t(($) => $.obsidianLib.buttons.ok),
       title: createFragment((f) => {

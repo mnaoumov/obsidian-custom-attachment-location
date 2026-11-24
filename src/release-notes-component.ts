@@ -2,7 +2,6 @@ import type { ReleaseNotes } from '@mnaoumov/obsidian-lib/components/release-not
 import type { App } from 'obsidian';
 
 import { ReleaseNotesComponent } from '@mnaoumov/obsidian-lib/components/release-notes-component';
-import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { alert } from '@mnaoumov/obsidian-lib/modals/alert';
 import { noop } from '@mnaoumov/typescript-lib/function';
@@ -15,6 +14,11 @@ import {
   MARKDOWN_URL_FORMAT_DOCUMENTATION_URL,
   TOKEN_REFERENCE_DOCUMENTATION_URL
 } from './documentation-links.ts';
+import {
+  codeNode,
+  linkNode,
+  translateFragment
+} from './i18n/translate-fragment.ts';
 
 interface CreateReleaseNotesComponentParams {
   readonly app: App;
@@ -84,76 +88,30 @@ function buildReleaseNotes(): ReleaseNotes {
   return {
     /* eslint-disable perfectionist/sort-objects -- Need to keep versions in order. */
     '9.0.0': createFragment((f) => {
-      f.appendText(t(($) => $.pluginSettingsManager.customToken.deprecated.part1));
-      f.createEl('a', {
-        href: CUSTOM_TOKENS_DOCUMENTATION_URL,
-        text: t(($) => $.pluginSettingsManager.customToken.deprecated.part2)
-      });
-      f.appendText(' ');
-      f.appendText(t(($) => $.pluginSettingsManager.customToken.deprecated.part3));
+      f.append(translateFragment(($) => $.pluginSettingsManager.customToken.deprecated, {
+        documentation: linkNode(CUSTOM_TOKENS_DOCUMENTATION_URL, t(($) => $.links.documentation))
+      }));
       f.createEl('br');
-      f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part1));
-      f.appendText(' ');
-      appendCodeBlock(f, t(($) => $.pluginSettingsTab.renameAttachmentsToLowerCase));
-      f.appendText(' ');
-      f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part2));
-      f.appendText(' ');
-      appendCodeBlock(f, 'lower');
-      f.appendText(' ');
-      f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part3));
-      f.appendText(' ');
-      f.createEl('a', {
-        href: TOKEN_REFERENCE_DOCUMENTATION_URL,
-        text: t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part4)
-      });
-      f.appendText(' ');
-      f.appendText(t(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase.part5));
+      f.append(translateFragment(($) => $.pluginSettingsManager.legacyRenameAttachmentsToLowerCase, {
+        documentation: linkNode(TOKEN_REFERENCE_DOCUMENTATION_URL, t(($) => $.links.documentation)),
+        format: codeNode('lower'),
+        setting: codeNode(t(($) => $.pluginSettingsTab.renameAttachmentsToLowerCase))
+      }));
     }),
-    '9.2.0': createFragment((f) => {
-      f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part1));
-      appendCodeBlock(f, t(($) => $.pluginSettingsTab.markdownUrlFormat.name));
-      f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part2));
-      f.createEl('a', {
-        href: MARKDOWN_URL_FORMAT_DOCUMENTATION_URL,
-        text: t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part3)
-      });
-      f.appendText(' ');
-      f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part4));
-      f.appendText(' ');
-      f.appendText(t(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated.part5));
+    '9.2.0': translateFragment(($) => $.pluginSettingsManager.markdownUrlFormat.deprecated, {
+      documentation: linkNode(MARKDOWN_URL_FORMAT_DOCUMENTATION_URL, t(($) => $.links.documentation)),
+      setting: codeNode(t(($) => $.pluginSettingsTab.markdownUrlFormat.name))
     }),
-    '9.16.0': createFragment((f) => {
-      f.appendText(t(($) => $.pluginSettingsManager.specialCharacters.part1));
-      appendCodeBlock(f, t(($) => $.pluginSettingsTab.specialCharacters.name));
-      f.appendText(t(($) => $.pluginSettingsManager.specialCharacters.part2));
+    '9.16.0': translateFragment(($) => $.pluginSettingsManager.specialCharacters, {
+      setting: codeNode(t(($) => $.pluginSettingsTab.specialCharacters.name))
     }),
-    '10.0.0': createFragment((f) => {
-      f.appendText(t(($) => $.releaseNotes.versions['10.0.0'].part1));
-      f.appendText(' ');
-      f.createEl('a', {
-        href: TOKEN_REFERENCE_DOCUMENTATION_URL,
-        text: t(($) => $.releaseNotes.versions['10.0.0'].part2)
-      });
-      f.appendText(' ');
-      f.appendText(t(($) => $.releaseNotes.versions['10.0.0'].part3));
+    '10.0.0': translateFragment(($) => $.releaseNotes.versions['10.0.0'], {
+      documentation: linkNode(TOKEN_REFERENCE_DOCUMENTATION_URL, t(($) => $.links.documentation))
     }),
-    '11.0.0': createFragment((f) => {
-      f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part1));
-      f.appendText(' ');
-      appendCodeBlock(f, 'context.attachmentFileContent');
-      f.appendText(' ');
-      f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part2));
-      f.appendText(' ');
-      appendCodeBlock(f, 'await context.getAttachmentFileContent()');
-      f.appendText(' ');
-      f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part3));
-      f.appendText(' ');
-      f.createEl('a', {
-        href: CUSTOM_TOKENS_DOCUMENTATION_URL,
-        text: t(($) => $.releaseNotes.versions['11.0.0'].part4)
-      });
-      f.appendText(' ');
-      f.appendText(t(($) => $.releaseNotes.versions['11.0.0'].part5));
+    '11.0.0': translateFragment(($) => $.releaseNotes.versions['11.0.0'], {
+      documentation: linkNode(CUSTOM_TOKENS_DOCUMENTATION_URL, t(($) => $.links.documentation)),
+      newMethod: codeNode('await context.getAttachmentFileContent()'),
+      oldProperty: codeNode('context.attachmentFileContent')
     })
     /* eslint-enable perfectionist/sort-objects -- Need to keep versions in order. */
   };
@@ -164,20 +122,10 @@ async function showVersionMismatchWarning(params: ShowVersionMismatchWarningPara
 
   await alert({
     app,
-    message: createFragment((f) => {
-      f.appendText(t(($) => $.releaseNotes.versionMismatch.part1));
-      f.appendText(' ');
-      appendCodeBlock(f, `${pluginDirectory}/data.json`);
-      f.appendText(' ');
-      f.appendText(t(($) => $.releaseNotes.versionMismatch.part2));
-      f.appendText(' ');
-      appendCodeBlock(f, storedVersion);
-      f.appendText(', ');
-      f.appendText(t(($) => $.releaseNotes.versionMismatch.part3));
-      f.appendText(' ');
-      appendCodeBlock(f, pluginVersion);
-      f.appendText('. ');
-      f.appendText(t(($) => $.releaseNotes.versionMismatch.part4));
+    message: translateFragment(($) => $.releaseNotes.versionMismatch.message, {
+      pluginVersion: codeNode(pluginVersion),
+      settingsFile: codeNode(`${pluginDirectory}/data.json`),
+      storedVersion: codeNode(storedVersion)
     }),
     title: t(($) => $.releaseNotes.versionMismatch.title, { pluginName })
   });

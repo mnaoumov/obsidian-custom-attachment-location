@@ -1,9 +1,6 @@
 export const lv = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Vai vēlaties rekursīvi savākt pielikumus visām piezīmēm mapēs?',
-      part2: 'Šo darbību nevar atsaukt.'
-    },
+    confirm: 'Vai vēlaties rekursīvi savākt pielikumus visām piezīmēm šajās mapēs?\n{{folders}}\nŠo darbību nevar atsaukt.',
     progressBar: {
       message: 'Apkopoju pielikumus {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Apkopoju pielikumus...'
@@ -16,10 +13,7 @@ export const lv = {
     skip: 'Izlaist'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Pielikums',
-      part2: 'tiek atsaucēts no vairākām piezimēm.'
-    },
+    content: 'Uz pielikumu {{attachment}} atsaucas vairākas piezīmes.',
     heading: 'Apkopoju pielikumu, kuru lieto vairākas piezimes',
     noPriorityWinnerReason: {
       EmptyList: 'Tas netika pārvietots, jo iestatījums {{settingName}} ir tukšs, tāpēc nekas nenosaka, kurai no šīm piezīmēm tas pieder.',
@@ -33,6 +27,10 @@ export const lv = {
     collectAttachmentsCurrentNote: 'Apkopot pielikumus pšreizējā piezimē',
     collectAttachmentsEntireVault: 'Apkopot pielikumus visā glabatavā'
   },
+  links: {
+    documentation: 'dokumentācijā',
+    tokens: 'tokenus'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Savākt pielikumus failā',
     collectAttachmentsInFiles: 'Savākt pielikumus failos'
@@ -41,10 +39,7 @@ export const lv = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Apkopoju pielikumus priekš \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Pielikumu apkopošana atcelta. Skatiet konsoli detalām.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Ģenerētais pielikuma faila nosaukums \'{{path}}\' nav derīgs.\n{{validationMessage}}\nPārbaudiet savu',
-      part2: 'iestatījumu.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Ģenerētais pielikuma faila nosaukums \'{{path}}\' nav derīgs.\n{{validationMessage}}\nPārbaudiet iestatījumu {{settingName}}.',
     notePathIsIgnored: 'Piezimes ceļš tiek ignorēts'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const lv = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Pielāgotie tokeni tika komentēti, jo tie ir jāatjaunina uz jauno formātu, kas ieviests spraudņa versijā 9.0.0.\n// Sīkāku informāciju skatiet dokumentācijā ({{customTokensDocumentationUrl}}).',
-      deprecated: {
-        part1: 'Spraudņa versijā 9.0.0 pielāgoto tokenu reģistrācijas formāts mainījās. Lūdzu, atjauniniet savus tokenus attiecīgi. Sīkāku informāciju skatiet',
-        part2: 'dokumentācijā',
-        part3: '.'
-      }
+      deprecated: 'Pielāgoto tokenu reģistrācijas formāts ir mainījies. Lūdzu, attiecīgi atjauniniet savus tokenus. Sīkāku informāciju skatiet {{documentation}}.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'Spraudņa versijā 9.0.0',
-      part2: 'iestatījums ir novecojis. Izmantojiet',
-      part3: 'formātu. Sīkāku informāciju skatiet',
-      part4: 'dokumentācijā',
-      part5: '.'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Iestatījums {{setting}} ir novecojis. Tā vietā izmantojiet formātu {{format}}. Sīkāku informāciju skatiet {{documentation}}.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Jums ir potenciāli nepareiza vērtība',
-        part2: 'formātam. Lūdzu, skatiet',
-        part3: 'dokumentāciju',
-        part4: 'sīkākai informācijai',
-        part5: 'Šis ziņojums vairs netiks parādīts.'
-      }
+      deprecated: 'Jums, iespējams, ir iestatīta nepareiza vērtība formātam {{setting}}. Sīkāku informāciju, lūdzu, skatiet {{documentation}}. Šis ziņojums vairs netiks parādīts.'
     },
-    specialCharacters: {
-      part1: 'Spraudņa versijā 9.16.0',
-      part2: 'noklusējuma iestatījuma vērtība mainījās. Jūsu iestatījuma vērtība tika atjaunināta uz jauno noklusējuma vērtību.'
-    },
+    specialCharacters: 'Iestatījuma {{setting}} noklusējuma vērtība ir mainījusies. Jūsu iestatījuma vērtība tika atjaunināta uz jauno noklusējuma vērtību.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Noklusējuma attēla izmēram jābūt pikseļos vai procentos',
       invalidCustomTokensCode: 'Nederīgs pielāgoto tokenu kods',
@@ -142,67 +118,35 @@ export const lv = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Pievienojot failus:'
-      },
+      description: 'Pievienojot failus:',
       name: 'Pielikuma pārdēvēšanas režīms'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Kad apkopotais pielikums tiek izmantots vairākās piezimēs:'
-      },
+      description: 'Kad apkopotais pielikums tiek izmantots vairākās piezīmēs:',
       name: 'Vairākās piezimēs izmantoto pielikumu apkopošanas režīms'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Skatiet pieejamos',
-        part2: 'tokenus'
-      },
+      description: 'Skatiet pieejamos {{tokens}}.\nAtstājiet tukšu, lai saglabātu pielikuma pašreizējo faila nosaukumu.',
       name: 'Apkopotais pielikuma faila nosaukums'
     },
     customTokens: {
-      description: {
-        part1: 'Izmantojamie pielāgotie tokeni.',
-        part2: 'Skatiet',
-        part3: 'dokumentāciju',
-        part4: 'sīkākai informācijai.',
-        part5: '⚠️ Pielāgotie tokeni var būt patvaļīgs JavaScript kods. Ja slikti uzrakstīts, tas var izraisīt datu zudumu. Izmantojiet uz savu risku.'
-      },
+      description: 'Izmantojamie pielāgotie tokeni.\nSīkāku informāciju skatiet {{documentation}}.\n⚠️ Pielāgotie tokeni var būt patvaļīgs JavaScript kods. Ja tas ir slikti uzrakstīts, tas var izraisīt datu zudumu. Izmantojiet uz savu risku.',
       name: 'Pielāgotie tokeni'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Noklusējuma attēla izmērs.',
-        part2: 'Var norādīt pikseļos',
-        part3: 'vai procentos no pilnā attēla izmēra',
-        part4: 'Atstājiet tukšu, lai izmantotu oriģinālo izmēru.'
-      },
+      description: 'Noklusējuma attēla izmērs.\nVar norādīt pikseļos ({{pixels}}) vai procentos no pilnā attēla izmēra ({{percentage}}).\nAtstājiet tukšu, lai izmantotu oriģinālo attēla izmēru.',
       name: 'Noklusējuma attēla izmērs'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Kad ielīmējat/vilkat failu ar tādu pašu nosaukumu kā esošam failam, šis atdalītājs tiks pievienots faila nosaukumam.',
-        part2: 'Piemēram, vilkot failu',
-        part3: ', tas tiks pārdēvēts uz',
-        part4: ', utt., iegūstot pirmo pieejamo nosaukumu.'
-      },
+      description: 'Kad ielīmējat vai velkat failu ar tādu pašu nosaukumu kā esošam failam, faila nosaukumam tiks pievienots šis atdalītājs.\nPiemēram, velkot failu {{existingFile}}, tas tiks pārdēvēts par {{firstAvailableName}}, {{secondAvailableName}} utt., izvēloties pirmo pieejamo nosaukumu.',
       name: 'Dublēto nosaukumu atdalītājs'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Izslēgt pielikumus no šādiem ceļiem, kad',
-        part2: 'Apkopot pielikumus',
-        part3: 'komanda tiek izpildīta.',
-        part4: 'Ievadiet katru ceļu jaunā rindā.',
-        part6: 'Ja iestatījums ir tukšs, ceļi netiek izslēgti no pielikumu apkopošanas.'
-      },
+      description: 'Izslēgt pielikumus no šādiem ceļiem, kad tiek izpildīta komanda {{command}}.\nIevadiet katru ceļu jaunā rindā.\n{{pathSyntax}}\nJa iestatījums ir tukšs, neviens ceļš netiek izslēgts no pielikumu apkopošanas.',
       name: 'Izslēgt ceļus no pielikumu apkopošanas'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Skatiet pieejamos',
-        part2: 'tokenus'
-      },
+      description: 'Skatiet pieejamos {{tokens}}.',
       name: 'Ģenerētais pielikuma faila nosaukums'
     },
     jpegQuality: {
@@ -210,40 +154,20 @@ export const lv = {
       name: 'JPEG kvalitāte'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Sāciet ar',
-        part2: ', lai izmantotu relatīvo ceļu.',
-        part3: 'Skatiet pieejamos',
-        part4: 'tokenus',
-        part5: 'Punktu mapes, piemēram',
-        part6: ', nav ieteicamas, jo Obsidian tās neuzrauga. Var būt nepieciešams izmantot',
-        part7: 'spraudni, lai tās pārvaldītu.'
-      },
+      description: 'Sāciet ar {{relativePrefix}}, lai norādītu ceļu attiecībā pret piezīmes vecākmapi.\nSkatiet pieejamos {{tokens}}.\nPunktu mapes, piemēram, {{dotFolder}}, nav ieteicamas, jo Obsidian tās neuzrauga. To pārvaldīšanai var būt nepieciešams spraudnis {{unhidePlugin}}.',
       name: 'Jauno pielikumu atrašanās vieta'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'URL formāts, kas tiks ievietots Markdown.',
-        part2: 'Skatiet pieejamos',
-        part3: 'tokenus',
-        part4: 'Atstājiet tukšu, lai izmantotu noklusējuma formātu.'
-      },
+      description: 'URL formāts, kas tiks ievietots Markdown, kad tiek pievienots pielikums. Tas tiek piemērots tikai tajā brīdī: saitei, ko Obsidian vēlāk pārraksta, kad piezīme vai pielikums tiek pārdēvēts vai pārvietots, tiek piemērots noklusējuma formāts.\nSkatiet pieejamos {{tokens}}.\nAtstājiet tukšu, lai izmantotu noklusējuma formātu.',
       name: 'Markdown URL formāts'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Vai pielikumu mapes un faila nosaukuma iestatījumus piemērot pielikumiem, ko izveido CITI spraudņi.',
-        part2: 'Daži spraudņi ieraksta pielikumu glabātavā ar savu nosaukumu, nejautājot Obsidian, kur tam būtu jāatrodas. Ja šis ir ieslēgts, šāds fails tiek pārvietots un pārdēvēts uzreiz pēc parādīšanās.',
-        part3: 'Tiek apstrādāti tikai faili, kas radīti, kamēr piezīme ir atvērta, nekad faili, kas nāk no sinhronizācijas vai glabātavas importa.'
-      },
+      description: 'Vai pielikumu mapes un faila nosaukuma iestatījumus piemērot pielikumiem, ko izveido CITI spraudņi.\nDaži spraudņi ieraksta pielikumu glabātavā ar savu nosaukumu, nejautājot Obsidian, kur tam būtu jāatrodas. Ja šis ir ieslēgts, šāds fails tiek pārvietots un pārdēvēts uzreiz pēc parādīšanās.\nTiek apstrādāti tikai faili, kas radīti, kamēr piezīme ir atvērta, un uz kuriem saitē kāda piezīme: fails, uz kuru nesaitē neviena piezīme, ir dati, ko cits spraudnis glabā sev, un tas paliek tur, kur tika ierakstīts. Faili, kas nāk no sinhronizācijas vai glabātavas importa, netiek apstrādāti nekad.\n{{modes}}\nSpraudnis, kas izveido failu, tiek noteikts pēc ieraksta izsaukumu steka. Tas notiek pēc labākās iespējas: spraudnis netiek noteikts failam, ko ierakstījis pats Obsidian, sinhronizācijas klients vai spraudnis, kas atliek savu ierakstu. Šāds fails tiek uzskatīts par TĀDU, KAS NAV zemāk esošajā sarakstā.',
       name: 'Pārdēvēt pielikumus, ko izveido citi spraudņi'
     },
     renameAttachmentsToLowerCase: 'Pārdēvēt pielikumus uz mazajiem burtiem',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Skatiet pieejamos',
-        part2: 'tokenus'
-      },
+      description: 'Skatiet pieejamos {{tokens}}.\nAtstājiet tukšu, lai saglabātu pielikuma pašreizējo faila nosaukumu.',
       name: 'Pārdēvētais pielikuma faila nosaukums'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +179,19 @@ export const lv = {
       name: 'Vai konvertēt ielīmētos attēlus uz JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Ja iespējots, pielikumi, kas apstrādāti caur',
-        part2: 'Apkopot pielikumus',
-        part3: 'komandām, tiks pārdēvēti saskaņā ar',
-        part4: 'iestatījumu.'
-      },
+      description: 'Ja iespējots, pielikumi, kas apstrādāti ar komandām {{command}}, tiks pārdēvēti saskaņā ar iestatījumu {{setting}}.',
       name: 'Vai pārdēvēt apkopotos pielikumus'
     },
     specialCharacters: {
-      description: {
-        part1: 'Īpašās rakstzīmes pielikumu mapē un faila nosaukumā, kas jāaizstāj vai jānoņem.',
-        part2: 'Atstājiet tukšu, lai saglabātu īpašās rakstzīmes.'
-      },
+      description: 'Īpašās rakstzīmes pielikumu mapē un faila nosaukumā, kas jāaizstāj vai jānoņem.\nAtstājiet tukšu, lai saglabātu īpašās rakstzīmes.',
       name: 'Īpašās rakstzīmes'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Aizstāšanas virkne īpašajām rakstzīmēm pielikumu mapē un faila nosaukumā.',
-        part2: 'Atstājiet tukšu, lai noņemtu īpašās rakstzīmes.'
-      },
+      description: 'Aizstāšanas virkne īpašajām rakstzīmēm pielikumu mapē un faila nosaukumā.\nAtstājiet tukšu, lai noņemtu īpašās rakstzīmes.',
       name: 'Īpašo rakstzīmju aizstāšana'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Laika ierobežojums sekundēs visām operācijām.',
-        part2: 'Ja',
-        part3: 'ir iestatīts, operāciju izpildes laika ierobežojums ir atspējots.'
-      },
+      description: 'Laika ierobežojums sekundēs visām operācijām.\nJa ir iestatīts {{zero}}, operāciju izpildes laika ierobežojums ir atspējots.',
       name: 'Laika ierobežojums sekundēs'
     }
   },

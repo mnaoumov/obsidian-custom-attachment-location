@@ -1,9 +1,6 @@
 export const he = {
   attachmentCollector: {
-    confirm: {
-      part1: 'האם ברצונך לאסוף קבצים מצורפים לכל ההערות בתיקיות באופן רקורסיבי?',
-      part2: 'לא ניתן לבטל פעולה זו.'
-    },
+    confirm: 'האם ברצונך לאסוף באופן רקורסיבי קבצים מצורפים לכל הרשימות בתיקיות?\n{{folders}}\nלא ניתן לבטל פעולה זו.',
     progressBar: {
       message: 'אוסף קבצים מצורפים {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'אוסף קבצים מצורפים...'
@@ -16,10 +13,7 @@ export const he = {
     skip: 'דלג'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'קובץ מצורף',
-      part2: 'משומש על ידי מספר רשימות.'
-    },
+    content: 'הקובץ המצורף {{attachment}} משומש על ידי מספר רשימות.',
     heading: 'איסוף קובץ מצורף המשומש על ידי מספר רשימות',
     noPriorityWinnerReason: {
       EmptyList: 'הוא לא הועבר משום שההגדרה {{settingName}} ריקה, ולכן דבר אינו קובע לאיזו מהפתקים הללו הוא שייך.',
@@ -33,6 +27,10 @@ export const he = {
     collectAttachmentsCurrentNote: 'אסוף קבצים מצורפים ברשימה הנוכחית',
     collectAttachmentsEntireVault: 'אסוף קבצים מצורפים בכל הכספת'
   },
+  links: {
+    documentation: 'התיעוד',
+    tokens: 'הטוקנים'
+  },
   menuItems: {
     collectAttachmentsInFile: 'איסוף קבצים מצורפים בקובץ',
     collectAttachmentsInFiles: 'איסוף קבצים מצורפים בקבצים'
@@ -41,10 +39,7 @@ export const he = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'אוסף קבצים מצורפים עבור \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'איסוף קבצים מצורפים בוטל. ראה קונסול לפרטים.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'שם קובץ מצורף שנוצר \'{{path}}\' אינו תקף.\n{{validationMessage}}\nבדוק את',
-      part2: 'ההגדרה שלך.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'שם הקובץ המצורף שנוצר \'{{path}}\' אינו תקף.\n{{validationMessage}}\nבדוק את ההגדרה {{settingName}}.',
     notePathIsIgnored: 'נתיב רשימה מתעלם'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const he = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// טוקנים מותאמים אישיים הועברו להערה מכיוון שהם צריכים להיות מעודכנים לפורמט החדש שהוצג בגרסת תוסף 9.0.0.\n// פנה לתיעוד ({{customTokensDocumentationUrl}}) למידע נוסף.',
-      deprecated: {
-        part1: 'בגרסת תוסף 9.0.0, הפורמט של רישום טוקנים מותאמים אישיים השתנה. אנא עדכן את הטוקנים שלך בהתאם. פנה ל',
-        part2: 'תיעוד',
-        part3: 'למידע נוסף'
-      }
+      deprecated: 'הפורמט של רישום טוקנים מותאמים אישיים השתנה. אנא עדכן את הטוקנים שלך בהתאם. ראה את {{documentation}} למידע נוסף.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'בגרסת תוסף 9.0.0, ההגדרה',
-      part2: 'היא מיושנת. השתמש ב',
-      part3: 'פורמט במקום. ראה',
-      part4: 'תיעוד',
-      part5: 'למידע נוסף'
-    },
+    legacyRenameAttachmentsToLowerCase: 'ההגדרה {{setting}} מיושנת. השתמש במקומה בפורמט {{format}}. ראה את {{documentation}} למידע נוסף.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'יש לך ערך פוטנציאלית שגוי עבור',
-        part2: 'הפורמט. אנא פנה ל',
-        part3: 'תיעוד',
-        part4: 'למידע נוסף',
-        part5: 'הודעה זו לא תוצג שוב.'
-      }
+      deprecated: 'ייתכן שהוגדר אצלך ערך שגוי עבור הפורמט {{setting}}. ראה את {{documentation}} למידע נוסף. הודעה זו לא תוצג שוב.'
     },
-    specialCharacters: {
-      part1: 'בגרסת תוסף 9.16.0, ערך',
-      part2: 'ההגדרה ברירת המחדל השתנה. ערך ההגדרה שלך עודכן לערך ברירת המחדל החדש.'
-    },
+    specialCharacters: 'ערך ברירת המחדל של ההגדרה {{setting}} השתנה. ערך ההגדרה שלך עודכן לערך ברירת המחדל החדש.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'גודל התמונה ברירת המחדל חייב להיות בפיקסלים או באחוזים',
       invalidCustomTokensCode: 'קוד טוקנים מותאמים אישיים לא תקף',
@@ -142,68 +118,35 @@ export const he = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'כאשר מצרפים קבצים:'
-      },
+      description: 'כאשר מצרפים קבצים:',
       name: 'מצב שינוי שם קבצים מצורפים'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'כאשר הקובץ המצורף שנאסף משמש מספר רשימות:'
-      },
+      description: 'כאשר הקובץ המצורף שנאסף משמש מספר רשימות:',
       name: 'מצב איסוף קובץ מצורף המשמש מספר רשימות'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'ראה',
-        part2: 'טוקנים זמינים',
-        part3: 'השאר ריק כדי לשמור על שם הקובץ המצורף המקורי.'
-      },
+      description: 'ראה את {{tokens}} הזמינים.\nהשאר ריק כדי לשמור על השם הנוכחי של הקובץ המצורף.',
       name: 'שם קובץ מצורף שנאסף'
     },
     customTokens: {
-      description: {
-        part1: 'טוקנים מותאמים אישיים לשימוש.',
-        part2: 'ראה',
-        part3: 'תיעוד',
-        part4: 'למידע נוסף.',
-        part5: '⚠️ טוקנים מותאמים אישיים יכולים להיות קוד JavaScript שרירותי. אם הם כתובים בצורה גרועה, הם עלולים לגרום לאובדן נתונים. השתמש בהם על אחריותך.'
-      },
+      description: 'טוקנים מותאמים אישיים לשימוש.\nראה את {{documentation}} למידע נוסף.\n⚠️ טוקנים מותאמים אישיים יכולים להיות קוד JavaScript שרירותי. אם הם כתובים בצורה גרועה, הם עלולים לגרום לאובדן נתונים. השתמש בהם על אחריותך.',
       name: 'טוקנים מותאמים אישיים'
     },
     defaultImageSize: {
-      description: {
-        part1: 'גודל התמונה ברירת המחדל.',
-        part2: 'ניתן לציין בפיקסלים',
-        part3: 'או באחוז מגודל התמונה המלא',
-        part4: 'השאר ריק כדי להשתמש בגודל המקורי.'
-      },
+      description: 'גודל התמונה ברירת המחדל.\nניתן לציין בפיקסלים ({{pixels}}) או באחוזים מגודל התמונה המלא ({{percentage}}).\nהשאר ריק כדי להשתמש בגודל התמונה המקורי.',
       name: 'גודל התמונה ברירת המחדל'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'כאשר אתה מדביק/גורר קובץ עם אותו שם כמו קובץ קיים, המפריד הזה יתווסף לשם הקובץ.',
-        part2: 'לדוגמה, כאשר אתה גורר קובץ',
-        part3: ', הוא יקבל שם חדש ל',
-        part4: ', וכו, לקבלת השם הראשון הזמין.'
-      },
+      description: 'כאשר אתה מדביק או גורר קובץ בשם זהה לשם של קובץ קיים, המפריד הזה יתווסף לשם הקובץ.\nלדוגמה, כאשר אתה גורר את הקובץ {{existingFile}}, שמו ישתנה ל-{{firstAvailableName}}, {{secondAvailableName}} וכן הלאה, לפי השם הפנוי הראשון.',
       name: 'מפריד שמות כפולים'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'הדר קבצים מצורפים מהנתיבים הבאים כאשר',
-        part2: 'אסוף קבצים מצורפים',
-        part3: 'הפקודה מבוצעת.',
-        part4: 'הכנס כל נתיב בשורה חדשה.',
-        part6: 'אם ההגדרה ריקה, אף נתיב לא מודר מאיסוף קבצים מצורפים.'
-      },
+      description: 'הדר קבצים מצורפים מהנתיבים הבאים כאשר הפקודה {{command}} מבוצעת.\nהכנס כל נתיב בשורה חדשה.\n{{pathSyntax}}\nאם ההגדרה ריקה, אף נתיב לא מודר מאיסוף קבצים מצורפים.',
       name: 'הדר נתיבים מאיסוף קבצים מצורפים'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'ראה',
-        part2: 'טוקנים זמינים'
-      },
+      description: 'ראה את {{tokens}} הזמינים.',
       name: 'שם קובץ מצורף שנוצר'
     },
     jpegQuality: {
@@ -211,41 +154,20 @@ export const he = {
       name: 'איכות JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'התחל עם',
-        part2: 'לשימוש בנתיב יחסי.',
-        part3: 'ראה',
-        part4: 'טוקנים זמינים',
-        part5: 'תיקיות נקודה כמו',
-        part6: 'לא מומלצות, כי Obsidian לא עוקב אחריהן. ייתכן שתצטרך להשתמש ב',
-        part7: 'תוסף לניהול אותן.'
-      },
+      description: 'התחל ב-{{relativePrefix}} עבור נתיבים יחסיים לתיקיית האב של הרשימה.\nראה את {{tokens}} הזמינים.\nתיקיות נקודה כמו {{dotFolder}} אינן מומלצות, כי Obsidian אינו עוקב אחריהן. ייתכן שתצטרך להשתמש בתוסף {{unhidePlugin}} כדי לנהל אותן.',
       name: 'מיקום לקבצים מצורפים חדשים'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'פורמט עבור ה-URL שיוכנס ל-Markdown.',
-        part2: 'ראה',
-        part3: 'טוקנים זמינים',
-        part4: 'השאר ריק לשימוש בפורמט ברירת המחדל.'
-      },
+      description: 'פורמט עבור ה-URL שיוכנס ל-Markdown כאשר מוסיפים קובץ מצורף. הוא חל ברגע זה בלבד: קישור ש-Obsidian כותב מחדש מאוחר יותר, כאשר שמה של רשימה או של קובץ מצורף משתנה או שהם מועברים, מקבל את פורמט ברירת המחדל.\nראה את {{tokens}} הזמינים.\nהשאר ריק לשימוש בפורמט ברירת המחדל.',
       name: 'פורמט URL Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'האם להחיל את הגדרות תיקיית הקבצים המצורפים ושם הקובץ על קבצים מצורפים שתוספים אחרים יוצרים.',
-        part2: 'חלק מהתוספים כותבים קובץ מצורף אל הכספת בשם משלהם, בלי לשאול את Obsidian לאן הוא שייך. כשאפשרות זו מופעלת, קובץ כזה מועבר ומשנה את שמו מיד עם הופעתו.',
-        part3: 'רק קבצים שנוצרים בזמן שפתקה פתוחה מטופלים, לעולם לא קבצים המגיעים מסנכרון או מייבוא כספת.'
-      },
+      description: 'האם להחיל את הגדרות תיקיית הקבצים המצורפים ושם הקובץ על קבצים מצורפים שתוספים אחרים יוצרים.\nחלק מהתוספים כותבים קובץ מצורף אל הכספת בשם משלהם, בלי לשאול את Obsidian לאן הוא שייך. כשאפשרות זו מופעלת, קובץ כזה מועבר ושמו משתנה מיד עם הופעתו.\nמטופלים רק קבצים שנוצרו בזמן שרשימה פתוחה ושרשימה מקשרת אליהם: קובץ שאף רשימה אינה מקשרת אליו הוא מידע שתוסף אחר שומר לעצמו, והוא נשאר במקום שבו נכתב. קבצים המגיעים מסנכרון או מייבוא כספת אינם מטופלים לעולם.\n{{modes}}\nהתוסף היוצר מזוהה לפי מחסנית הקריאות של הכתיבה. הזיהוי אינו מובטח: לא מזוהה שום תוסף עבור קובץ שנכתב על ידי Obsidian עצמו, על ידי לקוח סנכרון או על ידי תוסף שדוחה את הכתיבה שלו. קובץ כזה נחשב כקובץ שאינו נמצא ברשימה שלהלן.',
       name: 'שנה שם של קבצים מצורפים שיצרו תוספים אחרים'
     },
     renameAttachmentsToLowerCase: 'שנה שמות קבצים מצורפים לאותיות קטנות',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'ראה',
-        part2: 'טוקנים זמינים',
-        part3: 'השאר ריק כדי לשמור על שם הקובץ המצורף המקורי.'
-      },
+      description: 'ראה את {{tokens}} הזמינים.\nהשאר ריק כדי לשמור על השם הנוכחי של הקובץ המצורף.',
       name: 'שם קובץ מצורף ששמו שונה'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +179,19 @@ export const he = {
       name: 'האם להמיר תמונות שהודבקו ל-JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'אם מופעל, קבצים מצורפים המעובדים דרך',
-        part2: 'אסוף קבצים מצורפים',
-        part3: 'פקודות יקבלו שמות חדשים לפי',
-        part4: 'ההגדרה.'
-      },
+      description: 'אם מופעל, קבצים מצורפים המעובדים באמצעות הפקודות {{command}} יקבלו שמות חדשים לפי ההגדרה {{setting}}.',
       name: 'האם לשנות שמות קבצים מצורפים שנאספו'
     },
     specialCharacters: {
-      description: {
-        part1: 'תווים מיוחדים בתיקיית קבצים מצורפים ושם קובץ להחלפה או הסרה.',
-        part2: 'השאר ריק לשימור תווים מיוחדים.'
-      },
+      description: 'תווים מיוחדים בשם תיקיית הקבצים המצורפים ובשם הקובץ, להחלפה או להסרה.\nהשאר ריק לשימור תווים מיוחדים.',
       name: 'תווים מיוחדים'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'מחרוזת החלפה עבור תווים מיוחדים בתיקיית קבצים מצורפים ושם קובץ.',
-        part2: 'השאר ריק להסרת תווים מיוחדים.'
-      },
+      description: 'מחרוזת החלפה עבור תווים מיוחדים בשם תיקיית הקבצים המצורפים ובשם הקובץ.\nהשאר ריק להסרת תווים מיוחדים.',
       name: 'החלפת תווים מיוחדים'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'הזמן הקצוב בשניות עבור כל הפעולות.',
-        part2: 'אם',
-        part3: 'מוגדר, זמן הקצוב לביצוע פעולות מבוטל.'
-      },
+      description: 'הזמן הקצוב בשניות עבור כל הפעולות.\nאם מוגדר {{zero}}, הזמן הקצוב לביצוע פעולות מבוטל.',
       name: 'זמן קצוב בשניות'
     }
   },

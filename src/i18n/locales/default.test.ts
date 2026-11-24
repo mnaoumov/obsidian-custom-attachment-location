@@ -51,7 +51,8 @@ describe('defaultTranslations', () => {
     expect(defaultTranslations.promptWithPreviewModal.folderTitle).toBe('Choose attachment folder');
   });
 
-  it('should expose the release notes for version 10.0.0', () => {
-    expect(defaultTranslations.releaseNotes.versions['10.0.0'].part2).toBe('documentation');
+  it('should expose the release notes for version 10.0.0 as one sentence with a documentation link placeholder', () => {
+    expect(defaultTranslations.releaseNotes.versions['10.0.0']).toContain('{{documentation}}');
+    expect(defaultTranslations.links.documentation).toBe('documentation');
   });
 });

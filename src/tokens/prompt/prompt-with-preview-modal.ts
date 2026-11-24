@@ -83,13 +83,18 @@ class PreviewModal extends Modal {
 
     const previewContainer = this.contentEl.createDiv('preview-container');
 
-    this.embedComponent = embeddableCreator({
+    // A creator may decline the file, which leaves the preview empty.
+    const embedComponent = embeddableCreator({
       app: this.app,
       containerEl: previewContainer
     }, this.temporaryFile);
+    if (!embedComponent) {
+      return;
+    }
 
-    this.embedComponent.load();
-    this.embedComponent.loadFile();
+    this.embedComponent = embedComponent;
+    embedComponent.load();
+    await embedComponent.loadFile();
   }
 }
 

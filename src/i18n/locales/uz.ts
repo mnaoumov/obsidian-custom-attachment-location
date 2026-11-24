@@ -1,9 +1,6 @@
 export const uz = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Papkalardagi barcha qaydlar uchun ilovalarni rekursiv tarzda to‘plamoqchimisiz?',
-      part2: 'Bu amalni ortga qaytarib bo‘lmaydi.'
-    },
+    confirm: 'Papkalardagi barcha eslatmalar uchun qo\'shimchalarni ichki papkalar bilan birga yig\'ishni xohlaysizmi?\n{{folders}}\nBu amalni ortga qaytarib bo\'lmaydi.',
     progressBar: {
       message: 'Qo\'shimchalarni yig\'layapman {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Qo\'shimchalarni yig\'layapman...'
@@ -16,10 +13,7 @@ export const uz = {
     skip: 'O\'tkazib yuborish'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Qo\'shimcha',
-      part2: 'bir nechta eslatmalar tomonidan havola qilingan.'
-    },
+    content: '{{attachment}} qo\'shimchasiga bir nechta eslatmalar havola qilgan.',
     heading: 'Bir nechta eslatmalar tomonidan ishlatiladigan qo\'shimchani yig\'moqdaman',
     noPriorityWinnerReason: {
       EmptyList: '{{settingName}} sozlamasi boʻsh boʻlgani uchun koʻchirilmadi, shu sababli bu eslatmalardan qaysi biri unga egalik qilishini hech narsa hal qilmaydi.',
@@ -33,6 +27,10 @@ export const uz = {
     collectAttachmentsCurrentNote: 'Joriy eslatmadagi qo\'shimchalarni yig\'lash',
     collectAttachmentsEntireVault: 'Butun ombordagi qo\'shimchalarni yig\'lash'
   },
+  links: {
+    documentation: 'hujjatlarga',
+    tokens: 'tokenlarni'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Faylda ilovalarni to‘plash',
     collectAttachmentsInFiles: 'Fayllarda ilovalarni to‘plash'
@@ -41,10 +39,7 @@ export const uz = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '\'{{noteFilePath}}\' uchun qo\'shimchalarni yig\'layapman',
     collectingAttachmentsCancelled: 'Qo\'shimchalarni yig\'lash bekor qilindi. Tafsilotlar uchun konsolni ko\'ring.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Yaratilgan qo\'shimcha fayl nomi \'{{path}}\' noto\'g\'ri.\n{{validationMessage}}\nSozlamangizni tekshiring',
-      part2: ''
-    },
+    generatedAttachmentFileNameIsInvalid: 'Yaratilgan qo\'shimcha fayl nomi \'{{path}}\' noto\'g\'ri.\n{{validationMessage}}\n{{settingName}} sozlamangizni tekshiring.',
     notePathIsIgnored: 'Eslatma yo\'li e\'tiborga olinmaydi'
   },
   obsidianLib: {
@@ -105,33 +100,14 @@ export const uz = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Maxsus tokenlar komment qilindi, chunki ular 9.0.0 versiyasidagi yangi format bo\'yicha yangilanishi kerak.\n// Qo\'shimcha ma\'lumot uchun hujjatlarga murojaat qiling.',
-      deprecated: {
-        part1: '9.0.0 versiyasida maxsus tokenlar ro\'yxatga olish formati o\'zgardi. Iltimos, tokenlaringizni yangilang. Batafsil ma\'lumot uchun',
-        part2: 'hujjatga murojaat qiling',
-        part3: ''
-      }
+      codeComment: '// Maxsus tokenlar komment qilindi, chunki ular 9.0.0 versiyasidagi yangi format bo\'yicha yangilanishi kerak.\n// Qo\'shimcha ma\'lumot uchun hujjatlarga ({{customTokensDocumentationUrl}}) murojaat qiling.',
+      deprecated: 'Maxsus tokenlarni ro\'yxatga olish formati o\'zgardi. Iltimos, tokenlaringizni shunga mos ravishda yangilang. Batafsil ma\'lumot uchun {{documentation}} murojaat qiling.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: '9.0.0 versiyasida bu',
-      part2: 'sozlama eskirgan. Buning o\'rniga',
-      part3: 'formatidan foydalaning. Batafsil uchun',
-      part4: 'hujjatlarga qarang',
-      part5: ''
-    },
+    legacyRenameAttachmentsToLowerCase: '{{setting}} sozlamasi eskirgan. Buning o\'rniga {{format}} formatidan foydalaning. Batafsil ma\'lumot uchun {{documentation}} qarang.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Potentsial noto\'g\'ri qiymat o\'rnatilgan',
-        part2: 'format uchun. Iltimos, qarang',
-        part3: 'hujjatlar',
-        part4: 'batafsil ma\'lumot uchun.',
-        part5: 'Ushbu xabar yana ko\'rsatilmaydi.'
-      }
+      deprecated: '{{setting}} formati uchun noto\'g\'ri bo\'lishi mumkin bo\'lgan qiymat o\'rnatilgan. Batafsil ma\'lumot uchun {{documentation}} murojaat qiling. Bu xabar boshqa ko\'rsatilmaydi.'
     },
-    specialCharacters: {
-      part1: '9.16.0 versiyada',
-      part2: 'sozlamaning standart qiymati o\'zgardi. Sizning sozlamangiz yangi standart qiymatga yangilandi.'
-    },
+    specialCharacters: '{{setting}} sozlamasining standart qiymati o\'zgardi. Sozlamangiz qiymati yangi standart qiymatga yangilandi.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Standart rasm o‘lchami piksel yoki foizda bo‘lishi kerak',
       invalidCustomTokensCode: 'Noto\'g\'ri maxsus token kodi',
@@ -142,67 +118,35 @@ export const uz = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Fayllar qo\'shilganda:'
-      },
+      description: 'Fayllar qo\'shilganda:',
       name: 'Qo\'shimchalarni qayta nomlash rejimi'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Yig\'ilgan qo\'shimcha bir nechta eslatmalarda ishlatilganda:'
-      },
+      description: 'Yig\'ilgan qo\'shimcha bir nechta eslatmalarda ishlatilganda:',
       name: 'Bir nechta eslatmalar tomonidan foydalanilgan qo\'shimchani yig\'ish rejimi'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Mavjud',
-        part2: 'tokenlarni ko\'ring'
-      },
+      description: 'Mavjud {{tokens}} ko\'ring.\nQo\'shimchaning joriy fayl nomini saqlash uchun bo\'sh qoldiring.',
       name: 'Yig\'ilgan qo\'shimcha fayl nomi'
     },
     customTokens: {
-      description: {
-        part1: 'Foydalaniladigan maxsus tokenlar.',
-        part2: 'Qo\'shimcha ma\'lumot uchun qarang',
-        part3: 'hujjatlar',
-        part4: '',
-        part5: '⚠️ Maxsus tokenlar istalgan JavaScript kodi bo\'lishi mumkin. Noto\'g\'ri yozilganda ma\'lumot yo\'qolishi mumkin. O\'z xataringizga foydalaning.'
-      },
+      description: 'Foydalaniladigan maxsus tokenlar.\nBatafsil ma\'lumot uchun {{documentation}} qarang.\n⚠️ Maxsus tokenlar istalgan JavaScript kodi bo\'lishi mumkin. Yomon yozilgan bo\'lsa, ma\'lumotlar yo\'qolishiga olib kelishi mumkin. O\'z xavfingiz ostida foydalaning.',
       name: 'Maxsus tokenlar'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Standart rasm o‘lchami.',
-        part2: 'Pikselda ko‘rsatilishi mumkin',
-        part3: 'Rasm to‘liq o‘lchamining foizi sifatida',
-        part4: 'Asl o‘lchamdan foydalanish uchun bo‘sh qoldiring.'
-      },
+      description: 'Standart rasm o‘lchami.\nPikselda ({{pixels}}) yoki rasm to‘liq o‘lchamining foizida ({{percentage}}) ko‘rsatilishi mumkin.\nAsl rasm o‘lchamidan foydalanish uchun bo‘sh qoldiring.',
       name: 'Standart rasm o‘lchami'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Mavjud fayl nomi bilan bir xil bo\'lgan faylni joylashtirganingizda/yurgizganingizda, ushbu ajratgich fayl nomiga qo\'shiladi.',
-        part2: 'Masalan, faylni olib tashlayotganingizda:',
-        part3: ', u quyidagicha qayta nomlanadi: ',
-        part4: 'va boshqalar, birinchi mavjud nom aniqlanguncha.'
-      },
+      description: 'Mavjud fayl bilan bir xil nomdagi faylni joylashtirganingizda yoki sudrab olib kirganingizda, ushbu ajratgich fayl nomiga qo\'shiladi.\nMasalan, {{existingFile}} faylini sudrab olib kirganingizda, u birinchi bo\'sh nom tanlanib, {{firstAvailableName}}, {{secondAvailableName}} va hokazo deb qayta nomlanadi.',
       name: 'Nusxa nom ajratgichi'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Quyidagi yo\'llardan qo\'shimchalarni chiqarib tashlang, bu buyruq bajarilganda:',
-        part2: 'Qo\'shimchalarni yig\'ish',
-        part3: '',
-        part4: 'Har bir yo\'lni yangi qatorda yozing.',
-        part6: 'Sozlama bo\'sh bo\'lsa, hech qanday yo\'l chiqarilmaydi.'
-      },
+      description: '{{command}} buyrug\'i bajarilganda quyidagi yo\'llardagi qo\'shimchalar chiqarib tashlanadi.\nHar bir yo\'lni yangi qatorda yozing.\n{{pathSyntax}}\nSozlama bo\'sh bo\'lsa, qo\'shimchalarni yig\'ishdan hech qanday yo\'l chiqarib tashlanmaydi.',
       name: 'Qo\'shimcha yig\'ishda chiqarib tashlangan yo\'llar'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Mavjud',
-        part2: 'tokenlarni ko\'ring'
-      },
+      description: 'Mavjud {{tokens}} ko\'ring.',
       name: 'Yaratilgan qo\'shimcha fayl nomi'
     },
     jpegQuality: {
@@ -210,40 +154,20 @@ export const uz = {
       name: 'JPEG sifati'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Nisbiy yo\'lni ishlatish uchun bilan boshlang',
-        part2: '.',
-        part3: 'Mavjud',
-        part4: 'tokenlarni ko\'ring',
-        part5: '. nuqta bilan boshlangan papkalar, masalan',
-        part6: ', tavsiya etilmaydi, chunki Obsidian ularni kuzatmaydi. Ularni boshqarish uchun',
-        part7: 'kengaytmadan foydalanishingiz kerak bo\'lishi mumkin.'
-      },
+      description: 'Eslatmaning ota papkasiga nisbatan yo\'llar uchun {{relativePrefix}} bilan boshlang.\nMavjud {{tokens}} ko\'ring.\n{{dotFolder}} kabi nuqta bilan boshlanadigan papkalar tavsiya etilmaydi, chunki Obsidian ularni kuzatmaydi. Ularni boshqarish uchun {{unhidePlugin}} plaginidan foydalanishingiz kerak bo\'lishi mumkin.',
       name: 'Yangi qo\'shimchalar joylashuvi'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Markdown-ga qo\'shiladigan URL formati.',
-        part2: 'Mavjud',
-        part3: 'tokenlarni ko\'ring.',
-        part4: 'Standart formatni ishlatish uchun bo\'sh qoldiring.'
-      },
+      description: 'Qo\'shimcha qo\'shilganda Markdown-ga qo\'yiladigan URL formati. U faqat shu paytda qo\'llaniladi: eslatma yoki qo\'shimcha qayta nomlanganda yoki ko\'chirilganda Obsidian keyinroq qayta yozadigan havola standart formatni oladi.\nMavjud {{tokens}} ko\'ring.\nStandart formatdan foydalanish uchun bo\'sh qoldiring.',
       name: 'Markdown URL formati'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Ilova papkasi va fayl nomi sozlamalari BOSHQA plaginlar yaratgan ilovalarga ham qo\'llanilsinmi.',
-        part2: 'Ba\'zi plaginlar ilovani qayerga tegishli ekanini Obsidian\'dan so\'ramasdan, o\'z nomi bilan to\'g\'ridan-to\'g\'ri omborga yozadi. Bu yoqilganda, bunday fayl paydo bo\'lishi bilanoq ko\'chiriladi va nomi o\'zgartiriladi.',
-        part3: 'Faqat qayd ochiq turganda yaratilgan fayllarga tegiladi, sinxronlash yoki ombor import qilishdan kelgan fayllarga hech qachon tegilmaydi.'
-      },
+      description: 'Ilova papkasi va fayl nomi sozlamalari BOSHQA plaginlar yaratgan ilovalarga ham qo\'llanilsinmi.\nBa\'zi plaginlar ilovani qayerga tegishli ekanini Obsidian\'dan so\'ramasdan, o\'z nomi bilan to\'g\'ridan-to\'g\'ri omborga yozadi. Bu yoqilganda, bunday fayl paydo bo\'lishi bilanoq ko\'chiriladi va nomi o\'zgartiriladi.\nFaqat eslatma ochiq turganda yaratilgan va eslatmadan havola qilingan fayllarga tegiladi: hech bir eslatma havola qilmagan fayl boshqa plagin o\'zi uchun saqlaydigan ma\'lumotdir va yozilgan joyida qoladi. Sinxronlash yoki ombor importidan kelgan fayllarga hech qachon tegilmaydi.\n{{modes}}\nFaylni yaratgan plagin yozish amalining chaqiruvlar stekidan aniqlanadi. Bu imkon qadar amalga oshiriladi: Obsidian\'ning o\'zi, sinxronlash mijozi yoki yozishni keyinga qoldiradigan plagin yozgan fayl uchun hech qanday plagin aniqlanmaydi. Bunday fayl quyidagi ro\'yxatda YO\'Q deb hisoblanadi.',
       name: 'Boshqa plaginlar yaratgan ilovalar nomini o\'zgartirish'
     },
     renameAttachmentsToLowerCase: 'Qo\'shimchilarning nomlarini kichik harflarga o\'zgartirish',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Mavjud',
-        part2: 'tokenlarni ko\'ring'
-      },
+      description: 'Mavjud {{tokens}} ko\'ring.\nQo\'shimchaning joriy fayl nomini saqlash uchun bo\'sh qoldiring.',
       name: 'Qayta nomlangan qo\'shimcha fayl nomi'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +179,19 @@ export const uz = {
       name: 'Yopishtirilgan rasmlarni JPEG-ga o\'zgartirish'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Faollashtirilganda, qo\'llanilgan qo\'shimchalar',
-        part2: 'Qo\'shimchalarni yig\'ish',
-        part3: 'buyruqlari orqali qayta nomlanadi',
-        part4: 'belgilanishiga muvofiq.'
-      },
+      description: 'Yoqilgan bo\'lsa, {{command}} buyruqlari orqali qayta ishlangan qo\'shimchalar {{setting}} sozlamasiga muvofiq qayta nomlanadi.',
       name: 'Yig\'ilgan qo\'shimchalarni qayta nomlash'
     },
     specialCharacters: {
-      description: {
-        part1: 'Qo\'shimcha papkasi va fayl nomidagi maxsus belgilar almashtirilishi yoki olib tashlanishi kerak.',
-        part2: 'Maxsus belgilarni saqlash uchun bo\'sh qoldiring.'
-      },
+      description: 'Qo\'shimcha papkasi va fayl nomidagi almashtiriladigan yoki olib tashlanadigan maxsus belgilar.\nMaxsus belgilarni saqlash uchun bo\'sh qoldiring.',
       name: 'Maxsus belgilar'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Qo\'shimcha papka va fayl nomidagi maxsus belgilarni almashtirish uchun qatori.',
-        part2: 'Maxsus belgilarni olib tashlash uchun bo\'sh qoldiring.'
-      },
+      description: 'Qo\'shimcha papkasi va fayl nomidagi maxsus belgilar o\'rniga qo\'yiladigan satr.\nMaxsus belgilarni olib tashlash uchun bo\'sh qoldiring.',
       name: 'Maxsus belgilarni almashtirish'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Barcha operatsiyalar uchun vaqt tugashi (soniya).',
-        part2: 'Agar',
-        part3: 'belgilangan bo\'lsa, bajarilish vaqti cheklovlari o\'chiriladi.'
-      },
+      description: 'Barcha amallar uchun vaqt cheklovi (soniyalarda).\nAgar {{zero}} belgilansa, amallarni bajarish vaqti cheklovi o\'chiriladi.',
       name: 'Vaqt tugashi (soniya)'
     }
   },

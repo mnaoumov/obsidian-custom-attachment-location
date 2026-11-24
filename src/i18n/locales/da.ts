@@ -1,9 +1,6 @@
 export const da = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Vil du indsamle vedhæftninger for alle noter i mapper rekursivt?',
-      part2: 'Denne handling kan ikke fortrydes.'
-    },
+    confirm: 'Vil du indsamle vedhæftninger for alle noter i mapper rekursivt?\n{{folders}}\nDenne handling kan ikke fortrydes.',
     progressBar: {
       message: 'Samler vedhæftninger {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Samler vedhæftninger...'
@@ -16,10 +13,7 @@ export const da = {
     skip: 'Spring over'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Vedhæftning',
-      part2: 'refereres af flere noter.'
-    },
+    content: 'Vedhæftningen {{attachment}} refereres af flere noter.',
     heading: 'Samler vedhæftning brugt af flere noter',
     noPriorityWinnerReason: {
       EmptyList: 'Den blev ikke flyttet, fordi indstillingen {{settingName}} er tom, så intet afgør, hvilken af disse noter der ejer den.',
@@ -33,6 +27,10 @@ export const da = {
     collectAttachmentsCurrentNote: 'Saml vedhæftninger i nuværende note',
     collectAttachmentsEntireVault: 'Saml vedhæftninger i hele vault'
   },
+  links: {
+    documentation: 'dokumentationen',
+    tokens: 'tokens'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Indsaml vedhæftninger i fil',
     collectAttachmentsInFiles: 'Indsaml vedhæftninger i filer'
@@ -41,10 +39,7 @@ export const da = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Samler vedhæftninger for \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Samling af vedhæftninger annulleret. Se konsol for detaljer.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Genereret vedhæftningsfilnavn \'{{path}}\' er ugyldigt.\n{{validationMessage}}\nTjek din',
-      part2: 'indstilling.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Genereret vedhæftningsfilnavn \'{{path}}\' er ugyldigt.\n{{validationMessage}}\nTjek din indstilling {{settingName}}.',
     notePathIsIgnored: 'Notesti er ignoreret'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const da = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Brugerdefinerede tokens blev kommenteret ud, da de skal opdateres til det nye format introduceret i plugin version 9.0.0.\n// Se dokumentationen ({{customTokensDocumentationUrl}}) for flere oplysninger.',
-      deprecated: {
-        part1: 'I plugin version 9.0.0 ændrede formatet for brugerdefineret token-registrering sig. Opdater venligst dine tokens i overensstemmelse hermed. Se',
-        part2: 'dokumentationen',
-        part3: 'for flere oplysninger'
-      }
+      deprecated: 'Formatet for registrering af brugerdefinerede tokens er ændret. Opdater venligst dine tokens i overensstemmelse hermed. Se {{documentation}} for flere oplysninger.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'I plugin version 9.0.0 er',
-      part2: 'indstillingen forældet. Brug',
-      part3: 'format i stedet. Se',
-      part4: 'dokumentationen',
-      part5: 'for flere oplysninger'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Indstillingen {{setting}} er forældet. Brug formatet {{format}} i stedet. Se {{documentation}} for flere oplysninger.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Du har potentielt forkert værdi sat for',
-        part2: 'formatet. Se venligst',
-        part3: 'dokumentationen',
-        part4: 'for flere oplysninger',
-        part5: 'Denne besked vil ikke blive vist igen.'
-      }
+      deprecated: 'Du har muligvis sat en forkert værdi for formatet {{setting}}. Se {{documentation}} for flere oplysninger. Denne besked vil ikke blive vist igen.'
     },
-    specialCharacters: {
-      part1: 'I plugin version 9.16.0 blev',
-      part2: 'standardindstillingsværdien ændret. Din indstillingsværdi blev opdateret til den nye standardværdi.'
-    },
+    specialCharacters: 'Standardværdien for indstillingen {{setting}} er ændret. Din indstillingsværdi er blevet opdateret til den nye standardværdi.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Standardbilledstørrelsen skal angives i pixels eller procent',
       invalidCustomTokensCode: 'Ugyldig brugerdefineret tokens-kode',
@@ -142,68 +118,35 @@ export const da = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Når der vedhæftes filer:'
-      },
+      description: 'Når der vedhæftes filer:',
       name: 'Vedhæftningsomdøbningstilstand'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Når den samlede vedhæftning bruges af flere noter:'
-      },
+      description: 'Når den samlede vedhæftning bruges af flere noter:',
       name: 'Saml vedhæftning brugt af flere noter tilstand'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Se tilgængelige',
-        part2: 'tokens',
-        part3: 'Lad stå tomt for at beholde det oprindelige vedhæftningsfilnavn.'
-      },
+      description: 'Se tilgængelige {{tokens}}.\nLad stå tomt for at beholde det nuværende vedhæftningsfilnavn.',
       name: 'Samlet vedhæftningsfilnavn'
     },
     customTokens: {
-      description: {
-        part1: 'Brugerdefinerede tokens der skal bruges.',
-        part2: 'Se',
-        part3: 'dokumentationen',
-        part4: 'for flere oplysninger.',
-        part5: '⚠️ Brugerdefinerede tokens kan være vilkårlig JavaScript-kode. Hvis de er dårligt skrevet, kan de forårsage datatab. Brug dem på egen risiko.'
-      },
+      description: 'Brugerdefinerede tokens der skal bruges.\nSe {{documentation}} for flere oplysninger.\n⚠️ Brugerdefinerede tokens kan være vilkårlig JavaScript-kode. Hvis de er dårligt skrevet, kan de forårsage datatab. Brug dem på egen risiko.',
       name: 'Brugerdefinerede tokens'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Standardbilledstørrelsen.',
-        part2: 'Kan angives i pixels',
-        part3: 'eller i procent af den fulde billedstørrelse',
-        part4: 'Lad stå tomt for at bruge den originale billedstørrelse.'
-      },
+      description: 'Standardbilledstørrelsen.\nKan angives i pixels ({{pixels}}) eller i procent af den fulde billedstørrelse ({{percentage}}).\nLad stå tomt for at bruge den originale billedstørrelse.',
       name: 'Standardbilledstørrelse'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Når du indsætter/trækker en fil med samme navn som en eksisterende fil, vil denne separator blive tilføjet til filnavnet.',
-        part2: 'F.eks., når du trækker fil',
-        part3: ', vil den blive omdøbt til',
-        part4: ', osv., og få det første tilgængelige navn.'
-      },
+      description: 'Når du indsætter/trækker en fil med samme navn som en eksisterende fil, vil denne separator blive tilføjet til filnavnet.\nF.eks., når du trækker filen {{existingFile}}, vil den blive omdøbt til {{firstAvailableName}}, {{secondAvailableName}} osv., alt efter hvilket navn der først er ledigt.',
       name: 'Duplikatnavnseparator'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Udeluk vedhæftninger fra følgende stier når',
-        part2: 'Saml vedhæftninger',
-        part3: 'kommandoen udføres.',
-        part4: 'Indsæt hver sti på en ny linje.',
-        part6: 'Hvis indstillingen er tom, udelukkes ingen stier fra vedhæftningssamling.'
-      },
+      description: 'Udeluk vedhæftninger fra følgende stier, når kommandoen {{command}} udføres.\nIndsæt hver sti på en ny linje.\n{{pathSyntax}}\nHvis indstillingen er tom, udelukkes ingen stier fra vedhæftningssamling.',
       name: 'Udeluk stier fra vedhæftningssamling'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Se tilgængelige',
-        part2: 'tokens'
-      },
+      description: 'Se tilgængelige {{tokens}}.',
       name: 'Genereret vedhæftningsfilnavn'
     },
     jpegQuality: {
@@ -211,41 +154,20 @@ export const da = {
       name: 'JPEG-kvalitet'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Start med',
-        part2: 'for at bruge relativ sti.',
-        part3: 'Se tilgængelige',
-        part4: 'tokens',
-        part5: 'Punktmapper som',
-        part6: 'anbefales ikke, fordi Obsidian ikke sporer dem. Du skal muligvis bruge et',
-        part7: 'Plugin til at administrere dem.'
-      },
+      description: 'Start med {{relativePrefix}} for stier relative til notens overordnede mappe.\nSe tilgængelige {{tokens}}.\nPunktmapper som {{dotFolder}} anbefales ikke, fordi Obsidian ikke sporer dem. Du skal muligvis bruge pluginet {{unhidePlugin}} til at administrere dem.',
       name: 'Placering for nye vedhæftninger'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Format for URL\'en der vil blive indsat i Markdown.',
-        part2: 'Se tilgængelige',
-        part3: 'tokens',
-        part4: 'Lad stå tomt for at bruge standardformatet.'
-      },
+      description: 'Format for URL\'en, der vil blive indsat i Markdown, når en vedhæftning tilføjes. Det anvendes kun i det øjeblik: et link, som Obsidian senere omskriver, når en note eller en vedhæftning omdøbes eller flyttes, får standardformatet.\nSe tilgængelige {{tokens}}.\nLad stå tomt for at bruge standardformatet.',
       name: 'Markdown URL-format'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Om indstillingerne for vedhæftningsmappe og filnavn skal anvendes på vedhæftninger, som ANDRE plugins opretter.',
-        part2: 'Nogle plugins skriver en vedhæftning direkte i boksen under deres eget navn uden at spørge Obsidian, hvor den hører hjemme. Med dette slået til flyttes og omdøbes en sådan fil, så snart den dukker op.',
-        part3: 'Kun filer oprettet, mens en note er åben, berøres — aldrig filer, der kommer fra en synkronisering eller en boks-import.'
-      },
+      description: 'Om indstillingerne for vedhæftningsmappe og filnavn skal anvendes på vedhæftninger, som ANDRE plugins opretter.\nNogle plugins skriver en vedhæftning direkte i boksen under deres eget navn uden at spørge Obsidian, hvor den hører hjemme. Med dette slået til flyttes og omdøbes en sådan fil, så snart den dukker op.\nKun filer, der oprettes, mens en note er åben, og som en note linker til, berøres: en fil, som ingen note linker til, er data, som et andet plugin gemmer til sig selv, og den bliver, hvor den blev skrevet. Filer, der kommer fra en synkronisering eller en boks-import, berøres aldrig.\n{{modes}}\nDet plugin, der opretter filen, identificeres ud fra skrivningens kaldstak. Det sker efter bedste evne: der identificeres intet plugin for en fil skrevet af Obsidian selv, af en synkroniseringsklient eller af et plugin, der udskyder sin skrivning. En sådan fil regnes for IKKE at være på listen nedenfor.',
       name: 'Omdøb vedhæftninger oprettet af andre plugins'
     },
     renameAttachmentsToLowerCase: 'Omdøb vedhæftninger til små bogstaver',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Se tilgængelige',
-        part2: 'tokens',
-        part3: 'Lad stå tomt for at beholde det oprindelige vedhæftningsfilnavn.'
-      },
+      description: 'Se tilgængelige {{tokens}}.\nLad stå tomt for at beholde det nuværende vedhæftningsfilnavn.',
       name: 'Omdøbt vedhæftningsfilnavn'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +179,19 @@ export const da = {
       name: 'Skal konvertere indsatte billeder til JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Hvis aktiveret, vedhæftninger behandlet via',
-        part2: 'Saml vedhæftninger',
-        part3: 'kommandoer vil blive omdøbt i henhold til',
-        part4: 'indstillingen.'
-      },
+      description: 'Hvis aktiveret, vil vedhæftninger behandlet via kommandoerne {{command}} blive omdøbt i henhold til indstillingen {{setting}}.',
       name: 'Skal omdøbe samlede vedhæftninger'
     },
     specialCharacters: {
-      description: {
-        part1: 'Særlige tegn i vedhæftningsmappe og filnavn der skal erstattes eller fjernes.',
-        part2: 'Lad stå tomt for at bevare særlige tegn.'
-      },
+      description: 'Særlige tegn i vedhæftningsmappe- og filnavn, der skal erstattes eller fjernes.\nLad stå tomt for at bevare særlige tegn.',
       name: 'Særlige tegn'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Erstatningsstreng for særlige tegn i vedhæftningsmappe og filnavn.',
-        part2: 'Lad stå tomt for at fjerne særlige tegn.'
-      },
+      description: 'Erstatningsstreng for særlige tegn i vedhæftningsmappe- og filnavn.\nLad stå tomt for at fjerne særlige tegn.',
       name: 'Særlige tegn-erstatning'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Timeout i sekunder for alle operationer.',
-        part2: 'Hvis',
-        part3: 'er sat, er operationernes udførelsestimeout deaktiveret.'
-      },
+      description: 'Timeout i sekunder for alle operationer.\nHvis {{zero}} er sat, er operationernes udførelsestimeout deaktiveret.',
       name: 'Timeout i sekunder'
     }
   },

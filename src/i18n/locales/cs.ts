@@ -1,9 +1,6 @@
 export const cs = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Chcete shromáždit přílohy pro všechny poznámky ve složkách rekurzivně?',
-      part2: 'Tuto operaci nelze vrátit zpět.'
-    },
+    confirm: 'Chcete shromáždit přílohy pro všechny poznámky ve složkách rekurzivně?\n{{folders}}\nTuto operaci nelze vrátit zpět.',
     progressBar: {
       message: 'Shromažďování příloh {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Shromažďování příloh...'
@@ -16,10 +13,7 @@ export const cs = {
     skip: 'Přeskočit'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Příloha',
-      part2: 'je odkazována více poznámkami.'
-    },
+    content: 'Na přílohu {{attachment}} odkazuje více poznámek.',
     heading: 'Shromažďování přílohy používané více poznámkami',
     noPriorityWinnerReason: {
       EmptyList: 'Nebyla přesunuta, protože nastavení {{settingName}} je prázdné, takže nic nerozhoduje, které z těchto poznámek patří.',
@@ -33,6 +27,10 @@ export const cs = {
     collectAttachmentsCurrentNote: 'Shromáždit přílohy v aktuální poznámce',
     collectAttachmentsEntireVault: 'Shromáždit přílohy v celém úložišti'
   },
+  links: {
+    documentation: 'dokumentaci',
+    tokens: 'tokeny'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Shromáždit přílohy v souboru',
     collectAttachmentsInFiles: 'Shromáždit přílohy v souborech'
@@ -41,10 +39,7 @@ export const cs = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Shromažďování příloh pro \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Shromažďování příloh zrušeno. Podrobnosti viz konzole.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Vygenerované jméno souboru přílohy \'{{path}}\' je neplatné.\n{{validationMessage}}\nZkontrolujte vaše',
-      part2: 'nastavení.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Vygenerované jméno souboru přílohy \'{{path}}\' je neplatné.\n{{validationMessage}}\nZkontrolujte nastavení {{settingName}}.',
     notePathIsIgnored: 'Cesta poznámky je ignorována'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const cs = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Vlastní tokeny byly zakomentovány, protože musí být aktualizovány na nový formát zavedený ve verzi pluginu 9.0.0.\n// Odkazujte na dokumentaci ({{customTokensDocumentationUrl}}) pro více informací.',
-      deprecated: {
-        part1: 'Ve verzi pluginu 9.0.0 se změnil formát registrace vlastních tokenů. Aktualizujte prosím své tokeny odpovídajícím způsobem. Odkazujte na',
-        part2: 'dokumentaci',
-        part3: 'pro více informací'
-      }
+      deprecated: 'Formát registrace vlastních tokenů se změnil. Aktualizujte prosím své tokeny odpovídajícím způsobem. Další informace najdete v {{documentation}}.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'Ve verzi pluginu 9.0.0 je',
-      part2: 'nastavení zastaralé. Použijte',
-      part3: 'formát místo toho. Viz',
-      part4: 'dokumentace',
-      part5: 'pro více informací'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Nastavení {{setting}} je zastaralé. Použijte místo něj formát {{format}}. Další informace najdete v {{documentation}}.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Máte potenciálně nesprávnou hodnotu nastavenou pro',
-        part2: 'formát. Odkazujte prosím na',
-        part3: 'dokumentaci',
-        part4: 'pro více informací',
-        part5: 'Tato zpráva se již nebude zobrazovat.'
-      }
+      deprecated: 'Pro formát {{setting}} máte možná nastavenou nesprávnou hodnotu. Další informace najdete v {{documentation}}. Tato zpráva se již nebude zobrazovat.'
     },
-    specialCharacters: {
-      part1: 'Ve verzi pluginu 9.16.0 se',
-      part2: 'výchozí hodnota nastavení změnila. Vaše hodnota nastavení byla aktualizována na novou výchozí hodnotu.'
-    },
+    specialCharacters: 'Výchozí hodnota nastavení {{setting}} se změnila. Vaše hodnota nastavení byla aktualizována na novou výchozí hodnotu.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Výchozí velikost obrázku musí být v pixelech nebo procentech',
       invalidCustomTokensCode: 'Neplatný kód vlastních tokenů',
@@ -142,68 +118,35 @@ export const cs = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Při připojování souborů:'
-      },
+      description: 'Při připojování souborů:',
       name: 'Režim přejmenování příloh'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Když je shromážděná příloha používána více poznámkami:'
-      },
+      description: 'Když je shromážděná příloha používána více poznámkami:',
       name: 'Režim shromažďování přílohy používané více poznámkami'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Viz dostupné',
-        part2: 'tokeny',
-        part3: 'Ponechte prázdné, chcete-li zachovat původní jméno souboru přílohy.'
-      },
+      description: 'Viz dostupné {{tokens}}.\nPonechte prázdné, chcete-li zachovat aktuální jméno souboru přílohy.',
       name: 'Jméno souboru shromážděné přílohy'
     },
     customTokens: {
-      description: {
-        part1: 'Vlastní tokeny k použití.',
-        part2: 'Viz',
-        part3: 'dokumentace',
-        part4: 'pro více informací.',
-        part5: '⚠️ Vlastní tokeny mohou být libovolný JavaScript kód. Pokud jsou špatně napsané, mohou způsobit ztrátu dat. Používejte je na vlastní riziko.'
-      },
+      description: 'Vlastní tokeny k použití.\nDalší informace najdete v {{documentation}}.\n⚠️ Vlastní tokeny mohou být libovolný JavaScript kód. Pokud jsou špatně napsané, mohou způsobit ztrátu dat. Používejte je na vlastní riziko.',
       name: 'Vlastní tokeny'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Výchozí velikost obrázku.',
-        part2: 'Lze zadat v pixelech',
-        part3: 'nebo jako procento z plné velikosti obrázku',
-        part4: 'Ponechte prázdné, chcete-li použít původní velikost obrázku.'
-      },
+      description: 'Výchozí velikost obrázku.\nLze ji zadat v pixelech ({{pixels}}) nebo jako procento z plné velikosti obrázku ({{percentage}}).\nPonechte prázdné, chcete-li použít původní velikost obrázku.',
       name: 'Výchozí velikost obrázku'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Když vkládáte/přetahujete soubor se stejným názvem jako existující soubor, tento oddělovač bude přidán k názvu souboru.',
-        part2: 'Např., když přetahujete soubor',
-        part3: ', bude přejmenován na',
-        part4: ', atd., získáním prvního dostupného názvu.'
-      },
+      description: 'Když vkládáte/přetahujete soubor se stejným názvem jako existující soubor, tento oddělovač bude přidán k názvu souboru.\nNapř. když přetáhnete soubor {{existingFile}}, bude přejmenován na {{firstAvailableName}}, {{secondAvailableName}} atd., podle prvního dostupného názvu.',
       name: 'Oddělovač duplicitních názvů'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Vyloučit přílohy z následujících cest když',
-        part2: 'Shromáždit přílohy',
-        part3: 'příkaz je spuštěn.',
-        part4: 'Vložte každou cestu na nový řádek.',
-        part6: 'Pokud je nastavení prázdné, žádné cesty nejsou vyloučeny ze shromažďování příloh.'
-      },
+      description: 'Vyloučit přílohy z následujících cest při spuštění příkazu {{command}}.\nVložte každou cestu na nový řádek.\n{{pathSyntax}}\nPokud je nastavení prázdné, žádné cesty nejsou vyloučeny ze shromažďování příloh.',
       name: 'Vyloučit cesty ze shromažďování příloh'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Viz dostupné',
-        part2: 'tokeny'
-      },
+      description: 'Viz dostupné {{tokens}}.',
       name: 'Vygenerované jméno souboru přílohy'
     },
     jpegQuality: {
@@ -211,41 +154,20 @@ export const cs = {
       name: 'Kvalita JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Začít s',
-        part2: 'pro použití relativní cesty.',
-        part3: 'Viz dostupné',
-        part4: 'tokeny',
-        part5: 'Tečkové složky jako',
-        part6: 'nejsou doporučeny, protože Obsidian je nesleduje. Možná budete muset použít',
-        part7: 'Plugin pro jejich správu.'
-      },
+      description: 'Začněte s {{relativePrefix}} pro cesty relativní k nadřazené složce poznámky.\nViz dostupné {{tokens}}.\nTečkové složky jako {{dotFolder}} nejsou doporučeny, protože Obsidian je nesleduje. Ke správě těchto složek možná budete potřebovat plugin {{unhidePlugin}}.',
       name: 'Umístění pro nové přílohy'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Formát pro URL, které bude vloženo do Markdown.',
-        part2: 'Viz dostupné',
-        part3: 'tokeny',
-        part4: 'Ponechte prázdné pro použití výchozího formátu.'
-      },
+      description: 'Formát URL, které bude vloženo do Markdownu při přidání přílohy. Použije se pouze v tu chvíli: odkaz, který Obsidian později přepíše při přejmenování nebo přesunu poznámky či přílohy, dostane výchozí formát.\nViz dostupné {{tokens}}.\nPonechte prázdné pro použití výchozího formátu.',
       name: 'Formát URL Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Zda použít nastavení složky příloh a názvu souboru na přílohy, které vytvářejí JINÉ pluginy.',
-        part2: 'Některé pluginy zapíší přílohu do trezoru pod vlastním názvem, aniž by se Obsidianu zeptaly, kam patří. Je-li tato volba zapnutá, takový soubor se hned po vzniku přesune a přejmenuje.',
-        part3: 'Zpracují se jen soubory vzniklé při otevřené poznámce, nikdy soubory přicházející ze synchronizace nebo z importu trezoru.'
-      },
+      description: 'Zda použít nastavení složky příloh a názvu souboru na přílohy, které vytvářejí JINÉ pluginy.\nNěkteré pluginy zapíší přílohu do trezoru pod vlastním názvem, aniž by se Obsidianu zeptaly, kam patří. Je-li tato volba zapnutá, takový soubor se hned po vzniku přesune a přejmenuje.\nZpracují se jen soubory vzniklé při otevřené poznámce, na které odkazuje nějaká poznámka: soubor, na který neodkazuje žádná poznámka, jsou data, která si jiný plugin uchovává pro sebe, a zůstane tam, kam byl zapsán. Soubory přicházející ze synchronizace nebo z importu trezoru se nikdy nezpracují.\n{{modes}}\nPlugin, který soubor vytvořil, se určuje ze zásobníku volání zápisu. Jde jen o odhad: u souboru, který zapsal sám Obsidian, synchronizační klient nebo plugin, který zápis odkládá, se žádný plugin neurčí. Takový soubor se počítá, jako by v seznamu níže NEBYL.',
       name: 'Přejmenovat přílohy vytvořené jinými pluginy'
     },
     renameAttachmentsToLowerCase: 'Přejmenovat přílohy na malá písmena',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Viz dostupné',
-        part2: 'tokeny',
-        part3: 'Ponechte prázdné, chcete-li zachovat původní jméno souboru přílohy.'
-      },
+      description: 'Viz dostupné {{tokens}}.\nPonechte prázdné, chcete-li zachovat aktuální jméno souboru přílohy.',
       name: 'Jméno souboru přejmenované přílohy'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +179,19 @@ export const cs = {
       name: 'Zda převést vložené obrázky na JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Pokud je povoleno, přílohy zpracované přes',
-        part2: 'Shromáždit přílohy',
-        part3: 'příkazy budou přejmenovány podle',
-        part4: 'nastavení.'
-      },
+      description: 'Pokud je povoleno, přílohy zpracované příkazy {{command}} budou přejmenovány podle nastavení {{setting}}.',
       name: 'Zda přejmenovat shromážděné přílohy'
     },
     specialCharacters: {
-      description: {
-        part1: 'Speciální znaky ve složce příloh a názvu souboru k nahrazení nebo odstranění.',
-        part2: 'Ponechte prázdné pro zachování speciálních znaků.'
-      },
+      description: 'Speciální znaky v názvu složky příloh a souboru, které se mají nahradit nebo odstranit.\nPonechte prázdné pro zachování speciálních znaků.',
       name: 'Speciální znaky'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Náhradní řetězec pro speciální znaky ve složce příloh a názvu souboru.',
-        part2: 'Ponechte prázdné pro odstranění speciálních znaků.'
-      },
+      description: 'Náhradní řetězec pro speciální znaky v názvu složky příloh a souboru.\nPonechte prázdné pro odstranění speciálních znaků.',
       name: 'Náhrada speciálních znaků'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Časový limit v sekundách pro všechny operace.',
-        part2: 'Pokud je',
-        part3: 'nastaveno, časový limit provádění operací je zakázán.'
-      },
+      description: 'Časový limit v sekundách pro všechny operace.\nPokud je nastaveno {{zero}}, časový limit provádění operací je zakázán.',
       name: 'Časový limit v sekundách'
     }
   },

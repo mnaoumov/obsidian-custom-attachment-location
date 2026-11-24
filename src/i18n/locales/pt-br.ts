@@ -1,9 +1,6 @@
 export const ptBR = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Você deseja coletar anexos para todas as notas nas pastas de forma recursiva?',
-      part2: 'Esta operação não pode ser desfeita.'
-    },
+    confirm: 'Você deseja coletar anexos para todas as notas nas pastas de forma recursiva?\n{{folders}}\nEsta operação não pode ser desfeita.',
     progressBar: {
       message: 'Coletando anexos {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Coletando anexos...'
@@ -16,10 +13,7 @@ export const ptBR = {
     skip: 'Pular'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Anexo',
-      part2: 'é referenciado por múltiplas notas.'
-    },
+    content: 'O anexo {{attachment}} é referenciado por múltiplas notas.',
     heading: 'Coletando anexo usado por múltiplas notas',
     noPriorityWinnerReason: {
       EmptyList: 'Não foi movido porque a configuração {{settingName}} está vazia, então nada decide qual destas notas o possui.',
@@ -33,6 +27,10 @@ export const ptBR = {
     collectAttachmentsCurrentNote: 'Coletar anexos na nota atual',
     collectAttachmentsEntireVault: 'Coletar anexos em todo o cofre'
   },
+  links: {
+    documentation: 'documentação',
+    tokens: 'tokens'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Coletar anexos no arquivo',
     collectAttachmentsInFiles: 'Coletar anexos nos arquivos'
@@ -41,10 +39,7 @@ export const ptBR = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Coletando anexos para \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Coleta de anexos cancelada. Veja o console para detalhes.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Nome do arquivo de anexo gerado \'{{path}}\' é inválido.\n{{validationMessage}}\nVerifique sua',
-      part2: 'configuração.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'O nome de arquivo de anexo gerado \'{{path}}\' é inválido.\n{{validationMessage}}\nVerifique a configuração {{settingName}}.',
     notePathIsIgnored: 'Caminho da nota foi ignorado'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const ptBR = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Tokens personalizados foram comentados pois precisam ser atualizados para o novo formato introduzido na versão 9.0.0 do plugin.\n// Consulte a documentação ({{customTokensDocumentationUrl}}) para mais informações.',
-      deprecated: {
-        part1: 'Na versão 9.0.0 do plugin, o formato de registro de token personalizado mudou. Por favor, atualize seus tokens adequadamente. Consulte a',
-        part2: 'documentação',
-        part3: 'para mais informações'
-      }
+      deprecated: 'O formato de registro de tokens personalizados mudou. Por favor, atualize seus tokens adequadamente. Consulte a {{documentation}} para mais informações.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'Na versão 9.0.0 do plugin, a',
-      part2: 'configuração está obsoleta. Use o',
-      part3: 'formato em vez disso. Veja a',
-      part4: 'documentação',
-      part5: 'para mais informações'
-    },
+    legacyRenameAttachmentsToLowerCase: 'A configuração {{setting}} está obsoleta. Use o formato {{format}} em vez disso. Veja a {{documentation}} para mais informações.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Você tem um valor potencialmente incorreto definido para o',
-        part2: 'formato. Por favor, consulte a',
-        part3: 'documentação',
-        part4: 'para mais informações.',
-        part5: 'Esta mensagem não será exibida novamente.'
-      }
+      deprecated: 'Você tem um valor potencialmente incorreto definido para o formato {{setting}}. Por favor, consulte a {{documentation}} para mais informações. Esta mensagem não será exibida novamente.'
     },
-    specialCharacters: {
-      part1: 'Na versão 9.16.0 do plugin, o',
-      part2: 'valor padrão da configuração foi alterado. Seu valor de configuração foi atualizado para o novo valor padrão.'
-    },
+    specialCharacters: 'O valor padrão da configuração {{setting}} foi alterado. Seu valor de configuração foi atualizado para o novo valor padrão.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'O tamanho padrão da imagem deve estar em pixels ou porcentagem',
       invalidCustomTokensCode: 'Código de tokens personalizados inválido',
@@ -142,67 +118,35 @@ export const ptBR = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Ao anexar arquivos:'
-      },
+      description: 'Ao anexar arquivos:',
       name: 'Modo de renomeação de anexos'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Quando o anexo coletado é usado por múltiplas notas:'
-      },
+      description: 'Quando o anexo coletado é usado por múltiplas notas:',
       name: 'Modo de coleta de anexos usados por múltiplas notas'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Veja os',
-        part2: 'tokens disponíveis'
-      },
+      description: 'Veja os {{tokens}} disponíveis.\nDeixe em branco para manter o nome atual do arquivo de anexo.',
       name: 'Nome do arquivo de anexo coletado'
     },
     customTokens: {
-      description: {
-        part1: 'Tokens personalizados a serem usados.',
-        part2: 'Veja a',
-        part3: 'documentação',
-        part4: 'para mais informações.',
-        part5: '⚠️ Tokens personalizados podem ser código JavaScript arbitrário. Se mal escritos, podem causar perda de dados. Use por sua própria conta e risco.'
-      },
+      description: 'Tokens personalizados a serem usados.\nVeja a {{documentation}} para mais informações.\n⚠️ Tokens personalizados podem ser código JavaScript arbitrário. Se mal escritos, podem causar perda de dados. Use por sua própria conta e risco.',
       name: 'Tokens personalizados'
     },
     defaultImageSize: {
-      description: {
-        part1: 'O tamanho padrão da imagem.',
-        part2: 'Pode ser especificado em pixels',
-        part3: 'ou como porcentagem do tamanho total da imagem',
-        part4: 'Deixe em branco para usar o tamanho original da imagem.'
-      },
+      description: 'O tamanho padrão da imagem.\nPode ser especificado em pixels ({{pixels}}) ou como porcentagem do tamanho total da imagem ({{percentage}}).\nDeixe em branco para usar o tamanho original da imagem.',
       name: 'Tamanho padrão da imagem'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Ao colar/arrastar um arquivo com o mesmo nome de um arquivo existente, este separador será adicionado ao nome do arquivo.',
-        part2: 'Por exemplo, ao arrastar o arquivo',
-        part3: ', ele será renomeado para ',
-        part4: ', etc, recebendo o primeiro nome disponível.'
-      },
+      description: 'Ao colar/arrastar um arquivo com o mesmo nome de um arquivo existente, este separador será adicionado ao nome do arquivo.\nPor exemplo, ao arrastar o arquivo {{existingFile}}, ele será renomeado para {{firstAvailableName}}, {{secondAvailableName}} etc., recebendo o primeiro nome disponível.',
       name: 'Separador de nome duplicado'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Excluir anexos dos seguintes caminhos quando o comando',
-        part2: 'Coletar anexos',
-        part3: 'for executado.',
-        part4: 'Insira cada caminho em uma nova linha.',
-        part6: 'Se a configuração estiver vazia, nenhum caminho será excluído da coleta de anexos.'
-      },
+      description: 'Excluir anexos dos seguintes caminhos quando o comando {{command}} for executado.\nInsira cada caminho em uma nova linha.\n{{pathSyntax}}\nSe a configuração estiver vazia, nenhum caminho será excluído da coleta de anexos.',
       name: 'Excluir caminhos da coleta de anexos'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Veja os',
-        part2: 'tokens disponíveis'
-      },
+      description: 'Veja os {{tokens}} disponíveis.',
       name: 'Nome do arquivo de anexo gerado'
     },
     jpegQuality: {
@@ -210,40 +154,20 @@ export const ptBR = {
       name: 'Qualidade JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Comece com',
-        part2: 'para usar o caminho relativo.',
-        part3: 'Veja os',
-        part4: 'tokens disponíveis',
-        part5: 'Pastas que começam com ponto como',
-        part6: 'não são recomendadas, pois o Obsidian não as rastreia. Você pode precisar usar um',
-        part7: 'Plugin para gerenciá-las.'
-      },
+      description: 'Comece com {{relativePrefix}} para caminhos relativos à pasta pai da nota.\nVeja os {{tokens}} disponíveis.\nPastas que começam com ponto, como {{dotFolder}}, não são recomendadas, pois o Obsidian não as rastreia. Você pode precisar usar o plugin {{unhidePlugin}} para gerenciá-las.',
       name: 'Localização para novos anexos'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Formato da URL que será inserida no Markdown.',
-        part2: 'Veja os',
-        part3: 'tokens disponíveis',
-        part4: 'Deixe em branco para usar o formato padrão.'
-      },
+      description: 'Formato da URL que será inserida no Markdown quando um anexo for adicionado. Ele é aplicado somente nesse momento: um link que o Obsidian reescrever depois, quando uma nota ou um anexo for renomeado ou movido, recebe o formato padrão.\nVeja os {{tokens}} disponíveis.\nDeixe em branco para usar o formato padrão.',
       name: 'Formato de URL no Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Se as configurações de pasta de anexos e de nome de arquivo devem ser aplicadas a anexos criados por OUTROS plugins.',
-        part2: 'Alguns plugins gravam um anexo no cofre com um nome próprio, sem perguntar ao Obsidian onde ele deve ficar. Com esta opção ativada, esse arquivo é movido e renomeado assim que aparece.',
-        part3: 'Somente arquivos criados enquanto uma nota está aberta são tocados, nunca os que chegam de uma sincronização ou de uma importação de cofre.'
-      },
+      description: 'Se as configurações de pasta de anexos e de nome de arquivo devem ser aplicadas a anexos criados por OUTROS plugins.\nAlguns plugins gravam um anexo no cofre com um nome próprio, sem perguntar ao Obsidian onde ele deve ficar. Com esta opção ativada, esse arquivo é movido e renomeado assim que aparece.\nSomente arquivos criados enquanto uma nota está aberta, e vinculados a partir de uma nota, são tocados: um arquivo ao qual nenhuma nota faz link contém dados que outro plugin guarda para si e permanece onde foi gravado. Arquivos que chegam de uma sincronização ou de uma importação de cofre nunca são tocados.\n{{modes}}\nO plugin criador é identificado pela pilha de chamadas da gravação. Isso é feito na base do melhor esforço: nenhum plugin é identificado para um arquivo gravado pelo próprio Obsidian, por um cliente de sincronização ou por um plugin que adia sua gravação. Esse arquivo conta como NÃO estando na lista abaixo.',
       name: 'Renomear anexos criados por outros plugins'
     },
     renameAttachmentsToLowerCase: 'Renomear anexos para letras minúsculas',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Veja os',
-        part2: 'tokens disponíveis'
-      },
+      description: 'Veja os {{tokens}} disponíveis.\nDeixe em branco para manter o nome atual do arquivo de anexo.',
       name: 'Nome do arquivo de anexo renomeado'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +179,19 @@ export const ptBR = {
       name: 'Converter imagens coladas para JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Se ativado, anexos processados via comando',
-        part2: 'Coletar anexos',
-        part3: 'serão renomeados de acordo com a configuração',
-        part4: '.'
-      },
+      description: 'Se ativado, os anexos processados pelos comandos {{command}} serão renomeados de acordo com a configuração {{setting}}.',
       name: 'Renomear anexos coletados'
     },
     specialCharacters: {
-      description: {
-        part1: 'Caracteres especiais no nome da pasta ou do arquivo de anexos a serem substituídos ou removidos.',
-        part2: 'Deixe em branco para preservar os caracteres especiais.'
-      },
+      description: 'Caracteres especiais no nome da pasta e do arquivo de anexos a serem substituídos ou removidos.\nDeixe em branco para preservar os caracteres especiais.',
       name: 'Caracteres especiais'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'String de substituição para caracteres especiais no nome da pasta ou do arquivo de anexos.',
-        part2: 'Deixe em branco para remover os caracteres especiais.'
-      },
+      description: 'String de substituição para caracteres especiais no nome da pasta e do arquivo de anexos.\nDeixe em branco para remover os caracteres especiais.',
       name: 'Substituição de caracteres especiais'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'O tempo limite em segundos para todas as operações.',
-        part2: 'Se',
-        part3: 'estiver definido, o tempo limite de execução das operações será desativado.'
-      },
+      description: 'O tempo limite em segundos para todas as operações.\nSe {{zero}} estiver definido, o tempo limite de execução das operações será desativado.',
       name: 'Tempo limite em segundos'
     }
   },

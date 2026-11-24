@@ -1,9 +1,6 @@
 export const zhTW = {
   attachmentCollector: {
-    confirm: {
-      part1: '是否要遞迴收集資料夾中所有筆記的附件？',
-      part2: '此操作無法復原。'
-    },
+    confirm: '是否要遞迴收集下列資料夾中所有筆記的附件？\n{{folders}}\n此操作無法復原。',
     progressBar: {
       message: '正在收集附件 {{iterationString}} - \'{{noteFilePath}}\'.',
       title: '正在收集附件...'
@@ -16,10 +13,7 @@ export const zhTW = {
     skip: '跳過'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: '附件',
-      part2: '被多個筆記引用。'
-    },
+    content: '附件 {{attachment}} 被多個筆記引用。',
     heading: '正在收集被多個筆記使用的附件',
     noPriorityWinnerReason: {
       EmptyList: '未移動，因為 {{settingName}} 設定為空，沒有依據判斷這些筆記中哪一個擁有它。',
@@ -33,6 +27,10 @@ export const zhTW = {
     collectAttachmentsCurrentNote: '收集當前筆記中的附件',
     collectAttachmentsEntireVault: '收集整個庫中的附件'
   },
+  links: {
+    documentation: '官方文件',
+    tokens: '令牌'
+  },
   menuItems: {
     collectAttachmentsInFile: '在檔案中收集附件',
     collectAttachmentsInFiles: '在多個檔案中收集附件'
@@ -41,10 +39,7 @@ export const zhTW = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '正在為 \'{{noteFilePath}}\' 收集附件',
     collectingAttachmentsCancelled: '附件收集已取消。詳情請查看控制台。',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: '生成的附件檔案名稱 \'{{path}}\' 無效。\n{{validationMessage}}\n請檢查您的',
-      part2: '設定。'
-    },
+    generatedAttachmentFileNameIsInvalid: '生成的附件檔案名稱 \'{{path}}\' 無效。\n{{validationMessage}}\n請檢查您的 {{settingName}} 設定。',
     notePathIsIgnored: '筆記路徑已被忽略'
   },
   obsidianLib: {
@@ -105,33 +100,14 @@ export const zhTW = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// 自訂令牌因需更新為插件 9.0.0 版本所引入的新格式而被註解。\n// 詳情請參考官方文件。',
-      deprecated: {
-        part1: '在插件 9.0.0 版本中，自訂令牌的註冊格式已變更。請更新您的令牌。參見',
-        part2: '官方文件',
-        part3: '以獲得更多資訊'
-      }
+      codeComment: '// 自訂令牌因需更新為插件 9.0.0 版本所引入的新格式而被註解。\n// 詳情請參考官方文件 ({{customTokensDocumentationUrl}})。',
+      deprecated: '自訂令牌的註冊格式已變更。請據此更新您的令牌。詳情請參閱{{documentation}}。'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: '在插件 9.0.0 版本中，此',
-      part2: '設定已被淘汰。請改用',
-      part3: '格式。參見',
-      part4: '官方文件',
-      part5: '獲取更多資訊'
-    },
+    legacyRenameAttachmentsToLowerCase: '{{setting}} 設定已被淘汰。請改用 {{format}} 格式。詳情請參閱{{documentation}}。',
     markdownUrlFormat: {
-      deprecated: {
-        part1: '您為以下項目設定了可能不正確的值',
-        part2: '格式。請參考',
-        part3: '官方文件',
-        part4: '了解更多信息',
-        part5: '此訊息將不再顯示。'
-      }
+      deprecated: '您為 {{setting}} 格式設定的值可能不正確。詳情請參閱{{documentation}}。此訊息將不再顯示。'
     },
-    specialCharacters: {
-      part1: '在插件 9.16.0 版本中，',
-      part2: '預設設定值已更改。您的設定已更新為新預設值。'
-    },
+    specialCharacters: '{{setting}} 設定的預設值已變更。您的設定值已更新為新的預設值。',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: '預設圖片大小必須是像素或百分比',
       invalidCustomTokensCode: '無效的自訂令牌代碼',
@@ -142,67 +118,35 @@ export const zhTW = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: '附加檔案時：'
-      },
+      description: '附加檔案時：',
       name: '附件重新命名模式'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: '當收集的附件被多個筆記使用時：'
-      },
+      description: '當收集的附件被多個筆記使用時：',
       name: '多筆記共用附件收集模式'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: '參見可用',
-        part2: '令牌'
-      },
+      description: '參見可用的{{tokens}}。\n留空以保留附件目前的檔案名稱。',
       name: '收集的附件檔案名稱'
     },
     customTokens: {
-      description: {
-        part1: '自訂令牌用於。',
-        part2: '詳見',
-        part3: '官方文件',
-        part4: '以獲取更多資訊。',
-        part5: '⚠️ 自訂令牌可包含任意 JavaScript 代碼，若撰寫不當可能導致資料遺失，請自行斟酌使用。'
-      },
+      description: '要使用的自訂令牌。\n詳情請參閱{{documentation}}。\n⚠️ 自訂令牌可以是任意 JavaScript 代碼。若撰寫不當，可能導致資料遺失。使用風險請自行承擔。',
       name: '自訂令牌'
     },
     defaultImageSize: {
-      description: {
-        part1: '預設圖片大小。',
-        part2: '可以指定為像素',
-        part3: '或是圖片完整大小的百分比',
-        part4: '留空以使用原始圖片大小。'
-      },
+      description: '預設圖片大小。\n可以用像素（{{pixels}}）或圖片完整大小的百分比（{{percentage}}）指定。\n留空以使用原始圖片大小。',
       name: '預設圖片大小'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: '當您貼上或拖曳一個與已有檔案同名的檔案時，此分隔符會加在檔名後。',
-        part2: '例如，當拖曳檔案',
-        part3: '時，會被重新命名為',
-        part4: '依此類推直到找到可用名稱。'
-      },
+      description: '當您貼上或拖曳一個與現有檔案同名的檔案時，此分隔符會加在檔案名稱中。\n例如，當您拖曳檔案 {{existingFile}} 時，它會被重新命名為 {{firstAvailableName}}、{{secondAvailableName}} 等，取第一個可用的名稱。',
       name: '重複名稱分隔符'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: '執行',
-        part2: '收集附件',
-        part3: '指令時排除下列路徑中的附件。',
-        part4: '每條路徑請另起一行。',
-        part6: '若設定為空，收集附件時不排除任何路徑。'
-      },
+      description: '執行 {{command}} 指令時，排除下列路徑中的附件。\n每條路徑請另起一行。\n{{pathSyntax}}\n若設定為空，收集附件時不排除任何路徑。',
       name: '收集附件排除路徑'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: '參見可用',
-        part2: '令牌'
-      },
+      description: '參見可用的{{tokens}}。',
       name: '產生的附件檔案名稱'
     },
     jpegQuality: {
@@ -210,40 +154,20 @@ export const zhTW = {
       name: 'JPEG 品質'
     },
     locationForNewAttachments: {
-      description: {
-        part1: '以',
-        part2: '開頭使用相對路徑。',
-        part3: '參見可用',
-        part4: '令牌',
-        part5: '類似以點開頭的資料夾',
-        part6: '不建議使用，因 Obsidian 無法追蹤。您可能需要使用',
-        part7: '插件管理。'
-      },
+      description: '以 {{relativePrefix}} 開頭表示相對於筆記所在資料夾的路徑。\n參見可用的{{tokens}}。\n不建議使用 {{dotFolder}} 這類以點開頭的資料夾，因為 Obsidian 不會追蹤它們。您可能需要使用 {{unhidePlugin}} 外掛來管理它們。',
       name: '新附件位置'
     },
     markdownUrlFormat: {
-      description: {
-        part1: '將插入 Markdown 的 URL 格式。',
-        part2: '參見可用',
-        part3: '令牌',
-        part4: '留空使用預設格式。'
-      },
+      description: '新增附件時插入 Markdown 的 URL 格式。它只在插入當下套用：之後筆記或附件被重新命名或移動時，Obsidian 重寫的連結會使用預設格式。\n參見可用的{{tokens}}。\n留空以使用預設格式。',
       name: 'Markdown URL 格式'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: '是否將附件資料夾與檔案名稱設定套用至其他外掛建立的附件。',
-        part2: '有些外掛不詢問 Obsidian 附件該放在哪裡，逕自以自己的命名把附件寫入儲存庫。啟用此項後，這類檔案一出現就會被移動並重新命名。',
-        part3: '僅處理在筆記開啟時建立的檔案，絕不碰觸來自同步或儲存庫匯入的檔案。'
-      },
+      description: '是否將附件資料夾與檔案名稱設定套用至其他外掛建立的附件。\n有些外掛不詢問 Obsidian 附件該放在哪裡，逕自以自己的命名把附件寫入儲存庫。啟用此項後，這類檔案一出現就會被移動並重新命名。\n僅處理在筆記開啟時建立、且有筆記連結到的檔案：沒有任何筆記連結的檔案是其他外掛自用的資料，會留在寫入的位置。來自同步或儲存庫匯入的檔案絕不會被處理。\n{{modes}}\n建立檔案的外掛是根據寫入操作的呼叫堆疊來辨識，這只能盡力而為：由 Obsidian 本身、同步用戶端或延後寫入的外掛所寫入的檔案，無法辨識出外掛。這類檔案視為不在下方清單中。',
       name: '重新命名其他外掛建立的附件'
     },
     renameAttachmentsToLowerCase: '將附件名稱改成小寫',
     renamedAttachmentFileName: {
-      description: {
-        part1: '參見可用',
-        part2: '令牌'
-      },
+      description: '參見可用的{{tokens}}。\n留空以保留附件目前的檔案名稱。',
       name: '重新命名的附件檔案名稱'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +179,19 @@ export const zhTW = {
       name: '是否轉換貼上的圖片為 JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: '啟用時，通過',
-        part2: '收集附件',
-        part3: '指令處理的附件將根據',
-        part4: '設定重新命名。'
-      },
+      description: '啟用時，透過 {{command}} 指令處理的附件將根據 {{setting}} 設定重新命名。',
       name: '重新命名收集的附件'
     },
     specialCharacters: {
-      description: {
-        part1: '附件資料夾和檔案名稱中的特殊字元將被替換或移除。',
-        part2: '留空以保留特殊字元。'
-      },
+      description: '附件資料夾和檔案名稱中要替換或移除的特殊字元。\n留空以保留特殊字元。',
       name: '特殊字元'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: '附件資料夾和檔案名稱特殊字元的替換字串。',
-        part2: '留空以刪除特殊字元。'
-      },
+      description: '附件資料夾和檔案名稱中特殊字元的替換字串。\n留空以刪除特殊字元。',
       name: '特殊字元替換'
     },
     timeoutInSeconds: {
-      description: {
-        part1: '所有操作的逾時秒數。',
-        part2: '若設定，將停用操作逾時。',
-        part3: ''
-      },
+      description: '所有操作的逾時秒數。\n若設定為 {{zero}}，將停用操作執行逾時。',
       name: '逾時秒數'
     }
   },

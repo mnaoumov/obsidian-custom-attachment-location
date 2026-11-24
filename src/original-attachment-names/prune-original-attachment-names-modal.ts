@@ -11,7 +11,6 @@
 import type { PromiseResolve } from '@mnaoumov/typescript-lib/async';
 import type { App } from 'obsidian';
 
-import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { confirm } from '@mnaoumov/obsidian-lib/modals/confirm';
 import {
@@ -22,6 +21,11 @@ import { convertAsyncToSync } from '@mnaoumov/typescript-lib/async';
 import { ButtonComponent } from 'obsidian';
 
 import type { OriginalAttachmentNamesComponent } from './original-attachment-names-component.ts';
+
+import {
+  codeNode,
+  translateFragment
+} from '../i18n/translate-fragment.ts';
 
 /**
  * What the user chose in the prune dialog.
@@ -130,13 +134,11 @@ class PruneOriginalAttachmentNamesModal extends ModalBase<PruneOriginalAttachmen
 export async function isForgetAllConfirmed(app: App, count: number): Promise<boolean> {
   return await confirm({
     app,
-    message: createFragment((f) => {
-      f.appendText(t(($) => $.originalAttachmentNames.pruneModal.forgetAllConfirm.part1, { count }));
-      f.appendText(' ');
-      appendCodeBlock(f, '{{originalAttachmentFileName}}');
-      f.appendText(' ');
-      f.appendText(t(($) => $.originalAttachmentNames.pruneModal.forgetAllConfirm.part2));
-    }),
+    message: translateFragment(
+      ($) => $.originalAttachmentNames.pruneModal.forgetAllConfirm.message,
+      { token: codeNode('{{originalAttachmentFileName}}') },
+      { count }
+    ),
     okButtonText: t(($) => $.originalAttachmentNames.pruneModal.forgetAll),
     title: t(($) => $.originalAttachmentNames.pruneModal.forgetAllConfirm.title)
   });

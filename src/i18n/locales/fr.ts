@@ -1,9 +1,6 @@
 export const fr = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Voulez-vous collecter les pièces jointes pour toutes les notes dans les dossiers de manière récursive ?',
-      part2: 'Cette opération ne peut pas être annulée.'
-    },
+    confirm: 'Voulez-vous collecter de manière récursive les pièces jointes de toutes les notes des dossiers suivants ?\n{{folders}}\nCette opération ne peut pas être annulée.',
     progressBar: {
       message: 'Collecte des pièces jointes {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Collecte des pièces jointes...'
@@ -16,10 +13,7 @@ export const fr = {
     skip: 'Ignorer'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'La pièce jointe',
-      part2: 'est référencée par plusieurs notes.'
-    },
+    content: 'La pièce jointe {{attachment}} est référencée par plusieurs notes.',
     heading: 'Collecte de pièce jointe utilisée par plusieurs notes',
     noPriorityWinnerReason: {
       EmptyList: 'Elle n\'a pas été déplacée car le paramètre {{settingName}} est vide, donc rien ne décide à laquelle de ces notes elle appartient.',
@@ -33,6 +27,10 @@ export const fr = {
     collectAttachmentsCurrentNote: 'Collecter les pièces jointes dans la note actuelle',
     collectAttachmentsEntireVault: 'Collecter les pièces jointes dans tout le coffre'
   },
+  links: {
+    documentation: 'documentation',
+    tokens: 'jetons'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Collecter les pièces jointes dans le fichier',
     collectAttachmentsInFiles: 'Collecter les pièces jointes dans les fichiers'
@@ -41,10 +39,7 @@ export const fr = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Collecte des pièces jointes pour \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Collecte des pièces jointes annulée. Voir la console pour plus de détails.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Le nom de fichier de pièce jointe généré \'{{path}}\' est invalide.\n{{validationMessage}}\nVérifiez votre',
-      part2: 'paramètre.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Le nom de fichier de pièce jointe généré \'{{path}}\' est invalide.\n{{validationMessage}}\nVérifiez votre paramètre {{settingName}}.',
     notePathIsIgnored: 'Le chemin de la note est ignoré'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const fr = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Les jetons personnalisés ont été commentés car ils doivent être mis à jour vers le nouveau format introduit dans la version 9.0.0 du plugin.\n// Consultez la documentation ({{customTokensDocumentationUrl}}) pour plus d\'informations.',
-      deprecated: {
-        part1: 'Dans la version 9.0.0 du plugin, le format d\'enregistrement des jetons personnalisés a changé. Veuillez mettre à jour vos jetons en conséquence. Consultez la',
-        part2: 'documentation',
-        part3: 'pour plus d\'informations'
-      }
+      deprecated: 'Le format d\'enregistrement des jetons personnalisés a changé. Veuillez mettre à jour vos jetons en conséquence. Consultez la {{documentation}} pour plus d\'informations.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'Dans la version 9.0.0 du plugin, le paramètre',
-      part2: 'est obsolète. Utilisez le',
-      part3: 'format à la place. Voir la',
-      part4: 'documentation',
-      part5: 'pour plus d\'informations'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Le paramètre {{setting}} est obsolète. Utilisez plutôt le format {{format}}. Consultez la {{documentation}} pour plus d\'informations.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Vous avez potentiellement une valeur incorrecte définie pour le',
-        part2: 'format. Veuillez vous référer à la',
-        part3: 'documentation',
-        part4: 'pour plus d\'informations',
-        part5: 'Ce message ne sera plus affiché.'
-      }
+      deprecated: 'La valeur définie pour le format {{setting}} est peut-être incorrecte. Veuillez consulter la {{documentation}} pour plus d\'informations. Ce message ne sera plus affiché.'
     },
-    specialCharacters: {
-      part1: 'Dans la version 9.16.0 du plugin, la',
-      part2: 'valeur de paramètre par défaut a été modifiée. Votre valeur de paramètre a été mise à jour vers la nouvelle valeur par défaut.'
-    },
+    specialCharacters: 'La valeur par défaut du paramètre {{setting}} a été modifiée. Votre valeur de paramètre a été mise à jour vers la nouvelle valeur par défaut.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'La taille d\'image par défaut doit être en pixels ou en pourcentage',
       invalidCustomTokensCode: 'Code de jetons personnalisés invalide',
@@ -142,68 +118,35 @@ export const fr = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Lors de l\'ajout de fichiers :'
-      },
+      description: 'Lors de l\'ajout de fichiers :',
       name: 'Mode de renommage des pièces jointes'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Lorsque la pièce jointe collectée est utilisée par plusieurs notes :'
-      },
+      description: 'Lorsque la pièce jointe collectée est utilisée par plusieurs notes :',
       name: 'Mode de collecte de pièce jointe utilisée par plusieurs notes'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Voir les',
-        part2: 'jetons disponibles',
-        part3: 'Laisser vide pour conserver le nom de fichier de pièce jointe d\'origine.'
-      },
+      description: 'Voir les {{tokens}} disponibles.\nLaisser vide pour conserver le nom actuel du fichier de pièce jointe.',
       name: 'Nom de fichier de pièce jointe collectée'
     },
     customTokens: {
-      description: {
-        part1: 'Jetons personnalisés à utiliser.',
-        part2: 'Voir la',
-        part3: 'documentation',
-        part4: 'pour plus d\'informations.',
-        part5: '⚠️ Les jetons personnalisés peuvent être du code JavaScript arbitraire. S\'ils sont mal écrits, ils peuvent causer une perte de données. Utilisez-les à vos propres risques.'
-      },
+      description: 'Jetons personnalisés à utiliser.\nVoir la {{documentation}} pour plus d\'informations.\n⚠️ Les jetons personnalisés peuvent être du code JavaScript arbitraire. S\'ils sont mal écrits, ils peuvent causer une perte de données. Utilisez-les à vos propres risques.',
       name: 'Jetons personnalisés'
     },
     defaultImageSize: {
-      description: {
-        part1: 'La taille d\'image par défaut.',
-        part2: 'Peut être spécifiée en pixels',
-        part3: 'ou en pourcentage de la taille totale de l\'image',
-        part4: 'Laissez vide pour utiliser la taille originale.'
-      },
+      description: 'La taille d\'image par défaut.\nPeut être spécifiée en pixels ({{pixels}}) ou en pourcentage de la taille totale de l\'image ({{percentage}}).\nLaissez vide pour utiliser la taille originale.',
       name: 'Taille d\'image par défaut'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Lorsque vous collez/glissez un fichier avec le même nom qu\'un fichier existant, ce séparateur sera ajouté au nom du fichier.',
-        part2: 'Par exemple, lorsque vous glissez le fichier',
-        part3: ', il sera renommé en ',
-        part4: ', etc, obtenant le premier nom disponible.'
-      },
+      description: 'Lorsque vous collez/glissez un fichier avec le même nom qu\'un fichier existant, ce séparateur sera ajouté au nom du fichier.\nPar exemple, lorsque vous glissez le fichier {{existingFile}}, il sera renommé en {{firstAvailableName}}, {{secondAvailableName}}, etc., selon le premier nom disponible.',
       name: 'Séparateur de nom dupliqué'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Exclure les pièces jointes des chemins suivants lorsque la commande',
-        part2: 'Collecter les pièces jointes',
-        part3: 'est exécutée.',
-        part4: 'Insérez chaque chemin sur une nouvelle ligne.',
-        part6: 'Si le paramètre est vide, aucun chemin n\'est exclu de la collecte de pièces jointes.'
-      },
+      description: 'Exclure les pièces jointes des chemins suivants lorsque la commande {{command}} est exécutée.\nInsérez chaque chemin sur une nouvelle ligne.\n{{pathSyntax}}\nSi le paramètre est vide, aucun chemin n\'est exclu de la collecte de pièces jointes.',
       name: 'Chemins exclus de la collecte de pièces jointes'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Voir les',
-        part2: 'jetons disponibles'
-      },
+      description: 'Voir les {{tokens}} disponibles.',
       name: 'Nom de fichier de pièce jointe généré'
     },
     jpegQuality: {
@@ -211,41 +154,21 @@ export const fr = {
       name: 'Qualité JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Commencer par',
-        part2: 'pour utiliser un chemin relatif.',
-        part3: 'Voir les',
-        part4: 'jetons disponibles',
-        part5: 'Les dossiers point comme',
-        part6: 'ne sont pas recommandés, car Obsidian ne les suit pas. Vous pourriez avoir besoin d\'utiliser le',
-        part7: 'Plugin pour les gérer.'
-      },
+      description: 'Commencez par {{relativePrefix}} pour un chemin relatif au dossier parent de la note.\nVoir les {{tokens}} disponibles.\nLes dossiers point comme {{dotFolder}} ne sont pas recommandés, car Obsidian ne les suit pas. Vous pourriez avoir besoin du plugin {{unhidePlugin}} pour les gérer.',
       name: 'Emplacement des nouvelles pièces jointes'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Format pour l\'URL qui sera insérée dans Markdown.',
-        part2: 'Voir les',
-        part3: 'jetons disponibles',
-        part4: 'Laisser vide pour utiliser le format par défaut.'
-      },
+      description: 'Format de l\'URL qui sera insérée dans Markdown lors de l\'ajout d\'une pièce jointe. Il ne s\'applique qu\'à ce moment-là : un lien qu\'Obsidian réécrit plus tard, lorsqu\'une note ou une pièce jointe est renommée ou déplacée, reçoit le format par défaut.\nVoir les {{tokens}} disponibles.\nLaisser vide pour utiliser le format par défaut.',
       name: 'Format d\'URL Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Appliquer ou non les réglages de dossier de pièces jointes et de nom de fichier aux pièces jointes créées par D\'AUTRES modules.',
-        part2: 'Certains modules écrivent une pièce jointe dans le coffre sous un nom de leur choix, sans demander à Obsidian où elle doit aller. Avec cette option, un tel fichier est déplacé et renommé dès son apparition.',
-        part3: 'Seuls les fichiers créés pendant qu\'une note est ouverte sont concernés, jamais ceux provenant d\'une synchronisation ou d\'un import de coffre.'
-      },
+      description:
+        'Appliquer ou non les réglages de dossier de pièces jointes et de nom de fichier aux pièces jointes créées par D\'AUTRES modules.\nCertains modules écrivent une pièce jointe dans le coffre sous un nom de leur choix, sans demander à Obsidian où elle doit aller. Avec cette option, un tel fichier est déplacé et renommé dès son apparition.\nSeuls les fichiers créés pendant qu\'une note est ouverte, et liés depuis une note, sont concernés : un fichier vers lequel aucune note ne pointe contient des données qu\'un autre module conserve pour lui-même, et il reste là où il a été écrit. Les fichiers provenant d\'une synchronisation ou d\'un import de coffre ne sont jamais concernés.\n{{modes}}\nLe module créateur est identifié à partir de la pile d\'appels de l\'écriture. Cette identification est approximative : aucun module n\'est identifié pour un fichier écrit par Obsidian lui-même, par un client de synchronisation ou par un module qui diffère son écriture. Un tel fichier est considéré comme ne figurant PAS dans la liste ci-dessous.',
       name: 'Renommer les pièces jointes créées par d\'autres modules'
     },
     renameAttachmentsToLowerCase: 'Renommer les pièces jointes en minuscules',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Voir les',
-        part2: 'jetons disponibles',
-        part3: 'Laisser vide pour conserver le nom de fichier de pièce jointe d\'origine.'
-      },
+      description: 'Voir les {{tokens}} disponibles.\nLaisser vide pour conserver le nom actuel du fichier de pièce jointe.',
       name: 'Nom de fichier de pièce jointe renommée'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +180,19 @@ export const fr = {
       name: 'Convertir les images collées en JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Si activé, les pièces jointes traitées via les commandes',
-        part2: 'Collecter les pièces jointes',
-        part3: 'seront renommées selon le paramètre',
-        part4: '.'
-      },
+      description: 'Si activé, les pièces jointes traitées via les commandes {{command}} seront renommées selon le paramètre {{setting}}.',
       name: 'Renommer les pièces jointes collectées'
     },
     specialCharacters: {
-      description: {
-        part1: 'Caractères spéciaux dans le dossier de pièces jointes et le nom de fichier à remplacer ou supprimer.',
-        part2: 'Laisser vide pour préserver les caractères spéciaux.'
-      },
+      description: 'Caractères spéciaux dans le dossier de pièces jointes et le nom de fichier à remplacer ou supprimer.\nLaisser vide pour préserver les caractères spéciaux.',
       name: 'Caractères spéciaux'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Chaîne de remplacement pour les caractères spéciaux dans le dossier de pièces jointes et le nom de fichier.',
-        part2: 'Laisser vide pour supprimer les caractères spéciaux.'
-      },
+      description: 'Chaîne de remplacement pour les caractères spéciaux dans le dossier de pièces jointes et le nom de fichier.\nLaisser vide pour supprimer les caractères spéciaux.',
       name: 'Remplacement des caractères spéciaux'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Le délai d\'expiration en secondes pour toutes les opérations.',
-        part2: 'Si',
-        part3: 'est défini, le délai d\'expiration de l\'exécution des opérations est désactivé.'
-      },
+      description: 'Le délai d\'expiration en secondes pour toutes les opérations.\nSi {{zero}} est défini, le délai d\'expiration de l\'exécution des opérations est désactivé.',
       name: 'Délai d\'expiration en secondes'
     }
   },

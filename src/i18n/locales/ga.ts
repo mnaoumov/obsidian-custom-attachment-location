@@ -1,9 +1,6 @@
 export const ga = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Ar mhaith leat na ceangaltáin a bhailiú do gach nóta i bhfillteáin go hathchúrsach?',
-      part2: 'Ní féidir an oibríocht seo a chealú.'
-    },
+    confirm: 'Ar mhaith leat na ceangaltáin a bhailiú go hathchúrsach do gach nóta sna fillteáin seo a leanas?\n{{folders}}\nNí féidir an oibríocht seo a chealú.',
     progressBar: {
       message: 'Ag bailiú ceangaltán {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Ag bailiú ceangaltán...'
@@ -16,10 +13,7 @@ export const ga = {
     skip: 'Léim thar'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Tá an ceangaltán',
-      part2: 'in úsáid ag nótaí iomadúla.'
-    },
+    content: 'Tá an ceangaltán {{attachment}} in úsáid ag nótaí iomadúla.',
     heading: 'Ag bailiú ceangaltáin atá in úsáid ag nótaí iomadúla',
     noPriorityWinnerReason: {
       EmptyList: 'Níor bogadh é toisc go bhfuil an socrú {{settingName}} folamh, mar sin níl aon rud a chinneann cé acu de na nótaí seo ar leis é.',
@@ -33,6 +27,10 @@ export const ga = {
     collectAttachmentsCurrentNote: 'Bailigh ceangaltáin sa nóta reatha',
     collectAttachmentsEntireVault: 'Bailigh ceangaltáin sa taisc iomplán'
   },
+  links: {
+    documentation: 'doiciméadú',
+    tokens: 'comharthaí'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Bailigh ceangaltáin sa chomhad',
     collectAttachmentsInFiles: 'Bailigh ceangaltáin sna comhaid'
@@ -41,10 +39,7 @@ export const ga = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Ag bailiú ceangaltán do \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Cealaigh bailiú ceangaltán. Féach ar an consól le haghaidh sonraí.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Tá ainm comhad ceangaltáin ginte \'{{path}}\' neamhbhailí.\n{{validationMessage}}\nSeiceáil do',
-      part2: 'socruithe.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Tá ainm comhad ceangaltáin ginte \'{{path}}\' neamhbhailí.\n{{validationMessage}}\nSeiceáil do shocrú {{settingName}}.',
     notePathIsIgnored: 'Tá conair an nóta á neamhaird'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const ga = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Cuireadh comharthaí saincheaptha i gcomhrá mar gheall ar gá iad a nuashonrú chuig an fhormáid nua a tugadh isteach i leagan 9.0.0 an phlugain.\n// Féach ar an doiciméadú ({{customTokensDocumentationUrl}}) le haghaidh tuilleadh eolais.',
-      deprecated: {
-        part1: 'I leagan 9.0.0 an phlugain, d\'athraigh formáid chlárúcháin comharthaí saincheaptha. Nuashonraigh do chomharthaí dá réir. Féach ar an',
-        part2: 'doiciméadú',
-        part3: 'le haghaidh tuilleadh eolais'
-      }
+      deprecated: 'D\'athraigh formáid chlárúcháin na gcomharthaí saincheaptha. Nuashonraigh do chomharthaí dá réir. Féach ar an {{documentation}} le haghaidh tuilleadh eolais.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'I leagan 9.0.0 an phlugain, tá an',
-      part2: 'socrú as feidhm. Úsáid an',
-      part3: 'formáid ina ionad. Féach ar an',
-      part4: 'doiciméadú',
-      part5: 'le haghaidh tuilleadh eolais'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Tá an socrú {{setting}} as feidhm. Úsáid an fhormáid {{format}} ina ionad. Féach ar an {{documentation}} le haghaidh tuilleadh eolais.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Tá luach neamhcheart agat ar an',
-        part2: 'formáid. Féach ar an',
-        part3: 'doiciméadú',
-        part4: 'le haghaidh tuilleadh eolais',
-        part5: 'Ní thaispeánfar an teachtaireacht seo arís.'
-      }
+      deprecated: 'D\'fhéadfadh go bhfuil luach mícheart socraithe agat don fhormáid {{setting}}. Féach ar an {{documentation}} le haghaidh tuilleadh eolais. Ní thaispeánfar an teachtaireacht seo arís.'
     },
-    specialCharacters: {
-      part1: 'I leagan 9.16.0 an phlugain, d\'athraigh an',
-      part2: 'luach socrú réamhshocraithe. Nuashonraíodh do luach socrú chuig an luach réamhshocraithe nua.'
-    },
+    specialCharacters: 'Athraíodh luach réamhshocraithe an tsocraithe {{setting}}. Nuashonraíodh do luach socraithe chuig an luach réamhshocraithe nua.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Caithfidh méid réamhshocraithe na híomhá a bheith i bpicteilíní nó i gcéatadán',
       invalidCustomTokensCode: 'Cód comharthaí saincheaptha neamhbhailí',
@@ -142,68 +118,35 @@ export const ga = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Nuair a bhíonn comhaid á gceangal:'
-      },
+      description: 'Nuair a bhíonn comhaid á gceangal:',
       name: 'Mód athainmnithe ceangaltán'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Nuair a bhíonn an ceangaltán bailithe in úsáid ag nótaí iomadúla:'
-      },
+      description: 'Nuair a bhíonn an ceangaltán bailithe in úsáid ag nótaí iomadúla:',
       name: 'Mód bailiú ceangaltán atá in úsáid ag nótaí iomadúla'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Féach ar na',
-        part2: 'comharthaí atá ar fáil',
-        part3: 'Fág folamh chun ainm comhad ceangaltán bunaidh a choinneáil.'
-      },
+      description: 'Féach ar na {{tokens}} atá ar fáil.\nFág folamh chun ainm reatha an chomhaid ceangaltáin a choinneáil.',
       name: 'Ainm comhad ceangaltán bailithe'
     },
     customTokens: {
-      description: {
-        part1: 'Comharthaí saincheaptha le húsáid.',
-        part2: 'Féach ar an',
-        part3: 'doiciméadú',
-        part4: 'le haghaidh tuilleadh eolais.',
-        part5: '⚠️ Is féidir le comharthaí saincheaptha a bheith ina chód JavaScript treallach. Má tá siad drochscríofa, is féidir leo cailliúint sonraí a chur faoi deara. Úsáid iad ar do riosca féin.'
-      },
+      description: 'Comharthaí saincheaptha le húsáid.\nFéach ar an {{documentation}} le haghaidh tuilleadh eolais.\n⚠️ Is féidir le comharthaí saincheaptha a bheith ina chód JavaScript treallach. Má tá siad drochscríofa, is féidir leo cailliúint sonraí a chur faoi deara. Úsáid iad ar do riosca féin.',
       name: 'Comharthaí saincheaptha'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Méid réamhshocraithe na híomhá.',
-        part2: 'Is féidir a shonrú i bpicteilíní',
-        part3: 'nó i gcéatadán de mhéid na híomhá iomláine',
-        part4: 'Fág folamh chun an méid bunaidh a úsáid.'
-      },
+      description: 'Méid réamhshocraithe na híomhá.\nIs féidir é a shonrú i bpicteilíní ({{pixels}}) nó i gcéatadán de mhéid na híomhá iomláine ({{percentage}}).\nFág folamh chun an méid bunaidh a úsáid.',
       name: 'Méid réamhshocraithe na híomhá'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Nuair a bhíonn tú ag greamadh/tarraint comhad leis an ainm céanna le comhad atá ann cheana, cuirfear an deighilteoir seo leis an ainm comhaid.',
-        part2: 'M.sh., nuair a bhíonn tú ag tarraint an chomhaid',
-        part3: ', athainmneofar é go',
-        part4: ', srl., ag fáil an chéad ainm atá ar fáil.'
-      },
+      description: 'Nuair a bhíonn tú ag greamú/tarraingt comhaid leis an ainm céanna le comhad atá ann cheana, cuirfear an deighilteoir seo leis an ainm comhaid.\nM.sh., nuair a tharraingíonn tú an comhad {{existingFile}}, athainmneofar é go {{firstAvailableName}}, {{secondAvailableName}}, srl., ag fáil an chéad ainm atá ar fáil.',
       name: 'Deighilteoir ainm dúbailte'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Eisigh ceangaltáin ó na conairí seo a leanas nuair a',
-        part2: 'Bailigh ceangaltáin',
-        part3: 'a fhorghníomhaítear an t-ordú.',
-        part4: 'Cuir isteach gach conair ar líne nua.',
-        part6: 'a úsáid. Má tá an socrú folamh, ní eisítear aon chonairí ó bhailiú ceangaltán.'
-      },
+      description: 'Eisigh ceangaltáin ó na conairí seo a leanas nuair a fhorghníomhaítear an t-ordú {{command}}.\nCuir isteach gach conair ar líne nua.\n{{pathSyntax}}\nMá tá an socrú folamh, ní eisítear aon chonair ó bhailiú ceangaltán.',
       name: 'Conairí a eisíomh ó bhailiú ceangaltán'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Féach ar na',
-        part2: 'comharthaí atá ar fáil'
-      },
+      description: 'Féach ar na {{tokens}} atá ar fáil.',
       name: 'Ainm comhad ceangaltán ginte'
     },
     jpegQuality: {
@@ -211,41 +154,21 @@ export const ga = {
       name: 'Cáilíocht JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Tosaigh le',
-        part2: 'chun conair choibhneasta a úsáid.',
-        part3: 'Féach ar na',
-        part4: 'comharthaí atá ar fáil',
-        part5: 'Ní mholtar fhillteáin ponc mar',
-        part6: 'mar ní dhéanann Obsidian iad a rianú. D\'fhéadfadh gur gá duit',
-        part7: 'Plugan a úsáid chun iad a bhainistiú.'
-      },
+      description: 'Tosaigh le {{relativePrefix}} le haghaidh conairí atá coibhneasta le fillteán tuismitheora an nóta.\nFéach ar na {{tokens}} atá ar fáil.\nNí mholtar fillteáin phonc mar {{dotFolder}}, mar ní rianaíonn Obsidian iad. D\'fhéadfadh go mbeadh an plugan {{unhidePlugin}} de dhíth ort chun iad a bhainistiú.',
       name: 'Suíomh do cheangaltáin nua'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Formáid don URL a chuirfear isteach i Markdown.',
-        part2: 'Féach ar na',
-        part3: 'comharthaí atá ar fáil',
-        part4: 'Fág bán chun an fhormáid réamhshocraithe a úsáid.'
-      },
+      description: 'Formáid don URL a chuirfear isteach i Markdown nuair a chuirtear ceangaltán leis. Ní chuirtear i bhfeidhm í ach an tráth sin: faigheann nasc a athscríobhann Obsidian níos déanaí, nuair a athainmnítear nó a bhogtar nóta nó ceangaltán, an fhormáid réamhshocraithe.\nFéach ar na {{tokens}} atá ar fáil.\nFág bán chun an fhormáid réamhshocraithe a úsáid.',
       name: 'Formáid URL Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Cé acu na socruithe fillteáin ceangaltán agus ainm comhaid a chur i bhfeidhm ar cheangaltáin a chruthaíonn breiseáin EILE.',
-        part2: 'Scríobhann roinnt breiseán ceangaltán isteach sa taisce faoi ainm dá gcuid féin, gan fiafraí d\'Obsidian cá mbaineann sé. Agus é seo ar siúl, bogtar agus athainmnítear comhad den sórt sin díreach tar éis dó teacht chun cinn.',
-        part3: 'Ní bhaintear ach le comhaid a chruthaítear agus nóta ar oscailt, riamh le comhaid a thagann ó shioncronú nó ó iompórtáil taisce.'
-      },
+      description:
+        'Cé acu na socruithe fillteáin ceangaltán agus ainm comhaid a chur i bhfeidhm ar cheangaltáin a chruthaíonn breiseáin EILE.\nScríobhann roinnt breiseán ceangaltán isteach sa taisce faoi ainm dá gcuid féin, gan fiafraí d\'Obsidian cá mbaineann sé. Agus é seo ar siúl, bogtar agus athainmnítear comhad den sórt sin díreach tar éis dó teacht chun cinn.\nNí bhaintear ach le comhaid a chruthaítear agus nóta ar oscailt, agus a bhfuil nasc chucu ó nóta: is sonraí a choinníonn breiseán eile dó féin atá i gcomhad nach bhfuil nasc chuige ó aon nóta, agus fanann sé san áit ar scríobhadh é. Ní bhaintear riamh le comhaid a thagann ó shioncronú nó ó iompórtáil taisce.\n{{modes}}\nAithnítear an breiseán a chruthaigh an comhad ó chruach glaonna na scríbhneoireachta. Ní dhéantar é sin ach chomh maith agus is féidir: ní aithnítear aon bhreiseán do chomhad a scríobh Obsidian féin, cliant sioncronaithe, nó breiseán a chuireann a scríbhneoireacht siar. Meastar NACH bhfuil comhad den sórt sin sa liosta thíos.',
       name: 'Athainmnigh ceangaltáin a chruthaíonn breiseáin eile'
     },
     renameAttachmentsToLowerCase: 'Athainmnigh ceangaltáin go litreacha beaga',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Féach ar na',
-        part2: 'comharthaí atá ar fáil',
-        part3: 'Fág folamh chun ainm comhad ceangaltán bunaidh a choinneáil.'
-      },
+      description: 'Féach ar na {{tokens}} atá ar fáil.\nFág folamh chun ainm reatha an chomhaid ceangaltáin a choinneáil.',
       name: 'Ainm comhad ceangaltán athainmnithe'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +180,19 @@ export const ga = {
       name: 'An gcaithfear íomhánna greamaithe a thiontú go JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Má tá sé cumasaithe, athainmneofar ceangaltáin a phróiseáladh trí',
-        part2: 'Bailigh ceangaltáin',
-        part3: 'orduithe de réir an',
-        part4: 'socraithe.'
-      },
+      description: 'Má tá sé cumasaithe, athainmneofar ceangaltáin a phróiseáiltear trí na horduithe {{command}} de réir an tsocraithe {{setting}}.',
       name: 'An gcaithfear ceangaltáin bailithe a athainmniú'
     },
     specialCharacters: {
-      description: {
-        part1: 'Carachtair speisialta i bhfillteán ceangaltán agus ainm comhaid le cur in ionad nó a bhaint.',
-        part2: 'Fág bán chun carachtair speisialta a chaomhnú.'
-      },
+      description: 'Carachtair speisialta i bhfillteán ceangaltán agus ainm comhaid le cur in ionad nó a bhaint.\nFág bán chun carachtair speisialta a chaomhnú.',
       name: 'Carachtair speisialta'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Teaghrán ionadaíochta do charachtair speisialta i bhfillteán ceangaltán agus ainm comhaid.',
-        part2: 'Fág bán chun carachtair speisialta a bhaint.'
-      },
+      description: 'Teaghrán ionadaíochta do charachtair speisialta i bhfillteán ceangaltán agus ainm comhaid.\nFág bán chun carachtair speisialta a bhaint.',
       name: 'Ionadú carachtar speisialta'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'An t-am amach i soicindí do gach oibríocht.',
-        part2: 'Má tá',
-        part3: 'socraithe, tá t-am amach fhorghníomhaithe oibríochtaí díchumasaithe.'
-      },
+      description: 'An t-am amach i soicindí do gach oibríocht.\nMá tá {{zero}} socraithe, díchumasaítear an t-am amach d\'fhorghníomhú oibríochtaí.',
       name: 'T-am amach i soicindí'
     }
   },
