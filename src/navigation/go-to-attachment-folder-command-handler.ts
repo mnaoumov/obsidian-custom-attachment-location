@@ -7,7 +7,6 @@ import type {
 
 import { DUMMY_PATH } from '@mnaoumov/obsidian-lib/attachment-path';
 import { FileCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/file-command-handler';
-import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { createFolderSafe } from '@mnaoumov/obsidian-lib/vault';
 import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
@@ -18,6 +17,10 @@ import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-
 import type { AttachmentPathManager } from '../attachment-location/attachment-path-manager.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 
+import {
+  codeNode,
+  translateFragment
+} from '../i18n/translate-fragment.ts';
 import { ActionContext } from '../tokens/token-evaluator-context.ts';
 
 interface GoToAttachmentFolderCommandHandlerConstructorParams {
@@ -114,11 +117,7 @@ export class GoToAttachmentFolderCommandHandler extends FileCommandHandler {
 
     const notice = this.pluginNoticeComponent.showNotice(
       createFragment((f) => {
-        f.appendText(t(($) => $.goToAttachmentFolder.doesNotExist.part1));
-        f.appendText(' ');
-        appendCodeBlock(f, attachmentFolderPath);
-        f.appendText(' ');
-        f.appendText(t(($) => $.goToAttachmentFolder.doesNotExist.part2));
+        f.append(translateFragment(($) => $.goToAttachmentFolder.doesNotExist, { folder: codeNode(attachmentFolderPath) }));
         f.createEl('br');
         f.append(button.buttonEl);
       }),

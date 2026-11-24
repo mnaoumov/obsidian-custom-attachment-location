@@ -45,24 +45,24 @@ vi.mock('@mnaoumov/typescript-lib/error', () => ({
 
 // The mock App models no link index, so the link and backlink plumbing is driven directly.
 vi.mock('@mnaoumov/obsidian-lib/canvas', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/canvas')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/canvas')>()),
   getCanvasReferences: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-change', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-change')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-change')>()),
   applyFileChanges: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   editReferences: vi.fn(),
   extractReferenceFile: vi.fn(),
   updateLink: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>()),
   getBacklinksForFileSafe: vi.fn()
 }));
 
@@ -230,7 +230,7 @@ describe('identical-attachment', () => {
         identicalFile,
         pluginNoticeComponent: null,
         resourceLockComponent: null,
-        ...skippedCanvasPaths && { skippedCanvasPaths }
+        ...(skippedCanvasPaths && { skippedCanvasPaths })
       });
     }
 

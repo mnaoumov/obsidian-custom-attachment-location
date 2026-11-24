@@ -149,7 +149,7 @@ describe('migrateSettings', () => {
           });
           const dialogEl = findDialog();
           const rowCount = dialogEl?.querySelectorAll('.setting-item').length ?? 0;
-          const buttonEl = [...dialogEl?.querySelectorAll('button') ?? []].find((candidate) => candidate.textContent === buttonText);
+          const buttonEl = [...(dialogEl?.querySelectorAll('button') ?? [])].find((candidate) => candidate.textContent === buttonText);
           if (!buttonEl) {
             throw new Error(`The ${dialogTitlePrefix} dialog has no ${buttonText} button`);
           }

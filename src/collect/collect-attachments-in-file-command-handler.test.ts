@@ -47,7 +47,7 @@ interface TestableHandler {
 }
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   isFile: vi.fn(),
   isNote: vi.fn()
 }));

@@ -98,7 +98,7 @@ describe('Custom tokens on an enable after layout-ready', () => {
           await adapter.write(
             dataPath,
             JSON.stringify({
-              ...JSON.parse(originalData) as Record<string, unknown>,
+              ...(JSON.parse(originalData) as Record<string, unknown>),
               attachmentFolderPath,
               // eslint-disable-next-line unicorn/name-replacements -- `customTokensStr` is a persisted `data.json` settings key.
               customTokensStr: `registerCustomToken('lateEnableToken', () => '${tokenValue}');`,

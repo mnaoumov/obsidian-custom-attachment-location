@@ -1,9 +1,6 @@
 export const tr = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Klasörlerdeki tüm notlar için ekleri yinelemeli olarak toplamak ister misiniz?',
-      part2: 'Bu işlem geri alınamaz.'
-    },
+    confirm: 'Klasörlerdeki tüm notlar için ekleri alt klasörlerle birlikte toplamak ister misiniz?\n{{folders}}\nBu işlem geri alınamaz.',
     progressBar: {
       message: 'Ekler toplanıyor {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Ekler toplanıyor...'
@@ -16,10 +13,7 @@ export const tr = {
     skip: 'Geç'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Ek',
-      part2: 'birden fazla not tarafından referans alınıyor.'
-    },
+    content: '{{attachment}} eki birden fazla not tarafından referans alınıyor.',
     heading: 'Birden fazla not tarafından kullanılan ek toplama',
     noPriorityWinnerReason: {
       EmptyList: '{{settingName}} ayarı boş olduğu için taşınmadı; bu notlardan hangisinin sahibi olduğuna karar veren bir şey yok.',
@@ -33,6 +27,10 @@ export const tr = {
     collectAttachmentsCurrentNote: 'Mevcut nottaki ekleri topla',
     collectAttachmentsEntireVault: 'Tüm kasadaki ekleri topla'
   },
+  links: {
+    documentation: 'dokümantasyona',
+    tokens: 'tokenlara'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Dosyada ekleri topla',
     collectAttachmentsInFiles: 'Dosyalarda ekleri topla'
@@ -41,10 +39,7 @@ export const tr = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '\'{{noteFilePath}}\' için ekler toplanıyor',
     collectingAttachmentsCancelled: 'Ek toplama işlemi iptal edildi. Ayrıntılar için konsola bakın.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Oluşturulan ek dosya adı \'{{path}}\' geçersiz.\n{{validationMessage}}\nAyarlarınızı',
-      part2: 'kontrol edin.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Oluşturulan ek dosya adı \'{{path}}\' geçersiz.\n{{validationMessage}}\n{{settingName}} ayarınızı kontrol edin.',
     notePathIsIgnored: 'Not yolu yok sayıldı'
   },
   obsidianLib: {
@@ -105,33 +100,14 @@ export const tr = {
   },
   pluginSettingsManager: {
     customToken: {
-      codeComment: '// Özel tokenler yorum satırı yapıldı, 9.0.0 sürümünde değişen formata güncellenmesi gerekiyor.\n// Daha fazla bilgi için dokümantasyona bakınız.',
-      deprecated: {
-        part1: '9.0.0 sürümünde özel token kayıt formatı değişti. Lütfen tokenlerinizi güncelleyin. Detaylar için',
-        part2: 'dokümantasyona',
-        part3: 'bakınız.'
-      }
+      codeComment: '// Özel tokenler yorum satırı yapıldı, 9.0.0 sürümünde değişen formata güncellenmesi gerekiyor.\n// Daha fazla bilgi için dokümantasyona ({{customTokensDocumentationUrl}}) bakınız.',
+      deprecated: 'Özel token kayıt formatı değişti. Lütfen tokenlarınızı buna göre güncelleyin. Daha fazla bilgi için {{documentation}} bakın.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: '9.0.0 sürümünde bu',
-      part2: 'ayar kullanım dışı bırakıldı. Bunun yerine',
-      part3: 'formatını kullanın. Detaylar için',
-      part4: 'dokümantasyona',
-      part5: 'bakınız.'
-    },
+    legacyRenameAttachmentsToLowerCase: '{{setting}} ayarı kullanımdan kaldırıldı. Bunun yerine {{format}} formatını kullanın. Daha fazla bilgi için {{documentation}} bakın.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Potansiyel olarak hatalı bir değer ayarlandı:',
-        part2: 'format. Lütfen',
-        part3: 'dokümantasyona',
-        part4: 'bakınız.',
-        part5: 'Bu mesaj tekrar gösterilmeyecek.'
-      }
+      deprecated: '{{setting}} formatı için muhtemelen hatalı bir değer ayarladınız. Daha fazla bilgi için lütfen {{documentation}} bakın. Bu mesaj tekrar gösterilmeyecek.'
     },
-    specialCharacters: {
-      part1: '9.16.0 sürümünde,',
-      part2: 'varsayılan ayar değiştirildi. Ayarınız yeni varsayılan olarak güncellendi.'
-    },
+    specialCharacters: '{{setting}} ayarının varsayılan değeri değişti. Ayar değeriniz yeni varsayılan değere güncellendi.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Varsayılan resim boyutu piksel veya yüzde olmalıdır',
       invalidCustomTokensCode: 'Geçersiz özel token kodu',
@@ -142,67 +118,35 @@ export const tr = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Dosya eklerken:'
-      },
+      description: 'Dosya eklerken:',
       name: 'Ek dosya yeniden adlandırma modu'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Toplanan ek birden fazla notta kullanıldığında:'
-      },
+      description: 'Toplanan ek birden fazla notta kullanıldığında:',
       name: 'Birden fazla notta kullanılan ek toplama modu'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Mevcut',
-        part2: 'tokenlara bakınız'
-      },
+      description: 'Kullanılabilir {{tokens}} göz atın.\nEkin mevcut dosya adını korumak için boş bırakın.',
       name: 'Toplanan ek dosya adı'
     },
     customTokens: {
-      description: {
-        part1: 'Kullanılacak özel tokenlar.',
-        part2: 'Bakınız',
-        part3: 'dokümantasyon',
-        part4: 'daha fazla bilgi için.',
-        part5: '⚠️ Özel tokenlar herhangi bir JavaScript kodu olabilir. Hatalı yazılırsa veri kaybına yol açabilir. Kendi sorumluluğunuzda kullanın.'
-      },
+      description: 'Kullanılacak özel tokenlar.\nDaha fazla bilgi için {{documentation}} bakın.\n⚠️ Özel tokenlar herhangi bir JavaScript kodu olabilir. Kötü yazılırsa veri kaybına yol açabilir. Kendi sorumluluğunuzda kullanın.',
       name: 'Özel tokenlar'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Varsayılan resim boyutu.',
-        part2: 'Piksel olarak belirtilebilir',
-        part3: 'Tam resim boyutunun yüzdesi olarak',
-        part4: 'Orijinal resim boyutunu kullanmak için boş bırakın.'
-      },
+      description: 'Varsayılan resim boyutu.\nPiksel ({{pixels}}) veya tam resim boyutunun yüzdesi ({{percentage}}) olarak belirtilebilir.\nOrijinal resim boyutunu kullanmak için boş bırakın.',
       name: 'Varsayılan resim boyutu'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Mevcut bir dosya adıyla aynı olan dosya yapıştırılır/taşınırsa, bu ayırıcı dosya adına eklenir.',
-        part2: 'Örneğin, dosya sürüklendiğinde',
-        part3: 'şuna yeniden adlandırılır ',
-        part4: ', vb., ilk uygun ad bulunana kadar.'
-      },
+      description: 'Mevcut bir dosyayla aynı ada sahip bir dosyayı yapıştırdığınızda veya sürüklediğinizde, bu ayırıcı dosya adına eklenir.\nÖrneğin {{existingFile}} dosyasını sürüklediğinizde, ilk kullanılabilir ad seçilerek {{firstAvailableName}}, {{secondAvailableName}} vb. olarak yeniden adlandırılır.',
       name: 'Yinelenen ad ayırıcı'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Aşağıdaki yollardan ekler hariç tutulur,',
-        part2: 'Ekleri topla',
-        part3: 'komutu çalıştırıldığında.',
-        part4: 'Her yolu yeni satıra yazın.',
-        part6: 'Eğer ayar boşsa, hiç bir yol hariç tutulmaz.'
-      },
+      description: '{{command}} komutu çalıştırıldığında aşağıdaki yollardaki ekler hariç tutulur.\nHer yolu yeni bir satıra yazın.\n{{pathSyntax}}\nAyar boşsa, ek toplamadan hiçbir yol hariç tutulmaz.',
       name: 'Ek toplarken hariç tutulan yollar'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Mevcut',
-        part2: 'tokenlara bakınız'
-      },
+      description: 'Kullanılabilir {{tokens}} göz atın.',
       name: 'Oluşturulan ek dosya adı'
     },
     jpegQuality: {
@@ -210,40 +154,20 @@ export const tr = {
       name: 'JPEG Kalitesi'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Göreceli yol kullanmak için',
-        part2: 'ile başlayın.',
-        part3: 'Mevcut',
-        part4: 'tokenlara bakınız',
-        part5: 'Nokta ile başlayan klasörler gibi',
-        part6: 'Obsidian tarafından takip edilmez, yönetmek için eklenti gerekebilir.',
-        part7: 'Kullanmanız gerekebilir.'
-      },
+      description: 'Notun üst klasörüne göreceli yollar için {{relativePrefix}} ile başlayın.\nKullanılabilir {{tokens}} göz atın.\n{{dotFolder}} gibi nokta ile başlayan klasörler önerilmez, çünkü Obsidian bunları takip etmez. Bunları yönetmek için {{unhidePlugin}} eklentisini kullanmanız gerekebilir.',
       name: 'Yeni ekler için konum'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Markdown içine eklenecek URL formatı.',
-        part2: 'Mevcut',
-        part3: 'tokenlara bakınız',
-        part4: 'Varsayılan format için boş bırakın.'
-      },
+      description: 'Bir ek eklendiğinde Markdown içine eklenecek URL formatı. Yalnızca o anda uygulanır: bir not veya ek yeniden adlandırıldığında ya da taşındığında Obsidian\'ın daha sonra yeniden yazdığı bağlantı varsayılan formatı alır.\nKullanılabilir {{tokens}} göz atın.\nVarsayılan formatı kullanmak için boş bırakın.',
       name: 'Markdown URL formatı'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Ek klasörü ve dosya adı ayarlarının, BAŞKA eklentilerin oluşturduğu eklere de uygulanıp uygulanmayacağı.',
-        part2: 'Bazı eklentiler, nereye ait olduğunu Obsidian\'a sormadan eki kendi seçtikleri bir adla doğrudan kasaya yazar. Bu seçenek açıkken böyle bir dosya, ortaya çıkar çıkmaz taşınır ve yeniden adlandırılır.',
-        part3: 'Yalnızca bir not açıkken oluşturulan dosyalara dokunulur; eşitlemeden veya kasa içe aktarımından gelen dosyalara asla dokunulmaz.'
-      },
+      description: 'Ek klasörü ve dosya adı ayarlarının, BAŞKA eklentilerin oluşturduğu eklere de uygulanıp uygulanmayacağı.\nBazı eklentiler, nereye ait olduğunu Obsidian\'a sormadan eki kendi seçtikleri bir adla doğrudan kasaya yazar. Bu seçenek açıkken böyle bir dosya, ortaya çıkar çıkmaz taşınır ve yeniden adlandırılır.\nYalnızca bir not açıkken oluşturulan ve bir nottan bağlantı verilen dosyalara dokunulur: hiçbir notun bağlantı vermediği bir dosya, başka bir eklentinin kendisi için sakladığı veridir ve yazıldığı yerde kalır. Eşitlemeden veya kasa içe aktarımından gelen dosyalara asla dokunulmaz.\n{{modes}}\nDosyayı oluşturan eklenti, yazma işleminin çağrı yığınından belirlenir. Bu en iyi çaba esasına dayanır: Obsidian\'ın kendisinin, bir eşitleme istemcisinin veya yazmayı erteleyen bir eklentinin yazdığı dosya için hiçbir eklenti belirlenemez. Böyle bir dosya aşağıdaki listede YOK sayılır.',
       name: 'Diğer eklentilerin oluşturduğu ekleri yeniden adlandır'
     },
     renameAttachmentsToLowerCase: 'Eklerin dosya adlarını küçük harfe çevir',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Mevcut',
-        part2: 'tokenlara bakınız'
-      },
+      description: 'Kullanılabilir {{tokens}} göz atın.\nEkin mevcut dosya adını korumak için boş bırakın.',
       name: 'Yeniden adlandırılan ek dosya adı'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +179,19 @@ export const tr = {
       name: 'Yapıştırılan görüntüleri JPEG\'e dönüştür'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Aktifse,',
-        part2: 'Ekleri topla',
-        part3: 'komutları ile işlenen ekler',
-        part4: 'ayarına göre yeniden adlandırılır.'
-      },
+      description: 'Etkinse, {{command}} komutlarıyla işlenen ekler {{setting}} ayarına göre yeniden adlandırılır.',
       name: 'Toplanan ek dosyalarını yeniden adlandır'
     },
     specialCharacters: {
-      description: {
-        part1: 'Ek klasörü ve dosya adındaki özel karakterler değiştirilir veya kaldırılır.',
-        part2: 'Korumak için boş bırakın.'
-      },
+      description: 'Ek klasörü ve dosya adında değiştirilecek veya kaldırılacak özel karakterler.\nÖzel karakterleri korumak için boş bırakın.',
       name: 'Özel karakterler'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Ek klasörü ve dosya adındaki özel karakterler için değiştirme dizisi.',
-        part2: 'Özel karakterleri kaldırmak için boş bırakın.'
-      },
+      description: 'Ek klasörü ve dosya adındaki özel karakterler için değiştirme dizesi.\nÖzel karakterleri kaldırmak için boş bırakın.',
       name: 'Özel karakterler için değiştirme'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Tüm işlemler için zaman aşımı süresi (saniye).',
-        part2: 'Eğer',
-        part3: 'ayarlanırsa, zaman aşımı devre dışı bırakılır.'
-      },
+      description: 'Tüm işlemler için zaman aşımı süresi (saniye).\n{{zero}} ayarlanırsa, işlemlerin zaman aşımı devre dışı bırakılır.',
       name: 'Zaman aşımı (saniye)'
     }
   },

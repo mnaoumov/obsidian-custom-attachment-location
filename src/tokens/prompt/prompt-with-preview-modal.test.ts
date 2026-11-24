@@ -30,7 +30,8 @@ import { translationsMap } from '../../i18n/locales/translations-map.ts';
 import { TemplatePart } from '../token-evaluator-context.ts';
 import { promptWithPreview } from './prompt-with-preview-modal.ts';
 
-type EmbedByExtension = Partial<App['embedRegistry']['embedByExtension']>;
+// Keyed by any extension, so a test can register the generic creator under `png` without the per-extension typing.
+type EmbedByExtension = Partial<Record<string, App['embedRegistry']['embedByExtension'][string]>>;
 
 const captured = {
   buttons: [] as ButtonComponent[],
@@ -392,6 +393,33 @@ describe('promptWithPreview', () => {
     expect(embeddableCreator).toHaveBeenCalled();
     expect(hoisted.embedComponent.load).toHaveBeenCalled();
     expect(hoisted.embedComponent.loadFile).toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(0);
+    await promise;
+  });
+
+  it('should leave the preview empty when the embeddable creator declines the file', async () => {
+    const embeddableCreator = vi.fn<EmbedCreator>(() => null);
+    const createBinary = vi.fn((path: string): Promise<TFile> => Promise.resolve(strictProxy<TFile>({ name: 'temp', path })));
+    const vault = castTo<App['vault']>({
+      createBinary,
+      getConfig: vi.fn((): boolean => true)
+    });
+    const promise = promptWithPreview({
+      context: createContext({
+        app: createApp({
+          embedRegistry: createEmbedRegistry({ png: embeddableCreator }),
+          vault
+        }),
+        getAttachmentFileContent: (): Promise<ArrayBuffer | undefined> => Promise.resolve(new ArrayBuffer(8))
+      }),
+      defaultValue: 'default-value',
+      valueValidator: vi.fn((): Promise<null | string> => Promise.resolve(null))
+    });
+    await flushOnOpen();
+    clickButton(captured.buttons[2]);
+    await flushOnOpen();
+    expect(embeddableCreator).toHaveBeenCalled();
+    expect(hoisted.embedComponent.load).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(0);
     await promise;
   });

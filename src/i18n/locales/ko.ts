@@ -1,9 +1,6 @@
 export const ko = {
   attachmentCollector: {
-    confirm: {
-      part1: '폴더의 모든 노트에 대해 첨부 파일을 재귀적으로 수집하시겠습니까?',
-      part2: '이 작업은 되돌릴 수 없습니다.'
-    },
+    confirm: '다음 폴더에 있는 모든 노트의 첨부 파일을 재귀적으로 수집하시겠습니까?\n{{folders}}\n이 작업은 되돌릴 수 없습니다.',
     progressBar: {
       message: '첨부 파일 수집 중 {{iterationString}} - \'{{noteFilePath}}\'.',
       title: '첨부 파일 수집 중...'
@@ -16,10 +13,7 @@ export const ko = {
     skip: '건너뛰기'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: '첨부 파일',
-      part2: '이 여러 노트에서 참조되고 있습니다.'
-    },
+    content: '첨부 파일 {{attachment}}이(가) 여러 노트에서 참조되고 있습니다.',
     heading: '여러 노트에서 사용되는 첨부 파일 수집',
     noPriorityWinnerReason: {
       EmptyList: '{{settingName}} 설정이 비어 있어 이 노트 중 어느 것이 소유하는지 결정할 수 없으므로 이동되지 않았습니다.',
@@ -33,6 +27,10 @@ export const ko = {
     collectAttachmentsCurrentNote: '현재 노트의 첨부 파일 수집',
     collectAttachmentsEntireVault: '전체 볼트의 첨부 파일 수집'
   },
+  links: {
+    documentation: '문서',
+    tokens: '토큰'
+  },
   menuItems: {
     collectAttachmentsInFile: '파일에서 첨부 파일 수집',
     collectAttachmentsInFiles: '여러 파일에서 첨부 파일 수집'
@@ -41,10 +39,7 @@ export const ko = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '\'{{noteFilePath}}\'의 첨부 파일 수집 중',
     collectingAttachmentsCancelled: '첨부 파일 수집이 취소되었습니다. 자세한 내용은 콘솔을 확인하세요.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: '생성된 첨부 파일 이름 \'{{path}}\'이(가) 유효하지 않습니다.\n{{validationMessage}}\n설정을',
-      part2: '확인하세요.'
-    },
+    generatedAttachmentFileNameIsInvalid: '생성된 첨부 파일 이름 \'{{path}}\'이(가) 유효하지 않습니다.\n{{validationMessage}}\n{{settingName}} 설정을 확인하세요.',
     notePathIsIgnored: '노트 경로가 무시됩니다'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const ko = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// 사용자 정의 토큰은 플러그인 버전 9.0.0에서 도입된 새 형식으로 업데이트해야 하므로 주석 처리되었습니다.\n// 자세한 내용은 문서({{customTokensDocumentationUrl}})를 참조하세요.',
-      deprecated: {
-        part1: '플러그인 버전 9.0.0에서 사용자 정의 토큰 등록 형식이 변경되었습니다. 토큰을 적절히 업데이트하세요. 자세한 내용은',
-        part2: '문서',
-        part3: '를 참조하세요'
-      }
+      deprecated: '사용자 정의 토큰 등록 형식이 변경되었습니다. 토큰을 그에 맞게 업데이트하세요. 자세한 내용은 {{documentation}}를 참조하세요.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: '플러그인 버전 9.0.0에서',
-      part2: '설정이 더 이상 사용되지 않습니다. 대신',
-      part3: '형식을 사용하세요. 자세한 내용은',
-      part4: '문서',
-      part5: '를 참조하세요'
-    },
+    legacyRenameAttachmentsToLowerCase: '{{setting}} 설정은 더 이상 사용되지 않습니다. 대신 {{format}} 형식을 사용하세요. 자세한 내용은 {{documentation}}를 참조하세요.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: '다음 형식에 대해 잘못된 값이 설정되었을 수 있습니다',
-        part2: '. 자세한 내용은',
-        part3: '문서',
-        part4: '를 참조하세요',
-        part5: '이 메시지는 다시 표시되지 않습니다.'
-      }
+      deprecated: '{{setting}} 형식에 잘못된 값이 설정되어 있을 수 있습니다. 자세한 내용은 {{documentation}}를 참조하세요. 이 메시지는 다시 표시되지 않습니다.'
     },
-    specialCharacters: {
-      part1: '플러그인 버전 9.16.0에서',
-      part2: '기본 설정 값이 변경되었습니다. 설정 값이 새로운 기본 값으로 업데이트되었습니다.'
-    },
+    specialCharacters: '{{setting}} 설정의 기본값이 변경되었습니다. 설정 값이 새로운 기본값으로 업데이트되었습니다.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: '기본 이미지 크기는 픽셀 또는 백분율이어야 합니다',
       invalidCustomTokensCode: '유효하지 않은 사용자 정의 토큰 코드',
@@ -142,67 +118,35 @@ export const ko = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: '파일을 첨부할 때:'
-      },
+      description: '파일을 첨부할 때:',
       name: '첨부 파일 이름 변경 모드'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: '수집된 첨부 파일이 여러 노트에서 사용될 때:'
-      },
+      description: '수집된 첨부 파일이 여러 노트에서 사용될 때:',
       name: '여러 노트에서 사용되는 첨부 파일 수집 모드'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: '사용 가능한',
-        part2: '토큰을 참조하세요'
-      },
+      description: '사용 가능한 {{tokens}}을 참조하세요.\n현재 첨부 파일 이름을 유지하려면 비워두세요.',
       name: '수집된 첨부 파일 이름'
     },
     customTokens: {
-      description: {
-        part1: '사용할 사용자 정의 토큰입니다.',
-        part2: '자세한 내용은',
-        part3: '문서',
-        part4: '를 참조하세요.',
-        part5: '⚠️ 사용자 정의 토큰은 임의의 JavaScript 코드일 수 있습니다. 잘못 작성되면 데이터 손실을 일으킬 수 있습니다. 본인 책임하에 사용하세요.'
-      },
+      description: '사용할 사용자 정의 토큰입니다.\n자세한 내용은 {{documentation}}를 참조하세요.\n⚠️ 사용자 정의 토큰은 임의의 JavaScript 코드일 수 있습니다. 잘못 작성되면 데이터 손실을 일으킬 수 있습니다. 본인 책임하에 사용하세요.',
       name: '사용자 정의 토큰'
     },
     defaultImageSize: {
-      description: {
-        part1: '기본 이미지 크기입니다.',
-        part2: '픽셀로 지정할 수 있습니다',
-        part3: '또는 전체 이미지 크기의 백분율로 지정할 수 있습니다',
-        part4: '원본 이미지 크기를 사용하려면 비워두세요.'
-      },
+      description: '기본 이미지 크기입니다.\n픽셀({{pixels}}) 또는 전체 이미지 크기에 대한 백분율({{percentage}})로 지정할 수 있습니다.\n원본 이미지 크기를 사용하려면 비워두세요.',
       name: '기본 이미지 크기'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: '기존 파일과 같은 이름의 파일을 붙여넣기/드래그할 때 이 구분자가 파일 이름에 추가됩니다.',
-        part2: '예를 들어, 파일을 드래그할 때',
-        part3: ', 이름이',
-        part4: '등으로 변경되어 사용 가능한 첫 번째 이름을 얻습니다.'
-      },
+      description: '기존 파일과 같은 이름의 파일을 붙여넣거나 드래그하면 이 구분자가 파일 이름에 추가됩니다.\n예를 들어 {{existingFile}} 파일을 드래그하면 {{firstAvailableName}}, {{secondAvailableName}} 등 사용 가능한 첫 번째 이름으로 변경됩니다.',
       name: '중복 이름 구분자'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: '다음 경로에서 첨부 파일을 제외합니다',
-        part2: '첨부 파일 수집',
-        part3: '명령이 실행될 때.',
-        part4: '각 경로를 새 줄에 입력하세요.',
-        part6: '을(를) 사용할 수 있습니다. 설정이 비어 있으면 첨부 파일 수집에서 경로가 제외되지 않습니다.'
-      },
+      description: '{{command}} 명령을 실행할 때 다음 경로의 첨부 파일을 제외합니다.\n각 경로를 새 줄에 입력하세요.\n{{pathSyntax}}\n설정이 비어 있으면 첨부 파일 수집에서 제외되는 경로가 없습니다.',
       name: '첨부 파일 수집에서 제외할 경로'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: '사용 가능한',
-        part2: '토큰을 참조하세요'
-      },
+      description: '사용 가능한 {{tokens}}을 참조하세요.',
       name: '생성된 첨부 파일 이름'
     },
     jpegQuality: {
@@ -210,40 +154,20 @@ export const ko = {
       name: 'JPEG 품질'
     },
     locationForNewAttachments: {
-      description: {
-        part1: '상대 경로를 사용하려면',
-        part2: '로 시작하세요.',
-        part3: '사용 가능한',
-        part4: '토큰을 참조하세요',
-        part5: '점 폴더(예:',
-        part6: ')는 권장되지 않습니다. Obsidian이 추적하지 않기 때문입니다. 관리하려면',
-        part7: '플러그인이 필요할 수 있습니다.'
-      },
+      description: '노트의 상위 폴더를 기준으로 한 상대 경로를 사용하려면 {{relativePrefix}}(으)로 시작하세요.\n사용 가능한 {{tokens}}을 참조하세요.\n{{dotFolder}} 같은 점 폴더는 Obsidian이 추적하지 않으므로 권장되지 않습니다. 관리하려면 {{unhidePlugin}} 플러그인이 필요할 수 있습니다.',
       name: '새 첨부 파일 위치'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Markdown에 삽입될 URL의 형식입니다.',
-        part2: '사용 가능한',
-        part3: '토큰을 참조하세요',
-        part4: '기본 형식을 사용하려면 비워두세요.'
-      },
+      description: '첨부 파일을 추가할 때 Markdown에 삽입될 URL의 형식입니다. 이 형식은 그 시점에만 적용됩니다. 나중에 노트나 첨부 파일의 이름이 변경되거나 이동되어 Obsidian이 다시 쓰는 링크는 기본 형식을 따릅니다.\n사용 가능한 {{tokens}}을 참조하세요.\n기본 형식을 사용하려면 비워두세요.',
       name: 'Markdown URL 형식'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: '다른 플러그인이 만든 첨부 파일에도 첨부 폴더 및 파일 이름 설정을 적용할지 여부입니다.',
-        part2: '일부 플러그인은 첨부 파일이 어디에 속하는지 Obsidian에 묻지 않고 자체 이름으로 보관함에 바로 씁니다. 이 옵션을 켜면 그런 파일은 나타나는 즉시 이동되고 이름이 변경됩니다.',
-        part3: '노트가 열려 있는 동안 만들어진 파일만 처리되며, 동기화나 보관함 가져오기로 들어온 파일은 건드리지 않습니다.'
-      },
+      description: '다른 플러그인이 만든 첨부 파일에도 첨부 폴더 및 파일 이름 설정을 적용할지 여부입니다.\n일부 플러그인은 첨부 파일이 어디에 속하는지 Obsidian에 묻지 않고 자체 이름으로 보관함에 씁니다. 이 옵션을 켜면 그런 파일은 나타나는 즉시 이동되고 이름이 변경됩니다.\n노트가 열려 있는 동안 만들어지고 노트에서 링크된 파일만 처리됩니다. 어떤 노트에서도 링크되지 않은 파일은 다른 플러그인이 자체적으로 보관하는 데이터이므로 기록된 위치에 그대로 둡니다. 동기화나 보관함 가져오기로 들어온 파일은 절대 건드리지 않습니다.\n{{modes}}\n파일을 만든 플러그인은 쓰기 작업의 호출 스택으로 식별합니다. 이는 최선의 노력에 따른 것입니다. Obsidian 자체, 동기화 클라이언트 또는 쓰기를 지연하는 플러그인이 기록한 파일은 플러그인이 식별되지 않습니다. 그런 파일은 아래 목록에 없는 것으로 간주됩니다.',
       name: '다른 플러그인이 만든 첨부 파일 이름 변경'
     },
     renameAttachmentsToLowerCase: '첨부 파일을 소문자로 이름 변경',
     renamedAttachmentFileName: {
-      description: {
-        part1: '사용 가능한',
-        part2: '토큰을 참조하세요'
-      },
+      description: '사용 가능한 {{tokens}}을 참조하세요.\n현재 첨부 파일 이름을 유지하려면 비워두세요.',
       name: '이름이 변경된 첨부 파일 이름'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +179,19 @@ export const ko = {
       name: '붙여넣은 이미지를 JPEG로 변환'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: '활성화하면',
-        part2: '첨부 파일 수집',
-        part3: '명령을 통해 처리된 첨부 파일이',
-        part4: '설정에 따라 이름이 변경됩니다.'
-      },
+      description: '활성화하면 {{command}} 명령으로 처리된 첨부 파일의 이름이 {{setting}} 설정에 따라 변경됩니다.',
       name: '수집된 첨부 파일 이름 변경'
     },
     specialCharacters: {
-      description: {
-        part1: '첨부 파일 폴더 및 파일 이름에서 교체하거나 제거할 특수 문자입니다.',
-        part2: '특수 문자를 보존하려면 비워두세요.'
-      },
+      description: '첨부 파일 폴더 및 파일 이름에서 교체하거나 제거할 특수 문자입니다.\n특수 문자를 보존하려면 비워두세요.',
       name: '특수 문자'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: '첨부 파일 폴더 및 파일 이름의 특수 문자에 대한 교체 문자열입니다.',
-        part2: '특수 문자를 제거하려면 비워두세요.'
-      },
+      description: '첨부 파일 폴더 및 파일 이름의 특수 문자에 대한 교체 문자열입니다.\n특수 문자를 제거하려면 비워두세요.',
       name: '특수 문자 교체'
     },
     timeoutInSeconds: {
-      description: {
-        part1: '모든 작업에 대한 타임아웃(초)입니다.',
-        part2: '만약',
-        part3: '이(가) 설정되면 작업 실행 타임아웃이 비활성화됩니다.'
-      },
+      description: '모든 작업에 대한 타임아웃(초)입니다.\n{{zero}}(으)로 설정하면 작업 실행 타임아웃이 비활성화됩니다.',
       name: '시간 초과(초)'
     }
   },

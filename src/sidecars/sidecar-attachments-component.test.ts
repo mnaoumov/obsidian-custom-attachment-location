@@ -85,7 +85,7 @@ describe('sidecar attachment operations', () => {
   });
 
   function imported(name: string, extension: string, filepath?: string): ImportedAttachment {
-    return { data: Promise.resolve(new TextEncoder().encode(name + extension).buffer), extension, name, ...filepath && { filepath } };
+    return { data: Promise.resolve(new TextEncoder().encode(name + extension).buffer), extension, name, ...(filepath && { filepath }) };
   }
 
   it.each([false, true])('uses one base save even when the signature comes first (%s)', async (isReversed) => {

@@ -1,9 +1,6 @@
 export const id = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Apakah Anda ingin mengumpulkan lampiran untuk semua catatan di folder secara rekursif?',
-      part2: 'Operasi ini tidak dapat dibatalkan.'
-    },
+    confirm: 'Apakah Anda ingin mengumpulkan lampiran untuk semua catatan di folder berikut secara rekursif?\n{{folders}}\nOperasi ini tidak dapat dibatalkan.',
     progressBar: {
       message: 'Mengumpulkan lampiran {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Mengumpulkan lampiran...'
@@ -16,10 +13,7 @@ export const id = {
     skip: 'Lewati'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Lampiran',
-      part2: 'dirujuk oleh beberapa catatan.'
-    },
+    content: 'Lampiran {{attachment}} dirujuk oleh beberapa catatan.',
     heading: 'Mengumpulkan lampiran yang digunakan oleh beberapa catatan',
     noPriorityWinnerReason: {
       EmptyList: 'Lampiran tidak dipindahkan karena pengaturan {{settingName}} kosong, sehingga tidak ada yang menentukan catatan mana yang memilikinya.',
@@ -33,6 +27,10 @@ export const id = {
     collectAttachmentsCurrentNote: 'Kumpulkan lampiran di catatan saat ini',
     collectAttachmentsEntireVault: 'Kumpulkan lampiran di seluruh vault'
   },
+  links: {
+    documentation: 'dokumentasi',
+    tokens: 'token'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Kumpulkan lampiran di file',
     collectAttachmentsInFiles: 'Kumpulkan lampiran di file-file'
@@ -41,10 +39,7 @@ export const id = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Mengumpulkan lampiran untuk \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Pengumpulan lampiran dibatalkan. Lihat konsol untuk detail.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Nama file lampiran yang dihasilkan \'{{path}}\' tidak valid.\n{{validationMessage}}\nPeriksa',
-      part2: 'pengaturan Anda.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Nama file lampiran yang dihasilkan \'{{path}}\' tidak valid.\n{{validationMessage}}\nPeriksa pengaturan {{settingName}} Anda.',
     notePathIsIgnored: 'Jalur catatan diabaikan'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const id = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Token kustom dikomentari karena harus diperbarui ke format baru yang diperkenalkan di versi plugin 9.0.0.\n// Lihat dokumentasi ({{customTokensDocumentationUrl}}) untuk informasi lebih lanjut.',
-      deprecated: {
-        part1: 'Di versi plugin 9.0.0, format registrasi token kustom berubah. Silakan perbarui token Anda sesuai. Lihat',
-        part2: 'dokumentasi',
-        part3: 'untuk informasi lebih lanjut'
-      }
+      deprecated: 'Format registrasi token kustom telah berubah. Silakan perbarui token Anda sesuai dengan format baru. Lihat {{documentation}} untuk informasi lebih lanjut.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'Di versi plugin 9.0.0, pengaturan',
-      part2: 'sudah tidak digunakan lagi. Gunakan format',
-      part3: 'sebagai gantinya. Lihat',
-      part4: 'dokumentasi',
-      part5: 'untuk informasi lebih lanjut'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Pengaturan {{setting}} sudah tidak digunakan lagi. Gunakan format {{format}} sebagai gantinya. Lihat {{documentation}} untuk informasi lebih lanjut.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Anda mungkin memiliki nilai yang salah untuk format',
-        part2: '. Silakan lihat',
-        part3: 'dokumentasi',
-        part4: 'untuk informasi lebih lanjut',
-        part5: 'Pesan ini tidak akan ditampilkan lagi.'
-      }
+      deprecated: 'Anda mungkin memiliki nilai yang salah untuk format {{setting}}. Silakan lihat {{documentation}} untuk informasi lebih lanjut. Pesan ini tidak akan ditampilkan lagi.'
     },
-    specialCharacters: {
-      part1: 'Di versi plugin 9.16.0, nilai pengaturan default',
-      part2: 'berubah. Nilai pengaturan Anda diperbarui ke nilai default baru.'
-    },
+    specialCharacters: 'Nilai default pengaturan {{setting}} telah berubah. Nilai pengaturan Anda diperbarui ke nilai default yang baru.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Ukuran gambar default harus dalam piksel atau persentase',
       invalidCustomTokensCode: 'Kode token kustom tidak valid',
@@ -142,68 +118,35 @@ export const id = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Saat melampirkan file:'
-      },
+      description: 'Saat melampirkan file:',
       name: 'Mode penggantian nama lampiran'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Ketika lampiran yang dikumpulkan digunakan oleh beberapa catatan:'
-      },
+      description: 'Ketika lampiran yang dikumpulkan digunakan oleh beberapa catatan:',
       name: 'Mode pengumpulan lampiran yang digunakan oleh beberapa catatan'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Lihat',
-        part2: 'token yang tersedia',
-        part3: 'Biarkan kosong untuk mempertahankan nama file lampiran asli.'
-      },
+      description: 'Lihat {{tokens}} yang tersedia.\nBiarkan kosong untuk mempertahankan nama file lampiran saat ini.',
       name: 'Nama file lampiran yang dikumpulkan'
     },
     customTokens: {
-      description: {
-        part1: 'Token kustom yang akan digunakan.',
-        part2: 'Lihat',
-        part3: 'dokumentasi',
-        part4: 'untuk informasi lebih lanjut.',
-        part5: '⚠️ Token kustom dapat berupa kode JavaScript arbitrer. Jika ditulis dengan buruk, dapat menyebabkan kehilangan data. Gunakan dengan risiko sendiri.'
-      },
+      description: 'Token kustom yang akan digunakan.\nLihat {{documentation}} untuk informasi lebih lanjut.\n⚠️ Token kustom dapat berupa kode JavaScript arbitrer. Jika ditulis dengan buruk, dapat menyebabkan kehilangan data. Gunakan dengan risiko sendiri.',
       name: 'Token kustom'
     },
     defaultImageSize: {
-      description: {
-        part1: 'The default image size.',
-        part2: 'Can be specified in pixels',
-        part3: 'or percentage of the full image size',
-        part4: 'Leave blank to use the original image size.'
-      },
+      description: 'Ukuran gambar default.\nDapat ditentukan dalam piksel ({{pixels}}) atau persentase dari ukuran gambar penuh ({{percentage}}).\nBiarkan kosong untuk menggunakan ukuran gambar asli.',
       name: 'Default image size'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Ketika Anda menempel/menyeret file dengan nama yang sama dengan file yang ada, pemisah ini akan ditambahkan ke nama file.',
-        part2: 'Misalnya, ketika Anda menyeret file',
-        part3: ', itu akan diubah namanya menjadi',
-        part4: ', dll, mendapatkan nama pertama yang tersedia.'
-      },
+      description: 'Ketika Anda menempel atau menyeret file dengan nama yang sama dengan file yang sudah ada, pemisah ini akan ditambahkan ke nama file.\nMisalnya, ketika Anda menyeret file {{existingFile}}, file itu akan diubah namanya menjadi {{firstAvailableName}}, {{secondAvailableName}}, dan seterusnya, sesuai nama pertama yang tersedia.',
       name: 'Pemisah nama duplikat'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Kecualikan lampiran dari jalur berikut ketika',
-        part2: 'Kumpulkan lampiran',
-        part3: 'perintah dijalankan.',
-        part4: 'Masukkan setiap jalur pada baris baru.',
-        part6: 'Jika pengaturan kosong, tidak ada jalur yang dikecualikan dari pengumpulan lampiran.'
-      },
+      description: 'Kecualikan lampiran dari jalur berikut ketika perintah {{command}} dijalankan.\nMasukkan setiap jalur pada baris baru.\n{{pathSyntax}}\nJika pengaturan kosong, tidak ada jalur yang dikecualikan dari pengumpulan lampiran.',
       name: 'Kecualikan jalur dari pengumpulan lampiran'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Lihat',
-        part2: 'token yang tersedia'
-      },
+      description: 'Lihat {{tokens}} yang tersedia.',
       name: 'Nama file lampiran yang dihasilkan'
     },
     jpegQuality: {
@@ -211,41 +154,20 @@ export const id = {
       name: 'Kualitas JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Mulai dengan',
-        part2: 'untuk menggunakan jalur relatif.',
-        part3: 'Lihat',
-        part4: 'token yang tersedia',
-        part5: 'Folder titik seperti',
-        part6: 'tidak direkomendasikan, karena Obsidian tidak melacaknya. Anda mungkin perlu menggunakan',
-        part7: 'Plugin untuk mengelolanya.'
-      },
+      description: 'Mulai dengan {{relativePrefix}} untuk jalur yang relatif terhadap folder induk catatan.\nLihat {{tokens}} yang tersedia.\nFolder titik seperti {{dotFolder}} tidak direkomendasikan, karena Obsidian tidak melacaknya. Anda mungkin perlu menggunakan plugin {{unhidePlugin}} untuk mengelolanya.',
       name: 'Lokasi untuk lampiran baru'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Format untuk URL yang akan dimasukkan ke Markdown.',
-        part2: 'Lihat',
-        part3: 'token yang tersedia',
-        part4: 'Biarkan kosong untuk menggunakan format default.'
-      },
+      description: 'Format untuk URL yang akan dimasukkan ke Markdown saat lampiran ditambahkan. Format ini hanya diterapkan pada saat itu: tautan yang ditulis ulang oleh Obsidian kemudian, saat catatan atau lampiran diubah namanya atau dipindahkan, mendapatkan format default.\nLihat {{tokens}} yang tersedia.\nBiarkan kosong untuk menggunakan format default.',
       name: 'Format URL Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Apakah pengaturan folder lampiran dan nama berkas diterapkan pada lampiran yang dibuat plugin LAIN.',
-        part2: 'Sebagian plugin menulis lampiran langsung ke vault dengan nama pilihannya sendiri, tanpa menanyakan Obsidian di mana tempatnya. Bila ini diaktifkan, berkas seperti itu dipindahkan dan diganti namanya begitu muncul.',
-        part3: 'Hanya berkas yang dibuat saat sebuah catatan terbuka yang disentuh, tidak pernah berkas dari sinkronisasi atau impor vault.'
-      },
+      description: 'Apakah pengaturan folder lampiran dan nama berkas diterapkan pada lampiran yang dibuat plugin LAIN.\nSebagian plugin menulis lampiran langsung ke vault dengan nama pilihannya sendiri, tanpa menanyakan Obsidian di mana tempatnya. Bila ini diaktifkan, berkas seperti itu dipindahkan dan diganti namanya begitu muncul.\nHanya berkas yang dibuat saat sebuah catatan terbuka, dan ditautkan dari sebuah catatan, yang disentuh: berkas yang tidak ditautkan oleh catatan mana pun adalah data yang disimpan plugin lain untuk dirinya sendiri dan tetap berada di tempat ia ditulis. Berkas yang datang dari sinkronisasi atau impor vault tidak pernah disentuh.\n{{modes}}\nPlugin pembuat dikenali dari call stack penulisan. Ini hanya upaya terbaik: tidak ada plugin yang dikenali untuk berkas yang ditulis oleh Obsidian sendiri, oleh klien sinkronisasi, atau oleh plugin yang menunda penulisannya. Berkas seperti itu dianggap TIDAK ada dalam daftar di bawah.',
       name: 'Ganti nama lampiran yang dibuat plugin lain'
     },
     renameAttachmentsToLowerCase: 'Ubah nama lampiran menjadi huruf kecil',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Lihat',
-        part2: 'token yang tersedia',
-        part3: 'Biarkan kosong untuk mempertahankan nama file lampiran asli.'
-      },
+      description: 'Lihat {{tokens}} yang tersedia.\nBiarkan kosong untuk mempertahankan nama file lampiran saat ini.',
       name: 'Nama file lampiran yang diubah namanya'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +179,19 @@ export const id = {
       name: 'Haruskah mengkonversi gambar yang ditempel ke JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Jika diaktifkan, lampiran yang diproses melalui',
-        part2: 'Kumpulkan lampiran',
-        part3: 'perintah akan diubah namanya sesuai dengan',
-        part4: 'pengaturan.'
-      },
+      description: 'Jika diaktifkan, lampiran yang diproses melalui perintah {{command}} akan diubah namanya sesuai dengan pengaturan {{setting}}.',
       name: 'Haruskah mengubah nama lampiran yang dikumpulkan'
     },
     specialCharacters: {
-      description: {
-        part1: 'Karakter khusus dalam folder lampiran dan nama file yang akan diganti atau dihapus.',
-        part2: 'Biarkan kosong untuk mempertahankan karakter khusus.'
-      },
+      description: 'Karakter khusus dalam nama folder dan nama file lampiran yang akan diganti atau dihapus.\nBiarkan kosong untuk mempertahankan karakter khusus.',
       name: 'Karakter khusus'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'String pengganti untuk karakter khusus dalam folder lampiran dan nama file.',
-        part2: 'Biarkan kosong untuk menghapus karakter khusus.'
-      },
+      description: 'String pengganti untuk karakter khusus dalam nama folder dan nama file lampiran.\nBiarkan kosong untuk menghapus karakter khusus.',
       name: 'Penggantian karakter khusus'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Timeout dalam detik untuk semua operasi.',
-        part2: 'Jika',
-        part3: 'diatur, timeout eksekusi operasi dinonaktifkan.'
-      },
+      description: 'Timeout dalam detik untuk semua operasi.\nJika diatur ke {{zero}}, timeout eksekusi operasi dinonaktifkan.',
       name: 'Timeout dalam detik'
     }
   },

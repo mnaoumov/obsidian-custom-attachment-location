@@ -91,18 +91,18 @@ vi.mock('../attachment-location/identical-attachment.ts', () => ({
 }));
 
 vi.mock('@mnaoumov/typescript-lib/abort-controller', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/typescript-lib/abort-controller')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/typescript-lib/abort-controller')>()),
   abortSignalAny: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   isFile: vi.fn(),
   isFolder: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   editReferences: vi.fn(),
   updateLink: vi.fn()
 }));
@@ -112,17 +112,17 @@ vi.mock('@mnaoumov/obsidian-lib/loop', () => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>()),
   getBacklinksForFileSafe: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>()),
   copySafe: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/vault-delete', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault-delete')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault-delete')>()),
   deleteIfNotUsed: vi.fn()
 }));
 

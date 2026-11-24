@@ -1,9 +1,6 @@
 export const hu = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Szeretnéd összegyűjteni a mellékleteket a mappákban lévő összes jegyzethez rekurzívan?',
-      part2: 'Ez a művelet nem vonható vissza.'
-    },
+    confirm: 'Szeretnéd rekurzívan összegyűjteni a mellékleteket a mappákban lévő összes jegyzethez?\n{{folders}}\nEz a művelet nem vonható vissza.',
     progressBar: {
       message: 'Mellékletek összegyűjtése {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Mellékletek összegyűjtése...'
@@ -16,10 +13,7 @@ export const hu = {
     skip: 'Kihagyás'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Melléklet',
-      part2: 'több jegyzet hivatkozik rá.'
-    },
+    content: 'A(z) {{attachment}} mellékletre több jegyzet is hivatkozik.',
     heading: 'Több jegyzet által használt melléklet gyűjtése',
     noPriorityWinnerReason: {
       EmptyList: 'Nem került áthelyezésre, mert a(z) {{settingName}} beállítás üres, így semmi sem dönti el, hogy e jegyzetek közül melyikhez tartozik.',
@@ -33,6 +27,10 @@ export const hu = {
     collectAttachmentsCurrentNote: 'Mellékletek gyűjtése a jelenlegi jegyzetből',
     collectAttachmentsEntireVault: 'Mellékletek gyűjtése a teljes tárolóból'
   },
+  links: {
+    documentation: 'dokumentációt',
+    tokens: 'tokeneket'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Mellékletek összegyűjtése a fájlban',
     collectAttachmentsInFiles: 'Mellékletek összegyűjtése a fájlokban'
@@ -41,10 +39,7 @@ export const hu = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Mellékletek gyűjtése a következőhöz: \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Melléklet gyűjtés megszakítva. Részletekért lásd a konzolt.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'A generált melléklet fájlnév \'{{path}}\' érvénytelen.\n{{validationMessage}}\nEllenőrizd a',
-      part2: 'beállításodat.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'A(z) \'{{path}}\' generált melléklet fájlnév érvénytelen.\n{{validationMessage}}\nEllenőrizd a(z) {{settingName}} beállítást.',
     notePathIsIgnored: 'A jegyzet elérési útja figyelmen kívül marad'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const hu = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Az egyéni tokenek kommentbe kerültek, mert frissíteni kell őket a 9.0.0 verzióban bevezetett új formátumra.\n// További információért lásd a dokumentációt ({{customTokensDocumentationUrl}}).',
-      deprecated: {
-        part1: 'A 9.0.0 verzióban az egyéni token regisztráció formátuma megváltozott. Kérjük, frissítsd a tokenjeidet ennek megfelelően. Lásd a',
-        part2: 'dokumentációt',
-        part3: 'további információért'
-      }
+      deprecated: 'Az egyéni token regisztráció formátuma megváltozott. Kérjük, frissítsd a tokenjeidet ennek megfelelően. További információért lásd a {{documentation}}.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'A 9.0.0 verzióban a',
-      part2: 'beállítás elavult. Használd a',
-      part3: 'formátumot helyette. Lásd a',
-      part4: 'dokumentációt',
-      part5: 'további információért'
-    },
+    legacyRenameAttachmentsToLowerCase: 'A(z) {{setting}} beállítás elavult. Használd helyette a(z) {{format}} formátumot. További információért lásd a {{documentation}}.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Lehet, hogy hibás értéket állítottál be a',
-        part2: 'formátumhoz. Kérjük, lásd a',
-        part3: 'dokumentációt',
-        part4: 'további információért',
-        part5: 'Ez az üzenet nem jelenik meg újra.'
-      }
+      deprecated: 'Lehet, hogy hibás értéket állítottál be a(z) {{setting}} formátumhoz. További információért lásd a {{documentation}}. Ez az üzenet nem jelenik meg újra.'
     },
-    specialCharacters: {
-      part1: 'A 9.16.0 verzióban a',
-      part2: 'alapértelmezett beállítási érték megváltozott. A beállítási értéked frissítésre került az új alapértelmezett értékre.'
-    },
+    specialCharacters: 'A(z) {{setting}} beállítás alapértelmezett értéke megváltozott. A beállításod értéke frissült az új alapértelmezett értékre.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Az alapértelmezett képméretnek pixelben vagy százalékban kell megadva lennie',
       invalidCustomTokensCode: 'Érvénytelen egyéni token kód',
@@ -142,68 +118,35 @@ export const hu = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Fájlok csatolásakor:'
-      },
+      description: 'Fájlok csatolásakor:',
       name: 'Melléklet átnevezési mód'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Amikor a gyűjtött mellékletet több jegyzet használja:'
-      },
+      description: 'Amikor a gyűjtött mellékletet több jegyzet használja:',
       name: 'Több jegyzet által használt melléklet gyűjtési mód'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Lásd az elérhető',
-        part2: 'tokeneket',
-        part3: 'Hagyd üresen az eredeti melléklet fájlnév megtartásához.'
-      },
+      description: 'Lásd az elérhető {{tokens}}.\nHagyd üresen a melléklet jelenlegi fájlnevének megtartásához.',
       name: 'Gyűjtött melléklet fájlnév'
     },
     customTokens: {
-      description: {
-        part1: 'Használandó egyéni tokenek.',
-        part2: 'Lásd a',
-        part3: 'dokumentációt',
-        part4: 'további információért.',
-        part5: '⚠️ Az egyéni tokenek tetszőleges JavaScript kód lehetnek. Ha rosszul írták, adatvesztést okozhatnak. Saját felelősségre használd.'
-      },
+      description: 'Használandó egyéni tokenek.\nTovábbi információért lásd a {{documentation}}.\n⚠️ Az egyéni tokenek tetszőleges JavaScript kód lehetnek. Ha rosszul írták, adatvesztést okozhatnak. Saját felelősségre használd.',
       name: 'Egyéni tokenek'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Az alapértelmezett képméret.',
-        part2: 'Meghatározható pixelben',
-        part3: 'vagy a teljes képméret százalékában',
-        part4: 'Hagyja üresen az eredeti méret használatához.'
-      },
+      description: 'Az alapértelmezett képméret.\nMegadható pixelben ({{pixels}}) vagy a teljes képméret százalékában ({{percentage}}).\nHagyd üresen az eredeti képméret használatához.',
       name: 'Alapértelmezett képméret'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Amikor egy meglévő fájllal azonos nevű fájlt illesztesz be/húzol, ez az elválasztó kerül hozzáadásra a fájlnévhez.',
-        part2: 'Pl. amikor a fájlt',
-        part3: 'húzod, átnevezésre kerül',
-        part4: 'stb., az első elérhető nevet kapva.'
-      },
+      description: 'Amikor egy meglévő fájllal azonos nevű fájlt illesztesz be vagy húzol be, ez az elválasztó kerül a fájlnévhez.\nPl. amikor a(z) {{existingFile}} fájlt húzod be, az új neve {{firstAvailableName}}, {{secondAvailableName}} stb. lesz, az első még szabad név szerint.',
       name: 'Duplikált név elválasztó'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Mellékletek kizárása a következő útvonalakból, amikor a',
-        part2: 'Mellékletek gyűjtése',
-        part3: 'parancs végrehajtódik.',
-        part4: 'Minden útvonalat új sorba írj.',
-        part6: 'Ha a beállítás üres, egyetlen útvonal sem kerül kizárásra a melléklet gyűjtésből.'
-      },
+      description: 'Mellékletek kizárása a következő útvonalakról, amikor a(z) {{command}} parancs végrehajtódik.\nMinden útvonalat új sorba írj.\n{{pathSyntax}}\nHa a beállítás üres, egyetlen útvonal sem kerül kizárásra a melléklet gyűjtésből.',
       name: 'Útvonalak kizárása a melléklet gyűjtésből'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Lásd az elérhető',
-        part2: 'tokeneket'
-      },
+      description: 'Lásd az elérhető {{tokens}}.',
       name: 'Generált melléklet fájlnév'
     },
     jpegQuality: {
@@ -211,41 +154,20 @@ export const hu = {
       name: 'JPEG minőség'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Kezdd a',
-        part2: 'jelöléssel relatív útvonal használatához.',
-        part3: 'Lásd az elérhető',
-        part4: 'tokeneket',
-        part5: 'Pont mappák, mint a',
-        part6: 'nem ajánlottak, mert az Obsidian nem követi őket. Szükséged lehet',
-        part7: 'bővítményre a kezelésükhöz.'
-      },
+      description: 'A jegyzet szülőmappájához viszonyított relatív útvonalakhoz kezdd {{relativePrefix}} jelöléssel.\nLásd az elérhető {{tokens}}.\nA ponttal kezdődő mappák, mint a(z) {{dotFolder}}, nem ajánlottak, mert az Obsidian nem követi őket. A kezelésükhöz szükséged lehet a(z) {{unhidePlugin}} bővítményre.',
       name: 'Új mellékletek helye'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Formátum a Markdown-ba beillesztendő URL-hez.',
-        part2: 'Lásd az elérhető',
-        part3: 'tokeneket',
-        part4: 'Hagyd üresen az alapértelmezett formátum használatához.'
-      },
+      description: 'A Markdown-ba beillesztendő URL formátuma, amikor melléklet kerül hozzáadásra. Csak abban a pillanatban érvényes: az a hivatkozás, amelyet az Obsidian később ír át egy jegyzet vagy melléklet átnevezésekor vagy áthelyezésekor, az alapértelmezett formátumot kapja.\nLásd az elérhető {{tokens}}.\nHagyd üresen az alapértelmezett formátum használatához.',
       name: 'Markdown URL formátum'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Alkalmazza-e a melléklet mappa és fájlnév beállításait a MÁS bővítmények által létrehozott mellékletekre.',
-        part2: 'Egyes bővítmények saját néven írnak mellékletet a tárolóba, anélkül hogy megkérdeznék az Obsidiant, hová tartozik. Ha ez be van kapcsolva, az ilyen fájl a megjelenése után azonnal átkerül és átnevezésre kerül.',
-        part3: 'Csak a nyitott jegyzet mellett létrejövő fájlokat érinti, a szinkronizálásból vagy tárolóimportból érkezőket soha.'
-      },
+      description: 'Alkalmazza-e a melléklet mappa és fájlnév beállításait a MÁS bővítmények által létrehozott mellékletekre.\nEgyes bővítmények saját néven írnak mellékletet a tárolóba, anélkül hogy megkérdeznék az Obsidiant, hová tartozik. Ha ez be van kapcsolva, az ilyen fájl a megjelenése után azonnal áthelyezésre és átnevezésre kerül.\nCsak azokat a fájlokat érinti, amelyek egy nyitott jegyzet mellett jöttek létre, és amelyekre jegyzet hivatkozik: az a fájl, amelyre egyetlen jegyzet sem hivatkozik, egy másik bővítmény saját adata, és ott marad, ahová írták. A szinkronizálásból vagy tárolóimportból érkező fájlokat soha nem érinti.\n{{modes}}\nA létrehozó bővítményt az írási művelet hívási verméből azonosítja. Ez nem mindig sikerül: nem azonosítható bővítmény az Obsidian által, egy szinkronizáló kliens által vagy az írását késleltető bővítmény által írt fájlnál. Az ilyen fájl úgy számít, mint ami NINCS az alábbi listában.',
       name: 'Más bővítmények által létrehozott mellékletek átnevezése'
     },
     renameAttachmentsToLowerCase: 'Mellékletek átnevezése kisbetűre',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Lásd az elérhető',
-        part2: 'tokeneket',
-        part3: 'Hagyd üresen az eredeti melléklet fájlnév megtartásához.'
-      },
+      description: 'Lásd az elérhető {{tokens}}.\nHagyd üresen a melléklet jelenlegi fájlnevének megtartásához.',
       name: 'Átnevezett melléklet fájlnév'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +179,19 @@ export const hu = {
       name: 'Beillesztett képek JPEG-re konvertálása'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Ha engedélyezve, a',
-        part2: 'Mellékletek gyűjtése',
-        part3: 'parancsokon keresztül feldolgozott mellékletek átnevezésre kerülnek a',
-        part4: 'beállítás szerint.'
-      },
+      description: 'Ha engedélyezve van, a(z) {{command}} parancsokkal feldolgozott mellékletek a(z) {{setting}} beállítás szerint lesznek átnevezve.',
       name: 'Gyűjtött mellékletek átnevezése'
     },
     specialCharacters: {
-      description: {
-        part1: 'Speciális karakterek a melléklet mappában és fájlnévben cserélendő vagy eltávolítandó.',
-        part2: 'Hagyd üresen a speciális karakterek megőrzéséhez.'
-      },
+      description: 'A melléklet mappa- és fájlnevében cserélendő vagy eltávolítandó speciális karakterek.\nHagyd üresen a speciális karakterek megőrzéséhez.',
       name: 'Speciális karakterek'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Helyettesítő string a speciális karakterekhez a melléklet mappában és fájlnévben.',
-        part2: 'Hagyd üresen a speciális karakterek eltávolításához.'
-      },
+      description: 'Helyettesítő string a melléklet mappa- és fájlnevében lévő speciális karakterekhez.\nHagyd üresen a speciális karakterek eltávolításához.',
       name: 'Speciális karakterek helyettesítése'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Az időtúllépés másodpercekben minden művelethez.',
-        part2: 'Ha',
-        part3: 'be van állítva, a műveletek végrehajtási időtúllépése le van tiltva.'
-      },
+      description: 'Az időtúllépés másodpercekben minden művelethez.\nHa {{zero}} van beállítva, a műveletek végrehajtási időtúllépése le van tiltva.',
       name: 'Időtúllépés másodpercekben'
     }
   },

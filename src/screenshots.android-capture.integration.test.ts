@@ -565,7 +565,7 @@ async function pasteAttachment(notePath: string, fileName: string): Promise<stri
 
       return savedFile.path;
     },
-    input: { fileName, notePath, pngBytes: [...await buildScreenshotAttachment()] },
+    input: { fileName, notePath, pngBytes: [...(await buildScreenshotAttachment())] },
     vaultPath: vaultPath()
   });
 }

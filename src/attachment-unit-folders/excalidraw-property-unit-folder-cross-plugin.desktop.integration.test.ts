@@ -211,7 +211,7 @@ describe('A drawing marked by its excalidraw-plugin property is an attachment (i
           const confirmText = confirmContainerEl?.querySelector('.modal-content')?.textContent ?? '';
 
           // Confirm through the dialog's own button, so the queued operation's promise resolves.
-          const buttonEls = [...confirmContainerEl?.querySelectorAll<HTMLButtonElement>('button') ?? []];
+          const buttonEls = [...(confirmContainerEl?.querySelectorAll<HTMLButtonElement>('button') ?? [])];
           const okButtonEl = buttonEls.find((buttonEl) => buttonEl.textContent === 'OK') ?? buttonEls[0];
           okButtonEl?.click();
 

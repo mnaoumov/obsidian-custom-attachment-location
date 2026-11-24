@@ -125,8 +125,8 @@ export class ShareReceiverImportFilesPatchComponent extends MonkeyAroundComponen
   }
 
   private async generateFileName(file: SharedFile, note: null | TFile): Promise<string> {
-    const fileUri = window.Capacitor.convertFileSrc(file.uri);
-    const fetch = window.fetch.bind(window);
+    const fileUri = activeWindow.Capacitor.convertFileSrc(file.uri);
+    const fetch = activeWindow.fetch.bind(activeWindow);
     const response = await fetch(fileUri);
     const attachmentFileContent = await response.arrayBuffer();
     const substitutions = new Substitutions({

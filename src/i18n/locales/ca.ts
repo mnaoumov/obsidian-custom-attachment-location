@@ -1,9 +1,6 @@
 export const ca = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Vols recopilar els adjunts de totes les notes de les carpetes de manera recursiva?',
-      part2: 'Aquesta operació no es pot desfer.'
-    },
+    confirm: 'Vols recopilar els adjunts de totes les notes de les carpetes de manera recursiva?\n{{folders}}\nAquesta operació no es pot desfer.',
     progressBar: {
       message: 'Recollint adjunts {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Recollint adjunts...'
@@ -16,10 +13,7 @@ export const ca = {
     skip: 'Ometre'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'L\'adjunt',
-      part2: 'és referenciat per múltiples notes.'
-    },
+    content: 'L\'adjunt {{attachment}} és referenciat per múltiples notes.',
     heading: 'Recollint adjunt utilitzat per múltiples notes',
     noPriorityWinnerReason: {
       EmptyList: 'No s\'ha mogut perquè el paràmetre {{settingName}} és buit, de manera que res no decideix quina d\'aquestes notes el posseeix.',
@@ -33,6 +27,10 @@ export const ca = {
     collectAttachmentsCurrentNote: 'Recollir adjunts a la nota actual',
     collectAttachmentsEntireVault: 'Recollir adjunts a tot el dipòsit'
   },
+  links: {
+    documentation: 'documentació',
+    tokens: 'tokens'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Recopila els adjunts al fitxer',
     collectAttachmentsInFiles: 'Recopila els adjunts als fitxers'
@@ -41,10 +39,7 @@ export const ca = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Recollint adjunts per a \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Recollida d\'adjunts cancel·lada. Vegeu la consola per a detalls.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'El nom del fitxer adjunt generat \'{{path}}\' no és vàlid.\n{{validationMessage}}\nComproveu la vostra',
-      part2: 'configuració.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'El nom del fitxer adjunt generat \'{{path}}\' no és vàlid.\n{{validationMessage}}\nComproveu la configuració {{settingName}}.',
     notePathIsIgnored: 'El camí de la nota s\'ignora'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const ca = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Els tokens personalitzats van ser comentats ja que han de ser actualitzats al nou format introduït a la versió del plugin 9.0.0.\n// Consulteu la documentació ({{customTokensDocumentationUrl}}) per a més informació.',
-      deprecated: {
-        part1: 'A la versió del plugin 9.0.0, el format de registre de tokens personalitzats va canviar. Si us plau, actualitzeu els vostres tokens en conseqüència. Consulteu la',
-        part2: 'documentació',
-        part3: 'per a més informació'
-      }
+      deprecated: 'El format de registre de tokens personalitzats ha canviat. Si us plau, actualitzeu els vostres tokens en conseqüència. Consulteu la {{documentation}} per a més informació.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'A la versió del plugin 9.0.0, la',
-      part2: 'configuració està obsoleta. Utilitzeu el',
-      part3: 'format en lloc d\'això. Vegeu la',
-      part4: 'documentació',
-      part5: 'per a més informació'
-    },
+    legacyRenameAttachmentsToLowerCase: 'La configuració {{setting}} està obsoleta. Utilitzeu el format {{format}} en lloc seu. Vegeu la {{documentation}} per a més informació.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Teniu un valor potencialment incorrecte establert per al',
-        part2: 'format. Si us plau, consulteu la',
-        part3: 'documentació',
-        part4: 'per a més informació',
-        part5: 'Aquest missatge no es mostrarà de nou.'
-      }
+      deprecated: 'Potser teniu un valor incorrecte establert per al format {{setting}}. Consulteu la {{documentation}} per a més informació. Aquest missatge no es mostrarà de nou.'
     },
-    specialCharacters: {
-      part1: 'A la versió del plugin 9.16.0, el',
-      part2: 'valor de configuració per defecte va canviar. El vostre valor de configuració va ser actualitzat al nou valor per defecte.'
-    },
+    specialCharacters: 'El valor per defecte de la configuració {{setting}} ha canviat. El vostre valor de configuració s\'ha actualitzat al nou valor per defecte.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'La mida predeterminada de la imatge s\'ha d\'expressar en píxels o percentatge',
       invalidCustomTokensCode: 'Codi de tokens personalitzats no vàlid',
@@ -142,68 +118,35 @@ export const ca = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Quan s\'adjunten fitxers:'
-      },
+      description: 'Quan s\'adjunten fitxers:',
       name: 'Mode de reanomenament d\'adjunts'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Quan l\'adjunt recollit és utilitzat per múltiples notes:'
-      },
+      description: 'Quan l\'adjunt recollit és utilitzat per múltiples notes:',
       name: 'Mode de recollida d\'adjunt utilitzat per múltiples notes'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Vegeu els',
-        part2: 'tokens disponibles',
-        part3: 'Deixeu buit per mantenir el nom de fitxer adjunt original.'
-      },
+      description: 'Vegeu els {{tokens}} disponibles.\nDeixeu-ho buit per mantenir el nom actual del fitxer adjunt.',
       name: 'Nom de fitxer adjunt recollit'
     },
     customTokens: {
-      description: {
-        part1: 'Tokens personalitzats a utilitzar.',
-        part2: 'Vegeu la',
-        part3: 'documentació',
-        part4: 'per a més informació.',
-        part5: '⚠️ Els tokens personalitzats poden ser codi JavaScript arbitrari. Si estan mal escrits, poden causar pèrdua de dades. Utilitzeu-los sota la vostra responsabilitat.'
-      },
+      description: 'Tokens personalitzats a utilitzar.\nVegeu la {{documentation}} per a més informació.\n⚠️ Els tokens personalitzats poden ser codi JavaScript arbitrari. Si estan mal escrits, poden causar pèrdua de dades. Utilitzeu-los sota la vostra responsabilitat.',
       name: 'Tokens personalitzats'
     },
     defaultImageSize: {
-      description: {
-        part1: 'La mida predeterminada de la imatge.',
-        part2: 'Es pot especificar en píxels',
-        part3: 'o en percentatge de la mida completa de la imatge',
-        part4: 'Deixa-ho en blanc per utilitzar la mida original de la imatge.'
-      },
+      description: 'La mida predeterminada de la imatge.\nEs pot especificar en píxels ({{pixels}}) o en percentatge de la mida completa de la imatge ({{percentage}}).\nDeixeu-ho en blanc per utilitzar la mida original de la imatge.',
       name: 'Mida predeterminada de la imatge'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Quan enganxeu/arrossegueu un fitxer amb el mateix nom que un fitxer existent, aquest separador s\'afegirà al nom del fitxer.',
-        part2: 'Per exemple, quan arrossegueu el fitxer',
-        part3: ', es reanomenarà a',
-        part4: ', etc., obtenint el primer nom disponible.'
-      },
+      description: 'Quan enganxeu/arrossegueu un fitxer amb el mateix nom que un fitxer existent, aquest separador s\'afegirà al nom del fitxer.\nPer exemple, quan arrossegueu el fitxer {{existingFile}}, es reanomenarà a {{firstAvailableName}}, {{secondAvailableName}}, etc., i s\'agafarà el primer nom disponible.',
       name: 'Separador de noms duplicats'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Excloure adjunts dels següents camins quan',
-        part2: 'Recollir adjunts',
-        part3: 's\'executa la comanda.',
-        part4: 'Inseriu cada camí en una línia nova.',
-        part6: 'Si la configuració està buida, cap camí no s\'exclou de la recollida d\'adjunts.'
-      },
+      description: 'Exclou els adjunts dels camins següents quan s\'executa la comanda {{command}}.\nInseriu cada camí en una línia nova.\n{{pathSyntax}}\nSi la configuració està buida, cap camí no s\'exclou de la recollida d\'adjunts.',
       name: 'Excloure camins de la recollida d\'adjunts'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Vegeu els',
-        part2: 'tokens disponibles'
-      },
+      description: 'Vegeu els {{tokens}} disponibles.',
       name: 'Nom de fitxer adjunt generat'
     },
     jpegQuality: {
@@ -211,41 +154,20 @@ export const ca = {
       name: 'Qualitat JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Començar amb',
-        part2: 'per utilitzar camí relatiu.',
-        part3: 'Vegeu els',
-        part4: 'tokens disponibles',
-        part5: 'Les carpetes amb punt com',
-        part6: 'no es recomanen, perquè Obsidian no les rastreja. Potser necessiteu utilitzar un',
-        part7: 'Plugin per gestionar-les.'
-      },
+      description: 'Comenceu amb {{relativePrefix}} per a camins relatius a la carpeta pare de la nota.\nVegeu els {{tokens}} disponibles.\nLes carpetes amb punt com {{dotFolder}} no es recomanen, perquè Obsidian no les rastreja. Potser necessiteu el plugin {{unhidePlugin}} per gestionar-les.',
       name: 'Ubicació per a nous adjunts'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Format per a l\'URL que s\'inserirà a Markdown.',
-        part2: 'Vegeu els',
-        part3: 'tokens disponibles',
-        part4: 'Deixeu buit per utilitzar el format per defecte.'
-      },
+      description: 'Format per a l\'URL que s\'inserirà a Markdown quan s\'afegeixi un adjunt. Només s\'aplica en aquell moment: un enllaç que Obsidian reescrigui més tard, quan es reanomeni o es mogui una nota o un adjunt, rep el format per defecte.\nVegeu els {{tokens}} disponibles.\nDeixeu-ho buit per utilitzar el format per defecte.',
       name: 'Format URL Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Si cal aplicar la configuració de carpeta d\'adjunts i de nom de fitxer als adjunts que creen ALTRES connectors.',
-        part2: 'Alguns connectors escriuen un adjunt al magatzem amb un nom propi, sense preguntar a Obsidian on correspon. Amb això activat, aquest fitxer es mou i es reanomena tot just apareix.',
-        part3: 'Només s\'afecten els fitxers creats amb una nota oberta, mai els que arriben d\'una sincronització o d\'una importació de magatzem.'
-      },
+      description: 'Si cal aplicar la configuració de carpeta d\'adjunts i de nom de fitxer als adjunts que creen ALTRES connectors.\nAlguns connectors escriuen un adjunt al magatzem amb un nom propi, sense preguntar a Obsidian on correspon. Amb això activat, aquest fitxer es mou i es reanomena tot just apareix.\nNomés s\'afecten els fitxers creats amb una nota oberta i enllaçats des d\'una nota: un fitxer que cap nota no enllaça són dades que un altre connector guarda per a si mateix, i es queda on s\'ha escrit. Els fitxers que arriben d\'una sincronització o d\'una importació de magatzem no es toquen mai.\n{{modes}}\nEl connector creador s\'identifica a partir de la pila de crides de l\'escriptura. És una aproximació: no s\'identifica cap connector per a un fitxer escrit pel mateix Obsidian, per un client de sincronització o per un connector que ajorna l\'escriptura. Un fitxer així compta com a NO inclòs a la llista següent.',
       name: 'Reanomena els adjunts creats per altres connectors'
     },
     renameAttachmentsToLowerCase: 'Reanomenar adjunts a minúscules',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Vegeu els',
-        part2: 'tokens disponibles',
-        part3: 'Deixeu buit per mantenir el nom de fitxer adjunt original.'
-      },
+      description: 'Vegeu els {{tokens}} disponibles.\nDeixeu-ho buit per mantenir el nom actual del fitxer adjunt.',
       name: 'Nom de fitxer adjunt reanomenat'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +179,19 @@ export const ca = {
       name: 'Si convertir les imatges enganxades a JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Si està habilitat, els adjunts processats via',
-        part2: 'Recollir adjunts',
-        part3: 'les comandes es reanomenaran segons la',
-        part4: 'configuració.'
-      },
+      description: 'Si està habilitat, els adjunts processats per les comandes {{command}} es reanomenaran segons la configuració {{setting}}.',
       name: 'Si reanomenar adjunts recollits'
     },
     specialCharacters: {
-      description: {
-        part1: 'Caràcters especials a la carpeta d\'adjunts i nom del fitxer per ser reemplaçats o eliminats.',
-        part2: 'Deixeu buit per preservar caràcters especials.'
-      },
+      description: 'Caràcters especials del nom de la carpeta d\'adjunts i del fitxer que s\'han de reemplaçar o eliminar.\nDeixeu-ho buit per preservar els caràcters especials.',
       name: 'Caràcters especials'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Cadena de reemplaçament per caràcters especials a la carpeta d\'adjunts i nom del fitxer.',
-        part2: 'Deixeu buit per eliminar caràcters especials.'
-      },
+      description: 'Cadena de reemplaçament per als caràcters especials del nom de la carpeta d\'adjunts i del fitxer.\nDeixeu-ho buit per eliminar els caràcters especials.',
       name: 'Reemplaçament de caràcters especials'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'El temps d\'espera en segons per a totes les operacions.',
-        part2: 'Si',
-        part3: 'està establert, el temps d\'espera d\'execució d\'operacions està deshabilitat.'
-      },
+      description: 'El temps d\'espera en segons per a totes les operacions.\nSi s\'estableix {{zero}}, el temps d\'espera d\'execució de les operacions es desactiva.',
       name: 'Temps d\'espera en segons'
     }
   },

@@ -1,9 +1,6 @@
 export const sq = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Dëshiron të mbledhësh bashkëngjitjet për të gjitha shënimet në dosje në mënyrë rekursive?',
-      part2: 'Ky veprim nuk mund të zhbëhet.'
-    },
+    confirm: 'Dëshiron të mbledhësh në mënyrë rekursive bashkëngjitjet për të gjitha shënimet në dosje?\n{{folders}}\nKy veprim nuk mund të zhbëhet.',
     progressBar: {
       message: 'Duke mbledhur bashkëngjitjet {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Duke mbledhur bashkëngjitjet...'
@@ -16,10 +13,7 @@ export const sq = {
     skip: 'Kalo'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Bashkëngjitja',
-      part2: 'është e referuar nga disa shënime.'
-    },
+    content: 'Bashkëngjitja {{attachment}} është e referuar nga disa shënime.',
     heading: 'Duke mbledhur bashkëngjitjen e përdorur nga disa shënime',
     noPriorityWinnerReason: {
       EmptyList: 'Nuk u zhvendos sepse cilësimi {{settingName}} është bosh, prandaj asgjë nuk vendos se cili prej këtyre shënimeve e zotëron.',
@@ -33,6 +27,10 @@ export const sq = {
     collectAttachmentsCurrentNote: 'Mblidh bashkëngjitjet në shënimin aktual',
     collectAttachmentsEntireVault: 'Mblidh bashkëngjitjet në gjithë depozitën'
   },
+  links: {
+    documentation: 'dokumentacionin',
+    tokens: 'tokenat'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Mblidh bashkëngjitjet në skedar',
     collectAttachmentsInFiles: 'Mblidh bashkëngjitjet në skedarë'
@@ -41,10 +39,7 @@ export const sq = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Duke mbledhur bashkëngjitjet për \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Mbledhja e bashkëngjitjeve u anulua. Kontrolloni konsolën për detaje.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Emri i gjeneruar i skedarit të bashkëngjitur \'{{path}}\' është i pavlefshëm.\n{{validationMessage}}\nKontrolloni',
-      part2: 'cilësimet tuaja.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Emri i gjeneruar i skedarit të bashkëngjitur \'{{path}}\' është i pavlefshëm.\n{{validationMessage}}\nKontrolloni cilësimin {{settingName}}.',
     notePathIsIgnored: 'Shtegu i shënimit është injoruar'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const sq = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Tokenat e personalizuar u komentuan pasi duhet të përditësohen me formatin e ri të prezantuar në versionin 9.0.0 të shtesës.\n// Referojuni dokumentacionit ({{customTokensDocumentationUrl}}) për më shumë informacione.',
-      deprecated: {
-        part1: 'Në versionin 9.0.0 të shtesës formati i regjistrimit të tokenave të personalizuar ndryshoi. Ju lutemi përditësoni tokenat tuaj siç duhet. Referojuni',
-        part2: 'dokumentacionit',
-        part3: 'për më shumë informacione'
-      }
+      deprecated: 'Formati i regjistrimit të tokenave të personalizuar ndryshoi. Ju lutemi përditësoni tokenat tuaj siç duhet. Shihni {{documentation}} për më shumë informacione.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'Në versionin 9.0.0 të shtesës, kjo',
-      part2: 'cilësim është i vjetruar. Përdorni',
-      part3: 'formatin në vend të saj. Shihni',
-      part4: 'dokumentacionin',
-      part5: 'për më shumë informacione'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Cilësimi {{setting}} është i vjetruar. Përdorni në vend të tij formatin {{format}}. Shihni {{documentation}} për më shumë informacione.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Keni një vlerë potencialisht të gabuar të vendosur për',
-        part2: 'formatin. Ju lutemi referojuni',
-        part3: 'dokumentacionit',
-        part4: 'për më shumë informacione.',
-        part5: 'Ky mesazh nuk do të shfaqet më.'
-      }
+      deprecated: 'Keni një vlerë potencialisht të gabuar të vendosur për formatin {{setting}}. Ju lutemi shihni {{documentation}} për më shumë informacione. Ky mesazh nuk do të shfaqet më.'
     },
-    specialCharacters: {
-      part1: 'Në versionin 9.16.0 të shtesës,',
-      part2: 'vlera e parazgjedhur e cilësimit u ndryshua. Vlera juaj u përditësua me atë të re.'
-    },
+    specialCharacters: 'Vlera e parazgjedhur e cilësimit {{setting}} u ndryshua. Vlera juaj u përditësua me vlerën e re të parazgjedhur.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Madhësia e paracaktuar e imazhit duhet të jetë në pika ose në përqindje',
       invalidCustomTokensCode: 'Kod i pavlefshëm i tokenave të personalizuar',
@@ -142,67 +118,35 @@ export const sq = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Kur bashkëngjitni skedarë:'
-      },
+      description: 'Kur bashkëngjitni skedarë:',
       name: 'Mënyra e riemërtimit të bashkëngjitjeve'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Kur bashkëngjitja e mbledhur përdoret nga disa shënime:'
-      },
+      description: 'Kur bashkëngjitja e mbledhur përdoret nga disa shënime:',
       name: 'Mënyra e mbledhjes së bashkëngjitjeve të përdorura nga disa shënime'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Shih',
-        part2: 'tokenat e disponueshëm'
-      },
+      description: 'Shih {{tokens}} e disponueshëm.\nLëreni bosh për të ruajtur emrin aktual të skedarit të bashkëngjitur.',
       name: 'Emri i skedarit të bashkëngjitur të mbledhur'
     },
     customTokens: {
-      description: {
-        part1: 'Tokena të personalizuar që do të përdoren.',
-        part2: 'Shih',
-        part3: 'dokumentacionin',
-        part4: 'për më shumë informacione.',
-        part5: '⚠️ Tokenat e personalizuar mund të përmbajnë kod arbitrar JavaScript. Nëse shkruhen gabim, mund të shkaktojnë humbje të të dhënave. Përdoreni me kujdes.'
-      },
+      description: 'Tokena të personalizuar që do të përdoren.\nShih {{documentation}} për më shumë informacione.\n⚠️ Tokenat e personalizuar mund të përmbajnë kod arbitrar JavaScript. Nëse shkruhen gabim, mund të shkaktojnë humbje të të dhënave. Përdoreni me kujdes.',
       name: 'Tokena të personalizuar'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Madhësia e paracaktuar e imazhit.',
-        part2: 'Mund të specifikohet në pika',
-        part3: 'ose në përqindje të madhësisë së plotë të imazhit',
-        part4: 'Lëreni bosh për të përdorur madhësinë origjinale të imazhit.'
-      },
+      description: 'Madhësia e paracaktuar e imazhit.\nMund të specifikohet në pika ({{pixels}}) ose në përqindje të madhësisë së plotë të imazhit ({{percentage}}).\nLëreni bosh për të përdorur madhësinë origjinale të imazhit.',
       name: 'Madhësia e paracaktuar e imazhit'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Kur ngjisni ose tërhiqni një skedar me të njëjtin emër si një ekzistues, ky ndarës do të shtohet në emër.',
-        part2: 'P.sh., kur tërhiqni skedarin',
-        part3: ', do të riemërtohet në ',
-        part4: ', etj., duke marrë emrin e parë të lirë.'
-      },
+      description: 'Kur ngjisni ose tërhiqni një skedar me të njëjtin emër si një skedar ekzistues, ky ndarës do t’i shtohet emrit të skedarit.\nP.sh., kur tërhiqni skedarin {{existingFile}}, ai do të riemërtohet në {{firstAvailableName}}, {{secondAvailableName}} etj., duke marrë emrin e parë të lirë.',
       name: 'Ndarës për emra të dyfishtë'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Përjashto bashkëngjitjet nga këto shtigje kur komanda',
-        part2: 'Mblidh bashkëngjitjet',
-        part3: 'ekzekutohet.',
-        part4: 'Futni çdo shteg në një rresht të ri.',
-        part6: 'Nëse cilësimi është bosh, asnjë shteg nuk përjashtohet nga mbledhja.'
-      },
+      description: 'Përjashto bashkëngjitjet nga shtigjet e mëposhtme kur ekzekutohet komanda {{command}}.\nFutni çdo shteg në një rresht të ri.\n{{pathSyntax}}\nNëse cilësimi është bosh, asnjë shteg nuk përjashtohet nga mbledhja e bashkëngjitjeve.',
       name: 'Përjashto shtigje nga mbledhja e bashkëngjitjeve'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Shih',
-        part2: 'tokenat e disponueshëm'
-      },
+      description: 'Shih {{tokens}} e disponueshëm.',
       name: 'Emri i gjeneruar i skedarit të bashkëngjitur'
     },
     jpegQuality: {
@@ -210,40 +154,20 @@ export const sq = {
       name: 'Cilësia JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Filloni me',
-        part2: 'për të përdorur një shteg relativ.',
-        part3: 'Shih',
-        part4: 'tokenat e disponueshëm',
-        part5: 'Dosjet me pikë si',
-        part6: 'nuk rekomandohen, sepse Obsidian nuk i ndjek ato. Mund t’ju duhet të përdorni një',
-        part7: 'shtesë për t’i menaxhuar ato.'
-      },
+      description: 'Filloni me {{relativePrefix}} për shtigje relative ndaj dosjes mëmë të shënimit.\nShih {{tokens}} e disponueshëm.\nDosjet me pikë, si {{dotFolder}}, nuk rekomandohen, sepse Obsidian nuk i ndjek. Mund t’ju duhet shtesa {{unhidePlugin}} për t’i menaxhuar.',
       name: 'Vendndodhja për bashkëngjitje të reja'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Formati i URL-së që do të futet në Markdown.',
-        part2: 'Shih',
-        part3: 'tokenat e disponueshëm',
-        part4: 'Lëreni bosh për të përdorur formatin parazgjedhur.'
-      },
+      description: 'Formati i URL-së që do të futet në Markdown kur shtohet një bashkëngjitje. Zbatohet vetëm në atë moment: një lidhje që Obsidian e rishkruan më vonë, kur një shënim ose një bashkëngjitje riemërtohet ose zhvendoset, merr formatin e parazgjedhur.\nShih {{tokens}} e disponueshëm.\nLëreni bosh për të përdorur formatin e parazgjedhur.',
       name: 'Formati i URL-së Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Nëse cilësimet e dosjes së bashkëngjitjeve dhe të emrit të skedarit zbatohen edhe për bashkëngjitjet që krijojnë shtojca të TJERA.',
-        part2: 'Disa shtojca e shkruajnë bashkëngjitjen drejt e në kasafortë me një emër të tyrin, pa e pyetur Obsidian se ku i takon. Me këtë të aktivizuar, një skedar i tillë zhvendoset dhe riemërtohet sapo shfaqet.',
-        part3: 'Preken vetëm skedarët e krijuar ndërsa një shënim është i hapur, kurrë skedarët që vijnë nga një sinkronizim ose nga një import kasaforte.'
-      },
+      description: 'Nëse cilësimet e dosjes së bashkëngjitjeve dhe të emrit të skedarit zbatohen edhe për bashkëngjitjet që krijojnë shtojca të TJERA.\nDisa shtojca e shkruajnë bashkëngjitjen drejt e në kasafortë me një emër të tyrin, pa e pyetur Obsidian se ku i takon. Me këtë të aktivizuar, një skedar i tillë zhvendoset dhe riemërtohet sapo shfaqet.\nPreken vetëm skedarët e krijuar ndërsa një shënim është i hapur dhe te të cilët lidhet një shënim: një skedar te i cili nuk lidhet asnjë shënim përmban të dhëna që një shtojcë tjetër i mban për vete dhe mbetet aty ku u shkrua. Skedarët që vijnë nga një sinkronizim ose nga një import kasaforte nuk preken kurrë.\n{{modes}}\nShtojca që e krijoi skedarin identifikohet nga stiva e thirrjeve të shkrimit. Kjo bëhet sipas mundësive: asnjë shtojcë nuk identifikohet për një skedar të shkruar nga vetë Obsidian, nga një klient sinkronizimi ose nga një shtojcë që e shtyn shkrimin. Një skedar i tillë llogaritet si JO në listën më poshtë.',
       name: 'Riemërto bashkëngjitjet e krijuara nga shtojca të tjera'
     },
     renameAttachmentsToLowerCase: 'Riemërto bashkëngjitjet me shkronja të vogla',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Shih',
-        part2: 'tokenat e disponueshëm'
-      },
+      description: 'Shih {{tokens}} e disponueshëm.\nLëreni bosh për të ruajtur emrin aktual të skedarit të bashkëngjitur.',
       name: 'Emri i skedarit të bashkëngjitur të riemërtuar'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +179,19 @@ export const sq = {
       name: 'Konverto imazhet e ngjitura në JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Nëse aktivizohet, bashkëngjitjet e përpunuara nga komanda',
-        part2: 'Mblidh bashkëngjitjet',
-        part3: 'do të riemërtohen sipas',
-        part4: 'cilësimeve.'
-      },
+      description: 'Nëse aktivizohet, bashkëngjitjet e përpunuara nga komandat {{command}} do të riemërtohen sipas cilësimit {{setting}}.',
       name: 'Riemërto bashkëngjitjet e mbledhura'
     },
     specialCharacters: {
-      description: {
-        part1: 'Karakteret speciale në emrin e dosjes ose skedarit të bashkëngjitjes që do të zëvendësohen ose hiqen.',
-        part2: 'Lëreni bosh për të ruajtur karakteret speciale.'
-      },
+      description: 'Karakteret speciale në emrin e dosjes dhe të skedarit të bashkëngjitjes që do të zëvendësohen ose hiqen.\nLëreni bosh për të ruajtur karakteret speciale.',
       name: 'Karaktere speciale'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Vargu i zëvendësimit për karakteret speciale në dosje ose në emrin e skedarit të bashkëngjitur.',
-        part2: 'Lëreni bosh për t’i hequr karakteret speciale.'
-      },
+      description: 'Vargu i zëvendësimit për karakteret speciale në emrin e dosjes dhe të skedarit të bashkëngjitur.\nLëreni bosh për t’i hequr karakteret speciale.',
       name: 'Zëvendësim i karaktereve speciale'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Koha në sekonda për të gjitha operacionet.',
-        part2: 'Nëse',
-        part3: 'është i vendosur, koha e operacionit është e çaktivizuar.'
-      },
+      description: 'Kufiri i kohës në sekonda për të gjitha operacionet.\nNëse vendoset {{zero}}, kufiri i kohës për ekzekutimin e operacioneve çaktivizohet.',
       name: 'Kufiri i kohës në sekonda'
     }
   },

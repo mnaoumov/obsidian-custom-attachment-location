@@ -89,12 +89,11 @@ class CollectSettingsMigrationModal extends ModalBase<null | SettingsMigrationRo
   public override onOpen(): void {
     this.titleEl.setText(t(($) => $.settingsMigrationModal.title, { sourcePluginName: this.sourcePluginName }));
 
-    this.contentEl.createEl('p', {
-      text: t(($) => $.settingsMigrationModal.explanation.part1, { sourcePluginName: this.sourcePluginName })
-    });
-    this.contentEl.createEl('p', {
-      text: t(($) => $.settingsMigrationModal.explanation.part2)
-    });
+    // One string to translate; a blank line in it separates the paragraphs.
+    const explanation = t(($) => $.settingsMigrationModal.explanation, { sourcePluginName: this.sourcePluginName });
+    for (const paragraph of explanation.split('\n\n')) {
+      this.contentEl.createEl('p', { text: paragraph });
+    }
 
     for (const row of this.rows) {
       this.renderRow(row);

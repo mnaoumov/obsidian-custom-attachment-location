@@ -1,9 +1,6 @@
 export const zh = {
   attachmentCollector: {
-    confirm: {
-      part1: '是否要递归收集文件夹中所有笔记的附件？',
-      part2: '此操作无法撤销。'
-    },
+    confirm: '是否要递归收集以下文件夹中所有笔记的附件？\n{{folders}}\n此操作无法撤销。',
     progressBar: {
       message: '正在收集附件 {{iterationString}} - \'{{noteFilePath}}\'。',
       title: '正在收集附件...'
@@ -16,10 +13,7 @@ export const zh = {
     skip: '跳过'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: '附件',
-      part2: '被多个笔记引用。'
-    },
+    content: '附件 {{attachment}} 被多个笔记引用。',
     heading: '正在收集被多个笔记使用的附件',
     noPriorityWinnerReason: {
       EmptyList: '未移动，因为 {{settingName}} 设置为空，没有依据判断这些笔记中哪一个拥有它。',
@@ -33,6 +27,10 @@ export const zh = {
     collectAttachmentsCurrentNote: '收集当前笔记中的附件',
     collectAttachmentsEntireVault: '收集整个库中的附件'
   },
+  links: {
+    documentation: '文档',
+    tokens: '令牌'
+  },
   menuItems: {
     collectAttachmentsInFile: '在文件中收集附件',
     collectAttachmentsInFiles: '在多个文件中收集附件'
@@ -41,10 +39,7 @@ export const zh = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '正在为 \'{{noteFilePath}}\' 收集附件',
     collectingAttachmentsCancelled: '附件收集已取消。详情请查看控制台。',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: '生成的附件文件名 \'{{path}}\' 无效。\n{{validationMessage}}\n请检查',
-      part2: '设置。'
-    },
+    generatedAttachmentFileNameIsInvalid: '生成的附件文件名 \'{{path}}\' 无效。\n{{validationMessage}}\n请检查 {{settingName}} 设置。',
     notePathIsIgnored: '笔记路径已被忽略'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const zh = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// 自定义令牌已被注释掉，因为它们需要更新为插件 9.0.0 版本引入的新格式。\n// 更多信息请参考文档 ({{customTokensDocumentationUrl}})。',
-      deprecated: {
-        part1: '在插件 9.0.0 版本中，自定义令牌注册格式已更改。请相应更新你的令牌。参考',
-        part2: '文档',
-        part3: '了解更多信息'
-      }
+      deprecated: '自定义令牌的注册格式已更改。请相应更新你的令牌。更多信息请参阅{{documentation}}。'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: '在插件 9.0.0 版本中，',
-      part2: '设置已弃用。请使用',
-      part3: '格式代替。参见',
-      part4: '文档',
-      part5: '了解更多信息'
-    },
+    legacyRenameAttachmentsToLowerCase: '{{setting}} 设置已弃用。请改用 {{format}} 格式。更多信息请参阅{{documentation}}。',
     markdownUrlFormat: {
-      deprecated: {
-        part1: '你可能为',
-        part2: '格式设置了错误的值。请参考',
-        part3: '文档',
-        part4: '了解更多信息',
-        part5: '此消息不会再次显示。'
-      }
+      deprecated: '你为 {{setting}} 格式设置的值可能不正确。更多信息请参阅{{documentation}}。此消息不会再次显示。'
     },
-    specialCharacters: {
-      part1: '在插件版本 9.16.0 中，',
-      part2: '默认设置值已更改。您的设置值已更新为新的默认值。'
-    },
+    specialCharacters: '{{setting}} 设置的默认值已更改。你的设置值已更新为新的默认值。',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: '默认图像大小必须为像素或百分比',
       invalidCustomTokensCode: '无效的自定义令牌代码',
@@ -142,41 +118,23 @@ export const zh = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: '当附加文件时：'
-      },
+      description: '附加文件时：',
       name: '附件重命名模式'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: '当收集的附件被多个笔记使用时：'
-      },
+      description: '当收集的附件被多个笔记使用时：',
       name: '收集被多个笔记使用的附件模式'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: '查看可用',
-        part2: '令牌'
-      },
+      description: '查看可用的{{tokens}}。\n留空以保留附件当前的文件名。',
       name: '收集的附件文件名'
     },
     customTokens: {
-      description: {
-        part1: '要使用的自定义令牌。',
-        part2: '参见',
-        part3: '文档',
-        part4: '了解更多信息。',
-        part5: '⚠️ 自定义令牌可以是任意 JavaScript 代码。如果编写不当，可能会导致数据丢失。风险自担。'
-      },
+      description: '要使用的自定义令牌。\n更多信息请参阅{{documentation}}。\n⚠️ 自定义令牌可以是任意 JavaScript 代码。如果编写不当，可能会导致数据丢失。使用风险自负。',
       name: '自定义令牌'
     },
     defaultImageSize: {
-      description: {
-        part1: '默认图像大小。',
-        part2: '可以用像素指定',
-        part3: '或者是图像完整尺寸的百分比',
-        part4: '保留为空以使用原始图像大小。'
-      },
+      description: '默认图像大小。\n可以用像素（{{pixels}}）或图像完整尺寸的百分比（{{percentage}}）指定。\n留空以使用原始图像大小。',
       name: '默认图像大小'
     },
     downloadNetworkImages: {
@@ -184,29 +142,15 @@ export const zh = {
       name: '下载网络图片'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: '当你粘贴/拖拽一个与现有文件同名的文件时，此分隔符会添加到文件名中。',
-        part2: '例如，当你拖拽文件',
-        part3: '时，它会被重命名为',
-        part4: '，依此类推，直到获得第一个可用名称。'
-      },
+      description: '当你粘贴或拖入与现有文件同名的文件时，会在文件名中添加此分隔符。\n例如，当你拖入文件 {{existingFile}} 时，它会被重命名为 {{firstAvailableName}}、{{secondAvailableName}} 等，取第一个可用的名称。',
       name: '重复文件名分隔符'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: '当执行',
-        part2: '收集附件',
-        part3: '命令时，排除以下路径中的附件。',
-        part4: '每行输入一个路径。',
-        part6: '如果设置为空，则不会排除任何路径。'
-      },
+      description: '执行 {{command}} 命令时，排除以下路径中的附件。\n每行输入一个路径。\n{{pathSyntax}}\n如果设置为空，则不会从附件收集中排除任何路径。',
       name: '从附件收集中排除路径'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: '查看可用',
-        part2: '令牌'
-      },
+      description: '查看可用的{{tokens}}。',
       name: '生成的附件文件名'
     },
     jpegQuality: {
@@ -214,24 +158,11 @@ export const zh = {
       name: 'JPEG 质量'
     },
     locationForNewAttachments: {
-      description: {
-        part1: '以',
-        part2: '开头使用相对路径。',
-        part3: '查看可用',
-        part4: '令牌',
-        part5: '像',
-        part6: '这样的点文件夹不推荐使用，因为 Obsidian 不会跟踪它们。你可能需要使用',
-        part7: '插件来管理它们。'
-      },
+      description: '以 {{relativePrefix}} 开头表示相对于笔记所在文件夹的路径。\n查看可用的{{tokens}}。\n不推荐使用 {{dotFolder}} 这样的点文件夹，因为 Obsidian 不会跟踪它们。你可能需要使用 {{unhidePlugin}} 插件来管理它们。',
       name: '新附件位置'
     },
     markdownUrlFormat: {
-      description: {
-        part1: '插入到 Markdown 中的 URL 格式。',
-        part2: '查看可用',
-        part3: '令牌',
-        part4: '留空以使用默认格式。'
-      },
+      description: '添加附件时插入到 Markdown 中的 URL 格式。它只在插入的那一刻生效：之后笔记或附件被重命名或移动时，Obsidian 重写的链接会使用默认格式。\n查看可用的{{tokens}}。\n留空以使用默认格式。',
       name: 'Markdown URL 格式'
     },
     networkImageDownloadTimeoutInSeconds: {
@@ -239,19 +170,12 @@ export const zh = {
       name: '网络图片下载超时时间（秒）'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: '是否将附件文件夹和文件名设置应用于其他插件创建的附件。',
-        part2: '有些插件不询问 Obsidian 附件应放在何处，直接以自己的命名把附件写入库中。启用此项后，这类文件一出现就会被移动并重命名。',
-        part3: '仅处理在打开笔记时创建的文件，绝不触碰来自同步或库导入的文件。'
-      },
+      description: '是否将附件文件夹和文件名设置应用于其他插件创建的附件。\n有些插件不询问 Obsidian 附件应放在何处，直接以自己的命名把附件写入库中。启用此项后，这类文件一出现就会被移动并重命名。\n仅处理在打开笔记时创建、并且被笔记链接的文件：没有任何笔记链接的文件是其他插件自用的数据，会留在写入的位置。来自同步或库导入的文件绝不会被处理。\n{{modes}}\n创建文件的插件根据写入操作的调用栈来识别，这只是尽力而为：由 Obsidian 本身、同步客户端或延迟写入的插件写入的文件，无法识别出插件。这类文件视为不在下方列表中。',
       name: '重命名其他插件创建的附件'
     },
     renameAttachmentsToLowerCase: '将附件重命名为小写',
     renamedAttachmentFileName: {
-      description: {
-        part1: '查看可用',
-        part2: '令牌'
-      },
+      description: '查看可用的{{tokens}}。\n留空以保留附件当前的文件名。',
       name: '重命名的附件文件名'
     },
     resetToSampleCustomTokens: {
@@ -263,34 +187,19 @@ export const zh = {
       name: '是否将粘贴的图片转换为 JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: '如果启用，通过',
-        part2: '收集附件',
-        part3: '命令处理的附件将根据',
-        part4: '设置重命名。'
-      },
+      description: '如果启用，通过 {{command}} 命令处理的附件将根据 {{setting}} 设置重命名。',
       name: '是否重命名收集的附件'
     },
     specialCharacters: {
-      description: {
-        part1: '要替换或删除的附件文件夹和文件名中的特殊字符。',
-        part2: '留空以保留特殊字符。'
-      },
+      description: '附件文件夹和文件名中要替换或删除的特殊字符。\n留空以保留特殊字符。',
       name: '特殊字符'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: '附件文件夹和文件名中用于替换特殊字符的字符串。',
-        part2: '留空以删除特殊字符。'
-      },
+      description: '附件文件夹和文件名中用于替换特殊字符的字符串。\n留空以删除特殊字符。',
       name: '特殊字符替换'
     },
     timeoutInSeconds: {
-      description: {
-        part1: '所有操作的超时时间（秒）。',
-        part2: '如果',
-        part3: '已设置，则禁用操作执行超时。'
-      },
+      description: '所有操作的超时时间（秒）。\n如果设置为 {{zero}}，则禁用操作执行超时。',
       name: '超时时间（秒）'
     }
   },

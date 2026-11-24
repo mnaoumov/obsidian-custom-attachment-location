@@ -1,9 +1,6 @@
 export const am = {
   attachmentCollector: {
-    confirm: {
-      part1: 'በአቃፊዎች ውስጥ ላሉ ሁሉም ማስታወሻዎች ተያያዥ ፋይሎችን በተደጋጋሚ መሰብሰብ ትፈልጋለህ?',
-      part2: 'ይህ እርምጃ መመለስ አይቻልም።'
-    },
+    confirm: 'በአቃፊዎች ውስጥ ላሉ ሁሉም ማስታወሻዎች ተያያዥ ፋይሎችን በተደጋጋሚ መሰብሰብ ትፈልጋለህ?\n{{folders}}\nይህ እርምጃ መመለስ አይቻልም።',
     progressBar: {
       message: 'ተያያዥ ፋይሎችን በመሰብሰብ ላይ {{iterationString}} - \'{{noteFilePath}}\'።',
       title: 'ተያያዥ ፋይሎችን በመሰብሰብ ላይ...'
@@ -16,10 +13,7 @@ export const am = {
     skip: 'መዝለፍ'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'ተያያዥ',
-      part2: 'በበርካታ ማስታወሻዎች ይጠቀሳል።'
-    },
+    content: 'ተያያዥ {{attachment}} በበርካታ ማስታወሻዎች ይጠቀሳል።',
     heading: 'በበርካታ ማስታወሻዎች የሚጠቀም ተያያዥ መሰብሰብ',
     noPriorityWinnerReason: {
       EmptyList: 'የ{{settingName}} ቅንብር ባዶ ስለሆነ አልተዘዋወረም፤ ከእነዚህ ማስታወሻዎች የትኛው እንደሚይዘው የሚወስን ምንም ነገር የለም።',
@@ -33,6 +27,10 @@ export const am = {
     collectAttachmentsCurrentNote: 'በአሁኑ ማስታወሻ ውስጥ ተያያዦችን መሰብሰብ',
     collectAttachmentsEntireVault: 'በሙሉ ቫውልት ውስጥ ተያያዦችን መሰብሰብ'
   },
+  links: {
+    documentation: 'ሰነዱን',
+    tokens: 'ቶከኖች'
+  },
   menuItems: {
     collectAttachmentsInFile: 'በፋይል ውስጥ ተያያዥ ፋይሎችን ሰብስብ',
     collectAttachmentsInFiles: 'በፋይሎች ውስጥ ተያያዥ ፋይሎችን ሰብስብ'
@@ -41,10 +39,7 @@ export const am = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'ለ \'{{noteFilePath}}\' ተያያዦችን በመሰብሰብ ላይ',
     collectingAttachmentsCancelled: 'ተያያዦችን መሰብሰብ ተሰርዟል። ለዝርዝሮች ኮንሶል ይመልከቱ።',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'የተፈጠረው ተያያዥ ፋይል ስም \'{{path}}\' የማይሰራ ነው።\n{{validationMessage}}\nየእርስዎን',
-      part2: 'ቅንብር ይፈትሹ።'
-    },
+    generatedAttachmentFileNameIsInvalid: 'የተፈጠረው ተያያዥ ፋይል ስም \'{{path}}\' የማይሰራ ነው።\n{{validationMessage}}\nየእርስዎን የ{{settingName}} ቅንብር ይፈትሹ።',
     notePathIsIgnored: 'የማስታወሻ መንገድ ችላ ተብሏል'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const am = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// የተለመዱ ቶከኖች በፕላጊን ሥሪት 9.0.0 ውስጥ የተዋወቀውን አዲስ ቅርጸት ማዘመን ስለሚያስፈልጋቸው ተሰይመዋል።\n// ለተጨማሪ መረጃ ሰነዱን ይመልከቱ ({{customTokensDocumentationUrl}})።',
-      deprecated: {
-        part1: 'በፕላጊን ሥሪት 9.0.0 ውስጥ፣ የተለመዱ ቶከን ምዝገባ ቅርጸት ተለወጠ። እባክዎ ቶከኖችዎን በዚሁ መሰረት ያዘምኑ። ወደ',
-        part2: 'ሰነድ',
-        part3: 'ለተጨማሪ መረጃ ይመልከቱ'
-      }
+      deprecated: 'የተለመዱ ቶከኖች የምዝገባ ቅርጸት ተለውጧል። እባክዎ ቶከኖችዎን በዚሁ መሰረት ያዘምኑ። ለተጨማሪ መረጃ {{documentation}} ይመልከቱ።'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'በፕላጊን ሥሪት 9.0.0 ውስጥ፣',
-      part2: 'ቅንብር ተሰርዟል። በምትኩ',
-      part3: 'ቅርጸት ይጠቀሙ። ይመልከቱ',
-      part4: 'ሰነድ',
-      part5: 'ለተጨማሪ መረጃ'
-    },
+    legacyRenameAttachmentsToLowerCase: 'የ{{setting}} ቅንብር ተቋርጧል። በምትኩ የ{{format}} ቅርጸትን ይጠቀሙ። ለተጨማሪ መረጃ {{documentation}} ይመልከቱ።',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'ለ',
-        part2: 'ቅርጸት ምናልባት የማይሰራ እሴት አስቀመጥዎታል። እባክዎ ወደ',
-        part3: 'ሰነድ',
-        part4: 'ለተጨማሪ መረጃ ይመልከቱ',
-        part5: 'ይህ መልዕክት እንደገና አይታይም።'
-      }
+      deprecated: 'ለ{{setting}} ቅርጸት ምናልባት የተሳሳተ እሴት አስቀምጠው ሊሆን ይችላል። ለተጨማሪ መረጃ እባክዎ {{documentation}} ይመልከቱ። ይህ መልዕክት እንደገና አይታይም።'
     },
-    specialCharacters: {
-      part1: 'በፕላጊን ሥሪት 9.16.0 ውስጥ፣',
-      part2: 'የመሰረት ቅንብር እሴት ተለወጠ። የእርስዎ ቅንብር እሴት ወደ አዲሱ የመሰረት እሴት ተዘመነ።'
-    },
+    specialCharacters: 'የ{{setting}} ነባሪ ቅንብር እሴት ተለውጧል። የእርስዎ ቅንብር እሴት ወደ አዲሱ ነባሪ እሴት ተዘምኗል።',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'ነባሪ የምስል መጠን በፒክስል ወይም በመቶኛ መሆን አለበት',
       invalidCustomTokensCode: 'የማይሰራ የተለመዱ ቶከኖች ኮድ',
@@ -142,68 +118,35 @@ export const am = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'ፋይሎች ሲጣበቁ:'
-      },
+      description: 'ፋይሎች ሲያያይዙ:',
       name: 'ተያያዥ ስም መለወጫ ሁነታ'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'የተሰበሰበው ተያያዥ በበርካታ ማስታወሻዎች ሲጠቀም:'
-      },
+      description: 'የተሰበሰበው ተያያዥ በበርካታ ማስታወሻዎች ሲጠቀም:',
       name: 'በበርካታ ማስታወሻዎች የሚጠቀም ተያያዥ መሰብሰብ ሁነታ'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'የሚገኙ',
-        part2: 'ቶከኖችን ይመልከቱ',
-        part3: 'የመጀመሪያውን ተያያዥ ፋይል ስም ለማቆየት ባዶ ይተው።'
-      },
+      description: 'የሚገኙትን {{tokens}} ይመልከቱ።\nየአሁኑን ተያያዥ ፋይል ስም ለማቆየት ባዶ ይተዉ።',
       name: 'የተሰበሰበ ተያያዥ ፋይል ስም'
     },
     customTokens: {
-      description: {
-        part1: 'የሚጠቀሙ የተለመዱ ቶከኖች።',
-        part2: 'ይመልከቱ',
-        part3: 'ሰነድ',
-        part4: 'ለተጨማሪ መረጃ።',
-        part5: '⚠️ የተለመዱ ቶከኖች የዘፈቀደ JavaScript ኮድ ሊሆኑ ይችላሉ። በመጥፎ ሁኔታ ከተጻፉ፣ የመረጃ ኪሳራ ሊያስከትሉ ይችላሉ። በራስዎ አደጋ ይጠቀሙት።'
-      },
+      description: 'የሚጠቀሙ የተለመዱ ቶከኖች።\nለተጨማሪ መረጃ {{documentation}} ይመልከቱ።\n⚠️ የተለመዱ ቶከኖች የዘፈቀደ JavaScript ኮድ ሊሆኑ ይችላሉ። በመጥፎ ሁኔታ ከተጻፉ፣ የመረጃ ኪሳራ ሊያስከትሉ ይችላሉ። በራስዎ አደጋ ይጠቀሙት።',
       name: 'የተለመዱ ቶከኖች'
     },
     defaultImageSize: {
-      description: {
-        part1: 'ነባሪ የምስል መጠን።',
-        part2: 'በፒክስል መወሰን ይችላል',
-        part3: 'ወይም ከሙሉ የምስል መጠን መቶኛ',
-        part4: 'ኦሪጅናል መጠን ለመጠቀም ባዶ ይተው።'
-      },
+      description: 'ነባሪ የምስል መጠን።\nበፒክስል ({{pixels}}) ወይም ከሙሉ የምስል መጠን በመቶኛ ({{percentage}}) ሊገለጽ ይችላል።\nኦሪጅናሉን የምስል መጠን ለመጠቀም ባዶ ይተዉ።',
       name: 'ነባሪ የምስል መጠን'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'ከነባር ፋይል ተመሳሳይ ስም ያለው ፋይል ሲጣበቅ/ሲጎተት፣ ይህ መለያያ ወደ ፋይል ስም ይጨመራል።',
-        part2: 'ለምሳሌ፣ ፋይል',
-        part3: 'ን ሲጎተቱ፣ ወደ',
-        part4: 'ይሰየማል፣ ወዘተ፣ የመጀመሪያውን የሚገኝ ስም በማግኘት።'
-      },
+      description: 'ከነባር ፋይል ተመሳሳይ ስም ያለው ፋይል ሲጣበቅ/ሲጎተት፣ ይህ መለያያ ወደ ፋይል ስም ይጨመራል።\nለምሳሌ፣ {{existingFile}} የተባለውን ፋይል ሲጎትቱ፣ የመጀመሪያውን የሚገኝ ስም በመያዝ ወደ {{firstAvailableName}}፣ {{secondAvailableName}}፣ ወዘተ ይሰየማል።',
       name: 'የተደጋጋሚ ስም መለያያ'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'ከሚከተሉት መንገዶች ተያያዦችን አስወግድ የሚሆነው',
-        part2: 'ተያያዦችን መሰብሰብ',
-        part3: 'ትዕዛዝ ሲፈጸም።',
-        part4: 'እያንዳንዱን መንገድ በአዲስ መስመር ያስገቡ።',
-        part6: 'ቅንብሩ ባዶ ከሆነ፣ ምንም መንገድ ከተያያዥ መሰብሰብ አይገለልም።'
-      },
+      description: 'የ{{command}} ትዕዛዝ ሲፈጸም ከሚከተሉት መንገዶች ያሉ ተያያዦችን አግልል።\nእያንዳንዱን መንገድ በአዲስ መስመር ያስገቡ።\n{{pathSyntax}}\nቅንብሩ ባዶ ከሆነ፣ ምንም መንገድ ከተያያዥ መሰብሰብ አይገለልም።',
       name: 'ከተያያዥ መሰብሰብ መንገዶችን ማስወገድ'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'የሚገኙ',
-        part2: 'ቶከኖችን ይመልከቱ'
-      },
+      description: 'የሚገኙትን {{tokens}} ይመልከቱ።',
       name: 'የተፈጠረ ተያያዥ ፋይል ስም'
     },
     jpegQuality: {
@@ -211,41 +154,20 @@ export const am = {
       name: 'JPEG ጥራት'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'ከ',
-        part2: 'ጀምሮ አንጻራዊ መንገድ ለመጠቀም።',
-        part3: 'የሚገኙ',
-        part4: 'ቶከኖችን ይመልከቱ',
-        part5: 'እንደ',
-        part6: 'ያሉ ዶት-ፎልደሮች አይመከሩም፣ ምክንያቱም Obsidian አይከታተላቸውም። ለማስተዳደር',
-        part7: 'ፕላጊን መጠቀም ሊያስፈልግዎ ይችላል።'
-      },
+      description: 'ከማስታወሻው ወላጅ አቃፊ አንጻራዊ ለሆኑ መንገዶች በ{{relativePrefix}} ይጀምሩ።\nየሚገኙትን {{tokens}} ይመልከቱ።\nእንደ {{dotFolder}} ያሉ ዶት-ፎልደሮች አይመከሩም፣ ምክንያቱም Obsidian አይከታተላቸውም። እነሱን ለማስተዳደር የ{{unhidePlugin}} ፕላጊንን መጠቀም ሊያስፈልግዎ ይችላል።',
       name: 'ለአዲስ ተያያዦች ቦታ'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'ወደ Markdown ውስጥ የሚገባው URL ቅርጸት።',
-        part2: 'የሚገኙ',
-        part3: 'ቶከኖችን ይመልከቱ',
-        part4: 'የመሰረት ቅርጸትን ለመጠቀም ባዶ ይተዉ።'
-      },
+      description: 'ተያያዥ ሲታከል ወደ Markdown የሚገባው URL ቅርጸት። የሚተገበረው በዚያ ቅጽበት ብቻ ነው፤ ማስታወሻ ወይም ተያያዥ ሲሰየም ወይም ሲንቀሳቀስ Obsidian በኋላ እንደገና የሚጽፈው አገናኝ ነባሪውን ቅርጸት ያገኛል።\nየሚገኙትን {{tokens}} ይመልከቱ።\nነባሪውን ቅርጸት ለመጠቀም ባዶ ይተዉ።',
       name: 'Markdown URL ቅርጸት'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'የተያያዥ አቃፊ እና የፋይል ስም ቅንብሮች ሌሎች ተሰኪዎች በሚፈጥሯቸው ተያያዥ ፋይሎች ላይ ይተግበሩ እንደሆነ።',
-        part2: 'አንዳንድ ተሰኪዎች ኦብሲዲያንን የት እንደሚገባ ሳይጠይቁ ተያያዥ ፋይልን በራሳቸው ስም ወደ ቮልት ይጽፋሉ። ይህ ሲነቃ፣ እንዲህ ያለ ፋይል እንደታየ ወዲያውኑ ይንቀሳቀሳል እና ዳግም ይሰየማል።',
-        part3: 'ማስታወሻ ክፍት ሆኖ የተፈጠሩ ፋይሎች ብቻ ይነካሉ፤ ከማመሳሰል ወይም ከቮልት አስመጣ የሚመጡ ፋይሎች በጭራሽ አይነኩም።'
-      },
+      description: 'የተያያዥ አቃፊ እና የፋይል ስም ቅንብሮች ሌሎች ተሰኪዎች በሚፈጥሯቸው ተያያዥ ፋይሎች ላይ ይተግበሩ እንደሆነ።\nአንዳንድ ተሰኪዎች Obsidianን የት እንደሚገባ ሳይጠይቁ ተያያዥ ፋይልን በራሳቸው ስም ወደ ቮልት ይጽፋሉ። ይህ ሲበራ፣ እንዲህ ያለ ፋይል እንደታየ ወዲያውኑ ይንቀሳቀሳል እና ዳግም ይሰየማል።\nማስታወሻ ክፍት ሆኖ የተፈጠሩ እና ከማስታወሻ የተገናኙ ፋይሎች ብቻ ይነካሉ፤ ምንም ማስታወሻ የማያገናኘው ፋይል ሌላ ተሰኪ ለራሱ የሚያቆየው ውሂብ ስለሆነ በተጻፈበት ቦታ ይቆያል። ከማመሳሰል ወይም ከቮልት ማስመጣት የሚመጡ ፋይሎች በጭራሽ አይነኩም።\n{{modes}}\nየፈጠረው ተሰኪ የሚለየው ከጽሑፉ የጥሪ ቁልል ነው። ይህ በተቻለ መጠን ብቻ ነው፤ በObsidian ራሱ፣ በማመሳሰያ ደንበኛ ወይም ጽሑፉን በሚያዘገይ ተሰኪ ለተጻፈ ፋይል ምንም ተሰኪ አይለይም። እንዲህ ያለ ፋይል ከታች ባለው ዝርዝር ውስጥ እንደሌለ ይቆጠራል።',
       name: 'በሌሎች ተሰኪዎች የተፈጠሩ ተያያዥ ፋይሎችን ዳግም ሰይም'
     },
     renameAttachmentsToLowerCase: 'ተያያዦችን ወደ ትንሽ ፊደል መለወጥ',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'የሚገኙ',
-        part2: 'ቶከኖችን ይመልከቱ',
-        part3: 'የመጀመሪያውን ተያያዥ ፋይል ስም ለማቆየት ባዶ ይተው።'
-      },
+      description: 'የሚገኙትን {{tokens}} ይመልከቱ።\nየአሁኑን ተያያዥ ፋይል ስም ለማቆየት ባዶ ይተዉ።',
       name: 'የተሰየመ ተያያዥ ፋይል ስም'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +179,19 @@ export const am = {
       name: 'የተጣበቁ ምስሎችን ወደ JPEG መቀየር አለበት'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'ከተንቃ፣ በ',
-        part2: 'ተያያዦችን መሰብሰብ',
-        part3: 'ትዕዛዞች የተሰሩ ተያያዦች በ',
-        part4: 'ቅንብር መሰረት ይሰየማሉ።'
-      },
+      description: 'ከነቃ፣ በ{{command}} ትዕዛዞች የሚሰሩ ተያያዦች በ{{setting}} ቅንብር መሰረት ይሰየማሉ።',
       name: 'የተሰበሰቡ ተያያዦችን መሰየም አለበት'
     },
     specialCharacters: {
-      description: {
-        part1: 'በተያያዥ ፎልደር እና ፋይል ስም ውስጥ የሚተኩ ወይም የሚወገዱ ልዩ ቁምፊዎች።',
-        part2: 'ልዩ ቁምፊዎችን ለመጠበቅ ባዶ ይተዉ።'
-      },
+      description: 'በተያያዥ ፎልደር እና ፋይል ስም ውስጥ የሚተኩ ወይም የሚወገዱ ልዩ ቁምፊዎች።\nልዩ ቁምፊዎችን ለመጠበቅ ባዶ ይተዉ።',
       name: 'ልዩ ቁምፊዎች'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'በተያያዥ ፎልደር እና ፋይል ስም ውስጥ ለልዩ ቁምፊዎች የመተካት ሕብረቁምፊ።',
-        part2: 'ልዩ ቁምፊዎችን ለማስወገድ ባዶ ይተዉ።'
-      },
+      description: 'በተያያዥ ፎልደር እና ፋይል ስም ውስጥ ለልዩ ቁምፊዎች የመተካት ሕብረቁምፊ።\nልዩ ቁምፊዎችን ለማስወገድ ባዶ ይተዉ።',
       name: 'ልዩ ቁምፊዎች መተካት'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'ለሁሉም ስራዎች በሰከንድ የሚቆይ ጊዜ።',
-        part2: 'ከሆነ',
-        part3: 'ተዋቀረ፣ የስራዎች አፈጻጸም ጊዜ ይሰረዛል።'
-      },
+      description: 'ለሁሉም ስራዎች በሰከንድ የሚቆይ ጊዜ።\n{{zero}} ከተዋቀረ፣ የስራዎች አፈጻጸም የጊዜ ገደብ ይሰናከላል።',
       name: 'በሰከንድ የሚቆይ ጊዜ'
     }
   },

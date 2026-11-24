@@ -20,7 +20,6 @@ import {
   getPath,
   isNote
 } from '@mnaoumov/obsidian-lib/file-system';
-import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { extractReferenceFile } from '@mnaoumov/obsidian-lib/link';
 import {
@@ -60,6 +59,10 @@ import type { OriginalAttachmentFileNameParams } from '../tokens/substitutions.t
 
 import { isImageExtension } from '../attachment-saving/image-mime-types.ts';
 import { selfWriteRegistry } from '../externally-created-attachments/self-write-registry.ts';
+import {
+  codeNode,
+  translateFragment
+} from '../i18n/translate-fragment.ts';
 import { AttachmentOperation } from '../settings/attachment-operation.ts';
 import {
   formatString,
@@ -569,7 +572,7 @@ export class AttachmentPathManager {
     if (!validationMessage) {
       const parts = path.split('/');
       const fileName = ensureNonNullable(parts.at(-1));
-      // eslint-disable-next-line require-atomic-updates -- Ignore possible race condition.
+
       validationMessage = await this.tokenValidator.validateFileName({
         areSingleDotsAllowed: false,
         fileName,
@@ -578,13 +581,11 @@ export class AttachmentPathManager {
       });
     }
     if (validationMessage) {
-      this.pluginNoticeComponent.showNotice(createFragment((f) => {
-        f.appendText(t(($) => $.notice.generatedAttachmentFileNameIsInvalid.part1, { path, validationMessage }));
-        f.appendText(' ');
-        appendCodeBlock(f, t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name));
-        f.appendText(' ');
-        f.appendText(t(($) => $.notice.generatedAttachmentFileNameIsInvalid.part2));
-      }));
+      this.pluginNoticeComponent.showNotice(translateFragment(
+        ($) => $.notice.generatedAttachmentFileNameIsInvalid,
+        { settingName: codeNode(t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name)) },
+        { path, validationMessage }
+      ));
       const errorMessage = `Generated attachment file name "${path}" is invalid.\n${validationMessage}\nCheck your 'Generated attachment file name' setting.`;
       console.error(errorMessage, substitutions);
       throw new Error(errorMessage);

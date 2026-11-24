@@ -117,6 +117,88 @@ describe('translationsMap', () => {
     expect(offenders).toStrictEqual([]);
   });
 
+  it('should keep every sentence whole, with no part<N> fragment keys in any locale', () => {
+    const offenders: string[] = [];
+
+    function collect(value: unknown, path: string): void {
+      if (typeof value !== 'object' || value === null) {
+        return;
+      }
+
+      for (const [key, child] of Object.entries(value)) {
+        if (/^part\d+$/.test(key)) {
+          offenders.push(`${path}.${key}`);
+        }
+        collect(child, `${path}.${key}`);
+      }
+    }
+
+    for (const [locale, translations] of Object.entries(translationsMap)) {
+      collect(translations, locale);
+    }
+
+    expect(offenders).toStrictEqual([]);
+  });
+
+  it('should only translate keys the default translations define, with the same shape', () => {
+    const offenders: string[] = [];
+
+    function collect(value: unknown, defaultValue: unknown, path: string): void {
+      if (typeof value === 'string') {
+        if (typeof defaultValue !== 'string') {
+          offenders.push(path);
+        }
+        return;
+      }
+
+      if (typeof value !== 'object' || value === null || typeof defaultValue !== 'object' || defaultValue === null) {
+        offenders.push(path);
+        return;
+      }
+
+      for (const [key, child] of Object.entries(value)) {
+        collect(child, (defaultValue as Record<string, unknown>)[key], `${path}.${key}`);
+      }
+    }
+
+    for (const [locale, translations] of Object.entries(translationsMap)) {
+      collect(translations, en, locale);
+    }
+
+    expect(offenders).toStrictEqual([]);
+  });
+
+  it('should keep the placeholders of every translated string the same as the default one', () => {
+    const offenders: string[] = [];
+
+    // The distinct placeholder names, sorted: a translation may repeat or reorder them, but not drop or rename one.
+    function placeholders(text: string): string {
+      const names = [...text.matchAll(/\{\{(?<name>[^}]+)\}\}/g)].map((match) => match.groups?.['name'] ?? '');
+      return [...new Set(names)].sort().join(',');
+    }
+
+    function collect(value: unknown, defaultValue: unknown, path: string): void {
+      if (typeof value === 'string' && typeof defaultValue === 'string') {
+        if (placeholders(value) !== placeholders(defaultValue)) {
+          offenders.push(path);
+        }
+        return;
+      }
+
+      if (typeof value === 'object' && value !== null && typeof defaultValue === 'object' && defaultValue !== null) {
+        for (const [key, child] of Object.entries(value)) {
+          collect(child, (defaultValue as Record<string, unknown>)[key], `${path}.${key}`);
+        }
+      }
+    }
+
+    for (const [locale, translations] of Object.entries(translationsMap)) {
+      collect(translations, en, locale);
+    }
+
+    expect(offenders).toStrictEqual([]);
+  });
+
   it('should expose a translations object for every supported locale', () => {
     for (const value of Object.values(translationsMap)) {
       expect(value).toBeTypeOf('object');

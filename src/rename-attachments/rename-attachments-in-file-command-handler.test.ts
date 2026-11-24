@@ -74,18 +74,18 @@ interface TestableHandler {
 }
 
 vi.mock('@mnaoumov/obsidian-lib/attachment-unit-folder', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-unit-folder')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-unit-folder')>()),
   findAttachmentUnitFolderPath: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   isFile: vi.fn(),
   isMarkdownFile: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   extractReferenceFile: vi.fn()
 }));
 
@@ -94,7 +94,7 @@ vi.mock('@mnaoumov/obsidian-lib/loop', () => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>()),
   getBacklinksForFileSafe: vi.fn(),
   getCacheSafe: vi.fn(),
   getReferences: vi.fn()
@@ -105,7 +105,7 @@ vi.mock('@mnaoumov/obsidian-lib/queue', () => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>()),
   renameSafe: vi.fn()
 }));
 

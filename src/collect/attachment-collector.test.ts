@@ -147,22 +147,22 @@ interface SettingsLike {
 }
 
 vi.mock('@mnaoumov/typescript-lib/abort-controller', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/typescript-lib/abort-controller')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/typescript-lib/abort-controller')>()),
   abortSignalAny: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/canvas', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/canvas')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/canvas')>()),
   getCanvasReferences: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-change', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-change')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-change')>()),
   applyFileChanges: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   isCanvasFile: vi.fn(),
   isFile: vi.fn(),
   isFolder: vi.fn(),
@@ -170,19 +170,19 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   editReferences: vi.fn(),
   extractReferenceFile: vi.fn(),
   updateLink: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/loop', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/loop')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/loop')>()),
   loop: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/markdown', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/markdown')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/markdown')>()),
   // The real renderer needs a live workspace; the path is the whole of what the assertions read.
   renderInternalLink: vi.fn((params: RenderInternalLinkParamsLike): Promise<HTMLElement> => {
     const span = createSpan();
@@ -192,25 +192,25 @@ vi.mock('@mnaoumov/obsidian-lib/markdown', async (importOriginal) => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>()),
   getBacklinksForFileSafe: vi.fn(),
   getCacheSafe: vi.fn(),
   getReferences: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/modals/confirm', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/modals/confirm')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/modals/confirm')>()),
   confirm: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/queue', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/queue')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/queue')>()),
   addToQueue: vi.fn(),
   addToQueueAndWait: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>()),
   cleanupEmptyFolders: vi.fn(),
   copySafe: vi.fn(),
   renameSafe: vi.fn()

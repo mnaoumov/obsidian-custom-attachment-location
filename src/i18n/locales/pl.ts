@@ -1,9 +1,6 @@
 export const pl = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Czy chcesz zebrać załączniki dla wszystkich notatek w folderach rekursywnie?',
-      part2: 'Tej operacji nie można cofnąć.'
-    },
+    confirm: 'Czy chcesz rekursywnie zebrać załączniki dla wszystkich notatek w folderach?\n{{folders}}\nTej operacji nie można cofnąć.',
     progressBar: {
       message: 'Zbieranie załączników {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Zbieranie załączników...'
@@ -16,10 +13,7 @@ export const pl = {
     skip: 'Pomiń'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Załącznik',
-      part2: 'jest używany przez wiele notatek.'
-    },
+    content: 'Załącznik {{attachment}} jest używany przez wiele notatek.',
     heading: 'Zbieranie załącznika używanego przez wiele notatek',
     noPriorityWinnerReason: {
       EmptyList: 'Nie został przeniesiony, ponieważ ustawienie {{settingName}} jest puste, więc nic nie rozstrzyga, do której z tych notatek należy.',
@@ -33,6 +27,10 @@ export const pl = {
     collectAttachmentsCurrentNote: 'Zbierz załączniki w bieżącej notatce',
     collectAttachmentsEntireVault: 'Zbierz załączniki w całym sejfie'
   },
+  links: {
+    documentation: 'dokumentację',
+    tokens: 'tokeny'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Zbierz załączniki w pliku',
     collectAttachmentsInFiles: 'Zbierz załączniki w plikach'
@@ -41,10 +39,7 @@ export const pl = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Zbieranie załączników dla \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Zbieranie załączników anulowane. Zobacz konsolę dla szczegółów.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Wygenerowana nazwa pliku załącznika \'{{path}}\' jest nieprawidłowa.\n{{validationMessage}}\nSprawdź swoje',
-      part2: 'ustawienie.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Wygenerowana nazwa pliku załącznika \'{{path}}\' jest nieprawidłowa.\n{{validationMessage}}\nSprawdź ustawienie {{settingName}}.',
     notePathIsIgnored: 'Ścieżka notatki jest ignorowana'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const pl = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Niestandardowe tokeny zostały zakomentowane, ponieważ muszą zostać zaktualizowane do nowego formatu wprowadzonego w wersji wtyczki 9.0.0.\n// Zapoznaj się z dokumentacją ({{customTokensDocumentationUrl}}), aby uzyskać więcej informacji.',
-      deprecated: {
-        part1: 'W wersji wtyczki 9.0.0 zmienił się format rejestracji niestandardowych tokenów. Proszę zaktualizować swoje tokeny odpowiednio. Zapoznaj się z',
-        part2: 'dokumentacją',
-        part3: 'aby uzyskać więcej informacji'
-      }
+      deprecated: 'Zmienił się format rejestracji niestandardowych tokenów. Zaktualizuj odpowiednio swoje tokeny. Zobacz {{documentation}}, aby uzyskać więcej informacji.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'W wersji wtyczki 9.0.0',
-      part2: 'to ustawienie zostało wycofane. Użyj',
-      part3: 'formatu zamiast tego. Zobacz',
-      part4: 'dokumentację',
-      part5: 'aby uzyskać więcej informacji'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Ustawienie {{setting}} jest przestarzałe. Zamiast niego użyj formatu {{format}}. Zobacz {{documentation}}, aby uzyskać więcej informacji.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Możesz mieć ustawioną potencjalnie niepoprawną wartość dla',
-        part2: 'formatu. Proszę zapoznać się z',
-        part3: 'dokumentacją',
-        part4: 'aby uzyskać więcej informacji',
-        part5: 'Ta wiadomość nie zostanie ponownie wyświetlona.'
-      }
+      deprecated: 'Dla formatu {{setting}} może być ustawiona niepoprawna wartość. Zobacz {{documentation}}, aby uzyskać więcej informacji. Ta wiadomość nie zostanie ponownie wyświetlona.'
     },
-    specialCharacters: {
-      part1: 'W wersji wtyczki 9.16.0',
-      part2: 'domyślna wartość ustawienia została zmieniona. Twoje ustawienie zostało zaktualizowane do nowej wartości domyślnej.'
-    },
+    specialCharacters: 'Domyślna wartość ustawienia {{setting}} została zmieniona. Twoje ustawienie zostało zaktualizowane do nowej wartości domyślnej.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Domyślny rozmiar obrazu musi być w pikselach lub procentach',
       invalidCustomTokensCode: 'Nieprawidłowy kod niestandardowych tokenów',
@@ -142,67 +118,35 @@ export const pl = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Podczas dołączania plików:'
-      },
+      description: 'Podczas dołączania plików:',
       name: 'Tryb przemianowania załączników'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Gdy zebrany załącznik jest używany przez wiele notatek:'
-      },
+      description: 'Gdy zebrany załącznik jest używany przez wiele notatek:',
       name: 'Tryb zbierania załączników używanych przez wiele notatek'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Zobacz dostępne',
-        part2: 'tokeny'
-      },
+      description: 'Zobacz dostępne {{tokens}}.\nPozostaw puste, aby zachować bieżącą nazwę pliku załącznika.',
       name: 'Zebrana nazwa pliku załącznika'
     },
     customTokens: {
-      description: {
-        part1: 'Niestandardowe tokeny do użycia.',
-        part2: 'Zobacz',
-        part3: 'dokumentację',
-        part4: 'aby uzyskać więcej informacji.',
-        part5: '⚠️ Niestandardowe tokeny mogą być dowolnym kodem JavaScript. Jeśli są napisane nieprawidłowo, mogą spowodować utratę danych. Używasz ich na własne ryzyko.'
-      },
+      description: 'Niestandardowe tokeny do użycia.\nZobacz {{documentation}}, aby uzyskać więcej informacji.\n⚠️ Niestandardowe tokeny mogą być dowolnym kodem JavaScript. Jeśli są napisane nieprawidłowo, mogą spowodować utratę danych. Używasz ich na własne ryzyko.',
       name: 'Niestandardowe tokeny'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Domyślny rozmiar obrazu.',
-        part2: 'Można określić w pikselach',
-        part3: 'lub jako procent pełnego rozmiaru obrazu',
-        part4: 'Pozostaw puste, aby użyć oryginalnego rozmiaru obrazu.'
-      },
+      description: 'Domyślny rozmiar obrazu.\nMożna go określić w pikselach ({{pixels}}) lub jako procent pełnego rozmiaru obrazu ({{percentage}}).\nPozostaw puste, aby użyć oryginalnego rozmiaru obrazu.',
       name: 'Domyślny rozmiar obrazu'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Gdy wklejasz/przeciągasz plik o tej samej nazwie co istniejący plik, ten separator zostanie dodany do nazwy pliku.',
-        part2: 'Np. gdy przeciągasz plik',
-        part3: ', zostanie on przemianowany na ',
-        part4: ', itd., aż do pierwszej dostępnej nazwy.'
-      },
+      description: 'Gdy wklejasz lub przeciągasz plik o tej samej nazwie co istniejący plik, do nazwy pliku zostanie dodany ten separator.\nNp. gdy przeciągasz plik {{existingFile}}, zostanie on przemianowany na {{firstAvailableName}}, {{secondAvailableName}} itd. — wybierana jest pierwsza dostępna nazwa.',
       name: 'Separator duplikowanych nazw'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Wyklucz załączniki z następujących ścieżek, gdy wykonywane jest polecenie',
-        part2: 'Zbierz załączniki',
-        part3: '.',
-        part4: 'Wstaw każdą ścieżkę w nowej linii.',
-        part6: 'Jeśli ustawienie jest puste, żadne ścieżki nie są wykluczane ze zbierania załączników.'
-      },
+      description: 'Wyklucz załączniki z następujących ścieżek, gdy wykonywane jest polecenie {{command}}.\nWstaw każdą ścieżkę w nowej linii.\n{{pathSyntax}}\nJeśli ustawienie jest puste, żadne ścieżki nie są wykluczane ze zbierania załączników.',
       name: 'Wyklucz ścieżki ze zbierania załączników'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Zobacz dostępne',
-        part2: 'tokeny'
-      },
+      description: 'Zobacz dostępne {{tokens}}.',
       name: 'Wygenerowana nazwa pliku załącznika'
     },
     jpegQuality: {
@@ -210,40 +154,20 @@ export const pl = {
       name: 'Jakość JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Zacznij od',
-        part2: 'aby użyć ścieżki względnej.',
-        part3: 'Zobacz dostępne',
-        part4: 'tokeny',
-        part5: 'Foldery kropkowe, takie jak',
-        part6: 'nie są zalecane, ponieważ Obsidian ich nie śledzi. Możesz potrzebować użyć',
-        part7: 'wtyczki, aby nimi zarządzać.'
-      },
+      description: 'Zacznij od {{relativePrefix}}, aby podać ścieżkę względem folderu nadrzędnego notatki.\nZobacz dostępne {{tokens}}.\nFoldery kropkowe, takie jak {{dotFolder}}, nie są zalecane, ponieważ Obsidian ich nie śledzi. Do zarządzania nimi może być potrzebna wtyczka {{unhidePlugin}}.',
       name: 'Lokalizacja nowych załączników'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Format adresu URL, który zostanie wstawiony do Markdown.',
-        part2: 'Zobacz dostępne',
-        part3: 'tokeny',
-        part4: 'Pozostaw puste, aby użyć domyślnego formatu.'
-      },
+      description: 'Format adresu URL wstawianego do Markdown podczas dodawania załącznika. Jest stosowany tylko w tym momencie: link, który Obsidian przepisze później, przy zmianie nazwy lub przeniesieniu notatki albo załącznika, otrzyma format domyślny.\nZobacz dostępne {{tokens}}.\nPozostaw puste, aby użyć domyślnego formatu.',
       name: 'Format adresu URL w Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Czy stosować ustawienia folderu załączników i nazwy pliku do załączników tworzonych przez INNE wtyczki.',
-        part2: 'Niektóre wtyczki zapisują załącznik do skarbca pod własną nazwą, nie pytając Obsidiana, gdzie powinien trafić. Gdy ta opcja jest włączona, taki plik zostaje przeniesiony i przemianowany zaraz po pojawieniu się.',
-        part3: 'Dotyczy wyłącznie plików powstałych przy otwartej notatce, nigdy plików pochodzących z synchronizacji ani z importu skarbca.'
-      },
+      description: 'Czy stosować ustawienia folderu załączników i nazwy pliku do załączników tworzonych przez INNE wtyczki.\nNiektóre wtyczki zapisują załącznik do skarbca pod własną nazwą, nie pytając Obsidiana, gdzie powinien trafić. Gdy ta opcja jest włączona, taki plik zostaje przeniesiony i przemianowany zaraz po pojawieniu się.\nDotyczy to tylko plików utworzonych przy otwartej notatce i podlinkowanych w notatce: plik, do którego nie prowadzi link z żadnej notatki, to dane, które inna wtyczka przechowuje na własny użytek, więc pozostaje tam, gdzie został zapisany. Pliki pochodzące z synchronizacji lub importu skarbca nigdy nie są zmieniane.\n{{modes}}\nWtyczka, która utworzyła plik, jest rozpoznawana na podstawie stosu wywołań zapisu. Działa to w miarę możliwości: żadna wtyczka nie zostanie rozpoznana dla pliku zapisanego przez sam Obsidian, przez klienta synchronizacji ani przez wtyczkę, która odracza zapis. Taki plik uznaje się za NIEOBECNY na poniższej liście.',
       name: 'Zmieniaj nazwy załączników tworzonych przez inne wtyczki'
     },
     renameAttachmentsToLowerCase: 'Przemianuj załączniki na małe litery',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Zobacz dostępne',
-        part2: 'tokeny'
-      },
+      description: 'Zobacz dostępne {{tokens}}.\nPozostaw puste, aby zachować bieżącą nazwę pliku załącznika.',
       name: 'Przemianowana nazwa pliku załącznika'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +179,19 @@ export const pl = {
       name: 'Czy konwertować wklejone obrazy do JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Jeśli włączone, załączniki przetworzone przez polecenia',
-        part2: 'Zbierz załączniki',
-        part3: 'zostaną przemianowane zgodnie z ustawieniem',
-        part4: '.'
-      },
+      description: 'Jeśli włączone, załączniki przetworzone przez polecenia {{command}} zostaną przemianowane zgodnie z ustawieniem {{setting}}.',
       name: 'Czy przemianować zebrane załączniki'
     },
     specialCharacters: {
-      description: {
-        part1: 'Znaki specjalne w nazwie folderu i pliku załącznika do zastąpienia lub usunięcia.',
-        part2: 'Pozostaw puste, aby zachować znaki specjalne.'
-      },
+      description: 'Znaki specjalne w nazwie folderu i pliku załącznika do zastąpienia lub usunięcia.\nPozostaw puste, aby zachować znaki specjalne.',
       name: 'Znaki specjalne'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Ciąg zastępujący znaki specjalne w nazwie folderu i pliku załącznika.',
-        part2: 'Pozostaw puste, aby usuwać znaki specjalne.'
-      },
+      description: 'Ciąg zastępujący znaki specjalne w nazwie folderu i pliku załącznika.\nPozostaw puste, aby usuwać znaki specjalne.',
       name: 'Zamiana znaków specjalnych'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Limit czasu (w sekundach) dla wszystkich operacji.',
-        part2: 'Jeśli ustawisz',
-        part3: 'na 0, limit czasu zostanie wyłączony.'
-      },
+      description: 'Limit czasu (w sekundach) dla wszystkich operacji.\nJeśli ustawisz {{zero}}, limit czasu wykonywania operacji zostanie wyłączony.',
       name: 'Limit czasu w sekundach'
     }
   },

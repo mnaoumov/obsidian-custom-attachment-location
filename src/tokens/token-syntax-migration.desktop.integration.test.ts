@@ -102,7 +102,7 @@ describe('Token syntax migration', () => {
           await adapter.write(
             dataPath,
             JSON.stringify({
-              ...JSON.parse(originalData) as Record<string, unknown>,
+              ...(JSON.parse(originalData) as Record<string, unknown>),
               attachmentFolderPath: `./legacy/${legacyToken()}`,
               generatedAttachmentFileName: `img-${legacyToken()}`,
               shouldFollowObsidianAttachmentLocation: false,

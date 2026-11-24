@@ -19,6 +19,7 @@ import {
 } from 'obsidian';
 
 import { ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_NAME } from '../advanced-rename-and-delete-handler/advanced-rename-and-delete-handler.ts';
+import { translateFragment } from '../i18n/translate-fragment.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
 
 interface CollectAttachmentUsedByMultipleNotesModalConstructorParams {
@@ -107,16 +108,11 @@ class CollectAttachmentUsedByMultipleNotesModal extends Modal {
 
     this.contentEl.append(
       await createFragmentAsync(async (f) => {
-        f.appendText(t(($) => $.collectAttachmentUsedByMultipleNotesModal.content.part1));
-        f.appendText(' ');
-        f.append(
-          await renderInternalLink({
-            app: this.app,
-            pathOrAbstractFile: this.attachmentPath
-          })
-        );
-        f.appendText(' ');
-        f.appendText(t(($) => $.collectAttachmentUsedByMultipleNotesModal.content.part2));
+        const attachmentLink = await renderInternalLink({
+          app: this.app,
+          pathOrAbstractFile: this.attachmentPath
+        });
+        f.append(translateFragment(($) => $.collectAttachmentUsedByMultipleNotesModal.content, { attachment: attachmentLink }));
         f.append(
           // The class carries no styling; it is how an integration test addresses the list, as for
           // `custom-attachment-location-no-priority-winner-reason` above.

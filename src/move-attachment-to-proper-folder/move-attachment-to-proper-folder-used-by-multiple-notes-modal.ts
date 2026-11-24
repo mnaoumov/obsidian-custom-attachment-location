@@ -10,6 +10,7 @@ import {
   Setting
 } from 'obsidian';
 
+import { translateFragment } from '../i18n/translate-fragment.ts';
 import { MoveAttachmentToProperFolderUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
 
 interface MoveAttachmentToProperFolderUsedByMultipleNotesModalConstructorParams {
@@ -67,18 +68,11 @@ class MoveAttachmentToProperFolderUsedByMultipleNotesModal extends Modal {
 
     this.contentEl.append(
       await createFragmentAsync(async (f) => {
-        f.appendText(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.content.part1));
-        f.appendText(' ');
-        f.append(
-          await renderInternalLink({
-            app: this.app,
-            pathOrAbstractFile: this.attachmentPath
-          })
-        );
-        f.appendText(' ');
-        f.appendText(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.content.part2));
-        f.createEl('br');
-        f.appendText(t(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.content.part3));
+        const attachmentLink = await renderInternalLink({
+          app: this.app,
+          pathOrAbstractFile: this.attachmentPath
+        });
+        f.append(translateFragment(($) => $.moveAttachmentToProperFolderUsedByMultipleNotesModal.content, { attachment: attachmentLink }));
         f.createEl('br');
         for (const backlink of this.backlinks) {
           this.selectedBacklinks.add(backlink);

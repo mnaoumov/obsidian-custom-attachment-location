@@ -1,9 +1,6 @@
 export const ja = {
   attachmentCollector: {
-    confirm: {
-      part1: 'フォルダ内のすべてのノートの添付ファイルを再帰的に収集しますか？',
-      part2: 'この操作は元に戻せません。'
-    },
+    confirm: '次のフォルダ内のすべてのノートの添付ファイルを再帰的に収集しますか？\n{{folders}}\nこの操作は元に戻せません。',
     progressBar: {
       message: '添付ファイルを収集中 {{iterationString}} - \'{{noteFilePath}}\'.',
       title: '添付ファイルを収集中...'
@@ -16,10 +13,7 @@ export const ja = {
     skip: 'スキップ'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: '添付ファイル',
-      part2: 'が複数のノートで参照されています。'
-    },
+    content: '添付ファイル {{attachment}} が複数のノートで参照されています。',
     heading: '複数のノートで使用されている添付ファイルの収集',
     noPriorityWinnerReason: {
       EmptyList: '{{settingName}} 設定が空のため移動されませんでした。これらのノートのどれが所有するかを決めるものがありません。',
@@ -33,6 +27,10 @@ export const ja = {
     collectAttachmentsCurrentNote: '現在のノートの添付ファイルを収集',
     collectAttachmentsEntireVault: 'ボルト全体の添付ファイルを収集'
   },
+  links: {
+    documentation: 'ドキュメント',
+    tokens: 'トークン'
+  },
   menuItems: {
     collectAttachmentsInFile: 'ファイル内の添付ファイルを収集',
     collectAttachmentsInFiles: '複数ファイル内の添付ファイルを収集'
@@ -41,10 +39,7 @@ export const ja = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '\'{{noteFilePath}}\'の添付ファイルを収集中',
     collectingAttachmentsCancelled: '添付ファイルの収集がキャンセルされました。詳細はコンソールを確認してください。',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: '生成された添付ファイル名 \'{{path}}\' が無効です。\n{{validationMessage}}\n設定を',
-      part2: '確認してください。'
-    },
+    generatedAttachmentFileNameIsInvalid: '生成された添付ファイル名 \'{{path}}\' が無効です。\n{{validationMessage}}\n{{settingName}} 設定を確認してください。',
     notePathIsIgnored: 'ノートパスが無視されています'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const ja = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// カスタムトークンは、プラグイン バージョン 9.0.0 で導入された新しい形式に更新する必要があるため、コメントアウトされました。\n// 詳細については、ドキュメント ({{customTokensDocumentationUrl}}) を参照してください。',
-      deprecated: {
-        part1: 'プラグイン バージョン 9.0.0 では、カスタムトークン登録の形式が変更されました。トークンを適切に更新してください。詳細については',
-        part2: 'ドキュメント',
-        part3: 'を参照してください'
-      }
+      deprecated: 'カスタムトークン登録の形式が変更されました。トークンを適切に更新してください。詳細については{{documentation}}を参照してください。'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'プラグイン バージョン 9.0.0 では、',
-      part2: '設定は非推奨です。代わりに',
-      part3: '形式を使用してください。詳細については',
-      part4: 'ドキュメント',
-      part5: 'を参照してください'
-    },
+    legacyRenameAttachmentsToLowerCase: '{{setting}} 設定は非推奨です。代わりに {{format}} 形式を使用してください。詳細については{{documentation}}を参照してください。',
     markdownUrlFormat: {
-      deprecated: {
-        part1: '以下の形式に対して潜在的に正しくない値が設定されています',
-        part2: '。詳細については',
-        part3: 'ドキュメント',
-        part4: 'を参照してください',
-        part5: 'このメッセージは再度表示されません。'
-      }
+      deprecated: '{{setting}} 形式に正しくない可能性のある値が設定されています。詳細については{{documentation}}を参照してください。このメッセージは再度表示されません。'
     },
-    specialCharacters: {
-      part1: 'プラグイン バージョン 9.16.0 では、',
-      part2: 'デフォルト設定値が変更されました。設定値は新しいデフォルト値に更新されました。'
-    },
+    specialCharacters: '{{setting}} 設定のデフォルト値が変更されました。設定値は新しいデフォルト値に更新されました。',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'デフォルトの画像サイズはピクセルまたはパーセンテージで指定する必要があります',
       invalidCustomTokensCode: '無効なカスタムトークンコード',
@@ -142,68 +118,35 @@ export const ja = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'ファイルを添付するとき:'
-      },
+      description: 'ファイルを添付するとき:',
       name: '添付ファイルリネームモード'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: '収集された添付ファイルが複数のノートで使用されているとき:'
-      },
+      description: '収集された添付ファイルが複数のノートで使用されているとき:',
       name: '複数のノートで使用される添付ファイル収集モード'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: '利用可能な',
-        part2: 'トークンを参照',
-        part3: '元の添付ファイル名を保持する場合は空白のままにしてください。'
-      },
+      description: '利用可能な{{tokens}}を参照してください。\n現在の添付ファイル名を保持する場合は空白のままにしてください。',
       name: '収集された添付ファイル名'
     },
     customTokens: {
-      description: {
-        part1: '使用するカスタムトークン。',
-        part2: '詳細については',
-        part3: 'ドキュメント',
-        part4: 'を参照してください。',
-        part5: '⚠️ カスタムトークンは任意のJavaScriptコードにすることができます。不適切に記述された場合、データ損失を引き起こす可能性があります。自己責任で使用してください。'
-      },
+      description: '使用するカスタムトークン。\n詳細については{{documentation}}を参照してください。\n⚠️ カスタムトークンは任意のJavaScriptコードにすることができます。不適切に記述された場合、データ損失を引き起こす可能性があります。自己責任で使用してください。',
       name: 'カスタムトークン'
     },
     defaultImageSize: {
-      description: {
-        part1: 'デフォルトの画像サイズです。',
-        part2: 'ピクセルで指定できます',
-        part3: 'または画像全体のサイズのパーセンテージで指定できます',
-        part4: '元の画像サイズを使用する場合は空欄にしてください。'
-      },
+      description: 'デフォルトの画像サイズです。\nピクセル（{{pixels}}）または画像全体のサイズに対するパーセンテージ（{{percentage}}）で指定できます。\n元の画像サイズを使用する場合は空欄にしてください。',
       name: 'デフォルトの画像サイズ'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: '既存のファイルと同じ名前のファイルを貼り付け/ドラッグするとき、この区切り文字がファイル名に追加されます。',
-        part2: '例：ファイルをドラッグするとき',
-        part3: '、それは',
-        part4: 'などにリネームされ、最初に利用可能な名前を取得します。'
-      },
+      description: '既存のファイルと同じ名前のファイルを貼り付けまたはドラッグすると、この区切り文字がファイル名に追加されます。\n例：ファイル {{existingFile}} をドラッグすると、{{firstAvailableName}}、{{secondAvailableName}} などのうち、最初に利用可能な名前にリネームされます。',
       name: '重複名区切り文字'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: '以下のパスから添付ファイルを除外します',
-        part2: '添付ファイルを収集',
-        part3: 'コマンドが実行されるとき。',
-        part4: '各パスを新しい行に挿入してください。',
-        part6: 'を使用できます。設定が空の場合、添付ファイル収集からパスは除外されません。'
-      },
+      description: '{{command}} コマンドの実行時に、以下のパスにある添付ファイルを除外します。\n各パスを新しい行に挿入してください。\n{{pathSyntax}}\n設定が空の場合、添付ファイル収集から除外されるパスはありません。',
       name: '添付ファイル収集から除外するパス'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: '利用可能な',
-        part2: 'トークンを参照'
-      },
+      description: '利用可能な{{tokens}}を参照してください。',
       name: '生成された添付ファイル名'
     },
     jpegQuality: {
@@ -211,41 +154,20 @@ export const ja = {
       name: 'JPEG品質'
     },
     locationForNewAttachments: {
-      description: {
-        part1: '相対パスを使用するには',
-        part2: 'で始めてください。',
-        part3: '利用可能な',
-        part4: 'トークンを参照',
-        part5: 'ドットフォルダ（例：',
-        part6: '）は推奨されません。Obsidianが追跡しないためです。管理するには',
-        part7: 'プラグインが必要な場合があります。'
-      },
+      description: 'ノートの親フォルダからの相対パスにするには {{relativePrefix}} で始めてください。\n利用可能な{{tokens}}を参照してください。\n{{dotFolder}} のようなドットフォルダは、Obsidianが追跡しないため推奨されません。管理するには {{unhidePlugin}} プラグインが必要になる場合があります。',
       name: '新しい添付ファイルの場所'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Markdownに挿入されるURLの形式。',
-        part2: '利用可能な',
-        part3: 'トークンを参照',
-        part4: 'デフォルト形式を使用するには空白のままにしてください。'
-      },
+      description: '添付ファイルを追加したときにMarkdownに挿入されるURLの形式。適用されるのはその時点のみです。後でノートや添付ファイルの名前変更や移動によってObsidianが書き換えるリンクには、デフォルトの形式が使われます。\n利用可能な{{tokens}}を参照してください。\nデフォルト形式を使用するには空白のままにしてください。',
       name: 'Markdown URL形式'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: '他のプラグインが作成した添付ファイルにも、添付フォルダーとファイル名の設定を適用するかどうか。',
-        part2: '一部のプラグインは、どこに置くべきかを Obsidian に尋ねることなく、独自の名前で添付ファイルを直接保管庫に書き込みます。これを有効にすると、そのようなファイルは出現した直後に移動され、名前が変更されます。',
-        part3: 'ノートを開いている間に作成されたファイルのみが対象で、同期や保管庫の取り込みで届いたファイルは決して変更されません。'
-      },
+      description: '他のプラグインが作成した添付ファイルにも、添付フォルダーとファイル名の設定を適用するかどうか。\n一部のプラグインは、どこに置くべきかを Obsidian に尋ねることなく、独自の名前で添付ファイルを直接保管庫に書き込みます。これを有効にすると、そのようなファイルは出現した直後に移動され、名前が変更されます。\n対象は、ノートを開いている間に作成され、かつノートからリンクされているファイルのみです。どのノートからもリンクされていないファイルは他のプラグインが自分用に保持するデータであり、書き込まれた場所に残ります。同期や保管庫の取り込みで届いたファイルは決して変更されません。\n{{modes}}\n作成元のプラグインは、書き込み時のコールスタックから特定されます。これはベストエフォートです。Obsidian 自身、同期クライアント、または書き込みを遅延させるプラグインが書き込んだファイルについては、プラグインが特定されません。そのようなファイルは、下のリストに含まれて「いない」ものとして扱われます。',
       name: '他のプラグインが作成した添付ファイルの名前を変更'
     },
     renameAttachmentsToLowerCase: '添付ファイルを小文字にリネーム',
     renamedAttachmentFileName: {
-      description: {
-        part1: '利用可能な',
-        part2: 'トークンを参照',
-        part3: '元の添付ファイル名を保持する場合は空白のままにしてください。'
-      },
+      description: '利用可能な{{tokens}}を参照してください。\n現在の添付ファイル名を保持する場合は空白のままにしてください。',
       name: 'リネームされた添付ファイル名'
     },
     resetToSampleCustomTokens: {
@@ -257,34 +179,19 @@ export const ja = {
       name: '貼り付けた画像をJPEGに変換する'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: '有効にすると、',
-        part2: '添付ファイルを収集',
-        part3: 'コマンドを介して処理された添付ファイルは',
-        part4: '設定に従ってリネームされます。'
-      },
+      description: '有効にすると、{{command}} コマンドで処理された添付ファイルは {{setting}} 設定に従ってリネームされます。',
       name: '収集された添付ファイルをリネームする'
     },
     specialCharacters: {
-      description: {
-        part1: '添付ファイルフォルダとファイル名で置換または削除する特殊文字。',
-        part2: '特殊文字を保持するには空白のままにしてください。'
-      },
+      description: '添付ファイルのフォルダ名とファイル名で置換または削除する特殊文字。\n特殊文字を保持するには空白のままにしてください。',
       name: '特殊文字'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: '添付ファイルフォルダとファイル名の特殊文字の置換文字列。',
-        part2: '特殊文字を削除するには空白のままにしてください。'
-      },
+      description: '添付ファイルのフォルダ名とファイル名に含まれる特殊文字の置換文字列。\n特殊文字を削除するには空白のままにしてください。',
       name: '特殊文字の置換'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'すべての操作のタイムアウト（秒）。',
-        part2: 'もし',
-        part3: 'が設定されている場合、操作の実行タイムアウトは無効になります。'
-      },
+      description: 'すべての操作のタイムアウト（秒）。\n{{zero}} を設定すると、操作の実行タイムアウトは無効になります。',
       name: 'タイムアウト（秒）'
     }
   },

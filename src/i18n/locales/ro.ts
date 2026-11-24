@@ -1,9 +1,6 @@
 export const ro = {
   attachmentCollector: {
-    confirm: {
-      part1: 'Doriți să colectați atașamentele pentru toate notițele din foldere în mod recursiv?',
-      part2: 'Această operațiune nu poate fi anulată.'
-    },
+    confirm: 'Doriți să colectați recursiv atașamentele pentru toate notițele din foldere?\n{{folders}}\nAceastă operațiune nu poate fi anulată.',
     progressBar: {
       message: 'Colectez atașamente {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Colectez atașamente...'
@@ -16,10 +13,7 @@ export const ro = {
     skip: 'Sari peste'
   },
   collectAttachmentUsedByMultipleNotesModal: {
-    content: {
-      part1: 'Atașamentul',
-      part2: 'este folosit de mai multe notițe.'
-    },
+    content: 'Atașamentul {{attachment}} este folosit de mai multe notițe.',
     heading: 'Colectez atașamentul folosit de multiple notițe',
     noPriorityWinnerReason: {
       EmptyList: 'Nu a fost mutat deoarece setarea {{settingName}} este goală, așa că nimic nu stabilește căreia dintre aceste note îi aparține.',
@@ -33,6 +27,10 @@ export const ro = {
     collectAttachmentsCurrentNote: 'Colectează atașamentele din notița curentă',
     collectAttachmentsEntireVault: 'Colectează atașamentele din întregul seif'
   },
+  links: {
+    documentation: 'documentația',
+    tokens: 'tokenurile'
+  },
   menuItems: {
     collectAttachmentsInFile: 'Colectează atașamentele în fișier',
     collectAttachmentsInFiles: 'Colectează atașamentele în fișiere'
@@ -41,10 +39,7 @@ export const ro = {
     attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Colectez atașamentele pentru \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Colectarea atașamentelor a fost anulată. Verifică consola pentru detalii.',
-    generatedAttachmentFileNameIsInvalid: {
-      part1: 'Numele fișierului atașat generat \'{{path}}\' este invalid.\n{{validationMessage}}\nVerifică-ți',
-      part2: 'setările.'
-    },
+    generatedAttachmentFileNameIsInvalid: 'Numele generat al fișierului atașat \'{{path}}\' este invalid.\n{{validationMessage}}\nVerifică setarea {{settingName}}.',
     notePathIsIgnored: 'Calea notiței a fost ignorată'
   },
   obsidianLib: {
@@ -106,32 +101,13 @@ export const ro = {
   pluginSettingsManager: {
     customToken: {
       codeComment: '// Tokenurile personalizate au fost comentate deoarece trebuie actualizate la noul format introdus în versiunea 9.0.0 a pluginului.\n// Consultă documentația ({{customTokensDocumentationUrl}}) pentru mai multe informații.',
-      deprecated: {
-        part1: 'În versiunea 9.0.0 a pluginului, formatul de înregistrare a tokenurilor personalizate s-a schimbat. Actualizează tokenurile corespunzător. Consultă',
-        part2: 'documentația',
-        part3: 'pentru mai multe informații'
-      }
+      deprecated: 'Formatul de înregistrare a tokenurilor personalizate s-a schimbat. Actualizează tokenurile corespunzător. Consultă {{documentation}} pentru mai multe informații.'
     },
-    legacyRenameAttachmentsToLowerCase: {
-      part1: 'În versiunea 9.0.0 a pluginului, această',
-      part2: 'setare este depreciată. Folosește ',
-      part3: 'formatul în schimb. Vezi',
-      part4: 'documentația',
-      part5: 'pentru mai multe informații'
-    },
+    legacyRenameAttachmentsToLowerCase: 'Setarea {{setting}} este depreciată. Folosește în schimb formatul {{format}}. Consultă {{documentation}} pentru mai multe informații.',
     markdownUrlFormat: {
-      deprecated: {
-        part1: 'Aveți o valoare potențial incorectă setată pentru',
-        part2: 'format. Consultați',
-        part3: 'documentația',
-        part4: 'pentru mai multe informații.',
-        part5: 'Acest mesaj nu va mai fi afișat.'
-      }
+      deprecated: 'Aveți o valoare potențial incorectă setată pentru formatul {{setting}}. Consultați {{documentation}} pentru mai multe informații. Acest mesaj nu va mai fi afișat.'
     },
-    specialCharacters: {
-      part1: 'În versiunea 9.16.0 a pluginului,',
-      part2: 'valoarea implicită a setării a fost schimbată. Valoarea voastră a fost actualizată la noua valoare implicită.'
-    },
+    specialCharacters: 'Valoarea implicită a setării {{setting}} a fost schimbată. Valoarea voastră a fost actualizată la noua valoare implicită.',
     validation: {
       defaultImageSizeMustBePercentageOrPixels: 'Dimensiunea implicită a imaginii trebuie să fie în pixeli sau procente',
       invalidCustomTokensCode: 'Cod de token personalizat invalid',
@@ -142,67 +118,35 @@ export const ro = {
   },
   pluginSettingsTab: {
     attachmentRenameMode: {
-      description: {
-        part1: 'Când atașați fișiere:'
-      },
+      description: 'Când atașați fișiere:',
       name: 'Mod de redenumire atașamente'
     },
     collectAttachmentUsedByMultipleNotesMode: {
-      description: {
-        part1: 'Când atașamentul colectat este folosit de mai multe notițe:'
-      },
+      description: 'Când atașamentul colectat este folosit de mai multe notițe:',
       name: 'Mod colectare atașamente folosite de mai multe notițe'
     },
     collectedAttachmentFileName: {
-      description: {
-        part1: 'Vezi',
-        part2: 'tokenuri disponibile'
-      },
+      description: 'Vezi {{tokens}} disponibile.\nLăsați gol pentru a păstra numele curent al fișierului atașat.',
       name: 'Nume fișier atașament colectat'
     },
     customTokens: {
-      description: {
-        part1: 'Tokenuri personalizate de utilizat.',
-        part2: 'Vezi',
-        part3: 'documentația',
-        part4: 'pentru mai multe informații.',
-        part5: '⚠️ Tokenurile personalizate pot conține cod JavaScript arbitrar. Dacă sunt scrise greșit, pot cauza pierderi de date. Folosiți-le pe propria răspundere.'
-      },
+      description: 'Tokenuri personalizate de utilizat.\nConsultă {{documentation}} pentru mai multe informații.\n⚠️ Tokenurile personalizate pot conține cod JavaScript arbitrar. Dacă sunt scrise greșit, pot cauza pierderi de date. Folosiți-le pe propria răspundere.',
       name: 'Tokenuri personalizate'
     },
     defaultImageSize: {
-      description: {
-        part1: 'Dimensiunea implicită a imaginii.',
-        part2: 'Poate fi specificată în pixeli',
-        part3: 'sau ca procent din dimensiunea totală a imaginii',
-        part4: 'Lăsați gol pentru a folosi dimensiunea originală a imaginii.'
-      },
+      description: 'Dimensiunea implicită a imaginii.\nPoate fi specificată în pixeli ({{pixels}}) sau ca procent din dimensiunea totală a imaginii ({{percentage}}).\nLăsați gol pentru a folosi dimensiunea originală a imaginii.',
       name: 'Dimensiune implicită imagine'
     },
     duplicateNameSeparator: {
-      description: {
-        part1: 'Când lipiți/tractați un fișier cu același nume ca un fișier existent, acest separator va fi adăugat la nume.',
-        part2: 'De exemplu, când trageți fișierul',
-        part3: ', va fi redenumit în ',
-        part4: ', etc., folosind primul nume disponibil.'
-      },
+      description: 'Când lipiți/trageți un fișier cu același nume ca un fișier existent, acest separator va fi adăugat la numele fișierului.\nDe exemplu, când trageți fișierul {{existingFile}}, acesta va fi redenumit în {{firstAvailableName}}, {{secondAvailableName}} etc., folosind primul nume disponibil.',
       name: 'Separator pentru nume duplicate'
     },
     excludePathsFromAttachmentCollecting: {
-      description: {
-        part1: 'Excludeți atașamentele din următoarele căi când se execută comanda',
-        part2: 'Colectează atașamente',
-        part3: '.',
-        part4: 'Introduceți fiecare cale pe o linie nouă.',
-        part6: 'Dacă setarea este goală, nu se exclud căi din colectarea atașamentelor.'
-      },
+      description: 'Excludeți atașamentele din următoarele căi când se execută comanda {{command}}.\nIntroduceți fiecare cale pe o linie nouă.\n{{pathSyntax}}\nDacă setarea este goală, nu se exclude nicio cale din colectarea atașamentelor.',
       name: 'Excludere căi pentru colectarea atașamentelor'
     },
     generatedAttachmentFileName: {
-      description: {
-        part1: 'Vezi',
-        part2: 'tokenuri disponibile'
-      },
+      description: 'Vezi {{tokens}} disponibile.',
       name: 'Nume fișier atașament generat'
     },
     jpegQuality: {
@@ -210,40 +154,21 @@ export const ro = {
       name: 'Calitate JPEG'
     },
     locationForNewAttachments: {
-      description: {
-        part1: 'Începeți cu',
-        part2: 'pentru a folosi cale relativă.',
-        part3: 'Vezi',
-        part4: 'tokenurile disponibile',
-        part5: 'Dosare cu punct precum',
-        part6: 'nu sunt recomandate, deoarece Obsidian nu le urmărește. Este posibil să fie nevoie să folosiți un',
-        part7: 'plugin pentru a le gestiona.'
-      },
+      description: 'Începeți cu {{relativePrefix}} pentru căi relative la dosarul părinte al notiței.\nVezi {{tokens}} disponibile.\nDosarele cu punct, precum {{dotFolder}}, nu sunt recomandate, deoarece Obsidian nu le urmărește. Este posibil să aveți nevoie de pluginul {{unhidePlugin}} pentru a le gestiona.',
       name: 'Locația pentru atașamente noi'
     },
     markdownUrlFormat: {
-      description: {
-        part1: 'Formatul URL-ului care va fi inserat în Markdown.',
-        part2: 'Vezi',
-        part3: 'tokenurile disponibile',
-        part4: 'Lăsați necompletat pentru a folosi formatul implicit.'
-      },
+      description: 'Formatul URL-ului care va fi inserat în Markdown când se adaugă un atașament. Se aplică doar în acel moment: un link pe care Obsidian îl rescrie mai târziu, când o notiță sau un atașament este redenumit sau mutat, primește formatul implicit.\nVezi {{tokens}} disponibile.\nLăsați necompletat pentru a folosi formatul implicit.',
       name: 'Format URL Markdown'
     },
     renameAttachmentsCreatedByOtherPluginsMode: {
-      description: {
-        part1: 'Dacă setările pentru folderul de atașamente și numele fișierului se aplică și atașamentelor create de ALTE pluginuri.',
-        part2: 'Unele pluginuri scriu un atașament direct în seif sub un nume propriu, fără să întrebe Obsidian unde ar trebui să ajungă. Cu această opțiune activată, un astfel de fișier este mutat și redenumit imediat ce apare.',
-        part3: 'Sunt afectate doar fișierele create cât timp o notiță este deschisă, niciodată cele venite dintr-o sincronizare sau dintr-un import de seif.'
-      },
+      description:
+        'Dacă setările pentru folderul de atașamente și numele fișierului se aplică și atașamentelor create de ALTE pluginuri.\nUnele pluginuri scriu un atașament direct în seif sub un nume propriu, fără să întrebe Obsidian unde ar trebui să ajungă. Cu această opțiune activată, un astfel de fișier este mutat și redenumit imediat ce apare.\nSunt afectate doar fișierele create cât timp o notiță este deschisă și spre care trimite un link dintr-o notiță: un fișier spre care nu trimite nicio notiță conține date pe care alt plugin le păstrează pentru sine și rămâne acolo unde a fost scris. Fișierele venite dintr-o sincronizare sau dintr-un import de seif nu sunt afectate niciodată.\n{{modes}}\nPluginul care a creat fișierul este identificat din stiva de apeluri a scrierii. Identificarea se face în măsura posibilului: niciun plugin nu este identificat pentru un fișier scris de Obsidian însuși, de un client de sincronizare sau de un plugin care își amână scrierea. Un astfel de fișier este considerat ca NEFIIND în lista de mai jos.',
       name: 'Redenumește atașamentele create de alte pluginuri'
     },
     renameAttachmentsToLowerCase: 'Redenumește atașamentele cu litere mici',
     renamedAttachmentFileName: {
-      description: {
-        part1: 'Vezi',
-        part2: 'tokenuri disponibile'
-      },
+      description: 'Vezi {{tokens}} disponibile.\nLăsați gol pentru a păstra numele curent al fișierului atașat.',
       name: 'Nume fișier atașament redenumit'
     },
     resetToSampleCustomTokens: {
@@ -255,34 +180,19 @@ export const ro = {
       name: 'Convertiți imaginile lipite în JPEG'
     },
     shouldRenameCollectedAttachments: {
-      description: {
-        part1: 'Dacă este activat, atașamentele procesate prin comenzile',
-        part2: 'Colectează atașamente',
-        part3: 'vor fi redenumite conform',
-        part4: 'setării.'
-      },
+      description: 'Dacă este activat, atașamentele procesate prin comenzile {{command}} vor fi redenumite conform setării {{setting}}.',
       name: 'Redenumește atașamentele colectate'
     },
     specialCharacters: {
-      description: {
-        part1: 'Caractere speciale în numele dosarului sau fișierului atașament care vor fi înlocuite sau eliminate.',
-        part2: 'Lăsați gol pentru a le păstra.'
-      },
+      description: 'Caractere speciale în numele dosarului și fișierului atașament care vor fi înlocuite sau eliminate.\nLăsați gol pentru a păstra caracterele speciale.',
       name: 'Caractere speciale'
     },
     specialCharactersReplacement: {
-      description: {
-        part1: 'Șir de înlocuire pentru caractere speciale în numele dosarului sau fișierului atașament.',
-        part2: 'Lăsați gol pentru a elimina caracterele speciale.'
-      },
+      description: 'Șir de înlocuire pentru caracterele speciale din numele dosarului și fișierului atașament.\nLăsați gol pentru a elimina caracterele speciale.',
       name: 'Înlocuire caractere speciale'
     },
     timeoutInSeconds: {
-      description: {
-        part1: 'Timpul limită în secunde pentru toate operațiile.',
-        part2: 'Dacă',
-        part3: 'este setat, timpul limită va fi dezactivat.'
-      },
+      description: 'Timpul limită în secunde pentru toate operațiile.\nDacă este setat {{zero}}, timpul limită pentru executarea operațiilor este dezactivat.',
       name: 'Timp limită (secunde)'
     }
   },

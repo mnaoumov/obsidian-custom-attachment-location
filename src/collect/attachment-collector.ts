@@ -77,6 +77,10 @@ import {
   findIdenticalAttachmentFile,
   mergeIntoIdenticalAttachment
 } from '../attachment-location/identical-attachment.ts';
+import {
+  codeNode,
+  translateFragment
+} from '../i18n/translate-fragment.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
 import { selectMode } from '../shared-attachments/collect-attachment-used-by-multiple-notes-modal.ts';
 import { NoteOwnerResolver } from '../shared-attachments/note-owner-resolver.ts';
@@ -293,16 +297,11 @@ export class AttachmentCollector {
    */
   private buildHigherPriorityNotesNoticeMessage(attachmentPath: string, notePaths: readonly string[]): Promise<DocumentFragment> {
     return createFragmentAsync(async (f) => {
-      f.appendText(t(($) => $.notice.attachmentReferencedByHigherPriorityNotes.part1));
-      f.appendText(' ');
-      f.append(
-        await renderInternalLink({
-          app: this.app,
-          pathOrAbstractFile: attachmentPath
-        })
-      );
-      f.appendText(' ');
-      f.appendText(t(($) => $.notice.attachmentReferencedByHigherPriorityNotes.part2));
+      const attachmentLink = await renderInternalLink({
+        app: this.app,
+        pathOrAbstractFile: attachmentPath
+      });
+      f.append(translateFragment(($) => $.notice.attachmentReferencedByHigherPriorityNotes, { attachment: attachmentLink }));
       f.append(
         // The class carries no styling; it is how an integration test addresses the list.
         await createElAsync('ul', { cls: 'custom-attachment-location-higher-priority-notes-list' }, async (ul) => {
@@ -339,18 +338,16 @@ export class AttachmentCollector {
   private buildNothingToCollectNoticeMessage(notePath: string): DocumentFragment {
     const settings = this.pluginSettingsComponent.settings;
     return createFragment((f) => {
-      f.appendText(t(($) => $.notice.nothingToCollect.part1, { noteFilePath: notePath }));
+      f.appendText(t(($) => $.notice.nothingToCollect.message, { noteFilePath: notePath }));
 
       if (!settings.shouldRenameCollectedAttachments || settings.collectedAttachmentFileName) {
         return;
       }
 
       f.createEl('br');
-      f.appendText(t(($) => $.notice.nothingToCollect.part2));
-      f.appendText(' ');
-      appendCodeBlock(f, t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name));
-      f.appendText(' ');
-      f.appendText(t(($) => $.notice.nothingToCollect.part3));
+      f.append(translateFragment(($) => $.notice.nothingToCollect.emptyFileNameTemplate, {
+        settingName: codeNode(t(($) => $.pluginSettingsTab.collectedAttachmentFileName.name))
+      }));
     });
   }
 
@@ -851,18 +848,16 @@ export class AttachmentCollector {
     const canCollectAttachments = !!singleFile || (await confirm({
       app: this.app,
       cancelButtonText: t(($) => $.obsidianLib.buttons.cancel),
-      message: createFragment((f) => {
-        f.appendText(t(($) => $.attachmentCollector.confirm.part1));
-        f.createEl('br');
-        f.createEl('ul', {}, (ul) => {
-          for (const abstractFile of abstractFiles) {
-            ul.createEl('li', {}, (li) => {
-              appendCodeBlock(li, abstractFile.path);
-            });
-          }
-        });
-        f.createEl('br');
-        f.appendText(t(($) => $.attachmentCollector.confirm.part2));
+      message: translateFragment(($) => $.attachmentCollector.confirm, {
+        folders: (parent) => {
+          parent.createEl('ul', {}, (ul) => {
+            for (const abstractFile of abstractFiles) {
+              ul.createEl('li', {}, (li) => {
+                appendCodeBlock(li, abstractFile.path);
+              });
+            }
+          });
+        }
       }),
       okButtonText: t(($) => $.obsidianLib.buttons.ok),
       title: createFragment((f) => {
