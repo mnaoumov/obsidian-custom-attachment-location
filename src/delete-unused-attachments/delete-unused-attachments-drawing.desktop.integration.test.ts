@@ -108,7 +108,7 @@ describe('Delete unused attachments keeps what a drawing shows', () => {
           const okButton = document.querySelector<HTMLElement>('.modal-container .ok-button');
           if (okButton) {
             isModalShown = true;
-            listedTexts = [...okButton.closest('.modal-container')?.querySelectorAll('li') ?? []].map((liEl) => liEl.textContent);
+            listedTexts = [...(okButton.closest('.modal-container')?.querySelectorAll('li') ?? [])].map((liEl) => liEl.textContent);
             okButton.click();
             break;
           }

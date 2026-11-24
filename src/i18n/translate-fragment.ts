@@ -51,7 +51,7 @@ export function linkNode(href: string, text: string): TranslationNode {
  */
 export function translateFragment(
   selector: SelectorParam,
-  nodes: Readonly<Record<string, TranslationNode>> = {},
+  nodes: Readonly<Record<string, TranslationNode>>,
   options?: Readonly<Record<string, unknown>>
 ): DocumentFragment {
   const fragment = tFragment(selector, nodes, options);

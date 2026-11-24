@@ -42,7 +42,7 @@ interface TestableHandler {
 }
 
 vi.mock('@mnaoumov/obsidian-lib/modals/select-item', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/modals/select-item')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/modals/select-item')>()),
   selectItem: vi.fn()
 }));
 

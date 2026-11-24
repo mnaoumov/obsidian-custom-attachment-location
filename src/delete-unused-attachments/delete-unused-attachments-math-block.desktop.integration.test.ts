@@ -70,7 +70,7 @@ describe('Delete unused attachments after a math block that follows a list (#89)
           const okButton = document.querySelector<HTMLElement>('.modal-container .ok-button');
           if (okButton) {
             isModalShown = true;
-            listedTexts = [...okButton.closest('.modal-container')?.querySelectorAll('li') ?? []].map((liEl) => liEl.textContent);
+            listedTexts = [...(okButton.closest('.modal-container')?.querySelectorAll('li') ?? [])].map((liEl) => liEl.textContent);
             okButton.click();
             break;
           }

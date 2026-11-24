@@ -51,7 +51,7 @@ describe('Shared original attachment names', () => {
           const listing = await app.vault.adapter.list(folder);
           const paths = [...listing.files];
           for (const child of listing.folders) {
-            paths.push(...await documents(child));
+            paths.push(...(await documents(child)));
           }
           return paths;
         }

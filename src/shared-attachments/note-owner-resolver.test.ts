@@ -37,17 +37,17 @@ interface SettingsLike {
 }
 
 vi.mock('@mnaoumov/obsidian-lib/attachment-unit-folder', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-unit-folder')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-unit-folder')>()),
   findAttachmentUnitFolderPath: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   isFile: vi.fn()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>()),
   getBacklinksForFileSafe: vi.fn()
 }));
 

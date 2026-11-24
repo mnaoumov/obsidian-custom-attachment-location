@@ -35,7 +35,7 @@ import {
 } from './plugin-settings.ts';
 
 vi.mock('@mnaoumov/typescript-lib/error', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/typescript-lib/error')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/typescript-lib/error')>()),
   printError: vi.fn<(error: unknown) => void>()
 }));
 
@@ -77,7 +77,11 @@ class MockDataHandler implements DataHandler {
   }
 }
 
-async function createComponent(data: unknown = {}, dataHandler: DataHandler = new MockDataHandler(data)): Promise<PluginSettingsComponent> {
+async function createComponent(data: unknown = {}): Promise<PluginSettingsComponent> {
+  return await createComponentWithDataHandler(new MockDataHandler(data));
+}
+
+async function createComponentWithDataHandler(dataHandler: DataHandler): Promise<PluginSettingsComponent> {
   const app = App.createConfigured__().asOriginalType__();
   const validatorWrapper = ValueWrapper.unset<TokenValidator>();
   const component = new PluginSettingsComponent({
@@ -126,7 +130,7 @@ describe('PluginSettingsComponent', () => {
     // them silently: that is what 13.0.0's shouldFollowObsidianAttachmentLocation flip did.
     it('should write the full settings record when no data.json exists', async () => {
       const dataHandler = new MockDataHandler(null);
-      await createComponent(null, dataHandler);
+      await createComponentWithDataHandler(dataHandler);
       const saved = await dataHandler.loadData() as Partial<PluginSettings>;
       expect(saved.shouldFollowObsidianAttachmentLocation).toBe(true);
       expect(saved.attachmentFolderPath).toBe('./assets/{{noteFileName}}');
@@ -134,7 +138,7 @@ describe('PluginSettingsComponent', () => {
 
     it('should write the full settings record when loadData answers undefined', async () => {
       const dataHandler = new MockDataHandler(undefined);
-      await createComponent(undefined, dataHandler);
+      await createComponentWithDataHandler(dataHandler);
       const saved = await dataHandler.loadData() as Partial<PluginSettings>;
       expect(saved.shouldFollowObsidianAttachmentLocation).toBe(true);
     });
@@ -147,7 +151,7 @@ describe('PluginSettingsComponent', () => {
      */
     it('should not write data.json again when loading the record it wrote', async () => {
       const dataHandler = new JsonDataHandler({ shouldFollowObsidianAttachmentLocation: false });
-      const component = await createComponent(undefined, dataHandler);
+      const component = await createComponentWithDataHandler(dataHandler);
       const savesAfterFirstLoad = dataHandler.saveCount;
       const written = await dataHandler.loadData() as Record<string, unknown>;
 
@@ -159,7 +163,7 @@ describe('PluginSettingsComponent', () => {
 
     it('should keep a stored value the default now disagrees with', async () => {
       const dataHandler = new MockDataHandler({ shouldFollowObsidianAttachmentLocation: false });
-      const component = await createComponent(undefined, dataHandler);
+      const component = await createComponentWithDataHandler(dataHandler);
       expect(component.settings.shouldFollowObsidianAttachmentLocation).toBe(false);
       const saved = await dataHandler.loadData() as Partial<PluginSettings>;
       expect(saved.shouldFollowObsidianAttachmentLocation).toBe(false);

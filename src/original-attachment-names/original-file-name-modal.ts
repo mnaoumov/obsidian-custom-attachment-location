@@ -95,7 +95,7 @@ class OriginalFileNameModal extends ModalBase<void> {
 
   private async copy(): Promise<void> {
     try {
-      await window.navigator.clipboard.writeText(this.originalFileName);
+      await activeWindow.navigator.clipboard.writeText(this.originalFileName);
     } catch (error) {
       console.error('Failed to copy the original file name to the clipboard.', error);
       this.pluginNoticeComponent.showNotice(t(($) => $.originalAttachmentNames.originalFileNameModal.copyFailed));

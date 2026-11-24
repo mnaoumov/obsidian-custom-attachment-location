@@ -26,7 +26,7 @@ import { PluginSettings } from '../settings/plugin-settings.ts';
 import { NetworkImageDownloader } from './network-image-downloader.ts';
 
 vi.mock('obsidian', async (importOriginal) => ({
-  ...await importOriginal<typeof import('obsidian')>(),
+  ...(await importOriginal<typeof import('obsidian')>()),
   requestUrl: vi.fn()
 }));
 

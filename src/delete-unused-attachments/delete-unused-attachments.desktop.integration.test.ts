@@ -132,7 +132,7 @@ describe('Delete unused attachments (issue #23)', () => {
          */
         async function followOrphanLink(okButton: Element): Promise<LinkProbeResult> {
           const modalContainerEl = okButton.closest<HTMLElement>('.modal-container');
-          const orphanLinkEl = [...modalContainerEl?.querySelectorAll('a') ?? []].find((aEl) => aEl.textContent === orphanPath);
+          const orphanLinkEl = [...(modalContainerEl?.querySelectorAll('a') ?? [])].find((aEl) => aEl.textContent === orphanPath);
           orphanLinkEl?.click();
           // Minimizing hides the container, backdrop and all, rather than removing it.
           const isMinimizedByLink = modalContainerEl?.style.display === 'none';

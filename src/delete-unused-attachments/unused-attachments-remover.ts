@@ -274,7 +274,7 @@ export class UnusedAttachmentsRemover {
       return referencedAttachmentPaths;
     }
 
-    const references: Reference[] = isCanvasFile(note) ? [...await getCanvasReferences(this.app, note)] : [...getReferences({ cache })];
+    const references: Reference[] = isCanvasFile(note) ? [...(await getCanvasReferences(this.app, note))] : [...getReferences({ cache })];
     abortSignal.throwIfAborted();
 
     /*

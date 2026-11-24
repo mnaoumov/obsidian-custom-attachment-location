@@ -24,7 +24,7 @@ const { mockWatchPluginApi } = vi.hoisted(() => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/plugin/plugin-api', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/plugin/plugin-api')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/plugin/plugin-api')>()),
   watchPluginApi: mockWatchPluginApi
 }));
 

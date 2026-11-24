@@ -48,12 +48,12 @@ interface TestableFileHandler {
 }
 
 vi.mock('./original-attachment-names-modal.ts', async (importOriginal) => ({
-  ...await importOriginal<typeof import('./original-attachment-names-modal.ts')>(),
+  ...(await importOriginal<typeof import('./original-attachment-names-modal.ts')>()),
   showOriginalAttachmentNamesModal: vi.fn()
 }));
 
 vi.mock('./prune-original-attachment-names-modal.ts', async (importOriginal) => ({
-  ...await importOriginal<typeof import('./prune-original-attachment-names-modal.ts')>(),
+  ...(await importOriginal<typeof import('./prune-original-attachment-names-modal.ts')>()),
   showPruneOriginalAttachmentNamesModal: vi.fn()
 }));
 

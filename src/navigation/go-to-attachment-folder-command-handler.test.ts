@@ -50,7 +50,7 @@ interface TestableHandler {
 }
 
 vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>()),
   createFolderSafe: vi.fn()
 }));
 

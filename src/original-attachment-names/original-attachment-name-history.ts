@@ -67,7 +67,7 @@ export class OriginalAttachmentNameHistory {
    * @returns Observation ids, detached from the projection.
    */
   public getObserved(path: string): string[] {
-    return [...this.identities.get(path) ?? []];
+    return [...(this.identities.get(path) ?? [])];
   }
 
   /**
@@ -117,7 +117,7 @@ export class OriginalAttachmentNameHistory {
       this.identities.delete(path);
       if (identities && operation.kind === 'rename' && operation.target !== undefined) {
         const target = operation.target + path.slice(operation.path.length);
-        this.identities.set(target, new Set([...this.identities.get(target) ?? [], ...identities]));
+        this.identities.set(target, new Set([...(this.identities.get(target) ?? []), ...identities]));
       }
       const value = this.names.get(path);
       this.names.delete(path);

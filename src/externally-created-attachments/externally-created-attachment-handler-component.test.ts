@@ -48,7 +48,7 @@ vi.mock('@mnaoumov/typescript-lib/error', () => ({
 
 // The comparison runs for real; the merge needs a link index the mock App does not model, and is tested on its own.
 vi.mock('../attachment-location/identical-attachment.ts', async (importOriginal) => ({
-  ...await importOriginal<typeof import('../attachment-location/identical-attachment.ts')>(),
+  ...(await importOriginal<typeof import('../attachment-location/identical-attachment.ts')>()),
   mergeIntoIdenticalAttachment: vi.fn()
 }));
 

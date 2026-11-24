@@ -12,7 +12,7 @@ import { getPluginSettingsPopulate } from './plugin-settings-seed.ts';
 export const VITEST_GLOBAL_SETUP_OPTIONS: CreateSetupOptions = {
   enableCommunityPlugins: [ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID],
   populate: async () => ({
-    ...await getAdvancedRenameAndDeleteHandlerPopulate(),
+    ...(await getAdvancedRenameAndDeleteHandlerPopulate()),
     ...getPluginSettingsPopulate()
   })
 };

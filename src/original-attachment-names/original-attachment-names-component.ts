@@ -1098,7 +1098,7 @@ export class OriginalAttachmentNamesComponent extends ComponentEx {
       time: Math.max(Date.now(), this.history.time + 1)
     };
 
-    const key = window.crypto.randomUUID();
+    const key = activeWindow.crypto.randomUUID();
     this.history.add(key, timed);
     this.pending.set(key, { ...timed });
   }

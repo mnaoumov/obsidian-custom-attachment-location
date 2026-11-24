@@ -20,7 +20,7 @@ export const { setup, teardown } = createSetup({
   enableCommunityPlugins: [ADVANCED_RENAME_AND_DELETE_HANDLER_PLUGIN_ID],
   populate: async () => ({
     ...generatePerformanceVault(),
-    ...await getAdvancedRenameAndDeleteHandlerPopulate(),
+    ...(await getAdvancedRenameAndDeleteHandlerPopulate()),
     ...getPluginSettingsPopulate()
   })
 });

@@ -680,7 +680,7 @@ function createComponent(arrayBufferMap = strictProxy<ArrayBufferMap>({}), sidec
     pluginId: 'custom-attachment-location',
     pluginName: 'Custom Attachment Location',
     pluginSettingsComponent: context.pluginSettingsComponent,
-    ...sidecarAttachmentsComponent && { sidecarAttachmentsComponent },
+    ...(sidecarAttachmentsComponent && { sidecarAttachmentsComponent }),
     tokenValidator: strictProxy<TokenValidator>({})
   });
   loadedComponents.push(component);

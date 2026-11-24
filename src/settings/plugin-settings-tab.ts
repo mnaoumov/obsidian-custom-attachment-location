@@ -848,7 +848,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       }),
       this.settingEx({
-        desc: translateFragment(($) => $.pluginSettingsTab.shouldPreserveImageMetadata.description),
+        desc: translateFragment(($) => $.pluginSettingsTab.shouldPreserveImageMetadata.description, {}),
         disabled: () => this.pluginSettingsComponent.settings.convertImagesToJpegMode === ConvertImagesToJpegMode.None,
         name: t(($) => $.pluginSettingsTab.shouldPreserveImageMetadata.name),
         render: (setting) => {
@@ -999,7 +999,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       }),
       this.settingEx({
-        desc: translateFragment(($) => $.pluginSettingsTab.otherPluginIdsForAttachmentRename.description),
+        desc: translateFragment(($) => $.pluginSettingsTab.otherPluginIdsForAttachmentRename.description, {}),
         name: t(($) => $.pluginSettingsTab.otherPluginIdsForAttachmentRename.name),
         render: (setting) => {
           setting.addMultipleDropdown((multipleDropdown) => {
@@ -1256,7 +1256,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   private getSpecialCharactersItems(): SettingDefinitionRender[] {
     return [
       this.settingEx({
-        desc: translateFragment(($) => $.pluginSettingsTab.specialCharacters.description),
+        desc: translateFragment(($) => $.pluginSettingsTab.specialCharacters.description, {}),
         name: t(($) => $.pluginSettingsTab.specialCharacters.name),
         render: (setting) => {
           setting.addText((text) => {
@@ -1274,7 +1274,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       }),
       this.settingEx({
-        desc: translateFragment(($) => $.pluginSettingsTab.specialCharactersReplacement.description),
+        desc: translateFragment(($) => $.pluginSettingsTab.specialCharactersReplacement.description, {}),
         name: t(($) => $.pluginSettingsTab.specialCharactersReplacement.name),
         render: (setting) => {
           setting.addText((text) => {

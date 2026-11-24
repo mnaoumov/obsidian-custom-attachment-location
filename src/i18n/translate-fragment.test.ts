@@ -30,7 +30,7 @@ describe('translateFragment', () => {
   });
 
   it('should render each line break of the translation as a br', () => {
-    const html = render(translateFragment(($) => $.pluginSettingsTab.specialCharacters.description));
+    const html = render(translateFragment(($) => $.pluginSettingsTab.specialCharacters.description, {}));
     expect(html).toBe('Special characters in attachment folder and file name to be replaced or removed.<br>Leave blank to preserve special characters.');
   });
 

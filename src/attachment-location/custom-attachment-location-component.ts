@@ -222,7 +222,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
         attachmentPathManager: this.attachmentPathManager,
         pluginSettingsComponent: this.pluginSettingsComponent,
         shareReceiver: this.app.shareReceiver,
-        ...this.sidecarAttachmentsComponent && { sidecarAttachmentsComponent: this.sidecarAttachmentsComponent },
+        ...(this.sidecarAttachmentsComponent && { sidecarAttachmentsComponent: this.sidecarAttachmentsComponent }),
         tokenValidator: this.tokenValidator
       })
     );
@@ -354,7 +354,7 @@ export class CustomAttachmentLocationComponent extends LayoutReadyComponent {
       new ClipboardManagerInsertFilesPatchComponent({
         clipboardManager: markdownView.editMode.clipboardManager,
         insertGestureTrackerComponent: this.insertGestureTrackerComponent,
-        ...this.sidecarAttachmentsComponent && { sidecarAttachmentsComponent: this.sidecarAttachmentsComponent },
+        ...(this.sidecarAttachmentsComponent && { sidecarAttachmentsComponent: this.sidecarAttachmentsComponent }),
         pastedImageMarker: this.pastedImageMarker
       })
     );

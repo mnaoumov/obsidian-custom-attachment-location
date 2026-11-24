@@ -830,9 +830,9 @@ describe('PluginSettingsTab', () => {
     expect([...pageDesc.querySelectorAll('code')].map((code) => code.textContent)).toEqual(['{{originalAttachmentFileName}}']);
 
     const advice = tab.containerEl.querySelector('.original-name-storage-advice');
-    expect([...advice?.querySelectorAll('code') ?? []].map((code) => code.textContent)).toEqual(['{{originalAttachmentFileName}}']);
+    expect([...(advice?.querySelectorAll('code') ?? [])].map((code) => code.textContent)).toEqual(['{{originalAttachmentFileName}}']);
     const roots = tab.containerEl.querySelector('.original-name-storage-roots');
-    expect([...roots?.querySelectorAll('code') ?? []].map((code) => code.textContent)).toEqual(['Plugin data/a', 'Plugin data/b']);
+    expect([...(roots?.querySelectorAll('code') ?? [])].map((code) => code.textContent)).toEqual(['Plugin data/a', 'Plugin data/b']);
   });
 
   it.each(['Set up Obsidian Sync', 'Set up external sync'])('asks for device setup before enabling transport: %s', async (label) => {

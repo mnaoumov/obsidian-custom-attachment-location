@@ -85,12 +85,12 @@ vi.mock('obsidian', async (importOriginal) => {
 });
 
 vi.mock('@mnaoumov/obsidian-lib/attachment-path', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-path')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/attachment-path')>()),
   getAvailablePathForAttachments: vi.fn<typeof getAvailablePathForAttachments>()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/file-system')>()),
   getAbstractFileOrNull: vi.fn<typeof getAbstractFileOrNull>(),
   getFileOrNull: vi.fn<typeof getFileOrNull>(),
   getPath: vi.fn<typeof getPath>(),
@@ -98,18 +98,18 @@ vi.mock('@mnaoumov/obsidian-lib/file-system', async (importOriginal) => ({
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/link', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/link')>()),
   extractReferenceFile: vi.fn<typeof extractReferenceFile>()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/metadata-cache', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/metadata-cache')>()),
   getCacheSafe: vi.fn<typeof getCacheSafe>(),
   getReferences: vi.fn<typeof getReferences>()
 }));
 
 vi.mock('@mnaoumov/obsidian-lib/vault', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>(),
+  ...(await importOriginal<typeof import('@mnaoumov/obsidian-lib/vault')>()),
   createFolderSafe: vi.fn<typeof createFolderSafe>()
 }));
 
@@ -118,7 +118,7 @@ vi.mock('./identical-attachment.ts', () => ({
 }));
 
 vi.mock('../tokens/prompt/prompt-with-preview-modal.ts', async (importOriginal) => ({
-  ...await importOriginal<typeof import('../tokens/prompt/prompt-with-preview-modal.ts')>(),
+  ...(await importOriginal<typeof import('../tokens/prompt/prompt-with-preview-modal.ts')>()),
   promptWithPreview: vi.fn<typeof promptWithPreview>()
 }));
 

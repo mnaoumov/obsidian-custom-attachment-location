@@ -156,7 +156,7 @@ export class AttachmentSaver {
     const activeNoteFile = this.app.workspace.getActiveFile();
     if (!activeNoteFile || this.handedOverSettingsComponent.isPathIgnored(activeNoteFile.path)) {
       return await this.saveAttachmentCore({
-        ...params.destinationPath && { destinationPath: params.destinationPath },
+        ...(params.destinationPath && { destinationPath: params.destinationPath }),
         attachmentFileBaseName,
         attachmentFileContent,
         attachmentFileExtension,
@@ -232,7 +232,7 @@ export class AttachmentSaver {
     }
 
     const attachmentFile = await this.saveAttachmentCore({
-      ...params.destinationPath && { destinationPath: params.destinationPath },
+      ...(params.destinationPath && { destinationPath: params.destinationPath }),
       attachmentFileBaseName,
       attachmentFileContent,
       attachmentFileExtension,
