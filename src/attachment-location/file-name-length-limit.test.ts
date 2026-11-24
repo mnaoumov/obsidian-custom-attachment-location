@@ -124,6 +124,18 @@ describe('fitFileBaseName', () => {
     expect(result).toEqual({ fileBaseName: 'e'.repeat(243), isShortened: true });
   });
 
+  it('should leave the name alone when the cut would leave only dots and spaces', () => {
+    const fileBaseName = `${'.'.repeat(250)}tail`;
+    expect(fitFileBaseName({
+      absoluteVaultPath: null,
+      duplicateNameSeparator: ' ',
+      fileBaseName,
+      fileExtension: 'png',
+      folderPath: '',
+      isWindows: false
+    })).toEqual({ fileBaseName, isShortened: false });
+  });
+
   it('should leave the name alone when the folder leaves no room for one', () => {
     const fileBaseName = 'g'.repeat(50);
     expect(fitFileBaseName({
