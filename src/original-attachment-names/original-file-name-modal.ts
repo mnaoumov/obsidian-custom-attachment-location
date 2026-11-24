@@ -25,6 +25,21 @@ import {
 } from 'obsidian';
 
 /**
+ * Parameters for {@link copyOriginalFileName}.
+ */
+export interface CopyOriginalFileNameParams {
+  /**
+   * The name to copy.
+   */
+  readonly originalFileName: string;
+
+  /**
+   * Shows the copy notices, naming the plugin.
+   */
+  readonly pluginNoticeComponent: PluginNoticeComponent;
+}
+
+/**
  * Parameters for {@link showOriginalFileNameModal}.
  */
 export interface ShowOriginalFileNameModalParams {
@@ -94,15 +109,29 @@ class OriginalFileNameModal extends ModalBase<void> {
   }
 
   private async copy(): Promise<void> {
-    try {
-      await activeWindow.navigator.clipboard.writeText(this.originalFileName);
-    } catch (error) {
-      console.error('Failed to copy the original file name to the clipboard.', error);
-      this.pluginNoticeComponent.showNotice(t(($) => $.originalAttachmentNames.originalFileNameModal.copyFailed));
-      return;
-    }
-    this.pluginNoticeComponent.showNotice(t(($) => $.originalAttachmentNames.originalFileNameModal.copiedNotice, { name: this.originalFileName }));
+    await copyOriginalFileName({
+      originalFileName: this.originalFileName,
+      pluginNoticeComponent: this.pluginNoticeComponent
+    });
   }
+}
+
+/**
+ * Copies an original file name to the clipboard and says so in a notice, or says the copy failed.
+ *
+ * Shared by the dialog's copy button and the `Copy original file name` command.
+ *
+ * @param params - The name and the notice component.
+ */
+export async function copyOriginalFileName(params: CopyOriginalFileNameParams): Promise<void> {
+  try {
+    await activeWindow.navigator.clipboard.writeText(params.originalFileName);
+  } catch (error) {
+    console.error('Failed to copy the original file name to the clipboard.', error);
+    params.pluginNoticeComponent.showNotice(t(($) => $.originalAttachmentNames.originalFileNameModal.copyFailed));
+    return;
+  }
+  params.pluginNoticeComponent.showNotice(t(($) => $.originalAttachmentNames.originalFileNameModal.copiedNotice, { name: params.originalFileName }));
 }
 
 /**

@@ -34,6 +34,7 @@ export const defaultTranslations = {
     collectAttachmentsCurrentFolder: 'Collect attachments in current folder',
     collectAttachmentsCurrentNote: 'Collect attachments in current note',
     collectAttachmentsEntireVault: 'Collect attachments in entire vault',
+    copyOriginalFileName: 'Copy original file name',
     deleteUnusedAttachmentsCurrentNote: 'Delete unused attachments in current note',
     deleteUnusedAttachmentsEntireVault: 'Delete unused attachments in entire vault',
     goToAttachmentFolder: 'Go to attachment folder',

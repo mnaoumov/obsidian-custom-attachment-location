@@ -8,11 +8,11 @@ import type {
 import { ComponentEx } from '@mnaoumov/obsidian-lib/components/component-ex';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import { convertAsyncToSync } from '@mnaoumov/typescript-lib/async';
-import { TFile } from 'obsidian';
 
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { OriginalAttachmentNamesComponent } from './original-attachment-names-component.ts';
 
+import { getOriginalAttachmentNameTarget } from './original-attachment-name-target.ts';
 import { showOriginalFileNameModal } from './original-file-name-modal.ts';
 
 interface OriginalAttachmentNameMenuComponentConstructorParams {
@@ -49,10 +49,15 @@ export class OriginalAttachmentNameMenuComponent extends ComponentEx {
   }
 
   private addShowAction(menu: Menu, file: TAbstractFile): void {
-    if (!(file instanceof TFile) || this.pluginSettingsComponent.isNoteEx(file)) {
+    const target = getOriginalAttachmentNameTarget({
+      file,
+      originalAttachmentNamesComponent: this.originalAttachmentNamesComponent,
+      pluginSettingsComponent: this.pluginSettingsComponent
+    });
+    if (!target) {
       return;
     }
-    const originalFileName = this.originalAttachmentNamesComponent.get(file.path);
+    const { attachment, originalFileName } = target;
     menu.addItem((item) => {
       item.setTitle(t(($) => $.menuItems.showOriginalFileName)).setIcon('file-search').setSection('action').setDisabled(!originalFileName).onClick(
         convertAsyncToSync(async () => {
@@ -61,7 +66,7 @@ export class OriginalAttachmentNameMenuComponent extends ComponentEx {
           }
           await showOriginalFileNameModal({
             app: this.app,
-            attachmentPath: file.path,
+            attachmentPath: attachment.path,
             originalFileName,
             pluginNoticeComponent: this.pluginNoticeComponent
           });

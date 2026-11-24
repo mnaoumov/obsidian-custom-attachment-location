@@ -69,6 +69,7 @@ import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to
 import { GoToAttachmentFolderCommandHandler } from './navigation/go-to-attachment-folder-command-handler.ts';
 import { GoToOwningNoteCommandHandler } from './navigation/go-to-owning-note-command-handler.ts';
 import { NetworkImageDownloader } from './network-images/network-image-downloader.ts';
+import { CopyOriginalFileNameCommandHandler } from './original-attachment-names/copy-original-file-name-command-handler.ts';
 import { OriginalAttachmentNameMenuComponent } from './original-attachment-names/original-attachment-name-menu-component.ts';
 import {
   ORIGINAL_ATTACHMENT_NAMES_FILE_NAME,
@@ -491,6 +492,12 @@ export class Plugin extends PluginBase {
         bulkOperationCommitComponent,
         originalAttachmentNamesComponent,
         pluginNoticeComponent: this.pluginNoticeComponent
+      }),
+      new CopyOriginalFileNameCommandHandler({
+        app: this.app,
+        originalAttachmentNamesComponent,
+        pluginNoticeComponent: this.pluginNoticeComponent,
+        pluginSettingsComponent
       }),
       new RememberCurrentNameAsOriginalCommandHandler({
         originalAttachmentNamesComponent,

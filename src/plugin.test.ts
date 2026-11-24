@@ -69,6 +69,7 @@ import { MarkdownUrlMap } from './markdown-links/markdown-url-map.ts';
 import { MoveAttachmentToProperFolderCommandHandler } from './move-attachment-to-proper-folder/move-attachment-to-proper-folder-command-handler.ts';
 import { GoToAttachmentFolderCommandHandler } from './navigation/go-to-attachment-folder-command-handler.ts';
 import { GoToOwningNoteCommandHandler } from './navigation/go-to-owning-note-command-handler.ts';
+import { CopyOriginalFileNameCommandHandler } from './original-attachment-names/copy-original-file-name-command-handler.ts';
 import { PruneOriginalAttachmentNamesCommandHandler } from './original-attachment-names/prune-original-attachment-names-command-handler.ts';
 import { RememberCurrentNameAsOriginalCommandHandler } from './original-attachment-names/remember-current-name-as-original-command-handler.ts';
 import { ShowOriginalAttachmentNamesCommandHandler } from './original-attachment-names/show-original-attachment-names-command-handler.ts';
@@ -444,6 +445,7 @@ describe('Plugin', () => {
       expect.any(GoToOwningNoteCommandHandler),
       expect.any(ShowOriginalAttachmentNamesCommandHandler),
       expect.any(PruneOriginalAttachmentNamesCommandHandler),
+      expect.any(CopyOriginalFileNameCommandHandler),
       expect.any(RememberCurrentNameAsOriginalCommandHandler),
       expect.any(UndoBulkOperationCommandHandler),
       expect.any(OpenBugReportCommandHandler),
