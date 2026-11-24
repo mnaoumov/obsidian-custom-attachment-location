@@ -38,6 +38,7 @@ export const da = {
     collectAttachmentsInFiles: 'Indsaml vedhæftninger i filer'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Samler vedhæftninger for \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Samling af vedhæftninger annulleret. Se konsol for detaljer.',
     generatedAttachmentFileNameIsInvalid: {

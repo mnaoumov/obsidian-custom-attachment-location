@@ -38,6 +38,7 @@ export const am = {
     collectAttachmentsInFiles: 'በፋይሎች ውስጥ ተያያዥ ፋይሎችን ሰብስብ'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'ለ \'{{noteFilePath}}\' ተያያዦችን በመሰብሰብ ላይ',
     collectingAttachmentsCancelled: 'ተያያዦችን መሰብሰብ ተሰርዟል። ለዝርዝሮች ኮንሶል ይመልከቱ።',
     generatedAttachmentFileNameIsInvalid: {

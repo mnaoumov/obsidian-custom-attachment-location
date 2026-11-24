@@ -38,6 +38,7 @@ export const sq = {
     collectAttachmentsInFiles: 'Mblidh bashkëngjitjet në skedarë'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Duke mbledhur bashkëngjitjet për \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Mbledhja e bashkëngjitjeve u anulua. Kontrolloni konsolën për detaje.',
     generatedAttachmentFileNameIsInvalid: {

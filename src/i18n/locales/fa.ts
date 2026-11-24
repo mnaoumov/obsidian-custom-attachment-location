@@ -38,6 +38,7 @@ export const fa = {
     collectAttachmentsInFiles: 'جمع‌آوری پیوست‌ها در فایل‌ها'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'جمع‌آوری پیوست‌ها برای \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'جمع‌آوری پیوست‌ها لغو شد. برای جزئیات کنسول را ببینید.',
     generatedAttachmentFileNameIsInvalid: {

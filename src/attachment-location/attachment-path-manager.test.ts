@@ -33,8 +33,13 @@ import {
   CreateFolderSafeResult,
   EmptyFolderBehavior
 } from '@mnaoumov/obsidian-lib/vault';
+import { noop } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import {
+  FileSystemAdapter,
+  Platform
+} from 'obsidian';
 import {
   beforeAll,
   beforeEach,
@@ -140,6 +145,11 @@ interface MutableHandedOverSettings {
   readonly treatAsAttachmentExtensions: readonly string[];
 }
 
+interface MutablePlatform {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- A test switches the platform to Windows and back.
+  isWin: boolean;
+}
+
 interface TestContext {
   readonly create: ReturnType<typeof vi.fn<Vault['create']>>;
   readonly exists: ReturnType<typeof vi.fn<Vault['exists']>>;
@@ -156,6 +166,7 @@ interface TestContext {
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly readBinary: ReturnType<typeof vi.fn<Vault['readBinary']>>;
   readonly reportUnknown: ReturnType<typeof vi.fn<OriginalAttachmentNamesComponent['reportUnknown']>>;
+  readonly setAdapter: (adapter: Vault['adapter']) => void;
   readonly settings: PluginSettings;
   readonly tokenValidator: TokenValidator;
   readonly validateFileName: ReturnType<typeof vi.fn<TokenValidator['validateFileName']>>;
@@ -203,7 +214,16 @@ function createManager(): TestContext {
   const getAvailablePathForAttachmentsOriginal = vi.fn<Vault['getAvailablePathForAttachments']>().mockResolvedValue('original-path');
   const getConfig = vi.fn<(name: string) => unknown>().mockReturnValue('/');
 
+  // Not a FileSystemAdapter by default, so the name-length fit knows no absolute vault path, on any host.
+  let adapter = castTo<Vault['adapter']>({});
+  function setAdapter(value: Vault['adapter']): void {
+    adapter = value;
+  }
+
   const vault = strictProxy<Vault>({
+    get adapter(): Vault['adapter'] {
+      return adapter;
+    },
     create,
     exists: checkExists,
     getAvailablePath,
@@ -266,6 +286,7 @@ function createManager(): TestContext {
     pluginSettingsComponent,
     readBinary,
     reportUnknown,
+    setAdapter,
     settings,
     tokenValidator,
     validateFileName,
@@ -816,6 +837,61 @@ describe('AttachmentPathManager', () => {
   });
 
   describe('getDownloadedImagePath', () => {
+    it('should shorten a generated name the file system would refuse, and say so (issue #108)', async () => {
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'x'.repeat(300);
+      context.exists.mockResolvedValue(true);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(noop);
+      const result = await context.manager.getDownloadedImagePath({
+        actionContext: ActionContext.SaveAttachment,
+        downloadedContent: new ArrayBuffer(4),
+        fileExtension: 'png',
+        fileName: 'my-image',
+        noteFilePath: 'notes/note.md'
+      });
+      // 255, less `.png` and room for a ` 9999` duplicate suffix.
+      expect(result).toBe(`assets/${'x'.repeat(246)}.png`);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('too long for the file system'));
+      warn.mockRestore();
+    });
+
+    it('should keep the absolute path within MAX_PATH on Windows (issue #108)', async () => {
+      const platform = castTo<MutablePlatform>(Platform);
+      const wasWindows = platform.isWin;
+      platform.isWin = true;
+      const vaultPath = `C:\\${'v'.repeat(97)}`;
+      context.setAdapter(Object.assign(castTo<FileSystemAdapter>(Object.create(FileSystemAdapter.prototype)), {
+        getBasePath: (): string => vaultPath
+      }));
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'x'.repeat(200);
+      context.exists.mockResolvedValue(true);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(noop);
+      const params = {
+        actionContext: ActionContext.SaveAttachment,
+        downloadedContent: new ArrayBuffer(4),
+        fileExtension: 'png',
+        fileName: 'my-image',
+        noteFilePath: 'notes/note.md'
+      } as const;
+      try {
+        // 259, less the 108-character folder prefix, `.png` and room for a ` 9999` duplicate suffix.
+        expect(await context.manager.getDownloadedImagePath(params)).toBe(`assets/${'x'.repeat(142)}.png`);
+
+        // Off Windows only the name is bounded, whatever the vault's own path.
+        platform.isWin = false;
+        expect(await context.manager.getDownloadedImagePath(params)).toBe(`assets/${'x'.repeat(200)}.png`);
+        platform.isWin = true;
+
+        // An adapter with no vault folder on disk bounds the name alone.
+        context.setAdapter(castTo<FileSystemAdapter>({}));
+        expect(await context.manager.getDownloadedImagePath(params)).toBe(`assets/${'x'.repeat(200)}.png`);
+      } finally {
+        platform.isWin = wasWindows;
+        warn.mockRestore();
+      }
+    });
+
     it('should resolve the downloaded image path without creating an existing folder', async () => {
       context.settings.attachmentFolderPath = 'assets';
       context.settings.generatedAttachmentFileName = 'generated';
@@ -2034,6 +2110,30 @@ describe('AttachmentPathManager', () => {
       expect(register).toHaveBeenCalledExactlyOnceWith(savedPath);
       expect(context.expectArrival).toHaveBeenCalledOnce();
       register.mockRestore();
+    });
+
+    it('should answer with the shortened name, and say nothing, for a name the file system would refuse (issue #108)', async () => {
+      const noteFile = createTFile({ path: 'note.md' });
+      mockGetFileOrNull.mockImplementation(({ pathOrFile }) => pathOrFile === 'note.md' ? noteFile : null);
+      isNoteMock.mockImplementation((pathOrFile) => pathOrFile === 'note.md');
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'x'.repeat(300);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(noop);
+
+      const path = await context.manager.getAvailablePathForAttachments({
+        attachmentFileBaseName: 'img',
+        attachmentFileExtension: 'png',
+        context: AttachmentPathContext.Unknown,
+        notePathOrFile: 'note.md',
+        oldAttachmentPathOrFile: 'img.png',
+        readAttachmentFileContent: null,
+        shouldSkipDuplicateCheck: true,
+        shouldSkipMissingAttachmentFolderCreation: true
+      });
+
+      expect(path).toBe(`assets/${'x'.repeat(246)}.png`);
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
     });
   });
 });

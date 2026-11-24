@@ -38,6 +38,7 @@ export const kh = {
     collectAttachmentsInFiles: 'ប្រមូលឯកសារភ្ជាប់ក្នុងឯកសារច្រើន'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'កំពុងប្រក័បអទឹងដេរសម្រាប់ \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'ការកំពុងប្រក័បអទឹងដេរត្រូវបានបុកចេល។ មើលកន្សោលសម្រាប់រាយលំអិត។',
     generatedAttachmentFileNameIsInvalid: {

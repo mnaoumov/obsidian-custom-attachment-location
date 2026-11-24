@@ -38,6 +38,7 @@ export const zhTW = {
     collectAttachmentsInFiles: '在多個檔案中收集附件'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '正在為 \'{{noteFilePath}}\' 收集附件',
     collectingAttachmentsCancelled: '附件收集已取消。詳情請查看控制台。',
     generatedAttachmentFileNameIsInvalid: {

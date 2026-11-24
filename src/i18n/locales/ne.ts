@@ -38,6 +38,7 @@ export const ne = {
     collectAttachmentsInFiles: 'फाइलहरूमा संलग्नकहरू सङ्कलन गर्नुहोस्'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '\'{{noteFilePath}}\' का लागि संलग्नकहरू संकलन गर्दै',
     collectingAttachmentsCancelled: 'संलग्नक संकलन रद्द गरियो। विस्तृत जानकारीका लागि कन्सोल हेर्नुहोस्।',
     generatedAttachmentFileNameIsInvalid: {

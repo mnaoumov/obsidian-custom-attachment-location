@@ -38,6 +38,7 @@ export const ar = {
     collectAttachmentsInFiles: 'جمع المرفقات في الملفات'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'جمع المرفقات لـ \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'تم إلغاء جمع المرفقات. راجع وحدة التحكم للتفاصيل.',
     generatedAttachmentFileNameIsInvalid: {

@@ -46,7 +46,11 @@ import {
   isReferenceCache,
   parentFolderPath
 } from '@obsidian-typings/obsidian-public-latest/implementations';
-import { normalizePath } from 'obsidian';
+import {
+  FileSystemAdapter,
+  normalizePath,
+  Platform
+} from 'obsidian';
 
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
 import type { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
@@ -75,6 +79,7 @@ import {
   TokenValidationMode,
   TokenValidator
 } from '../tokens/token-validator.ts';
+import { fitFileBaseName } from './file-name-length-limit.ts';
 import { doesFolderExist } from './folder-existence.ts';
 import { findIdenticalAttachmentFile } from './identical-attachment.ts';
 import {
@@ -117,6 +122,13 @@ interface AttachmentPathManagerConstructorParams {
   readonly pluginNoticeComponent: PluginNoticeComponent;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly tokenValidator: TokenValidator;
+}
+
+interface AttachmentPathManagerFitFileBaseNameParams {
+  readonly fileBaseName: string;
+  readonly fileExtension: string;
+  readonly folderPath: string;
+  readonly shouldNotify: boolean;
 }
 
 interface AttachmentPathManagerGetAttachmentFolderFullPathForPathParams {
@@ -185,6 +197,8 @@ interface AttachmentPathManagerGetRenamedAttachmentPathParams {
   readonly noteFilePath: string;
   readonly sequenceNumber: number;
 }
+
+type AttachmentPathManagerIsQueryParams = Pick<AttachmentPathManagerGetAvailablePathForAttachmentsParams, 'shouldSkipDuplicateCheck' | 'shouldSkipMissingAttachmentFolderCreation'>;
 
 interface AttachmentPathManagerPrepareInsertedLinkTextParams {
   readonly attachmentFileBaseName: string;
@@ -388,11 +402,23 @@ export class AttachmentPathManager {
         });
       }
       const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
+      const directory = dirname(generatedAttachmentFileNamePath);
+      const unfittedBaseName = basename(generatedAttachmentFileNamePath, params.attachmentFileExtension ? `.${params.attachmentFileExtension}` : '');
+      const generatedAttachmentFileNameBaseName = this.fitFileBaseName({
+        fileBaseName: unfittedBaseName,
+        fileExtension: params.attachmentFileExtension,
+        folderPath: directory,
+        shouldNotify: !this.isQuery(params)
+      });
       if (params.shouldSkipDuplicateCheck) {
-        attachmentPath = generatedAttachmentFileNamePath;
+        attachmentPath = generatedAttachmentFileNameBaseName === unfittedBaseName ? generatedAttachmentFileNamePath : join(
+          directory,
+          makeFileName({
+            fileBaseName: generatedAttachmentFileNameBaseName,
+            fileExtension: params.attachmentFileExtension
+          })
+        );
       } else {
-        const directory = dirname(generatedAttachmentFileNamePath);
-        const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.attachmentFileExtension ? `.${params.attachmentFileExtension}` : '');
         attachmentPath = this.app.vault.getAvailablePath(join(directory, generatedAttachmentFileNameBaseName), params.attachmentFileExtension);
       }
     } else {
@@ -426,8 +452,7 @@ export class AttachmentPathManager {
      * there, so it claims nothing, expects no arrival and prepares no link text. A vault-wide audit asks this once
      * per reference, and each of those three would otherwise pile up a minute's worth of entries.
      */
-    const isQuery = params.shouldSkipDuplicateCheck === true && params.shouldSkipMissingAttachmentFolderCreation === true;
-    if (isQuery) {
+    if (this.isQuery(params)) {
       return attachmentPath;
     }
 
@@ -482,7 +507,12 @@ export class AttachmentPathManager {
 
     const generatedAttachmentFileNamePath = join(attachmentFolderFullPath, generatedAttachmentFileName);
     const directory = dirname(generatedAttachmentFileNamePath);
-    const generatedAttachmentFileNameBaseName = basename(generatedAttachmentFileNamePath, params.fileExtension ? `.${params.fileExtension}` : '');
+    const generatedAttachmentFileNameBaseName = this.fitFileBaseName({
+      fileBaseName: basename(generatedAttachmentFileNamePath, params.fileExtension ? `.${params.fileExtension}` : ''),
+      fileExtension: params.fileExtension,
+      folderPath: directory,
+      shouldNotify: true
+    });
     const attachmentPath = this.app.vault.getAvailablePath(join(directory, generatedAttachmentFileNameBaseName), params.fileExtension);
     this.originalAttachmentNamesComponent.expectArrival(attachmentPath, attachmentFileName);
 
@@ -718,12 +748,17 @@ export class AttachmentPathManager {
       })
     );
 
+    const folderPath = dirname(attachmentFile.path);
     // A template may hold a `/`, which names a subfolder in the generated-name template; here only the name is used.
     const newAttachmentFileName = makeFileName({
-      fileBaseName: basename(newAttachmentFileBaseName),
+      fileBaseName: this.fitFileBaseName({
+        fileBaseName: basename(newAttachmentFileBaseName),
+        fileExtension: attachmentFile.extension,
+        folderPath,
+        shouldNotify: true
+      }),
       fileExtension: attachmentFile.extension
     });
-    const folderPath = dirname(attachmentFile.path);
     const properPath = join(folderPath, newAttachmentFileName);
     if (properPath === attachmentFile.path || this.isParkedBesideProperPath(attachmentFile, properPath)) {
       return null;
@@ -838,6 +873,33 @@ export class AttachmentPathManager {
     }
   }
 
+  /**
+   * Shortens a name the file system would refuse, or would accept but leave unreadable to Obsidian (issue #108), and
+   * says so: a template such as `{{heading}}` can grow past either limit without the user noticing.
+   *
+   * @param params - The name, its folder, and whether a shortening is reported.
+   * @returns The base name to use.
+   */
+  private fitFileBaseName(params: AttachmentPathManagerFitFileBaseNameParams): string {
+    // Only Windows bounds the whole path, so only there is the vault's own path needed.
+    const isWindows = Platform.isWin;
+    const adapter = isWindows ? this.app.vault.adapter : null;
+    const result = fitFileBaseName({
+      absoluteVaultPath: adapter instanceof FileSystemAdapter ? adapter.getBasePath() : null,
+      duplicateNameSeparator: this.pluginSettingsComponent.settings.duplicateNameSeparator,
+      fileBaseName: params.fileBaseName,
+      fileExtension: params.fileExtension,
+      folderPath: params.folderPath,
+      isWindows
+    });
+    if (result.isShortened && params.shouldNotify) {
+      const fileName = makeFileName({ fileBaseName: result.fileBaseName, fileExtension: params.fileExtension });
+      console.warn(`Attachment file name "${makeFileName({ fileBaseName: params.fileBaseName, fileExtension: params.fileExtension })}" is too long for the file system, shortened to "${fileName}".`);
+      this.pluginNoticeComponent.showNotice(t(($) => $.notice.attachmentFileNameShortened, { fileName }));
+    }
+    return result.fileBaseName;
+  }
+
   private async getAttachmentFolderPath(substitutions: Substitutions): Promise<string> {
     /*
      * Collecting has its own destination when the user gave it one (issue #78): a working vault keeps new
@@ -947,6 +1009,17 @@ export class AttachmentPathManager {
           isCaseInsensitive: true,
           pathOrFile: properPath
         }) !== null;
+  }
+
+  /**
+   * Whether a resolver call is a query: one that skips both the duplicate check and the folder creation asks where an
+   * attachment belongs, and nothing will be written at the path it returns.
+   *
+   * @param params - The resolver call.
+   * @returns `true` for a query.
+   */
+  private isQuery(params: AttachmentPathManagerIsQueryParams): boolean {
+    return params.shouldSkipDuplicateCheck === true && params.shouldSkipMissingAttachmentFolderCreation === true;
   }
 
   private async prepareInsertedLinkText(prepareParams: AttachmentPathManagerPrepareInsertedLinkTextParams): Promise<void> {

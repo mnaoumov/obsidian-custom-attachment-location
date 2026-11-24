@@ -38,6 +38,7 @@ export const ko = {
     collectAttachmentsInFiles: '여러 파일에서 첨부 파일 수집'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '\'{{noteFilePath}}\'의 첨부 파일 수집 중',
     collectingAttachmentsCancelled: '첨부 파일 수집이 취소되었습니다. 자세한 내용은 콘솔을 확인하세요.',
     generatedAttachmentFileNameIsInvalid: {
