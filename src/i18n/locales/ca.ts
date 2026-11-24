@@ -38,6 +38,7 @@ export const ca = {
     collectAttachmentsInFiles: 'Recopila els adjunts als fitxers'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Recollint adjunts per a \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Recollida d\'adjunts cancel·lada. Vegeu la consola per a detalls.',
     generatedAttachmentFileNameIsInvalid: {

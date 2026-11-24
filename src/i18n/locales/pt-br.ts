@@ -38,6 +38,7 @@ export const ptBR = {
     collectAttachmentsInFiles: 'Coletar anexos nos arquivos'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Coletando anexos para \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Coleta de anexos cancelada. Veja o console para detalhes.',
     generatedAttachmentFileNameIsInvalid: {

@@ -38,6 +38,7 @@ export const enGB = {
     collectAttachmentsInFiles: 'Collect attachments in files'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Collecting attachments for \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Collecting attachments cancelled. See console for details.',
     generatedAttachmentFileNameIsInvalid: {

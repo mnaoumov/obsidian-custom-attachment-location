@@ -38,6 +38,7 @@ export const uz = {
     collectAttachmentsInFiles: 'Fayllarda ilovalarni to‘plash'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '\'{{noteFilePath}}\' uchun qo\'shimchalarni yig\'layapman',
     collectingAttachmentsCancelled: 'Qo\'shimchalarni yig\'lash bekor qilindi. Tafsilotlar uchun konsolni ko\'ring.',
     generatedAttachmentFileNameIsInvalid: {

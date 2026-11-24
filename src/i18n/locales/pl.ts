@@ -38,6 +38,7 @@ export const pl = {
     collectAttachmentsInFiles: 'Zbierz załączniki w plikach'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Zbieranie załączników dla \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Zbieranie załączników anulowane. Zobacz konsolę dla szczegółów.',
     generatedAttachmentFileNameIsInvalid: {

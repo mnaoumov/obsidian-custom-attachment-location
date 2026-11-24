@@ -38,6 +38,7 @@ export const hu = {
     collectAttachmentsInFiles: 'Mellékletek összegyűjtése a fájlokban'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: 'Mellékletek gyűjtése a következőhöz: \'{{noteFilePath}}\'',
     collectingAttachmentsCancelled: 'Melléklet gyűjtés megszakítva. Részletekért lásd a konzolt.',
     generatedAttachmentFileNameIsInvalid: {

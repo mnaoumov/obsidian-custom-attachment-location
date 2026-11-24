@@ -38,6 +38,7 @@ export const ja = {
     collectAttachmentsInFiles: '複数ファイル内の添付ファイルを収集'
   },
   notice: {
+    attachmentFileNameShortened: 'The attachment file name was too long for the file system, so it was shortened to \'{{fileName}}\'. To choose how a long name is shortened, use the `trim` format option in your file name template.',
     collectingAttachments: '\'{{noteFilePath}}\'の添付ファイルを収集中',
     collectingAttachmentsCancelled: '添付ファイルの収集がキャンセルされました。詳細はコンソールを確認してください。',
     generatedAttachmentFileNameIsInvalid: {

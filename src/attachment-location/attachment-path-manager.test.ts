@@ -33,6 +33,7 @@ import {
   CreateFolderSafeResult,
   EmptyFolderBehavior
 } from '@mnaoumov/obsidian-lib/vault';
+import { noop } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import {
@@ -204,6 +205,8 @@ function createManager(): TestContext {
   const getConfig = vi.fn<(name: string) => unknown>().mockReturnValue('/');
 
   const vault = strictProxy<Vault>({
+    // Not a FileSystemAdapter, so the name-length fit knows no absolute vault path, on any host.
+    adapter: castTo<Vault['adapter']>({}),
     create,
     exists: checkExists,
     getAvailablePath,
@@ -816,6 +819,24 @@ describe('AttachmentPathManager', () => {
   });
 
   describe('getDownloadedImagePath', () => {
+    it('should shorten a generated name the file system would refuse, and say so (issue #108)', async () => {
+      context.settings.attachmentFolderPath = 'assets';
+      context.settings.generatedAttachmentFileName = 'x'.repeat(300);
+      context.exists.mockResolvedValue(true);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(noop);
+      const result = await context.manager.getDownloadedImagePath({
+        actionContext: ActionContext.SaveAttachment,
+        downloadedContent: new ArrayBuffer(4),
+        fileExtension: 'png',
+        fileName: 'my-image',
+        noteFilePath: 'notes/note.md'
+      });
+      // 255, less `.png` and room for a ` 9999` duplicate suffix.
+      expect(result).toBe(`assets/${'x'.repeat(246)}.png`);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('too long for the file system'));
+      warn.mockRestore();
+    });
+
     it('should resolve the downloaded image path without creating an existing folder', async () => {
       context.settings.attachmentFolderPath = 'assets';
       context.settings.generatedAttachmentFileName = 'generated';
