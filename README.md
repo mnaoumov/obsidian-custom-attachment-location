@@ -77,17 +77,24 @@ Moved to [06 Settings](<./demo-vault/06 Settings.md>), under `markdownUrlFormat`
 | [`Attachment Location Manager`](https://community.obsidian.md/plugins/attachment-location-manager) | Global, folder and note destinations; nearest-match rules; extension exceptions | Same routing goal; one token pattern can read paths and frontmatter |
 | [`Attachment Management`](https://community.obsidian.md/plugins/attachment-management) | Attachment path/name patterns; collection; follows note renames | Overlaps on naming and collection; delegates note moves/renames to `Advanced Rename and Delete Handler` |
 | [`Attachment Manager`](https://community.obsidian.md/plugins/attachment-manager) | One attachment folder per note; rename, delete and visibility handling | Overlaps on per-note folders; supports other layouts through patterns |
+| [`Attachment Organizer`](https://community.obsidian.md/plugins/attachment-organizer) | Previewed plan of moves, staging and conflicts; apply; undo the last batch | Overlaps on tidying existing attachments; patterns also place new ones |
 | [`Attachment Placement`](https://community.obsidian.md/plugins/attachment-placement) | Routes new attachments by usage and insertion rules | Overlaps on routing; also chooses file names |
 | [`Attachment Renamer`](https://community.obsidian.md/plugins/attachment-renamer) | Templated names for new and existing attachments | Overlaps on naming; also chooses the folder |
 | [`Attachment Steward`](https://community.obsidian.md/plugins/attachment-steward) | Templated folders/names; original-name retention; bulk imports | Overlaps on templating; also collects existing attachments and deletes unused ones |
+| [`Attachmenter`](https://community.obsidian.md/plugins/attachmenter) | Per-note folders; automatic names; remote image download; path check and repair | Overlaps on paths, names and downloads; one token pattern for folders and names |
+| [`Consistent Attachments`](https://community.obsidian.md/plugins/consistent-attachments) | Moves attachments when notes move; shared-file handling; misplaced scan | Complementary: chooses new attachment folders and names |
 | [`Consistent Attachments and Links`](https://community.obsidian.md/plugins/consistent-attachments-and-links) (maintained by me) | Moves attachments with notes; vault-wide link consistency | Complementary: chooses new attachment folders and names |
 | [`Foldwise`](https://community.obsidian.md/plugins/foldwise) | Per-folder asset rules; saved-assets page | Same routing goal; token patterns; no assets page |
 | [`Image Renamer`](https://community.obsidian.md/plugins/image-renamer) | Pasted-image templates; frontmatter-based names and folders | Broader scope: every attachment type |
+| [`Load Image`](https://community.obsidian.md/plugins/load-image) | Pasted images beside the note, in a relative folder or under the root | Same routing goal for every attachment type; token patterns |
+| [`Note Attachment Folder`](https://community.obsidian.md/plugins/note-attachment-folder) | Same-name folder per note, synced on rename, move and delete | Overlaps on per-note folders; supports other pattern-based layouts too |
 | [`Note Companion Folder`](https://community.obsidian.md/plugins/note-companion-folder) | Separate attachment folder for each note | Overlaps on per-note folders; supports other pattern-based layouts too |
+| [`Note-named attachments`](https://community.obsidian.md/plugins/note-named-attachments) | Adds a note-named sibling folder to Obsidian's own location setting | Overlaps on per-note folders; supports other pattern-based layouts too |
 | [`Paste image rename`](https://community.obsidian.md/plugins/obsidian-paste-image-rename) | Pasted-image names from a pattern or prompt | Broader scope: every attachment type; folder patterns too |
 | [`Unique attachments`](https://community.obsidian.md/plugins/unique-attachments) | Names derived from content hashes | Overlaps on hash naming; also chooses folders and other name patterns |
+| [`Vaultkeeper`](https://community.obsidian.md/plugins/vaultkeeper) | Date and type folder rules; pasted-file renames; unlinked cleanup; OCR | Overlaps on routing, renames and cleanup; no OCR |
 
-Last searched for similar plugins on 2026-10-26.
+Last searched for similar plugins on 2026-11-26.
 
 ## For plugin developers
 
