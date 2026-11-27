@@ -84,6 +84,7 @@ import type { NetworkImageDownloader } from '../network-images/network-image-dow
 import type { CustomAttachmentLocationApi } from '../plugin-api/plugin-api.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
 import type { PluginSettings } from '../settings/plugin-settings.ts';
+import type { CollectPlan } from './collect-plan.ts';
 
 import {
   findIdenticalAttachmentFile,
@@ -93,7 +94,13 @@ import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { PLUGIN_API_VERSION } from '../plugin-api/plugin-api.ts';
 import { CollectAttachmentUsedByMultipleNotesMode } from '../settings/plugin-settings.ts';
 import { selectMode } from '../shared-attachments/collect-attachment-used-by-multiple-notes-modal.ts';
+import { ActionContext } from '../tokens/token-evaluator-context.ts';
 import { AttachmentCollector } from './attachment-collector.ts';
+import {
+  CollectPlanConflictReason,
+  CollectPlanEntryKind,
+  CollectPlanSkipReason
+} from './collect-plan.ts';
 
 interface ApplyFileChangesParamsLike {
   readonly changesProvider: FileChangeLike[];
@@ -114,6 +121,10 @@ interface LoopOptionsLike {
   readonly buildNoticeMessage: (params: LoopBuildNoticeMessageParamsLike) => string;
   readonly items: TFile[];
   readonly processItem: (item: TFile) => Promise<void>;
+}
+
+interface PlanCacheLike {
+  readonly notePath: string;
 }
 
 interface QueueParamsLike {
@@ -367,6 +378,7 @@ describe('AttachmentCollector', () => {
   let errorSpy: MockInstance<typeof console.error>;
   let getProperAttachmentPath: Mock<AttachmentPathManager['getProperAttachmentPath']>;
   let getSequenceNumberMap: Mock<AttachmentPathManager['getSequenceNumberMap']>;
+  let getAbstractFileByPath: Mock<(path: string) => null | TAbstractFile>;
   let getFileByPath: Mock<(path: string) => null | TFile>;
   let getFileCache: Mock<(file: TFile) => CachedMetadataEx | null>;
   let getFolderByPath: Mock<(path: string) => null | TFolder>;
@@ -407,6 +419,7 @@ describe('AttachmentCollector', () => {
     getMarkdownFiles = vi.fn<() => TFile[]>().mockReturnValue([]);
     cachedRead = vi.fn<(file: TFile) => Promise<string>>().mockResolvedValue('');
     getFolderByPath = vi.fn<(path: string) => null | TFolder>().mockReturnValue(null);
+    getAbstractFileByPath = vi.fn<(path: string) => null | TAbstractFile>().mockReturnValue(null);
     getFileByPath = vi.fn<(path: string) => null | TFile>().mockImplementation((path) => createFile(path));
     getFileCache = vi.fn<(file: TFile) => CachedMetadataEx | null>().mockReturnValue(null);
     app = strictProxy<App>({
@@ -415,6 +428,7 @@ describe('AttachmentCollector', () => {
       }),
       vault: strictProxy<App['vault']>({
         cachedRead: (file: TFile) => cachedRead(file),
+        getAbstractFileByPath: (path: string) => getAbstractFileByPath(path),
         // The collector reads the unit-folder designation off the patched method, not off the settings.
         getFileByPath: (path: string) => getFileByPath(path),
         getFolderByPath: (path: string) => getFolderByPath(path),
@@ -1744,6 +1758,11 @@ describe('AttachmentCollector', () => {
       isNoteMock.mockReturnValue(true);
       shouldConfirmMock.mockResolvedValue(true);
       vi.mocked(settings.isPathIgnored).mockImplementation((path: string) => path === 'a.md');
+      // The plan reads the other note's cache; only what the collect itself reads is under test.
+      shouldConfirmMock.mockImplementation(() => {
+        mockGetCacheSafe.mockClear();
+        return Promise.resolve(true);
+      });
       mockLoop.mockImplementation(async (options) => {
         await castTo<LoopOptionsLike>(options).processItem(noteFile);
       });
@@ -1783,6 +1802,11 @@ describe('AttachmentCollector', () => {
       mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['note.md', 'other.md']));
       getProperAttachmentPath.mockResolvedValue('attachments/img.png');
       settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Cancel;
+      // The plan reads both notes' caches first; only what the collect itself reads is under test.
+      shouldConfirmMock.mockImplementation(() => {
+        mockGetCacheSafe.mockClear();
+        return Promise.resolve(true);
+      });
       mockLoop.mockImplementation(async (options) => {
         const typed = castTo<LoopOptionsLike>(options);
         await typed.processItem(noteFile1);
@@ -1812,8 +1836,15 @@ describe('AttachmentCollector', () => {
       const note2CacheGate = new Promise<void>((resolve) => {
         resolveNote2Cache = resolve;
       });
+      // The plan reads both caches and backlinks before the confirm; the gate holds only the collect's read.
+      let isConfirmed = false;
+      shouldConfirmMock.mockImplementation(() => {
+        isConfirmed = true;
+        mockGetBacklinksForFileSafe.mockClear();
+        return Promise.resolve(true);
+      });
       mockGetCacheSafe.mockImplementation(async (_app, fileOrPath) => {
-        if (fileOrPath === noteFile2) {
+        if (isConfirmed && fileOrPath === noteFile2) {
           await note2CacheGate;
         }
         return strictProxy<CachedMetadataEx>({});
@@ -1844,6 +1875,190 @@ describe('AttachmentCollector', () => {
       });
       await runOperation([noteFile]);
       expect(noticeMessage).toContain('a.md');
+    });
+  });
+  describe('collect plan for a folder or vault run', () => {
+    const NOTE_A = createFile('a.md');
+    const NOTE_B = createFile('b.md');
+    let referencesByNotePath: Map<string, Reference[]>;
+
+    async function planFor(notes: TFile[], shouldApply = false): Promise<CollectPlan> {
+      isFileMock.mockImplementation((f) => notes.includes(castTo<TFile>(f)));
+      isNoteMock.mockReturnValue(true);
+      shouldConfirmMock.mockResolvedValue(shouldApply);
+      collector.collectAttachmentsInAbstractFiles(notes);
+      const params = castTo<QueueParamsLike>(mockAddToQueue.mock.calls[0]?.[0]);
+      await params.operationFunction(new AbortController().signal);
+      const planCall = consoleDebug.mock.calls.find(([message]) => message === 'Collect plan:');
+      return castTo<CollectPlan>(planCall?.[1]);
+    }
+
+    beforeEach(() => {
+      referencesByNotePath = new Map([['a.md', [createReference()]]]);
+      mockAbortSignalAny.mockReturnValue(new AbortController().signal);
+      mockLoop.mockResolvedValue(undefined);
+      isCanvasFileMock.mockReturnValue(false);
+      mockGetCacheSafe.mockImplementation((_app, file) => Promise.resolve(castTo<CachedMetadataEx>({ notePath: castTo<TFile>(file).path })));
+      mockGetLinks.mockImplementation(({ cache }) => referencesByNotePath.get(castTo<PlanCacheLike>(cache).notePath) ?? []);
+      mockExtractLinkFile.mockImplementation(({ reference }) => createFile(reference.link));
+      mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md']));
+      getProperAttachmentPath.mockResolvedValue('attachments/img.png');
+    });
+
+    it('should show the plan in the confirm, with an Apply plan button, and collect nothing when it is cancelled', async () => {
+      const plan = await planFor([NOTE_A, NOTE_B]);
+
+      expect(plan.entries).toEqual([
+        {
+          attachmentPath: 'img.png',
+          isUnitFolder: false,
+          kind: CollectPlanEntryKind.Move,
+          notePath: 'a.md',
+          ownerNotePath: null,
+          skipReason: null,
+          targetPath: 'attachments/img.png'
+        }
+      ]);
+      expect(plan.conflicts).toEqual([]);
+      expect(shouldConfirmMock).toHaveBeenCalledWith(expect.objectContaining({ okButtonText: 'Apply plan' }));
+      expect(mockLoop).not.toHaveBeenCalled();
+      expect(mockRenameSafe).not.toHaveBeenCalled();
+      // The dry run asks with its own context, so no token prompts and no original-name notice fires.
+      expect(getProperAttachmentPath).toHaveBeenCalledWith(expect.objectContaining({ actionContext: ActionContext.PlanCollectAttachments }));
+    });
+
+    it('should collect once the plan is applied', async () => {
+      await planFor([NOTE_A, NOTE_B], true);
+      expect(mockLoop).toHaveBeenCalled();
+    });
+
+    it('should tell a rename from a move and a kept attachment', async () => {
+      referencesByNotePath.set('a.md', [createReference({ link: 'r.png' }), createReference({ link: 'k.png' })]);
+      getProperAttachmentPath.mockImplementation(({ attachmentFile }) => Promise.resolve(attachmentFile.path === 'r.png' ? 'r-1.png' : null));
+      const plan = await planFor([NOTE_A, NOTE_B]);
+      expect(plan.entries.map((entry) => [entry.attachmentPath, entry.kind, entry.targetPath])).toEqual([
+        ['r.png', CollectPlanEntryKind.Rename, 'r-1.png'],
+        ['k.png', CollectPlanEntryKind.Keep, null]
+      ]);
+    });
+
+    it('should plan a merge into an identical file at the destination', async () => {
+      mockFindIdenticalAttachmentFile.mockResolvedValue(createFile('attachments/img.png'));
+      const plan = await planFor([NOTE_A, NOTE_B]);
+      expect(plan.entries[0]?.kind).toBe(CollectPlanEntryKind.Merge);
+    });
+
+    it('should skip an excluded attachment', async () => {
+      vi.mocked(settings.isExcludedFromAttachmentCollecting).mockReturnValue(true);
+      const plan = await planFor([NOTE_A, NOTE_B]);
+      expect(plan.entries[0]).toEqual(expect.objectContaining({ kind: CollectPlanEntryKind.Skip, skipReason: CollectPlanSkipReason.Excluded }));
+    });
+
+    it('should skip an attachment referenced by a raw path, without a notice', async () => {
+      settings.shouldSkipCollectingAttachmentsReferencedByRawPath = true;
+      getMarkdownFiles.mockReturnValue([createFile('other.md')]);
+      cachedRead.mockResolvedValue('<img src="img.png">');
+      const showNoticeSpy = vi.spyOn(pluginNoticeComponent, 'showNotice');
+      const plan = await planFor([NOTE_A, NOTE_B]);
+      expect(plan.entries[0]).toEqual(expect.objectContaining({ kind: CollectPlanEntryKind.Skip, skipReason: CollectPlanSkipReason.RawPath }));
+      expect(showNoticeSpy).not.toHaveBeenCalledWith(expect.stringContaining('raw path'));
+    });
+
+    it('should move an attachment the raw path scan finds no note for', async () => {
+      settings.shouldSkipCollectingAttachmentsReferencedByRawPath = true;
+      getMarkdownFiles.mockReturnValue([createFile('a.md'), createFile('other.md')]);
+      const plan = await planFor([NOTE_A, NOTE_B]);
+      expect(plan.entries[0]?.kind).toBe(CollectPlanEntryKind.Move);
+    });
+
+    it('should leave out ignored notes, notes with no cache and unresolved references', async () => {
+      vi.mocked(settings.isPathIgnored).mockImplementation((path) => path === 'b.md');
+      referencesByNotePath.set('b.md', [createReference()]);
+      referencesByNotePath.set('c.md', [createReference()]);
+      mockGetCacheSafe.mockImplementation((_app, file) => Promise.resolve(castTo<TFile>(file).path === 'c.md' ? null : castTo<CachedMetadataEx>({ notePath: castTo<TFile>(file).path })));
+      mockExtractLinkFile.mockReturnValue(null);
+      const plan = await planFor([NOTE_A, NOTE_B, createFile('c.md')]);
+      expect(plan.entries).toEqual([]);
+    });
+
+    it('should read a canvas through its canvas references', async () => {
+      isCanvasFileMock.mockImplementation((file) => castTo<TFile>(file).path === 'a.md');
+      mockGetCanvasReferences.mockResolvedValue([createCanvasFileNodeReference()]);
+      const plan = await planFor([NOTE_A, NOTE_B]);
+      expect(mockGetCanvasReferences).toHaveBeenCalled();
+      expect(plan.entries).toHaveLength(1);
+    });
+
+    it('should plan a unit folder whole, once for all its attachments', async () => {
+      vi.mocked(settings.isAttachmentUnitFolder).mockImplementation((path) => path === 'units/u');
+      getFolderByPath.mockImplementation((path) => path.startsWith('units') ? strictProxy<TFolder>({ path }) : null);
+      referencesByNotePath.set('a.md', [createReference({ link: 'units/u/one.png' }), createReference({ link: 'units/u/two.png' })]);
+      const plan = await planFor([NOTE_A, NOTE_B]);
+      expect(plan.entries).toEqual([
+        expect.objectContaining({ attachmentPath: 'units/u', isUnitFolder: true, kind: CollectPlanEntryKind.Move, targetPath: 'attachments/u' })
+      ]);
+    });
+
+    it('should report a destination another file holds', async () => {
+      getAbstractFileByPath.mockImplementation((path) => path === 'attachments/img.png' ? createFile(path) : null);
+      const plan = await planFor([NOTE_A, NOTE_B]);
+      expect(plan.conflicts.map((conflict) => conflict.reason)).toEqual([CollectPlanConflictReason.DestinationTaken]);
+    });
+
+    describe('an attachment several notes reference', () => {
+      beforeEach(() => {
+        mockGetBacklinksForFileSafe.mockResolvedValue(createBacklinks(['a.md', 'b.md']));
+      });
+
+      it.each([
+        [CollectAttachmentUsedByMultipleNotesMode.Copy, CollectPlanEntryKind.Copy, null],
+        [CollectAttachmentUsedByMultipleNotesMode.Move, CollectPlanEntryKind.Move, null],
+        [CollectAttachmentUsedByMultipleNotesMode.Skip, CollectPlanEntryKind.Skip, CollectPlanSkipReason.Shared],
+        [CollectAttachmentUsedByMultipleNotesMode.Prompt, CollectPlanEntryKind.Shared, null],
+        [CollectAttachmentUsedByMultipleNotesMode.Cancel, CollectPlanEntryKind.Shared, null]
+      ])('should plan mode %s as %s', async (mode, kind, skipReason) => {
+        settings.collectAttachmentUsedByMultipleNotesMode = mode;
+        const plan = await planFor([NOTE_A, NOTE_B]);
+        expect(plan.entries[0]).toEqual(expect.objectContaining({ kind, skipReason }));
+        expect(mockSelectMode).not.toHaveBeenCalled();
+      });
+
+      it('should keep a copy-mode attachment already in place', async () => {
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
+        getProperAttachmentPath.mockResolvedValue(null);
+        const plan = await planFor([NOTE_A, NOTE_B]);
+        expect(plan.entries[0]?.kind).toBe(CollectPlanEntryKind.Keep);
+      });
+
+      it('should skip a copy-mode attachment inside a unit folder', async () => {
+        settings.collectAttachmentUsedByMultipleNotesMode = CollectAttachmentUsedByMultipleNotesMode.Copy;
+        vi.mocked(settings.isAttachmentUnitFolder).mockImplementation((path) => path === 'units/u');
+        getFolderByPath.mockImplementation((path) => path.startsWith('units') ? strictProxy<TFolder>({ path }) : null);
+        referencesByNotePath.set('a.md', [createReference({ link: 'units/u/one.png' })]);
+        const plan = await planFor([NOTE_A, NOTE_B]);
+        expect(plan.entries[0]).toEqual(expect.objectContaining({ kind: CollectPlanEntryKind.Skip, skipReason: CollectPlanSkipReason.UnitFolderShared }));
+      });
+
+      it('should plan the priority winner once, naming it for the note it outranks', async () => {
+        settings.notePriorities = ['b.md'];
+        referencesByNotePath.set('b.md', [createReference()]);
+        const plan = await planFor([NOTE_A, NOTE_B]);
+        expect(plan.entries).toEqual([expect.objectContaining({ kind: CollectPlanEntryKind.Move, notePath: 'a.md', ownerNotePath: 'b.md' })]);
+        expect(getProperAttachmentPath).toHaveBeenLastCalledWith(expect.objectContaining({ noteFilePath: 'b.md' }));
+      });
+
+      it('should name no owner when the collected note is the winner', async () => {
+        settings.notePriorities = ['a.md'];
+        const plan = await planFor([NOTE_A, NOTE_B]);
+        expect(plan.entries[0]?.ownerNotePath).toBeNull();
+      });
+
+      it('should leave out an attachment the winner cannot resolve', async () => {
+        settings.notePriorities = ['b.md'];
+        getFileByPath.mockReturnValue(null);
+        const plan = await planFor([NOTE_A, NOTE_B]);
+        expect(plan.entries).toEqual([]);
+      });
     });
   });
 });

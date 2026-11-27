@@ -175,6 +175,15 @@ A consumer auditing a vault asks `getAvailablePathForAttachments` once per refer
 
 A resolver call that skips both the duplicate check and the folder creation is a query. It claims no self-write path, expects no arrival and prepares no inserted link text, because nothing will be written at the path it returns.
 
+## A folder or vault collect plans first, under a context that asks nothing
+
+`collectAttachmentsInAbstractFilesImpl` shows a plan before a run over more than one file: `planCollectAttachments` walks the same notes and references with the collect's own decisions (ignored and excluded paths, raw paths, unit folders, the priority list, the multiple-notes mode) and writes nothing, and `buildCollectPlanMessage` (`src/collect/collect-plan.ts`) renders it inside the same `confirm` the run always asked, with **Apply plan** as its OK button. A single note still runs at once, because it never asked a confirm and `Collect attachments automatically` runs it on every save.
+
+- **The plan resolves under `ActionContext.PlanCollectAttachments`.** It is non-interactive (`isNonInteractiveActionContext`), so `{{prompt}}` answers its dummy and the unknown-original-name notice stays quiet, and `isCollectActionContext` gives it the collect folder and file name templates. A new branch in the path manager that singles out `CollectAttachments` must use `isCollectActionContext`, or the plan names a destination the collect does not use.
+- **The plan is a preview, not a script.** The collect still decides each attachment as it runs, so a destination taken mid-run, a `Prompt` answer or a sync can change it. Conflicts are reported, not resolved: a taken destination or two attachments planned for one destination still collect, under a duplicate-name suffix.
+- **A repeated move is dropped** (`removeRepeatedCollectPlanEntries`): every note referencing an attachment the priority list hands to one owner plans that same move, and the collect makes it once.
+- **Entries already in place are only counted.** In a vault collected before they are nearly all of them; the listing stops at 500 entries and counts the rest.
+
 ## Bulk commands are wrapped in git commits from OUTSIDE the operation queue
 
 The collect, delete-unused, move-to-proper-folder and prune commands run their work inside `BulkOperationCommitComponent.runBulkOperation` (`@mnaoumov/obsidian-lib`), which records each run as `chore: before OP<n>` plus `OP<n>: <summary>` when `shouldCommitBulkOperations` is on, the app is desktop and the vault is in a `git` work tree. The summary is English on purpose (`src/bulk-operations/bulk-operation-summary.ts`): it is a commit subject.
