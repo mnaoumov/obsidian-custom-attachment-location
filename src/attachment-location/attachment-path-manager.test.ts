@@ -509,6 +509,17 @@ describe('AttachmentPathManager', () => {
       expect(result).toBe('notes/exported');
     });
 
+    it('should use the collected attachment folder path template for the collect plan', async () => {
+      context.settings.attachmentFolderPath = '_Attachments';
+      context.settings.collectedAttachmentFolderPath = './exported';
+      const result = await context.manager.getAttachmentFolderFullPathForPath({
+        actionContext: ActionContext.PlanCollectAttachments,
+        attachmentFileName: 'img.png',
+        notePath: 'notes/note.md'
+      });
+      expect(result).toBe('notes/exported');
+    });
+
     it('should fall back to the new attachment folder path when the collected template is empty', async () => {
       context.settings.attachmentFolderPath = '_Attachments';
       context.settings.collectedAttachmentFolderPath = '';
@@ -627,6 +638,11 @@ describe('AttachmentPathManager', () => {
     it('should use the collected attachment file name template for CollectAttachments', async () => {
       context.settings.collectedAttachmentFileName = 'collected';
       const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.CollectAttachments));
+      expect(result).toBe('collected');
+    });
+    it('should use the collected attachment file name template for the collect plan', async () => {
+      context.settings.collectedAttachmentFileName = 'collected';
+      const result = await context.manager.getGeneratedAttachmentFileBaseName(createSubstitutions(ActionContext.PlanCollectAttachments));
       expect(result).toBe('collected');
     });
 

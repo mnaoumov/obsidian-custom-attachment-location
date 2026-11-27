@@ -13,6 +13,8 @@ Open the Command Palette (`Ctrl`/`Cmd` + `P`) and search for *`Custom Attachment
 - **Collect attachments in entire vault**
   - the whole vault at once.
 
+A folder or vault run plans first and shows the plan before anything moves. The dialog counts what would move, be renamed, be copied for a note that shares the attachment, merge into an identical file, wait for your answer about an attachment several notes use, stay in place or be skipped. It lists every conflict: a destination another file already holds, or two attachments planned for one destination, where the collect would add a duplicate-name suffix. Then each note's changes follow, under the note's name. **Apply plan** runs the collect, and **Cancel** leaves the vault untouched. The plan is a preview: the collect decides each attachment again as it runs. **Collect attachments in current note** runs straight away, as before.
+
 There is also **Move attachment to proper folder**, which relocates a single attachment file to where the settings say it belongs.
 
 ## Collecting automatically

@@ -6,12 +6,41 @@ export const defaultTranslations = {
   ...obsidianLibEn,
   attachmentCollector: {
     confirm: 'Do you want to collect attachments for all notes in folders recursively?\n{{folders}}\nThis operation cannot be undone.',
+    plan: {
+      conflict: {
+        destinationTaken: '{{target}} is taken by another file, so {{attachment}} will get a duplicate-name suffix.',
+        sameDestination: '{{attachment}} and {{otherAttachment}} are both planned for {{target}}, so the later one will get a duplicate-name suffix.'
+      },
+      conflictsHeading: 'Conflicts: {{count}}',
+      kind: {
+        copy: 'Copy',
+        merge: 'Merge into the identical file',
+        move: 'Move',
+        rename: 'Rename',
+        shared: 'Referenced by several notes, asked when the plan applies',
+        skip: 'Skip'
+      },
+      moreEntries: 'And {{count}} more, not shown.',
+      noChanges: 'No attachment would move, rename or copy.',
+      ownerNote: 'collected into {{note}}, the note of highest priority',
+      planningNotice: 'Planning the collect of {{count}} notes...',
+      previewNote: 'This is a preview. The collect decides each attachment again when it runs, so a file another plugin or a sync changes in the meantime can end up elsewhere.',
+      skipReason: {
+        excluded: 'excluded from collecting',
+        rawPath: 'referenced by a raw path',
+        shared: 'referenced by several notes',
+        unitFolderShared: 'its attachment unit folder is referenced by several notes'
+      },
+      summary: 'Plan: {{moveCount}} to move, {{renameCount}} to rename, {{copyCount}} to copy, {{mergeCount}} to merge, {{sharedCount}} to ask about, {{keepCount}} already in place, {{skipCount}} skipped.',
+      title: 'Collect plan'
+    },
     progressBar: {
       message: 'Collecting attachments {{iterationString}} - \'{{noteFilePath}}\'.',
       title: 'Collecting attachments...'
     }
   },
   buttons: {
+    applyPlan: 'Apply plan',
     copy: 'Copy',
     copyAll: 'Copy all',
     create: 'Create',

@@ -43,6 +43,13 @@ export enum ActionContext {
   OpenFile = 'OpenFile',
 
   /**
+   * The dry run that previews a collect before it applies. It asks where each attachment would be collected to,
+   * exactly as {@link CollectAttachments} would, but writes nothing and must never ask the user anything: it is
+   * one question per attachment of a whole folder or vault, and the collect that follows asks them for real.
+   */
+  PlanCollectAttachments = 'PlanCollectAttachments',
+
+  /**
    * A read through this plugin's published API. Answers a question without performing an action, so it must
    * never ask the user anything: an audit walking a vault would otherwise raise one dialog per note.
    */
@@ -335,6 +342,18 @@ export function attachmentPathContextToActionContext(context: AttachmentPathCont
 }
 
 /**
+ * Whether the action collects attachments, for real or as the dry run that previews it.
+ *
+ * Both answer with the collect templates, so the plan names the destination the collect will use.
+ *
+ * @param context - The action context.
+ * @returns `true` for a collect or its plan.
+ */
+export function isCollectActionContext(context: ActionContext): boolean {
+  return context === ActionContext.CollectAttachments || context === ActionContext.PlanCollectAttachments;
+}
+
+/**
  * Whether the action being performed has no user to ask.
  *
  * Tokens that would otherwise open a dialog consult this instead of naming the contexts themselves, so a
@@ -344,5 +363,5 @@ export function attachmentPathContextToActionContext(context: AttachmentPathCont
  * @returns `true` when nothing may be asked.
  */
 export function isNonInteractiveActionContext(context: ActionContext): boolean {
-  return context === ActionContext.ReadApi || context === ActionContext.ValidateTokens;
+  return context === ActionContext.PlanCollectAttachments || context === ActionContext.ReadApi || context === ActionContext.ValidateTokens;
 }

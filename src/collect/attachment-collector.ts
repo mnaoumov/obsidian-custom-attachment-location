@@ -22,7 +22,6 @@ import {
   isFolder,
   isNote
 } from '@mnaoumov/obsidian-lib/file-system';
-import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { t } from '@mnaoumov/obsidian-lib/i18n/i18n';
 import {
   editReferences,
@@ -72,6 +71,10 @@ import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-
 import type { AttachmentPathManager } from '../attachment-location/attachment-path-manager.ts';
 import type { NetworkImageDownloader } from '../network-images/network-image-downloader.ts';
 import type { PluginSettingsComponent } from '../settings/plugin-settings-component.ts';
+import type {
+  CollectPlan,
+  CollectPlanEntry
+} from './collect-plan.ts';
 
 import {
   findIdenticalAttachmentFile,
@@ -86,6 +89,15 @@ import { selectMode } from '../shared-attachments/collect-attachment-used-by-mul
 import { NoteOwnerResolver } from '../shared-attachments/note-owner-resolver.ts';
 import { copyWithSidecars } from '../sidecars/sidecar-group.ts';
 import { ActionContext } from '../tokens/token-evaluator-context.ts';
+import {
+  buildCollectPlanMessage,
+  classifyCollectMove,
+  CollectPlanEntryKind,
+  CollectPlanSkipReason,
+  createSkippedCollectPlanEntry,
+  findCollectPlanConflicts,
+  removeRepeatedCollectPlanEntries
+} from './collect-plan.ts';
 import { isReferencedByRawPath } from './raw-path-reference.ts';
 
 interface AttachmentCollectorCollectAttachmentsParams {
@@ -106,7 +118,26 @@ interface AttachmentCollectorConstructorParams {
   readonly resourceLockComponent: null | ResourceLockComponent;
 }
 
+type AttachmentCollectorFindNoteReferencingByRawPathParams = AttachmentCollectorSkipAttachmentReferencedByRawPathParams;
+
+interface AttachmentCollectorPlanAttachmentParams {
+  readonly abortSignal: AbortSignal;
+  readonly movedUnitFolderPaths: Map<string, string>;
+  readonly note: TFile;
+  readonly oldAttachmentPaths: Set<string>;
+  readonly reference: Reference;
+  readonly sequenceNumberByAttachmentPath: ReadonlyMap<string, number>;
+}
+
+interface AttachmentCollectorPlanMoveParams {
+  readonly movedUnitFolderPaths: Map<string, string>;
+  readonly moveResult: AttachmentMoveResult;
+  readonly notePath: string;
+  readonly ownerNotePath: null | string;
+}
+
 interface AttachmentCollectorPrepareAttachmentToMoveForNoteParams {
+  readonly actionContext: ActionContext;
   readonly attachmentMoveResult: AttachmentMoveResult;
   readonly newNotePath: string;
   readonly reference: Reference;
@@ -114,6 +145,7 @@ interface AttachmentCollectorPrepareAttachmentToMoveForNoteParams {
 }
 
 interface AttachmentCollectorPrepareAttachmentToMoveParams {
+  readonly actionContext: ActionContext;
   readonly movedUnitFolderPaths: ReadonlyMap<string, string>;
   readonly newNotePath: string;
   readonly oldAttachmentPaths: Set<string>;
@@ -423,6 +455,7 @@ export class AttachmentCollector {
         }
 
         let attachmentMoveResult = await this.prepareAttachmentToMove({
+          actionContext: ActionContext.CollectAttachments,
           movedUnitFolderPaths,
           newNotePath: params.note.path,
           oldAttachmentPaths,
@@ -478,6 +511,7 @@ export class AttachmentCollector {
           const priorityWinnerNotePath = this.noteOwnerResolver.pickOwnerNotePath(backlinksSorted);
           if (priorityWinnerNotePath) {
             const priorityResult = await this.prepareAttachmentToMoveForNote({
+              actionContext: ActionContext.CollectAttachments,
               attachmentMoveResult,
               newNotePath: priorityWinnerNotePath,
               reference: link,
@@ -845,52 +879,18 @@ export class AttachmentCollector {
       return;
     }
 
-    const canCollectAttachments = !!singleFile || (await confirm({
-      app: this.app,
-      cancelButtonText: t(($) => $.obsidianLib.buttons.cancel),
-      message: translateFragment(($) => $.attachmentCollector.confirm, {
-        folders: (parent) => {
-          parent.createEl('ul', {}, (ul) => {
-            for (const abstractFile of abstractFiles) {
-              ul.createEl('li', {}, (li) => {
-                appendCodeBlock(li, abstractFile.path);
-              });
-            }
-          });
-        }
-      }),
-      okButtonText: t(($) => $.obsidianLib.buttons.ok),
-      title: createFragment((f) => {
-        setIcon(f.createSpan(), 'lucide-alert-triangle');
-        f.appendText(' ');
-        f.appendText(t(($) => $.menuItems.collectAttachmentsInFiles));
-      })
-    }));
+    const noteFiles = this.getNoteFilesToCollect(abstractFiles);
 
-    if (!canCollectAttachments) {
+    /*
+     * A folder or vault run shows its whole plan before anything moves, and the user applies or cancels it. A single
+     * note keeps its one-step run: it never asked a confirm, and it is also the run `Collect attachments automatically`
+     * makes on every save, where a dialog would interrupt typing.
+     */
+    if (!singleFile && !await this.confirmCollectPlan(abstractFiles, noteFiles, abortSignal)) {
       abortSignal.throwIfAborted();
       return;
     }
     this.consoleDebugComponent.consoleDebug(`Collect attachments in files:\n${abstractFiles.map((abstractFile) => abstractFile.path).join('\n')}`);
-    const noteFilesSet = new Set<TFile>();
-
-    for (const abstractFile of abstractFiles) {
-      if (isFile(abstractFile) && isNote(abstractFile)) {
-        noteFilesSet.add(abstractFile);
-      }
-
-      if (isFolder(abstractFile)) {
-        Vault.recurseChildren(abstractFile, (child) => {
-          if (isFile(child) && isNote(child)) {
-            noteFilesSet.add(child);
-          }
-        });
-      }
-    }
-
-    const noteFiles = [...noteFilesSet];
-    noteFiles.sort((a, b) => a.path.localeCompare(b.path));
-
     const context: CollectAttachmentContext = { isSingleNoteRun: !!singleFile };
     const abortController = new AbortController();
 
@@ -924,6 +924,100 @@ export class AttachmentCollector {
   }
 
   /**
+   * Plans a folder or vault collect, shows the plan, and asks the user to apply it.
+   *
+   * @param abstractFiles - The folders and notes the user asked to collect.
+   * @param noteFiles - The notes the collect would visit, in its order.
+   * @param abortSignal - The abort signal.
+   * @returns Whether the user applied the plan.
+   */
+  private async confirmCollectPlan(abstractFiles: readonly TAbstractFile[], noteFiles: readonly TFile[], abortSignal: AbortSignal): Promise<boolean> {
+    const planningNotice = this.pluginNoticeComponent.showNotice(t(($) => $.attachmentCollector.plan.planningNotice, { count: noteFiles.length }), {
+      isPermanent: true
+    });
+    let plan: CollectPlan;
+    try {
+      plan = await this.planCollectAttachments(noteFiles, abortSignal);
+    } finally {
+      planningNotice.hide();
+    }
+
+    this.consoleDebugComponent.consoleDebug('Collect plan:', plan);
+
+    return await confirm({
+      app: this.app,
+      cancelButtonText: t(($) => $.obsidianLib.buttons.cancel),
+      cssClasses: ['custom-attachment-location-collect-plan-modal'],
+      message: buildCollectPlanMessage({
+        abstractFilePaths: abstractFiles.map((abstractFile) => abstractFile.path),
+        plan
+      }),
+      okButtonText: t(($) => $.buttons.applyPlan),
+      title: createFragment((f) => {
+        setIcon(f.createSpan(), 'lucide-alert-triangle');
+        f.appendText(' ');
+        f.appendText(t(($) => $.attachmentCollector.plan.title));
+      })
+    });
+  }
+
+  /**
+   * Finds a note naming the attachment by a raw path the metadata cache does not index (issue #46), when
+   * `shouldSkipCollectingAttachmentsReferencedByRawPath` is on.
+   *
+   * @param params - The attachment and the notes already known to link it.
+   * @returns The first such note's path, or `null`.
+   */
+  private async findNoteReferencingByRawPath(params: AttachmentCollectorFindNoteReferencingByRawPathParams): Promise<null | string> {
+    if (!this.pluginSettingsComponent.settings.shouldSkipCollectingAttachmentsReferencedByRawPath) {
+      return null;
+    }
+
+    for (const noteFile of this.app.vault.getMarkdownFiles()) {
+      params.abortSignal.throwIfAborted();
+      // Notes with an indexed link to the attachment are already accounted for by the backlink-based checks.
+      if (params.indexedBacklinkPaths.has(noteFile.path)) {
+        continue;
+      }
+
+      const content = await this.app.vault.cachedRead(noteFile);
+      if (isReferencedByRawPath({ attachmentPath: params.attachmentPath, content })) {
+        return noteFile.path;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * The notes a collect over these files and folders visits, sorted by path.
+   *
+   * @param abstractFiles - The notes and folders.
+   * @returns The notes, each once.
+   */
+  private getNoteFilesToCollect(abstractFiles: readonly TAbstractFile[]): TFile[] {
+    const noteFilesSet = new Set<TFile>();
+
+    for (const abstractFile of abstractFiles) {
+      if (isFile(abstractFile) && isNote(abstractFile)) {
+        noteFilesSet.add(abstractFile);
+      }
+
+      if (isFolder(abstractFile)) {
+        Vault.recurseChildren(abstractFile, (child) => {
+          if (isFile(child) && isNote(child)) {
+            noteFilesSet.add(child);
+          }
+        });
+      }
+    }
+
+    const noteFiles = [...noteFilesSet];
+    noteFiles.sort((a, b) => a.path.localeCompare(b.path));
+    return noteFiles;
+  }
+
+  /**
    * Whether this attachment has to go through the multiple-notes mode at all.
    *
    * Two independent reasons to say no, and they are different axes on purpose. The backlink count has already had
@@ -941,6 +1035,221 @@ export class AttachmentCollector {
    */
   private needsMultipleNotesHandling(attachmentPath: string, relevantBacklinkCount: number): boolean {
     return !this.pluginSettingsComponent.settings.isExtensionExcludedFromMultipleNotesCheck(attachmentPath) && relevantBacklinkCount > 1;
+  }
+
+  /**
+   * Plans one reference of a note the way {@link collectAttachments} would collect it, writing nothing.
+   *
+   * It follows the collect's decisions in its order: unresolved and ignored attachments yield no entry (the collect
+   * says nothing to the user about them either), then exclusion, raw paths, the priority list and the multiple-notes
+   * mode. A unit folder is planned as the whole folder, and recorded in `movedUnitFolderPaths` so the folder's other
+   * attachments add nothing, as they add nothing to the collect.
+   *
+   * @param params - The reference and the plan's running state.
+   * @returns The entry, or `null` when the collect would pass the reference by.
+   */
+  private async planAttachment(params: AttachmentCollectorPlanAttachmentParams): Promise<CollectPlanEntry | null> {
+    const settings = this.pluginSettingsComponent.settings;
+    const moveResult = await this.prepareAttachmentToMove({
+      actionContext: ActionContext.PlanCollectAttachments,
+      movedUnitFolderPaths: params.movedUnitFolderPaths,
+      newNotePath: params.note.path,
+      oldAttachmentPaths: params.oldAttachmentPaths,
+      oldNotePath: params.note.path,
+      reference: params.reference,
+      sequenceNumberByAttachmentPath: params.sequenceNumberByAttachmentPath
+    });
+    params.abortSignal.throwIfAborted();
+    if (!moveResult) {
+      return null;
+    }
+
+    if (settings.isExcludedFromAttachmentCollecting(moveResult.oldAttachmentPath)) {
+      return createSkippedCollectPlanEntry({ attachmentPath: moveResult.oldAttachmentPath, notePath: params.note.path, skipReason: CollectPlanSkipReason.Excluded });
+    }
+
+    const backlinks = await getBacklinksForFileSafe({
+      app: this.app,
+      pathOrFile: moveResult.oldAttachmentPath,
+      timeoutInMilliseconds: settings.getTimeoutInMilliseconds()
+    });
+    params.abortSignal.throwIfAborted();
+
+    if (settings.shouldSkipCollectingAttachmentsReferencedByRawPath) {
+      const rawPathNotePath = await this.findNoteReferencingByRawPath({
+        abortSignal: params.abortSignal,
+        attachmentPath: moveResult.oldAttachmentPath,
+        indexedBacklinkPaths: new Set(backlinks.keys())
+      });
+      if (rawPathNotePath !== null) {
+        return createSkippedCollectPlanEntry({ attachmentPath: moveResult.oldAttachmentPath, notePath: params.note.path, skipReason: CollectPlanSkipReason.RawPath });
+      }
+    }
+
+    const relevantBacklinks = backlinks.keys().filter((backlink) => !settings.isExcludedFromMultipleNotesCheck(backlink));
+    if (!this.needsMultipleNotesHandling(moveResult.oldAttachmentPath, relevantBacklinks.length)) {
+      return this.planMove({ movedUnitFolderPaths: params.movedUnitFolderPaths, moveResult, notePath: params.note.path, ownerNotePath: null });
+    }
+
+    const backlinksSorted = relevantBacklinks.sort((a, b) => a.localeCompare(b));
+    const priorityWinnerNotePath = this.noteOwnerResolver.pickOwnerNotePath(backlinksSorted);
+    if (priorityWinnerNotePath) {
+      const priorityResult = await this.prepareAttachmentToMoveForNote({
+        actionContext: ActionContext.PlanCollectAttachments,
+        attachmentMoveResult: moveResult,
+        newNotePath: priorityWinnerNotePath,
+        reference: params.reference,
+        sequenceNumberByAttachmentPath: params.sequenceNumberByAttachmentPath
+      });
+      params.abortSignal.throwIfAborted();
+      if (!priorityResult) {
+        return null;
+      }
+      return this.planMove({
+        movedUnitFolderPaths: params.movedUnitFolderPaths,
+        moveResult: priorityResult,
+        notePath: params.note.path,
+        ownerNotePath: priorityWinnerNotePath === params.note.path ? null : priorityWinnerNotePath
+      });
+    }
+
+    switch (settings.collectAttachmentUsedByMultipleNotesMode) {
+      case CollectAttachmentUsedByMultipleNotesMode.Copy: {
+        if (moveResult.unitFolderPath) {
+          return createSkippedCollectPlanEntry({ attachmentPath: moveResult.oldAttachmentPath, notePath: params.note.path, skipReason: CollectPlanSkipReason.UnitFolderShared });
+        }
+        if (!moveResult.newAttachmentPath) {
+          return this.planMove({ movedUnitFolderPaths: params.movedUnitFolderPaths, moveResult, notePath: params.note.path, ownerNotePath: null });
+        }
+        return {
+          attachmentPath: moveResult.oldAttachmentPath,
+          isUnitFolder: false,
+          kind: CollectPlanEntryKind.Copy,
+          notePath: params.note.path,
+          ownerNotePath: null,
+          skipReason: null,
+          targetPath: moveResult.newAttachmentPath
+        };
+      }
+      case CollectAttachmentUsedByMultipleNotesMode.Move: {
+        return this.planMove({ movedUnitFolderPaths: params.movedUnitFolderPaths, moveResult, notePath: params.note.path, ownerNotePath: null });
+      }
+      case CollectAttachmentUsedByMultipleNotesMode.Skip: {
+        return createSkippedCollectPlanEntry({ attachmentPath: moveResult.oldAttachmentPath, notePath: params.note.path, skipReason: CollectPlanSkipReason.Shared });
+      }
+      default: {
+        // `Prompt` and `Cancel` both decide when the collect reaches the attachment, so the plan cannot.
+        return {
+          attachmentPath: moveResult.oldAttachmentPath,
+          isUnitFolder: false,
+          kind: CollectPlanEntryKind.Shared,
+          notePath: params.note.path,
+          ownerNotePath: null,
+          skipReason: null,
+          targetPath: moveResult.newAttachmentPath
+        };
+      }
+    }
+  }
+
+  /**
+   * Plans a folder or vault collect without writing anything: every note the collect would visit, in its order.
+   *
+   * @param noteFiles - The notes, sorted as the collect sorts them.
+   * @param abortSignal - The abort signal.
+   * @returns The plan.
+   */
+  private async planCollectAttachments(noteFiles: readonly TFile[], abortSignal: AbortSignal): Promise<CollectPlan> {
+    const entries: CollectPlanEntry[] = [];
+    const movedUnitFolderPaths = new Map<string, string>();
+
+    for (const note of noteFiles) {
+      abortSignal.throwIfAborted();
+      if (this.handedOverSettingsComponent.isPathIgnored(note.path)) {
+        continue;
+      }
+
+      const cache = await getCacheSafe(this.app, note);
+      abortSignal.throwIfAborted();
+      if (!cache) {
+        continue;
+      }
+
+      const references = isCanvasFile(note) ? await getCanvasReferences(this.app, note) : getReferences({ cache });
+      const sequenceNumberByAttachmentPath = await this.attachmentPathManager.getSequenceNumberMap(note.path);
+      abortSignal.throwIfAborted();
+      const oldAttachmentPaths = new Set<string>();
+
+      for (const reference of references) {
+        const entry = await this.planAttachment({
+          abortSignal,
+          movedUnitFolderPaths,
+          note,
+          oldAttachmentPaths,
+          reference,
+          sequenceNumberByAttachmentPath
+        });
+        if (entry) {
+          entries.push(entry);
+        }
+      }
+    }
+
+    const uniqueEntries = removeRepeatedCollectPlanEntries(entries);
+    return {
+      conflicts: findCollectPlanConflicts(uniqueEntries, (path) => this.app.vault.getAbstractFileByPath(path) !== null),
+      entries: uniqueEntries
+    };
+  }
+
+  /**
+   * Plans an attachment the collect moves: kept, merged into an identical file, moved or renamed, or carried inside
+   * its unit folder.
+   *
+   * @param params - The move result and who it is collected for.
+   * @returns The entry.
+   */
+  private async planMove(params: AttachmentCollectorPlanMoveParams): Promise<CollectPlanEntry> {
+    const { moveResult } = params;
+    const base = {
+      notePath: params.notePath,
+      ownerNotePath: params.ownerNotePath,
+      skipReason: null
+    };
+
+    if (!moveResult.newAttachmentPath) {
+      return { ...base, attachmentPath: moveResult.oldAttachmentPath, isUnitFolder: false, kind: CollectPlanEntryKind.Keep, targetPath: null };
+    }
+
+    if (moveResult.unitFolderPath) {
+      const targetPath = join(dirname(moveResult.newAttachmentPath), basename(moveResult.unitFolderPath));
+      params.movedUnitFolderPaths.set(moveResult.unitFolderPath, targetPath);
+      return {
+        ...base,
+        attachmentPath: moveResult.unitFolderPath,
+        isUnitFolder: true,
+        kind: classifyCollectMove(moveResult.unitFolderPath, targetPath),
+        targetPath
+      };
+    }
+
+    const identicalFile = await findIdenticalAttachmentFile({
+      app: this.app,
+      attachmentPathOrFile: moveResult.oldAttachmentPath,
+      destinationPath: moveResult.newAttachmentPath,
+      pluginSettingsComponent: this.pluginSettingsComponent
+    });
+    if (identicalFile) {
+      return { ...base, attachmentPath: moveResult.oldAttachmentPath, isUnitFolder: false, kind: CollectPlanEntryKind.Merge, targetPath: identicalFile.path };
+    }
+
+    return {
+      ...base,
+      attachmentPath: moveResult.oldAttachmentPath,
+      isUnitFolder: false,
+      kind: classifyCollectMove(moveResult.oldAttachmentPath, moveResult.newAttachmentPath),
+      targetPath: moveResult.newAttachmentPath
+    };
   }
 
   private async prepareAttachmentToMove(params: AttachmentCollectorPrepareAttachmentToMoveParams): Promise<AttachmentMoveResult | null> {
@@ -972,7 +1281,7 @@ export class AttachmentCollector {
     }
 
     const newAttachmentPath = await this.attachmentPathManager.getProperAttachmentPath({
-      actionContext: ActionContext.CollectAttachments,
+      actionContext: params.actionContext,
       attachmentFile: oldAttachmentFile,
       noteFilePath: params.newNotePath,
       reference: params.reference,
@@ -1011,7 +1320,7 @@ export class AttachmentCollector {
     }
 
     const newAttachmentPath = await this.attachmentPathManager.getProperAttachmentPath({
-      actionContext: ActionContext.CollectAttachments,
+      actionContext: params.actionContext,
       attachmentFile,
       noteFilePath: params.newNotePath,
       reference: params.reference,
@@ -1142,32 +1451,18 @@ export class AttachmentCollector {
   }
 
   private async skipAttachmentReferencedByRawPath(params: AttachmentCollectorSkipAttachmentReferencedByRawPathParams): Promise<boolean> {
-    if (!this.pluginSettingsComponent.settings.shouldSkipCollectingAttachmentsReferencedByRawPath) {
+    const noteFilePath = await this.findNoteReferencingByRawPath(params);
+    if (noteFilePath === null) {
       return false;
     }
 
-    for (const noteFile of this.app.vault.getMarkdownFiles()) {
-      params.abortSignal.throwIfAborted();
-      // Notes with an indexed link to the attachment are already accounted for by the backlink-based checks.
-      if (params.indexedBacklinkPaths.has(noteFile.path)) {
-        continue;
-      }
-
-      const content = await this.app.vault.cachedRead(noteFile);
-      if (!isReferencedByRawPath({ attachmentPath: params.attachmentPath, content })) {
-        continue;
-      }
-
-      console.warn(
-        `Skipping collecting attachment ${params.attachmentPath} as it is referenced by a raw path (not an indexed link) in ${noteFile.path}.`
-      );
-      this.pluginNoticeComponent.showNotice(t(($) => $.notice.attachmentReferencedByRawPath, {
-        attachmentPath: params.attachmentPath,
-        noteFilePath: noteFile.path
-      }));
-      return true;
-    }
-
-    return false;
+    console.warn(
+      `Skipping collecting attachment ${params.attachmentPath} as it is referenced by a raw path (not an indexed link) in ${noteFilePath}.`
+    );
+    this.pluginNoticeComponent.showNotice(t(($) => $.notice.attachmentReferencedByRawPath, {
+      attachmentPath: params.attachmentPath,
+      noteFilePath
+    }));
+    return true;
   }
 }

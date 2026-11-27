@@ -72,6 +72,7 @@ import { Substitutions } from '../tokens/substitutions.ts';
 import {
   ActionContext,
   attachmentPathContextToActionContext,
+  isCollectActionContext,
   TemplatePart
 } from '../tokens/token-evaluator-context.ts';
 import {
@@ -536,7 +537,8 @@ export class AttachmentPathManager {
        * it here renames files the user never asked to rename (and prompts, when it holds a `{{prompt}}`
        * token). Both of these settings ship empty, so the fallback fired by default.
        */
-      case ActionContext.CollectAttachments: {
+      case ActionContext.CollectAttachments:
+      case ActionContext.PlanCollectAttachments: {
         baseTemplate = this.pluginSettingsComponent.settings.getOperationFileName(AttachmentOperation.Collect) || CURRENT_ATTACHMENT_FILE_NAME_TEMPLATE;
         break;
       }
@@ -910,7 +912,7 @@ export class AttachmentPathManager {
      */
     const settings = this.pluginSettingsComponent.settings;
     const collectedAttachmentFolderPath = settings.getOperationFolderPath(AttachmentOperation.Collect);
-    if (substitutions.actionContext === ActionContext.CollectAttachments && collectedAttachmentFolderPath) {
+    if (isCollectActionContext(substitutions.actionContext) && collectedAttachmentFolderPath) {
       return await this.resolvePathTemplate({ isFileNamePart: false, substitutions, template: collectedAttachmentFolderPath });
     }
 
