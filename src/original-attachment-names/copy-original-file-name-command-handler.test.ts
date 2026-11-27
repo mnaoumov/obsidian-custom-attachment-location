@@ -6,7 +6,7 @@ import type {
 } from 'obsidian';
 
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
-import { noopAsync } from '@mnaoumov/typescript-lib/function';
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
@@ -33,8 +33,13 @@ const mockedCopyOriginalFileName = vi.mocked(copyOriginalFileName);
 
 const NOTE_EXTENSIONS = new Set(['base', 'canvas', 'md']);
 
+interface ExecutableHandler {
+  readonly execute: () => Promise<void>;
+}
+
 interface Scenario {
   readonly checkCallback: (this: void, isChecking: boolean) => boolean;
+  readonly execute: (this: void) => Promise<void>;
   readonly pluginNoticeComponent: PluginNoticeComponent;
 }
 
@@ -87,6 +92,7 @@ async function createScenario(params: ScenarioParams): Promise<Scenario> {
   const command = handler.buildCommand();
   return {
     checkCallback: (isChecking) => command.checkCallback?.(isChecking) === true,
+    execute: () => castTo<ExecutableHandler>(handler).execute(),
     pluginNoticeComponent
   };
 }
@@ -102,16 +108,11 @@ describe('Copy original file name command', () => {
   });
 
   it('should copy nothing when the stored name is gone by the time the command runs', async () => {
-    const storedNames: Record<string, string> = { 'image.png': 'Screenshot 2026-11-23.png' };
-    const { checkCallback } = await createScenario({ activePath: 'image.png', storedNames });
-    expect(checkCallback(true)).toBe(true);
-
-    delete storedNames['image.png'];
-    checkCallback(false);
-    await noopAsync();
+    // The palette asks first, so this is the call that comes in after the name went away in between.
+    const { execute } = await createScenario({ activePath: 'image.png', storedNames: {} });
+    await execute();
     expect(mockedCopyOriginalFileName).not.toHaveBeenCalled();
   });
-
   it.each(['note.md', 'drawing.canvas', 'table.base'])('should be unavailable while the note %s is open with no link under the cursor', async (activePath) => {
     const { checkCallback } = await createScenario({ activePath, cursorLine: 'plain text' });
     expect(checkCallback(true)).toBe(false);
