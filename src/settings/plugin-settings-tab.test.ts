@@ -555,9 +555,16 @@ function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknow
   castTo<Record<string, unknown>>(rawTarget)[key] = value;
 }
 
+// The first tab a file builds pays the cold cost: lazily imported setting components, first-run JIT and,
+// under coverage, instrumenting them. It costs about 2.5 times a warm build alone, and on a loaded machine
+// that pushed the file's first case past the 5-second test timeout. Building one tab here moves that cost
+// into a hook with its own bound, so no case's timeout depends on where it sits in the file.
+const WARM_UP_HOOK_TIMEOUT_IN_MILLISECONDS = 30_000;
+
 beforeAll(async () => {
   await initI18N(translationsMap);
-});
+  await createTab();
+}, WARM_UP_HOOK_TIMEOUT_IN_MILLISECONDS);
 
 describe('PluginSettingsTab', () => {
   beforeEach(() => {
