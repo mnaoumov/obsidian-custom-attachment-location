@@ -2152,4 +2152,68 @@ describe('AttachmentPathManager', () => {
       warn.mockRestore();
     });
   });
+
+  describe('previewNewAttachmentPath', () => {
+    it('should resolve the default folder and file name templates for the note', async () => {
+      context.settings.attachmentFolderPath = './{{noteFileName}}';
+      context.settings.generatedAttachmentFileName = 'img-{{sequenceNumber}}';
+
+      const path = await context.manager.previewNewAttachmentPath({ attachmentFileName: 'Pasted image.png', noteFilePath: 'notes/note.md' });
+
+      expect(path).toBe('notes/note/img-1.png');
+    });
+
+    it('should resolve the templates of the operation it is asked about', async () => {
+      context.settings.pastedImageAttachmentFolderPath = 'shots';
+      context.settings.pastedImageAttachmentFileName = 'shot';
+
+      const path = await context.manager.previewNewAttachmentPath({
+        attachmentFileName: 'Pasted image.png',
+        newAttachmentOperation: NewAttachmentOperation.PastedImage,
+        noteFilePath: 'notes/note.md'
+      });
+
+      expect(path).toBe('shots/shot.png');
+    });
+
+    it('should show the prompt token instead of asking', async () => {
+      context.settings.generatedAttachmentFileName = '{{prompt}}';
+
+      const path = await context.manager.previewNewAttachmentPath({ attachmentFileName: 'Document.pdf', noteFilePath: 'notes/note.md' });
+
+      expect(path).toBe('assets/{{prompt}}.pdf');
+      expect(mockPromptWithPreview).not.toHaveBeenCalled();
+    });
+
+    it('should claim no path, expect no arrival and create no folder', async () => {
+      const register = vi.spyOn(selfWriteRegistry, 'register');
+
+      await context.manager.previewNewAttachmentPath({ attachmentFileName: 'Pasted image.png', noteFilePath: 'notes/note.md' });
+
+      expect(register).not.toHaveBeenCalled();
+      expect(context.expectArrival).not.toHaveBeenCalled();
+      expect(mockCreateFolderSafe).not.toHaveBeenCalled();
+      expect(context.getAvailablePath).not.toHaveBeenCalled();
+      register.mockRestore();
+    });
+
+    it('should throw the folder template error without a notice', async () => {
+      context.validatePath.mockResolvedValue('invalid folder');
+
+      await expect(context.manager.previewNewAttachmentPath({ attachmentFileName: 'Pasted image.png', noteFilePath: 'notes/note.md' }))
+        .rejects.toThrow('invalid folder');
+      expect(noticeInstances).toHaveLength(0);
+    });
+
+    it('should throw the file name template error without a notice', async () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(noop);
+      context.validateFileName.mockResolvedValue('invalid file name');
+
+      await expect(context.manager.previewNewAttachmentPath({ attachmentFileName: 'Pasted image.png', noteFilePath: 'notes/note.md' }))
+        .rejects.toThrow('invalid file name');
+      expect(noticeInstances).toHaveLength(0);
+      expect(error).not.toHaveBeenCalled();
+      error.mockRestore();
+    });
+  });
 });

@@ -50,6 +50,12 @@ export enum ActionContext {
   PlanCollectAttachments = 'PlanCollectAttachments',
 
   /**
+   * The live preview in the settings tab of where a new attachment would go. It runs on every keystroke in a
+   * template, so it must never ask the user anything, report anything or write anything.
+   */
+  PreviewTemplates = 'PreviewTemplates',
+
+  /**
    * A read through this plugin's published API. Answers a question without performing an action, so it must
    * never ask the user anything: an audit walking a vault would otherwise raise one dialog per note.
    */
@@ -363,5 +369,8 @@ export function isCollectActionContext(context: ActionContext): boolean {
  * @returns `true` when nothing may be asked.
  */
 export function isNonInteractiveActionContext(context: ActionContext): boolean {
-  return context === ActionContext.PlanCollectAttachments || context === ActionContext.ReadApi || context === ActionContext.ValidateTokens;
+  return context === ActionContext.PlanCollectAttachments
+    || context === ActionContext.PreviewTemplates
+    || context === ActionContext.ReadApi
+    || context === ActionContext.ValidateTokens;
 }

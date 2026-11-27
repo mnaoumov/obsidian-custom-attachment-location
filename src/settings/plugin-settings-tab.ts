@@ -33,10 +33,12 @@ import {
   Platform
 } from 'obsidian';
 
+import type { AttachmentPathManager } from '../attachment-location/attachment-path-manager.ts';
 import type { TranslationNode } from '../i18n/translate-fragment.ts';
 import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
+import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import {
   CUSTOM_TOKENS_DOCUMENTATION_URL,
   TOKEN_REFERENCE_DOCUMENTATION_URL
@@ -83,6 +85,18 @@ const JPEG_QUALITY_PRECISION = 2;
 const REGISTER_CUSTOM_TOKENS_DEBOUNCE_IN_MILLISECONDS = 2000;
 
 /**
+ * The note the template previews resolve for when no note is open. It need not exist: most note tokens read only its
+ * path, and one that reads the note itself shows its error in the preview.
+ */
+const PREVIEW_EXAMPLE_NOTE_PATH = 'Example folder/Example note.md';
+
+/**
+ * The incoming file a preview places, per operation: a screenshot for a paste, a document for the rest.
+ */
+const PREVIEW_IMAGE_FILE_NAME = 'Pasted image.png';
+const PREVIEW_FILE_FILE_NAME = 'Document.pdf';
+
+/**
  * A file name to ask Obsidian Sync's filter about. Only its extension matters: the history is stored as JSON.
  */
 const SYNC_PROBE_FILE_NAME = 'history.json';
@@ -99,6 +113,10 @@ const bindOptionsWithTrim: BindOptionsExtended<PluginSettings, string, Condition
 };
 
 interface PluginSettingsTabConstructorParams extends PluginSettingsTabBaseConstructorParams<PluginSettings> {
+  /**
+   * Reaches the resolver the template previews ask. Left out, the tab shows no preview rows.
+   */
+  readonly getAttachmentPathManager?: (this: void) => AttachmentPathManager;
   readonly getOriginalAttachmentNamesComponent?: (this: void) => OriginalAttachmentNamesComponent;
   /**
    * Reaches the plugin's gate, LAZILY.
@@ -136,10 +154,13 @@ interface PluginSettingsTabGetNewAttachmentOperationTemplateItemsParams {
   readonly description: string;
   readonly fileName: string;
   readonly folderPath: string;
+  readonly newAttachmentOperation: NewAttachmentOperation;
   readonly operation: AttachmentOperation;
 }
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
+  private readonly attachmentPathPreviewUpdaters = new Set<() => void>();
+  private readonly getAttachmentPathManager: ((this: void) => AttachmentPathManager) | null;
   private readonly getOriginalAttachmentNamesComponent: ((this: void) => OriginalAttachmentNamesComponent) | null;
   private readonly getPluginGateComponent: (this: void) => PluginGateComponent;
   // Kept so this plugin can leave ITSELF out of the plugin picker; the base class does not expose `plugin`.
@@ -149,6 +170,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   public constructor(params: PluginSettingsTabConstructorParams) {
     super(params);
     this.getPluginGateComponent = params.getPluginGateComponent;
+    this.getAttachmentPathManager = params.getAttachmentPathManager ?? null;
     this.getOriginalAttachmentNamesComponent = params.getOriginalAttachmentNamesComponent ?? null;
     this.ownPluginId = params.plugin.manifest.id;
     this.pluginSettingsComponent2 = params.pluginSettingsComponent;
@@ -344,6 +366,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.description),
           fileName: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.fileName),
           folderPath: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.folderPath),
+          newAttachmentOperation: NewAttachmentOperation.PastedImage,
           operation: AttachmentOperation.PastedImage
         }),
         name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedImage.name),
@@ -355,6 +378,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.description),
           fileName: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.fileName),
           folderPath: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.folderPath),
+          newAttachmentOperation: NewAttachmentOperation.PastedFile,
           operation: AttachmentOperation.PastedFile
         }),
         name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.pastedFile.name),
@@ -366,6 +390,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.description),
           fileName: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.fileName),
           folderPath: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.folderPath),
+          newAttachmentOperation: NewAttachmentOperation.DroppedFile,
           operation: AttachmentOperation.DroppedFile
         }),
         name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.droppedFile.name),
@@ -377,6 +402,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           description: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.description),
           fileName: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.fileName),
           folderPath: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.folderPath),
+          newAttachmentOperation: NewAttachmentOperation.Other,
           operation: AttachmentOperation.OtherNewAttachment
         }),
         name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.other.name),
@@ -486,6 +512,77 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         ],
         name: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.renameCommand.name),
         operation: AttachmentOperation.RenameCommand
+      })
+    ];
+  }
+
+  /**
+   * A read-only row showing where a new attachment would be saved under the templates as they are now typed.
+   *
+   * It resolves through the plugin's own resolver under `ActionContext.PreviewTemplates`, so a template mistake shows
+   * here before the next paste does, and nothing is asked, reported or written. The note is the open one, else
+   * {@link PREVIEW_EXAMPLE_NOTE_PATH}. Each render registers the row with {@link updateAttachmentPathPreviews}, which
+   * the template rows on the same page call as the user types; a later answer replaces an earlier one only if no newer
+   * request was made in between.
+   *
+   * The idea of a live resolved-location preview comes from the `Load Image` plugin (MIT).
+   *
+   * @param newAttachmentOperation - The operation whose templates the row previews, `null` for the defaults.
+   * @returns The row, or none when the tab has no resolver to ask.
+   */
+  private getAttachmentPathPreviewItems(newAttachmentOperation: NewAttachmentOperation | null): SettingDefinitionRender[] {
+    const getAttachmentPathManager = this.getAttachmentPathManager;
+    if (!getAttachmentPathManager) {
+      return [];
+    }
+
+    return [
+      this.settingEx({
+        name: t(($) => $.pluginSettingsTab.attachmentPathPreview.name),
+        render: (setting) => {
+          addPluginCssClasses(setting.settingEl, 'attachment-path-preview');
+          let requestCount = 0;
+          const update = (): void => {
+            requestCount++;
+            const request = requestCount;
+            const activeFile = this.app.workspace.getActiveFile();
+            const noteFilePath = activeFile?.extension === 'md' ? activeFile.path : PREVIEW_EXAMPLE_NOTE_PATH;
+            const attachmentFileName = newAttachmentOperation === null || newAttachmentOperation === NewAttachmentOperation.PastedImage
+              ? PREVIEW_IMAGE_FILE_NAME
+              : PREVIEW_FILE_FILE_NAME;
+            invokeAsyncSafely(async () => {
+              let description: DocumentFragment;
+              try {
+                const path = await getAttachmentPathManager().previewNewAttachmentPath({
+                  attachmentFileName,
+                  newAttachmentOperation: newAttachmentOperation ?? undefined,
+                  noteFilePath
+                });
+                description = translateFragment(($) => $.pluginSettingsTab.attachmentPathPreview.description, {
+                  attachment: codeNode(attachmentFileName),
+                  note: codeNode(noteFilePath),
+                  path: codeNode(path)
+                });
+              } catch (error) {
+                description = translateFragment(($) => $.pluginSettingsTab.attachmentPathPreview.error, {
+                  note: codeNode(noteFilePath)
+                }, {
+                  error: error instanceof Error ? error.message : String(error)
+                });
+              }
+              if (request === requestCount) {
+                setting.setDesc(description);
+              }
+            });
+          };
+          this.attachmentPathPreviewUpdaters.add(update);
+          update();
+          return () => {
+            this.attachmentPathPreviewUpdaters.delete(update);
+          };
+        },
+        // The row holds no setting of its own, and its text changes with every keystroke.
+        searchable: false
       })
     ];
   }
@@ -601,8 +698,9 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           setting.addToggle((toggle) => {
             this.bind({
               onChanged: () => {
-                // Only the template row below reads this value, through its `visible` predicate.
+                // The template row below reads this value through its `visible` predicate, and the preview through the resolver.
                 this.refreshDomState();
+                this.updateAttachmentPathPreviews();
               },
               propertyName: 'shouldFollowObsidianAttachmentLocation',
               valueComponent: toggle
@@ -623,9 +721,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
             codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
             this.bind({
+              ...bindOptionsWithTrim,
+              onChanged: () => {
+                this.updateAttachmentPathPreviews();
+              },
               propertyName: 'attachmentFolderPath',
-              valueComponent: codeHighlighter,
-              ...bindOptionsWithTrim
+              valueComponent: codeHighlighter
             });
           });
         },
@@ -639,13 +740,17 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
             codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
             this.bind({
+              ...bindOptionsWithTrim,
+              onChanged: () => {
+                this.updateAttachmentPathPreviews();
+              },
               propertyName: 'generatedAttachmentFileName',
-              valueComponent: codeHighlighter,
-              ...bindOptionsWithTrim
+              valueComponent: codeHighlighter
             });
           });
         }
       }),
+      ...this.getAttachmentPathPreviewItems(null),
       this.settingEx({
         desc: t(($) => $.pluginSettingsTab.sidecarExtensions.description),
         name: t(($) => $.pluginSettingsTab.sidecarExtensions.name),
@@ -1072,9 +1177,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
           codeHighlighter.setLanguage(TOKENIZED_STRING_LANGUAGE);
           codeHighlighter.inputEl.addClass('tokenized-string-setting-control');
           this.bind({
+            ...bindOptionsWithTrim,
+            onChanged: () => {
+              this.updateAttachmentPathPreviews();
+            },
             propertyName: params.propertyName,
-            valueComponent: codeHighlighter,
-            ...bindOptionsWithTrim
+            valueComponent: codeHighlighter
           });
         });
       }
@@ -1101,7 +1209,8 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         hint: t(($) => $.pluginSettingsTab.attachmentOperationTemplates.fileNameDescription),
         name: params.fileName,
         propertyName: keys.fileName
-      })
+      }),
+      ...this.getAttachmentPathPreviewItems(params.newAttachmentOperation)
     ];
   }
 
@@ -1434,6 +1543,15 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       })
     ];
+  }
+
+  /**
+   * Recomputes every template preview row currently rendered.
+   */
+  private updateAttachmentPathPreviews(): void {
+    for (const update of this.attachmentPathPreviewUpdaters) {
+      update();
+    }
   }
 }
 

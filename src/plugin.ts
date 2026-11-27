@@ -336,6 +336,7 @@ export class Plugin extends PluginBase {
       new PluginSettingsTabComponent({
         plugin: this,
         pluginSettingsTab: new PluginSettingsTab({
+          getAttachmentPathManager: (): AttachmentPathManager => attachmentPathManager,
           getOriginalAttachmentNamesComponent: (): OriginalAttachmentNamesComponent => originalAttachmentNamesComponent,
           // Deliberately lazy: the gate is what loads this method, so the base has not assigned it yet.
           getPluginGateComponent: (): PluginGateComponent => this.pluginGateComponent,

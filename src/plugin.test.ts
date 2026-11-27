@@ -322,6 +322,7 @@ interface ReleaseNotesParamsProbe {
 }
 
 interface SettingsTabParamsProbe {
+  readonly getAttachmentPathManager: () => unknown;
   readonly getOriginalAttachmentNamesComponent: () => Component;
   readonly getPluginGateComponent: () => PluginGateComponent;
 }
@@ -490,6 +491,8 @@ describe('Plugin', () => {
       const params = castTo<SettingsTabParamsProbe>(call[0]);
       expect(params.getPluginGateComponent()).toBe(castTo<PluginGateProbe>(plugin).pluginGateComponent);
       expect(params.getOriginalAttachmentNamesComponent()).toBeInstanceOf(Component);
+      // The template previews ask the same resolver every save goes through.
+      expect(params.getAttachmentPathManager()).toBe(vi.mocked(AttachmentPathManager).mock.instances[0]);
       const handedOverCall = vi.mocked(HandedOverSettingsComponent).mock.calls[0];
       const handedOverParams = castTo<HandedOverSettingsParamsProbe>(handedOverCall?.[0]);
       expect(hoisted.metadataExclusionDuringSetup).toHaveBeenCalledWith(false);
