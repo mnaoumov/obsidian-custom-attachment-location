@@ -6,6 +6,7 @@ import type {
 } from 'obsidian';
 
 import { initI18N } from '@mnaoumov/obsidian-lib/i18n/i18n';
+import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
@@ -98,6 +99,17 @@ describe('Copy original file name command', () => {
     await vi.waitFor(() => {
       expect(mockedCopyOriginalFileName).toHaveBeenCalledWith({ originalFileName: 'Screenshot 2026-11-23.png', pluginNoticeComponent });
     });
+  });
+
+  it('should copy nothing when the stored name is gone by the time the command runs', async () => {
+    const storedNames: Record<string, string> = { 'image.png': 'Screenshot 2026-11-23.png' };
+    const { checkCallback } = await createScenario({ activePath: 'image.png', storedNames });
+    expect(checkCallback(true)).toBe(true);
+
+    delete storedNames['image.png'];
+    checkCallback(false);
+    await noopAsync();
+    expect(mockedCopyOriginalFileName).not.toHaveBeenCalled();
   });
 
   it.each(['note.md', 'drawing.canvas', 'table.base'])('should be unavailable while the note %s is open with no link under the cursor', async (activePath) => {
