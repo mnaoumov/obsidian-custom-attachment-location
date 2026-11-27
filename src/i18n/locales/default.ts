@@ -431,6 +431,11 @@ export const defaultTranslations = {
       },
       tokens: 'See available tokens'
     },
+    attachmentPathPreview: {
+      description: 'A new attachment {{attachment}} in the note {{note}} would be saved as:\n{{path}}\nWhether it is renamed at all is still decided by the rename attachments mode.',
+      error: 'The templates cannot be resolved for the note {{note}}:\n{{error}}',
+      name: 'Preview'
+    },
     attachmentRenameMode: {
       description: 'When attaching files:',
       name: 'Attachment rename mode'

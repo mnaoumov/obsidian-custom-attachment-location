@@ -112,6 +112,11 @@ const MAX_INSERTED_LINK_TEXTS = 100;
 const INSERTED_LINK_TEXT_LIFETIME_IN_MILLISECONDS = 60_000;
 const MAX_NOTE_REFERENCE_RESOLUTIONS = 100;
 
+/**
+ * What the settings preview shows where `{{prompt}}` would ask: the token itself, since the answer is the user's.
+ */
+const PROMPT_TOKEN_PREVIEW = '{{prompt}}';
+
 interface AttachmentPathManagerCleanKeptFileBaseNameParams {
   readonly fileBaseName: string;
   readonly isGeneratedByShareReceiver: boolean;
@@ -211,6 +216,12 @@ interface AttachmentPathManagerPrepareInsertedLinkTextParams {
   readonly noteFilePath: string | undefined;
   readonly originalAttachmentFileNameParams: OriginalAttachmentFileNameParams;
   readonly params: AttachmentPathManagerGetAvailablePathForAttachmentsParams;
+}
+
+interface AttachmentPathManagerPreviewNewAttachmentPathParams {
+  readonly attachmentFileName: string;
+  readonly newAttachmentOperation?: NewAttachmentOperation | undefined;
+  readonly noteFilePath: string;
 }
 
 interface AttachmentPathManagerResolveOriginalAttachmentFileNameParams {
@@ -583,6 +594,10 @@ export class AttachmentPathManager {
       });
     }
     if (validationMessage) {
+      if (substitutions.actionContext === ActionContext.PreviewTemplates) {
+        // The settings preview shows the message itself, on every keystroke, so it must not raise a notice too.
+        throw new Error(validationMessage);
+      }
       this.pluginNoticeComponent.showNotice(translateFragment(
         ($) => $.notice.generatedAttachmentFileNameIsInvalid,
         { settingName: codeNode(t(($) => $.pluginSettingsTab.generatedAttachmentFileName.name)) },
@@ -775,14 +790,6 @@ export class AttachmentPathManager {
     return this.app.vault.getAvailablePath(join(folderPath, basename(newAttachmentFileName, `.${attachmentFile.extension}`)), attachmentFile.extension);
   }
 
-  /**
-   * Builds a map from attachment file path to its 1-based sequence number within the note.
-   *
-   * The `Collect attachments` command must compute this **before** it moves any attachment: a move
-   * rewrites the note's links, which would shift the numbering of the attachments processed later in
-   * the same pass. Snapshotting the numbering up front keeps each attachment's `{{sequenceNumber}}`
-   * stable regardless of move order.
-   */
   public async getSequenceNumberMap(noteFilePath: string): Promise<Map<string, number>> {
     const { sequenceNumberByAttachmentPath } = await this.walkNoteLinks(noteFilePath, null);
     return sequenceNumberByAttachmentPath;
@@ -794,6 +801,59 @@ export class AttachmentPathManager {
    */
   public invalidateNoteReferenceResolutions(): void {
     this.noteReferenceResolutions.clear();
+  }
+
+  /**
+   * Builds a map from attachment file path to its 1-based sequence number within the note.
+   *
+   * The `Collect attachments` command must compute this **before** it moves any attachment: a move
+   * rewrites the note's links, which would shift the numbering of the attachments processed later in
+   * the same pass. Snapshotting the numbering up front keeps each attachment's `{{sequenceNumber}}`
+   * stable regardless of move order.
+   */
+  /**
+   * Where a new attachment of the note would be saved, for the settings tab's live preview.
+   *
+   * The same folder and file name templates a new attachment gets, resolved under
+   * {@link ActionContext.PreviewTemplates}: nothing is asked, reported, claimed or created, and no duplicate check
+   * runs, because the preview is recomputed on every keystroke and only shows what the templates produce. The
+   * placeholder `{{prompt}}` answers with is shown as the token itself.
+   *
+   * @param params - The note, the incoming file name, and how it arrives.
+   * @returns The attachment path.
+   * @throws When a template cannot be resolved; the error says why.
+   */
+  public async previewNewAttachmentPath(params: AttachmentPathManagerPreviewNewAttachmentPathParams): Promise<string> {
+    const now = Math.trunc(Date.now());
+    const attachmentFileStats: FileStats = { ctime: now, mtime: now, size: 0 };
+    const extension = extname(params.attachmentFileName);
+    const attachmentFileExtension = extension.slice(1);
+    const createSubstitutions = (): Substitutions =>
+      new Substitutions({
+        actionContext: ActionContext.PreviewTemplates,
+        app: this.app,
+        attachmentFileName: params.attachmentFileName,
+        attachmentFileStats,
+        newAttachmentOperation: params.newAttachmentOperation,
+        noteFilePath: params.noteFilePath,
+        originalAttachmentFileName: params.attachmentFileName,
+        pluginSettingsComponent: this.pluginSettingsComponent,
+        // The first attachment of the note, so `{{sequenceNumber}}` previews as it would number one.
+        sequenceNumber: 1,
+        tokenValidator: this.tokenValidator
+      });
+    const folderPath = await this.getAttachmentFolderPath(createSubstitutions());
+    const fileBaseName = await this.getGeneratedAttachmentFileBaseName(createSubstitutions());
+    const unfittedPath = join(folderPath, makeFileName({ fileBaseName, fileExtension: attachmentFileExtension }));
+    const directory = dirname(unfittedPath);
+    const fittedBaseName = this.fitFileBaseName({
+      fileBaseName: basename(unfittedPath, extension),
+      fileExtension: attachmentFileExtension,
+      folderPath: directory,
+      shouldNotify: false
+    });
+    const path = join(directory, makeFileName({ fileBaseName: fittedBaseName, fileExtension: attachmentFileExtension }));
+    return path.replaceAll(DUMMY_PATH, () => PROMPT_TOKEN_PREVIEW);
   }
 
   public takeInsertedLinkText(params: AttachmentPathManagerTakeInsertedLinkTextParams): null | string {
@@ -1155,6 +1215,10 @@ export class AttachmentPathManager {
 
       return resolvedPath;
     } catch (error) {
+      if (substitutions.actionContext === ActionContext.PreviewTemplates) {
+        // The settings preview shows the error itself, on every keystroke, so it must not raise a notice too.
+        throw error;
+      }
       this.pluginNoticeComponent.showNotice(t(($) => $.notice.couldNotResolveTemplatePath, { template }));
       console.error('Could not resolve template path', {
         substitutions,

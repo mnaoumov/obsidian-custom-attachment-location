@@ -18,6 +18,7 @@ import type {
   SettingDefinitionPage,
   SettingDefinitionRender,
   SettingGroup,
+  TFile,
   ToggleComponent
 } from 'obsidian';
 import type { Mock } from 'vitest';
@@ -52,9 +53,11 @@ import {
 } from 'vitest';
 
 import type { HandedOverSettingsComponent } from '../advanced-rename-and-delete-handler/handed-over-settings-component.ts';
+import type { AttachmentPathManager } from '../attachment-location/attachment-path-manager.ts';
 import type { OriginalAttachmentNamesComponent } from '../original-attachment-names/original-attachment-names-component.ts';
 import type { Plugin } from '../plugin.ts';
 
+import { NewAttachmentOperation } from '../attachment-saving/new-attachment-operation.ts';
 import { translationsMap } from '../i18n/locales/translations-map.ts';
 import { TokenValidator } from '../tokens/token-validator.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
@@ -142,6 +145,7 @@ interface DeclaredRow {
 }
 
 interface StorageAccessorOptions {
+  readonly getAttachmentPathManager?: () => AttachmentPathManager;
   readonly getOriginalAttachmentNamesComponent?: () => OriginalAttachmentNamesComponent;
 }
 
@@ -206,7 +210,12 @@ function createSyncInstance(options: CreateSyncInstanceOptions): SyncInstanceStu
   };
 }
 
-async function createTab(configure?: (settings: PluginSettings) => void, storage?: OriginalAttachmentNamesComponent, syncInstance: unknown = null): Promise<CreatedTab> {
+async function createTab(
+  configure?: (settings: PluginSettings) => void,
+  storage?: OriginalAttachmentNamesComponent,
+  syncInstance: unknown = null,
+  attachmentPathManager?: AttachmentPathManager
+): Promise<CreatedTab> {
   const app = App.createConfigured__();
   const originalApp = app.asOriginalType__();
 
@@ -378,7 +387,10 @@ async function createTab(configure?: (settings: PluginSettings) => void, storage
   });
 
   const tab = new PluginSettingsTab({
-    ...normalizeOptionalProperties<StorageAccessorOptions>({ getOriginalAttachmentNamesComponent: storage ? (): OriginalAttachmentNamesComponent => storage : undefined }),
+    ...normalizeOptionalProperties<StorageAccessorOptions>({
+      getAttachmentPathManager: attachmentPathManager ? (): AttachmentPathManager => attachmentPathManager : undefined,
+      getOriginalAttachmentNamesComponent: storage ? (): OriginalAttachmentNamesComponent => storage : undefined
+    }),
     getPluginGateComponent: (): PluginGateComponent =>
       strictProxy<PluginGateComponent>({
         hasActiveWarningConflicts: hasActiveWarningConflictsMock,
@@ -766,6 +778,171 @@ describe('PluginSettingsTab', () => {
       expect(getRowNames(collectedPage)).not.toContain('Collected attachment file name');
       expect(getRowNames(moveRenamesPage)).not.toContain('Renamed attachment file name');
       expect(getRowNames(moveRenamesPage)).not.toContain('Manually renamed attachment file name');
+    });
+  });
+
+  describe('Template preview', () => {
+    type PreviewParams = Parameters<AttachmentPathManager['previewNewAttachmentPath']>[0];
+
+    interface PreviewManager {
+      readonly manager: AttachmentPathManager;
+      readonly previewNewAttachmentPath: Mock<(params: PreviewParams) => Promise<string>>;
+    }
+
+    interface RenderedPreview {
+      readonly cleanup: unknown;
+      readonly setting: SettingEx;
+    }
+
+    function createPreviewManager(answer: (params: PreviewParams) => Promise<string>): PreviewManager {
+      const previewNewAttachmentPath = vi.fn(answer);
+      return {
+        manager: strictProxy<AttachmentPathManager>({ previewNewAttachmentPath }),
+        previewNewAttachmentPath
+      };
+    }
+
+    async function renderPreview(row: SettingDefinitionRender, tab: PluginSettingsTab): Promise<RenderedPreview> {
+      const setting = new SettingEx(tab.containerEl);
+      setting.setName(row.name);
+      const cleanup = row.render(setting, castTo<SettingGroup>(null));
+      await waitForAllAsyncOperations();
+      return { cleanup, setting };
+    }
+
+    function getCodes(setting: SettingEx): (null | string)[] {
+      return [...setting.descEl.querySelectorAll('code')].map((code) => code.textContent);
+    }
+
+    it('should declare no preview row when the tab has no resolver', async () => {
+      const { tab } = await createTab();
+      expect(findRows(tab, 'Preview')).toHaveLength(0);
+    });
+
+    it('should preview the core templates and each new-attachment operation, with its own sample file', async () => {
+      const { manager, previewNewAttachmentPath } = createPreviewManager(async (params) => {
+        await noopAsync();
+        return `assets/${params.attachmentFileName}`;
+      });
+      const { tab } = await createTab(undefined, undefined, null, manager);
+      const rows = findRows(tab, 'Preview');
+      expect(rows).toHaveLength(5);
+
+      const { setting } = await renderPreview(ensureNonNullable(rows[0]), tab);
+      expect(getCodes(setting)).toEqual(['Pasted image.png', 'Example folder/Example note.md', 'assets/Pasted image.png']);
+
+      previewNewAttachmentPath.mockClear();
+      for (const row of rows.slice(1)) {
+        await renderPreview(row, tab);
+      }
+      expect(previewNewAttachmentPath.mock.calls.map(([params]) => [params.newAttachmentOperation, params.attachmentFileName])).toEqual([
+        [NewAttachmentOperation.PastedImage, 'Pasted image.png'],
+        [NewAttachmentOperation.PastedFile, 'Document.pdf'],
+        [NewAttachmentOperation.DroppedFile, 'Document.pdf'],
+        [NewAttachmentOperation.Other, 'Document.pdf']
+      ]);
+    });
+
+    it('should preview for the open note when there is one', async () => {
+      const { manager, previewNewAttachmentPath } = createPreviewManager(async () => {
+        await noopAsync();
+        return 'x.png';
+      });
+      const { tab } = await createTab(undefined, undefined, null, manager);
+      vi.spyOn(tab.app.workspace, 'getActiveFile').mockReturnValue(castTo<TFile>({ extension: 'md', path: 'Projects/Plan.md' }));
+
+      await renderPreview(ensureNonNullable(findRows(tab, 'Preview')[0]), tab);
+
+      expect(previewNewAttachmentPath).toHaveBeenLastCalledWith(expect.objectContaining({ noteFilePath: 'Projects/Plan.md' }));
+    });
+
+    it('should show why the templates cannot be resolved', async () => {
+      const { manager } = createPreviewManager(async () => {
+        await noopAsync();
+        throw new Error('Unknown token \'oops\'.');
+      });
+      const { tab } = await createTab(undefined, undefined, null, manager);
+
+      const { setting } = await renderPreview(ensureNonNullable(findRows(tab, 'Preview')[0]), tab);
+
+      expect(setting.descEl.textContent).toContain('Unknown token \'oops\'.');
+      expect(getCodes(setting)).toEqual(['Example folder/Example note.md']);
+    });
+
+    it('should show a thrown value that is not an Error as text', async () => {
+      const { manager } = createPreviewManager(async () => {
+        await noopAsync();
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- A custom token script can throw anything.
+        throw 'plain text';
+      });
+      const { tab } = await createTab(undefined, undefined, null, manager);
+
+      const { setting } = await renderPreview(ensureNonNullable(findRows(tab, 'Preview')[0]), tab);
+
+      expect(setting.descEl.textContent).toContain('plain text');
+    });
+
+    it('should keep the newest answer when an older one arrives after it', async () => {
+      // Answered at once while `createTab` renders its own rows, then held until the test releases each answer.
+      let shouldDefer = false;
+      const deferred: ((value: string) => void)[] = [];
+      const { manager } = createPreviewManager(async () => {
+        if (!shouldDefer) {
+          await noopAsync();
+          return 'initial.png';
+        }
+        return await new Promise<string>((resolve) => {
+          deferred.push(resolve);
+        });
+      });
+      const { tab, textLikeComponents } = await createTab(undefined, undefined, null, manager);
+      await waitForAllAsyncOperations();
+      shouldDefer = true;
+
+      // The first deferred request is this row's render; typing then asks every rendered row again, this one included.
+      const row = ensureNonNullable(findRows(tab, 'Preview')[0]);
+      const setting = new SettingEx(tab.containerEl);
+      row.render(setting, castTo<SettingGroup>(null));
+      const firstRequestCount = deferred.length;
+      findComponent(textLikeComponents, 'Generated attachment file name').setValue('typed');
+      await vi.waitFor(() => {
+        expect(deferred.length).toBeGreaterThan(firstRequestCount);
+      });
+
+      for (const resolve of deferred.slice(firstRequestCount)) {
+        resolve('newer.png');
+      }
+      await vi.waitFor(() => {
+        expect(getCodes(setting).at(-1)).toBe('newer.png');
+      });
+      for (const resolve of deferred.slice(0, firstRequestCount)) {
+        resolve('older.png');
+      }
+      await waitForAllAsyncOperations();
+
+      expect(getCodes(setting).at(-1)).toBe('newer.png');
+    });
+
+    it('should recompute as the user types a template, until the row is torn down', async () => {
+      let pluginSettingsComponent: null | PluginSettingsComponent = null;
+      const { manager, previewNewAttachmentPath } = createPreviewManager(async () => {
+        await noopAsync();
+        return `assets/${ensureNonNullable(pluginSettingsComponent).settings.generatedAttachmentFileName}.png`;
+      });
+      const created = await createTab(undefined, undefined, null, manager);
+      pluginSettingsComponent = created.pluginSettingsComponent;
+      const { cleanup, setting } = await renderPreview(ensureNonNullable(findRows(created.tab, 'Preview')[0]), created.tab);
+
+      findComponent(created.textLikeComponents, 'Generated attachment file name').setValue('typed');
+      await waitForAllAsyncOperations();
+      expect(getCodes(setting).at(-1)).toBe('assets/typed.png');
+
+      castTo<() => void>(cleanup)();
+      previewNewAttachmentPath.mockClear();
+      findComponent(created.textLikeComponents, 'Generated attachment file name').setValue('again');
+      await waitForAllAsyncOperations();
+      // `createTab` rendered every preview row once, and those are still up; only the one torn down is not asked again.
+      expect(previewNewAttachmentPath).toHaveBeenCalledTimes(findRows(created.tab, 'Preview').length);
     });
   });
 
