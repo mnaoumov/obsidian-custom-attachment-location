@@ -48,6 +48,9 @@
     "version": "jiti scripts/version.ts"
   },
   "overrides": {
+    "@microsoft/eslint-plugin-sdl": {
+      "eslint-plugin-n": "^17.24.0"
+    },
     "@mnaoumov/obsidian-lib": "$@mnaoumov/obsidian-lib",
     "@puppeteer/browsers": "^3.2.5",
     "deepmerge-ts": "^8.0.2",
